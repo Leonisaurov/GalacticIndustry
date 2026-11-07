@@ -1,5 +1,9 @@
 version = 2
 
+# Puente para CodeAssist: el layout canónico es el de apkc (raíz del repo), pero
+# CodeAssist espera un módulo `app` con su module.toml. Las rutas suben un nivel.
+# No muevas estas rutas: apkc y CodeAssist comparten los mismos ficheros.
+
 [module]
 type = "android-app"
 name = "app"
@@ -22,12 +26,10 @@ resources = ["src/debug/resources"]
 
 [sourceSets.main]
 scope = "IMPLEMENTATION"
-aidl = ["src/main/aidl"]
-assets = ["src/main/assets"]
-java = ["src/main/java", "src/main/kotlin"]
-jniLibs = ["src/main/jniLibs"]
-res = ["src/main/res"]
-resources = ["src/main/resources"]
+assets = ["../assets"]
+java = ["../src"]
+jniLibs = ["../lib"]
+res = ["../res"]
 
 [sourceSets.release]
 scope = "IMPLEMENTATION"
@@ -51,4 +53,5 @@ namespace = "com.example.codegame"
 compileSdk = 36
 minSdk = 26
 targetSdk = 36
+manifest = "../AndroidManifest.xml"
 isApplication = true

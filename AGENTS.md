@@ -40,31 +40,28 @@ Verificación del APK: `aapt2 dump badging build/app.apk` y
 
 - `src/com/example/codegame/` — todo el código Java.
 - `res/`, `assets/`, `lib/<abi>/*.so`, `AndroidManifest.xml` — app.
+- `app/module.toml` — puente de CodeAssist (ver más abajo).
 - `jar/`, `res/__deps/`, `deps.installed.json` — generados por apkc-deps
   (ignorados, no editar).
 - `src/**/R.java` y `src/**/Manifest.java` — generados por aapt2 en cada build
   (ignorados, no editar).
 - `deps.json` y `deps.lock.json` — sí se versionan.
 
-## Compatibilidad con el layout antiguo (`module.toml`)
+## Compatibilidad con CodeAssist (`app/module.toml`)
 
-El layout canónico es el de apkc. Para construir también con la herramienta
-anterior no hay una segunda copia: hay una proyección generada.
+El layout canónico es el de apkc, pero `app/module.toml` es un puente para
+CodeAssist (móvil). CodeAssist guarda en `.platform/workspace.json` (local, no
+versionado) un módulo llamado `app` y lee `app/module.toml`; sin ese fichero
+falla con "no encuentra el módulo app".
 
-```sh
-tools/make-legacy.sh
-```
+Ese `module.toml` no duplica nada: sus sourceSets apuntan a la raíz con rutas
+relativas (`../src`, `../res`, `../assets`, `../lib`) y
+`[android] manifest = "../AndroidManifest.xml"`. CodeAssist resuelve `..` sin
+problema. Si mueves directorios, actualiza también `app/module.toml`; no lo
+borres aunque solo uses apkc.
 
-Crea `legacy/` (ignorado) con `app/module.toml` (plantilla versionada en
-`tools/legacy-module.toml`) y enlaces **por fichero** a `src/`, `res/`,
-`assets/` y `lib/`. Excluye los `R.java`/`Manifest.java` generados por aapt2 y
-`res/__deps/` de apkc-deps, que romperían el otro build. Las ediciones se ven
-sin regenerar; ejecuta el script solo tras añadir, renombrar o borrar ficheros.
-No enlaza directorios, así que las herramientas que recorren el árbol sin
-seguir symlinks de directorio también ven el contenido.
-
-La herramienta antigua no está instalada en este equipo: el layout se validó
-compilando los enlaces con `javac`, no ejecutando ese build.
+Los artefactos generados (`.platform/`, `app/build/`, `build/`, `jar/`,
+`res/__deps/`, `R.java`) están ignorados, así que no viajan entre dispositivos.
 
 ## Dependencias y nativos
 
