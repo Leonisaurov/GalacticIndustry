@@ -91,7 +91,9 @@ public class MyGame implements ApplicationListener {
         hudView = new ScreenViewport(hudCam);
         shapes = new ShapeRenderer();
         batch = new SpriteBatch();
-        font = new BitmapFont();
+        // La fuente por defecto de gdx vive en el classpath del jar, y apkc no
+        // empaqueta recursos de jars: se copia a assets/fonts y se carga de ahí.
+        font = new BitmapFont(Gdx.files.internal("fonts/lsans-15.fnt"));
         layout = new GlyphLayout();
         upgrades = new Upgrades();
         world = new GameWorld(upgrades);

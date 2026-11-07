@@ -1,0 +1,28 @@
+{
+  "boms": [],
+  "direct": [
+    {
+      "coord": "com.badlogicgames.gdx:gdx-backend-android:1.14.2"
+    },
+    {
+      "coord": "com.badlogicgames.gdx:gdx:1.14.2"
+    }
+  ],
+  "googleServices": "",
+  "schema": 1,
+  "settings": {
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86_64"
+    ],
+    "cacheCapMB": 400,
+    "repos": [
+      "google",
+      "central",
+      "m2local",
+      "jitpack"
+    ],
+    "resourcePrecedence": "last-declared-wins"
+  }
+}

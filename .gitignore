@@ -1,9 +1,20 @@
 build/
-.platform/
+legacy/
+.apkc-deps/
 .gradle/
+.platform/
 local.properties
 *.apk
 *.aab
 *.jks
 *.keystore
 .DS_Store
+
+# Derivado por apkc-deps (se recrea con `apkc-deps sync`)
+jar/
+res/__deps/
+deps.installed.json
+
+# Generado por aapt2/apkc-deps en cada build: no editar a mano
+src/**/R.java
+src/**/Manifest.java
