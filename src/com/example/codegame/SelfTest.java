@@ -3611,6 +3611,84 @@ public class SelfTest {
                         && refLoaded.playerStation.tradeMarket().stock(
                         Commodity.HIERRO) == refSavedStock);
 
+        // T-906: gate de la etapa 9 (estacion personal).
+        Upgrades s9Up = new Upgrades(true);
+        s9Up.setCoins(4000);
+        GameSession s9 = new GameSession(new PlayerProfile(s9Up));
+        s9.startRun();
+        s9.ship().pos.set(-1500f, 0f);
+        s9.ship().cargo().setCapacity(400f);
+        s9.ship().cargo().addExact(Commodity.HIERRO, 90);
+        s9.ship().cargo().addExact(Commodity.COBRE, 60);
+        s9.ship().cargo().addExact(Commodity.SILICATO, 90);
+        s9.ship().cargo().addExact(Commodity.TITANIO, 20);
+        s9.ship().cargo().addExact(Commodity.HIELO, 30);
+        check("S9: la plataforma vacia no da servicios",
+                !s9.playerStation.built()
+                        && s9.playerStation.serviceMask() == 0
+                        && s9.playerStation.storageCapacity() == 0f
+                        && s9.playerStation.tradeMarket() == null);
+        check("S9: se construye la plataforma y se acopla",
+                ConstructionService.buildCore(s9, -1500f, 0f).ok
+                        && s9.playerStation.built()
+                        && DockingSystem.canDock(s9.sector)
+                        && DockingSystem.dock(s9.sector)
+                        && s9.sector.ship.docked
+                        && s9.sector.dockedAtPlayer);
+        DockingSystem.undock(s9.sector);
+        check("S9: se construyen los cuatro modulos",
+                s9.playerStation.build(0, ModuleDef.STORAGE, s9Up,
+                        s9.ship().cargo()).ok
+                        && s9.playerStation.build(1, ModuleDef.REPAIR, s9Up,
+                        s9.ship().cargo()).ok
+                        && s9.playerStation.build(2, ModuleDef.REFINERY, s9Up,
+                        s9.ship().cargo()).ok
+                        && s9.playerStation.build(3, ModuleDef.MARKET, s9Up,
+                        s9.ship().cargo()).ok
+                        && s9.playerStation.serviceMask() == 15
+                        && s9.playerStation.storageCapacity() == 200f);
+        s9.ship().fuel = 5f;
+        s9.pilot.oxygen = 30f;
+        int s9Batches = s9.playerStation.refine(s9.ship().cargo(),
+                s9.ship(), s9.pilot);
+        s9.ship().part[Ship.HULL] = 30f;
+        check("S9: refineria y taller funcionan tras construirse",
+                s9Batches == 3
+                        && s9.ship().fuel > 5f
+                        && s9.pilot.oxygen > 30f
+                        && s9.playerStation.repairAll(s9.ship(), s9Up)
+                        && s9.ship().part[Ship.HULL] == Ship.PART_MAX);
+        int s9Deposited = s9.playerStation.depositAll(s9.ship().cargo());
+        int s9MarketStock = s9.playerStation.tradeMarket().stock(Commodity.ORO);
+        check("S9: almacen y mercado funcionan tras construirse",
+                s9Deposited > 0
+                        && s9.playerStation.stationStorage().totalUnits() > 0
+                        && s9.playerStation.buy(s9Up, s9.ship().cargo(),
+                        Commodity.ORO, 1, null).ok
+                        && s9.playerStation.sell(s9Up, s9.ship().cargo(),
+                        Commodity.ORO, 1, null).ok
+                        && s9.playerStation.tradeMarket().stock(Commodity.ORO)
+                        == s9MarketStock);
+        SaveService.MemoryStorage s9Store = new SaveService.MemoryStorage();
+        SaveService s9Saves = new SaveService(s9Store);
+        check("S9: la estacion se guarda", s9Saves.save(s9));
+        GameSession s9Loaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        boolean noWalking = false;
+        try {
+            Class.forName("com.example.codegame.Interior");
+        } catch (ClassNotFoundException expected) {
+            noWalking = true;
+        }
+        check("S9: todo persiste y no hay movimiento a pie",
+                s9Saves.load(s9Loaded) == SaveService.LoadStatus.V2
+                        && s9Loaded.playerStation.built()
+                        && s9Loaded.playerStation.moduleCount() == 4
+                        && s9Loaded.playerStation.serviceMask() == 15
+                        && s9Loaded.playerStation.stationStorage().totalUnits()
+                        == s9.playerStation.stationStorage().totalUnits()
+                        && noWalking);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

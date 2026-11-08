@@ -150,12 +150,12 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S9` — Estación espacial personal.
+- Etapa actual: `S10` — Interiores.
 - No hay tarea en progreso.
-- Última tarea completada: `T-908` — Módulos de refinería y mercado.
-- Primera tarea disponible: `T-906` — Verificación de la estación personal.
+- Última tarea completada: `T-906` — Verificación de la estación personal.
+- Primera tarea disponible: `T-1001` — Crear marco de interiores para estaciones y naves.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **81 %** (66 de 81 tareas de progreso).
+- La implementación del juego está al **83 %** (67 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

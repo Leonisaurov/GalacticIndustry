@@ -251,6 +251,19 @@ Verificación de T-807:
 | No se simulan galaxias inactivas en detalle | Snapshot de `draco-core` nulo y solo sectores visitados conservan estado |
 | Rendimiento de viaje/carga | `BENCH universo 8 viajes=1ms`; `18_map`, `16_universe` |
 
+## Gate de la Etapa 9 — estación personal
+
+Verificación de T-906:
+
+| Criterio | Evidencia |
+|---|---|
+| Plataforma vacía y acople | `PASS S9: se construye la plataforma y se acopla` |
+| Al menos un módulo | `PASS S9: se construyen los cuatro modulos` |
+| Almacén y reparación tras módulos | `PASS S9: refineria y taller funcionan tras construirse` |
+| Refinería y mercado tras módulos | `PASS S9: almacen y mercado funcionan tras construirse` |
+| La estación persiste | `PASS S9: todo persiste ...`; `17_player_station` |
+| Sin movimiento a pie | Comprobación estructural de ausencia de interiores |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.
