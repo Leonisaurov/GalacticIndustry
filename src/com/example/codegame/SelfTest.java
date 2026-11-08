@@ -3124,6 +3124,40 @@ public class SelfTest {
                         && GameData.START_SECTOR_ID.equals(
                         warpLoaded.currentSector.id));
 
+        // T-805: descubrimientos del mapa y viaje a lo descubierto.
+        Upgrades mapUp = new Upgrades(true);
+        mapUp.addCoins(20000);
+        mapUp.buy(Upgrades.MOTOR);
+        for (int i = 0; i < 5; i++) {
+            mapUp.buy(Upgrades.LASER);
+        }
+        GameSession mapSession = new GameSession(new PlayerProfile(mapUp));
+        mapSession.startRun();
+        check("el mapa conoce el sistema inicial y faros",
+                mapSession.universe.discoveredCount() == 5
+                        && mapSession.universe.isDiscovered("sol-prime")
+                        && mapSession.universe.isDiscovered("sol-belt")
+                        && mapSession.universe.isDiscovered("sol-ice")
+                        && mapSession.universe.isDiscovered("andromeda-forge")
+                        && mapSession.universe.isDiscovered("draco-core")
+                        && !mapSession.universe.isDiscovered("andromeda-drift"));
+        check("los sectores no descubiertos no se pueden viajar",
+                !TravelService.quote(mapSession, "andromeda-drift").ok
+                        && "Sector no descubierto".equals(
+                        TravelService.quote(mapSession, "andromeda-drift").error));
+        TravelService.Quote farQuote = TravelService.quote(mapSession,
+                "andromeda-forge");
+        check("el mapa puede viajar a otro sistema/galaxia",
+                farQuote.ok
+                        && farQuote.distance > 30f
+                        && farQuote.fuelCost > 10
+                        && farQuote.energyCost > 10);
+        check("al llegar se descubre el sistema de destino",
+                TravelService.travel(mapSession, "andromeda-forge").ok
+                        && mapSession.universe.isDiscovered("andromeda-forge")
+                        && mapSession.universe.isDiscovered("andromeda-drift")
+                        && mapSession.universe.discoveredCount() == 6);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

@@ -96,6 +96,9 @@ final class PlayHud {
         if (hud.canRescue) {
             ui.drawButton(hud.rescue, Visuals.BTN_WARM, true);
         }
+        if (hud.canOpenMap) {
+            ui.drawButton(hud.map, Visuals.BTN_SECONDARY, true);
+        }
         drawIconButton(hud.pause);
         ui.drawCoinIcon(pad + 18f * u, h - 54f * u, 13f * u);
         if (hud.state == MyGame.PLAYING) {
@@ -174,6 +177,9 @@ final class PlayHud {
                     hud.dock.bounds.x + hud.dock.bounds.width * 0.5f,
                     hud.dock.bounds.y + hud.dock.bounds.height + 22f * u,
                     0.72f * u, Visuals.ACCENT);
+        }
+        if (hud.canOpenMap) {
+            ui.drawButtonText(hud.map, true);
         }
         if (hud.canRescue) {
             ui.drawButtonText(hud.rescue, true);

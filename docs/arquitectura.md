@@ -239,7 +239,24 @@ estáticos se reutilizan.
   - se guarda la partida.
 - El sector actual se persiste; al cargar se restaura con `switchSector`.
 - `T`/`Y` y dos zonas invisibles de prueba permiten viajar y volver en
-  `warp_test`; la UI de mapa llega en T-805.
+  `warp_test`.
+
+## Mapa de sectores (MapScreen)
+
+- Se abre con el botón `MAPA` del HUD en `PLAYING` y se cierra con `VOLVER`.
+- Muestra la posición actual (`galaxia / sistema / sector`) y todos los
+  sectores del universo en filas.
+- **Descubrimiento**:
+  - al empezar se descubren todos los sectores del sistema inicial;
+  - se añade un faro en la primera estación de cada otra galaxia;
+  - al llegar a un sistema se descubren todos sus sectores.
+- Los sectores no descubiertos aparecen como `???` / `SIN DATOS`, no revelan
+  distancia ni coste y no se pueden seleccionar ni viajar a ellos.
+- Para cada destino descubierto se muestra distancia, coste de combustible (`C`)
+  y energía (`E`), calculados por `TravelService`.
+- `VIAJAR` ejecuta el warp y cierra el mapa; si falta motor, combustible o
+  energía, muestra el error sin moverse.
+- Se dibuja con formas y texto, funciona en vertical y no usa red ni imágenes.
 
 ## Pilotos autónomos (datos)
 

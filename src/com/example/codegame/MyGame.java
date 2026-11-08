@@ -29,6 +29,7 @@ public class MyGame implements ApplicationListener {
     static final int DYING = 5;
     static final int DOCKED = 6;
     static final int MARKET = 7;
+    static final int MAP = 8;
 
     private static final float MIN_W = 480f;
     private static final float MIN_H = 800f;
@@ -51,6 +52,7 @@ public class MyGame implements ApplicationListener {
     private PlayHud playHud;
     private StationScreen stationScreen;
     private MarketScreen marketScreen;
+    private MapScreen mapScreen;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -127,6 +129,8 @@ public class MyGame implements ApplicationListener {
     Button btnDock, btnUndock;
     /** Rescate por falta de combustible. */
     Button btnRescue;
+    /** Abrir el mapa de sectores. */
+    Button btnMap;
     /** Zonas invisibles solo para pruebas de warp. */
     private Button btnWarpDebug, btnWarpBackDebug;
     private final RescueService rescue = new RescueService();
@@ -371,6 +375,7 @@ public class MyGame implements ApplicationListener {
         playHud = new PlayHud(ui, world, session, upgrades, batch, shapes, art, hud);
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
         marketScreen = new MarketScreen(this, ui, batch, shapes, space);
+        mapScreen = new MapScreen(this, ui, batch, shapes, space);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
         saves = new SaveService(
@@ -698,6 +703,7 @@ public class MyGame implements ApplicationListener {
                 bw * 0.9f, 46f * u);
         btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
                 bw * 0.9f, 46f * u);
+        btnMap = new Button("MAPA", w * 0.5f - 70f * u, pad, 140f * u, 44f * u);
         if (warpTest) {
             btnWarpDebug = new Button("", w * 0.30f, h * 0.05f, w * 0.18f, h * 0.08f);
             btnWarpBackDebug = new Button("", w * 0.52f, h * 0.05f, w * 0.18f, h * 0.08f);
@@ -708,6 +714,9 @@ public class MyGame implements ApplicationListener {
         }
         if (marketScreen != null) {
             marketScreen.layout(w, h);
+        }
+        if (mapScreen != null) {
+            mapScreen.layout(w, h);
         }
     }
 
@@ -879,6 +888,7 @@ public class MyGame implements ApplicationListener {
             case PAUSED: handlePause(); break;
             case DOCKED: stationScreen.handle(); break;
             case MARKET: marketScreen.handle(); break;
+            case MAP: mapScreen.handle(); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
@@ -899,6 +909,7 @@ public class MyGame implements ApplicationListener {
             case PAUSED: return "PAUSED";
             case DOCKED: return "DOCKED";
             case MARKET: return "MARKET";
+            case MAP: return "MAP";
             case OVER: return "OVER";
             case DYING: return "DYING";
             default: return "MENU";
@@ -979,7 +990,9 @@ public class MyGame implements ApplicationListener {
                         + "\"sectorProfile\":\"%s\","
                         + "\"sectorMapX\":%.1f,\"sectorMapY\":%.1f,"
                         + "\"loadedSectors\":%d,\"unloadedSectors\":%d,"
-                        + "\"warpLevel\":%d,\"snapshotSectors\":%d}",
+                        + "\"warpLevel\":%d,\"snapshotSectors\":%d,"
+                        + "\"mapDiscovered\":%d,\"mapHidden\":%d,"
+                        + "\"mapSelected\":\"%s\",\"mapMessage\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1055,7 +1068,11 @@ public class MyGame implements ApplicationListener {
                 session.streamer.loadedCount(),
                 session.streamer.unloadedCount(),
                 upgrades.level(Upgrades.MOTOR),
-                session.universe.snapshots().size()));
+                session.universe.snapshots().size(),
+                mapScreen.discoveredCount(),
+                mapScreen.hiddenCount(),
+                mapScreen.selectedSectorId(),
+                state == MAP ? mapScreen.message() : ""));
     }
 
     void logEvent(String json) {
@@ -1194,6 +1211,11 @@ public class MyGame implements ApplicationListener {
     }
 
     private void updatePlaying(float dt) {
+        if (tapped(btnMap)) {
+            resetControls();
+            openMap();
+            return;
+        }
         if (warpTest && tapped(btnWarpDebug)) {
             travelTo(TravelService.nextSectorId(session));
             return;
@@ -1534,6 +1556,20 @@ public class MyGame implements ApplicationListener {
         layoutUi();
     }
 
+    /** Abrir el mapa desde la partida. */
+    void openMap() {
+        mapScreen.enter();
+        state = MAP;
+        layoutUi();
+        logEvent("{\"event\":\"map_open\"}");
+    }
+
+    /** Volver del mapa a la partida. */
+    void closeMap() {
+        state = PLAYING;
+        layoutUi();
+    }
+
     /** Registro de una transacción de mercado. */
     void logTrade(TradeService.Trade trade) {
         if (trade != null) {
@@ -1639,6 +1675,8 @@ public class MyGame implements ApplicationListener {
             stationScreen.draw(w, h);
         } else if (state == MARKET) {
             marketScreen.draw(w, h);
+        } else if (state == MAP) {
+            mapScreen.draw(w, h);
         } else {
             hud.state = state;
             hud.runActive = runActive;
@@ -1658,6 +1696,8 @@ public class MyGame implements ApplicationListener {
             hud.canDock = canDock();
             hud.rescue = btnRescue;
             hud.canRescue = canRescue();
+            hud.map = btnMap;
+            hud.canOpenMap = state == PLAYING && runActive && !rescue.active();
             hud.rescueActive = rescue.active();
             hud.rescueSeconds = rescue.remaining();
             playHud.draw(w, h);

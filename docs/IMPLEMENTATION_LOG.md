@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T05:30:00-06:00  
+**Última actualización:** 2026-11-08T05:46:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,74 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-066 — MapScreen y navegación warp
+
+- **Fecha:** 2026-11-08T05:46:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-805
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `MapScreen` vertical, abierto con el botón `MAPA` del HUD.
+- Muestra la posición actual (`GALAXIA / SISTEMA / SECTOR`) y todos los
+  sectores del universo.
+- **Descubrimientos**:
+  - sistema inicial completo;
+  - un faro en la primera estación de cada otra galaxia;
+  - al llegar a un sistema se descubren todos sus sectores.
+- Los nodos no descubiertos muestran `???` / `SIN DATOS` y no se pueden
+  seleccionar ni viajar.
+- Cada destino descubierto muestra distancia y coste `C`/`E` de `TravelService`.
+- `VIAJAR` ejecuta el warp, guarda el origen y cierra el mapa; los errores de
+  motor/combustible/energía se muestran en pantalla.
+- `18_map` y la captura `32_map` verifican el flujo.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MapScreen.java` (nuevo)
+- `src/com/example/codegame/UniverseState.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/TravelService.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/HudView.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/18_map.sh` (nuevo)
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 18_map`: **OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS el mapa conoce el sistema inicial y faros`
+- `PASS los sectores no descubiertos no se pueden viajar`
+- `PASS el mapa puede viajar a otro sistema/galaxia`
+- `PASS al llegar se descubre el sistema de destino`
+- `18_map`: 5/6 descubiertos, coste y viaje a `sol-belt`.
+- Captura `32_map`: nodo oculto y costes `C/E`.
+
+### Decisiones tomadas
+
+- El descubrimiento inicial incluye el sistema de arranque y faros lejanos.
+- Los nodos ocultos no revelan distancia ni coste.
+- El mapa no exige puertas: usa el mismo `TravelService` que el warp libre.
+- El botón `MAPA` solo está disponible en `PLAYING`.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-806 — Añadir Vía Láctea, galaxias reales y ficticias**.
 
 ---
 

@@ -55,6 +55,10 @@ MC_BUY_X=0
 MC_SELL_X=0
 MC_BACK_X=0
 MC_BACK_Y=0
+MAP_BTN_X=0
+MAP_BTN_Y=0
+MAP_TRAVEL_X=0
+MAP_TRAVEL_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -138,6 +142,12 @@ device_geometry() {
     MC_SELL_X=$((MC_NADA_X))
     MC_BACK_X=$((W - 8 * U - 96 * U + 39 * U))
     MC_BACK_Y=$((36 * U))
+    # Mapa: botón MAPA en el HUD y VIAJAR en el pie del mapa.
+    MAP_BTN_X=$((W / 2))
+    MAP_BTN_Y=$((H - 38 * U))
+    local map_half=$(( (W - 64 * U) / 2 ))
+    MAP_TRAVEL_X=$((28 * U + map_half / 2))
+    MAP_TRAVEL_Y=$((H - 118 * U))
 }
 
 # ---------- build y SelfTest ----------

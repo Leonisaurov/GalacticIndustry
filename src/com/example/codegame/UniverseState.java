@@ -16,6 +16,8 @@ final class UniverseState {
     /** Estado resumido de sectores ya visitados, por ID estable. */
     private final Map<String, SectorRuntime.Snapshot> snapshots =
             new LinkedHashMap<>();
+    /** Sectores descubiertos; el mapa oculta los detalles del resto. */
+    private final java.util.Set<String> discovered = new java.util.LinkedHashSet<>();
 
     GalaxyDef addGalaxy(GalaxyDef galaxy) {
         if (galaxy != null && galaxy(galaxy.id) == null) {
@@ -128,6 +130,62 @@ final class UniverseState {
 
     void clearSnapshots() {
         snapshots.clear();
+    }
+
+    void discover(String sectorId) {
+        if (sectorId != null && sector(sectorId) != null) {
+            discovered.add(sectorId);
+        }
+    }
+
+    boolean isDiscovered(String sectorId) {
+        return sectorId != null && discovered.contains(sectorId);
+    }
+
+    int discoveredCount() {
+        return discovered.size();
+    }
+
+    List<String> discoveredSectorIds() {
+        return new ArrayList<>(discovered);
+    }
+
+    /**
+     * Descubrimiento inicial: todos los sectores del sistema de arranque y un
+     * faro en cada otra galaxia para que el mapa ofrezca destinos lejanos.
+     */
+    void discoverSystem(String systemId) {
+        SystemDef system = system(systemId);
+        if (system == null) {
+            return;
+        }
+        for (int i = 0; i < system.sectors.size(); i++) {
+            discovered.add(system.sectors.get(i).id);
+        }
+    }
+
+    void discoverInitial(String currentSectorId) {
+        SectorDef current = sector(currentSectorId);
+        if (current == null) {
+            return;
+        }
+        SystemDef system = system(current.systemId);
+        if (system != null) {
+            for (int i = 0; i < system.sectors.size(); i++) {
+                discovered.add(system.sectors.get(i).id);
+            }
+        }
+        for (int i = 0; i < galaxies.size(); i++) {
+            GalaxyDef galaxy = galaxies.get(i);
+            if (galaxy.systems.isEmpty()) {
+                continue;
+            }
+            SystemDef first = galaxy.systems.get(0);
+            if (!first.sectors.isEmpty()) {
+                discovered.add(first.sectors.get(0).id);
+            }
+        }
+        discovered.add(currentSectorId);
     }
 
     /** Lista de errores de validación; vacía si los datos son coherentes. */

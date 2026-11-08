@@ -26,6 +26,8 @@ final class HudView {
     boolean canDock;
     Button rescue;
     boolean canRescue;
+    Button map;
+    boolean canOpenMap;
     boolean rescueActive;
     float rescueSeconds;
 }

@@ -65,6 +65,10 @@ final class TravelService {
             quote.error = "Ya estas en ese sector";
             return quote;
         }
+        if (!session.universe.isDiscovered(target.id)) {
+            quote.error = "Sector no descubierto";
+            return quote;
+        }
         int warp = session.upgrades().level(Upgrades.MOTOR);
         quote.warpLevel = warp;
         quote.fromSectorId = session.currentSector.id;

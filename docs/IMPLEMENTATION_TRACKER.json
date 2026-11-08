@@ -4,26 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T05:30:00-06:00",
-    "lastSessionId": "S-065",
+    "lastUpdated": "2026-11-08T05:46:00-06:00",
+    "lastSessionId": "S-066",
     "lastVerification": {
-      "date": "2026-11-08T05:30:00-06:00",
+      "date": "2026-11-08T05:46:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "TravelService calcula coste por distancia/motor y exige motor nivel >=1",
-        "El viaje descuenta combustible y energia y carga el destino por streaming",
-        "La nave conserva carga, combustible, danos y energia",
-        "El origen queda como snapshot y se puede regresar",
-        "Las puertas son atajos opcionales (factor 0.5)",
-        "El sector actual persiste al guardar y cargar",
-        "17_warp: viaje y regreso en dispositivo",
+        "Descubrimiento inicial: sistema de arranque + faros de otras galaxias",
+        "Sectores no descubiertos ocultos, sin coste y sin viaje",
+        "MapScreen muestra posicion, destinos, distancia y coste C/E",
+        "VIAJAR cambia de sector y guarda el origen",
+        "18_map: 5/6 descubiertos y viaje a sol-belt; captura 32_map",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S8",
     "currentTaskId": null,
-    "nextTaskId": "T-805",
+    "nextTaskId": "T-806",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4203,7 +4201,7 @@
       "description": "Añadir el mapa de sectores/sistemas/galaxias con posición actual, destinos, coste estimado y descubrimiento, orientado a viaje libre warp.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-804"
@@ -4229,10 +4227,43 @@
         "Revisión visual"
       ],
       "technicalNotes": "No usar imágenes externas; dibujar con formas.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-066",
+          "date": "2026-11-08T05:46:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MapScreen vertical con posicion actual, lista de sectores, descubrimientos (sistema inicial + faros + sistema al llegar), nodos ocultos sin datos y coste distancia/combustible/energia. Viaje desde VIAJAR con validacion de TravelService. Boton MAPA en HUD, telemetria y 18_map/32_map.",
+          "files": [
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/TravelService.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_map.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "16_universe",
+            "Revisión visual",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mapa conoce el sistema inicial y faros",
+        "PASS los sectores no descubiertos no se pueden viajar",
+        "PASS el mapa puede viajar a otro sistema/galaxia",
+        "PASS al llegar se descubre el sistema de destino",
+        "18_map: 5/6 descubiertos, coste y viaje a sol-belt",
+        "Captura 32_map con nodo oculto y costes C/E"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:46:00-06:00"
     },
     {
       "id": "T-806",
@@ -4241,7 +4272,7 @@
       "description": "Crear la galaxia inicial Vía Láctea y al menos otra galaxia real, con posibilidad de añadir galaxias ficticias. Diferenciar composición, precios, estaciones y nave nodriza.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -5926,6 +5957,35 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-066",
+      "date": "2026-11-08T05:46:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "MapScreen y navegación warp",
+      "summary": "Mapa vertical con descubrimientos, nodos ocultos, coste de warp y viaje desde VIAJAR. Botón MAPA en el HUD; prueba 18_map y captura 32_map.",
+      "tasks": [
+        "T-805"
+      ],
+      "files": [
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/TravelService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_map.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_map",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-806 (Vía Láctea, galaxias reales y ficticias)."
+    },
     {
       "id": "S-065",
       "date": "2026-11-08T05:30:00-06:00",

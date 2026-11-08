@@ -52,6 +52,7 @@ class GameSession {
         this.currentSector = universe.defaultSector();
         this.streamer = new SectorStreamer(universe);
         this.streamer.switchTo(currentSector == null ? null : currentSector.id, null);
+        this.universe.discoverInitial(currentSector == null ? null : currentSector.id);
         this.sector = new GameWorld(profile.upgrades, currentSector);
         this.sector.attachLifeSupport(lifeSupport);
     }
@@ -98,6 +99,8 @@ class GameSession {
         }
         next.ship.copyTravelStateFrom(old.ship);
         next.attachLifeSupport(lifeSupport);
+        universe.discover(sectorId);
+        universe.discoverSystem(target.systemId);
         currentSector = target;
         sector = next;
         return next;
