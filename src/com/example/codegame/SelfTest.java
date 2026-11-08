@@ -3795,6 +3795,38 @@ public class SelfTest {
                         && shipAvatar.atExit(shipWalk)
                         && shipWalk.kind == InteriorScene.Kind.SHIP);
 
+        // T-1005: entrada, salida y guardado del avatar.
+        InteriorScene saveWalk = s9.playerStation.buildInterior();
+        Avatar saveAvatar = new Avatar(saveWalk);
+        InteriorInput saveInput = new InteriorInput();
+        saveInput.set(0f, 1f);
+        saveAvatar.update(1.1f, saveInput, saveWalk);
+        check("el avatar llega a la habitacion del modulo",
+                "module-0".equals(saveAvatar.roomId));
+        s9.saveAvatar(saveAvatar, true);
+        SaveService.MemoryStorage walkStore = new SaveService.MemoryStorage();
+        SaveService walkSaves = new SaveService(walkStore);
+        check("el guardado con interior es valido", walkSaves.save(s9));
+        GameSession walkLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("la posicion del avatar persiste",
+                walkSaves.load(walkLoaded) == SaveService.LoadStatus.V2
+                        && "module-0".equals(walkLoaded.interiorRoom)
+                        && Math.abs(walkLoaded.interiorX - saveAvatar.x) < 0.01f
+                        && Math.abs(walkLoaded.interiorY - saveAvatar.y) < 0.01f
+                        && walkLoaded.interiorActive);
+        Avatar walkRestored = new Avatar(walkLoaded.playerStation.buildInterior());
+        walkLoaded.restoreAvatar(walkRestored);
+        check("el avatar se restaura junto al modulo",
+                "module-0".equals(walkRestored.roomId)
+                        && Math.abs(walkRestored.x - saveAvatar.x) < 0.01f
+                        && Math.abs(walkRestored.y - saveAvatar.y) < 0.01f);
+        s9.saveAvatar(saveAvatar, false);
+        check("salir del interior no rompe el guardado de vuelo",
+                s9.interiorActive == false
+                        && walkLoaded.ship().pos != null
+                        && walkLoaded.currentSector != null);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

@@ -7,7 +7,7 @@ prepare_device_module
 ensure_magick
 OUT=${OUT:-build/screens}
 mkdir -p "$OUT"
-rm -f "$OUT/36_interior.png" "$OUT/37_interaction.png"
+rm -f "$OUT/36_interior.png" "$OUT/37_interaction.png" "$OUT/39_exit.png"
 
 launch_app "--ez test_mode true --ez module_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de interiores"
@@ -34,6 +34,14 @@ done
 assert_ge "fps interior" 25 "$fps"
 shot "$OUT" 36_interior
 validate_shot "$OUT/36_interior.png"
+# T-1005: salir a la nave desde la salida.
+tap "$((W / 2))" "$((H / 2))" 0.5
+wait_current_state PLAYING 5 || fail "la salida no devolvió a la nave"
+sleep 0.4
+status=$(latest_status)
+assert_eq "sin acople tras salir" false "$(printf '%s' "$status" | json_get docked)"
+shot "$OUT" 39_exit
+validate_shot "$OUT/39_exit.png"
 
 # T-1004: interacción por proximidad con un módulo.
 launch_app "--ez test_mode true --ez interior_mgmt_test true"

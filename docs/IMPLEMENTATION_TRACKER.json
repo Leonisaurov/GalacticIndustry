@@ -4,22 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T09:56:00-06:00",
-    "lastSessionId": "S-080",
+    "lastUpdated": "2026-11-08T10:18:00-06:00",
+    "lastSessionId": "S-081",
     "lastVerification": {
-      "date": "2026-11-08T09:56:00-06:00",
+      "date": "2026-11-08T10:18:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Interactuable por proximidad abre la gestion desde el interior",
-        "La pantalla reutilizada vuelve al interior sin despegar",
-        "18_interiors: captura 37_interaction y estado conservado",
+        "ENTRAR abre el interior desde la gestion",
+        "EXIT desacopla y devuelve a PLAYING",
+        "La posicion del avatar persiste y se restaura",
+        "El guardado de vuelo sigue intacto",
+        "17_player_station y 18_interiors en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S10",
     "currentTaskId": null,
-    "nextTaskId": "T-1005",
+    "nextTaskId": "T-1006",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5090,7 +5092,7 @@
       "description": "Permitir entrar/salir de la estación y guardar la posición del personaje.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -5115,10 +5117,39 @@
         "Guardado/carga"
       ],
       "technicalNotes": "La salida debe ser rápida y clara.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-081",
+          "date": "2026-11-08T10:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Entrada/salida del interior: ENTRAR desde gestion, EXIT devuelve a la nave desacoplando. GameSession guarda room/x/y/active del avatar en el bloque interior del v2 y se restaura al volver. Pruebas de guardado y capturas 38_entry/39_exit.",
+          "files": [
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors",
+            "Guardado/carga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la posicion del avatar persiste",
+        "PASS el avatar se restaura junto al modulo",
+        "PASS salir del interior no rompe el guardado de vuelo",
+        "17_player_station: ENTRAR abre INTERIOR (38_entry)",
+        "18_interiors: EXIT devuelve a PLAYING (39_exit)"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T10:18:00-06:00"
     },
     {
       "id": "T-1006",
@@ -5127,7 +5158,7 @@
       "description": "Cerrar la etapa comprobando movimiento, colisión, interacción, salida y persistencia.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1005"
@@ -6377,6 +6408,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-081",
+      "date": "2026-11-08T10:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Entrada, salida y guardado del interior",
+      "summary": "ENTRAR/EXIT funcionales, salida desacopla a la nave y la posición del avatar se persiste sin romper el guardado de vuelo.",
+      "tasks": [
+        "T-1005"
+      ],
+      "files": [
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1006 (verificacion de interiores)."
+    },
     {
       "id": "S-080",
       "date": "2026-11-08T09:56:00-06:00",

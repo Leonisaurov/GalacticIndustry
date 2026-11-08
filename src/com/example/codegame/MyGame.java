@@ -709,6 +709,10 @@ public class MyGame implements ApplicationListener {
             session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
                     world.ship.cargo());
             bindInterior(session.playerStation.buildInterior());
+            if (interiorTest) {
+                interiorAvatar.x = 0f;
+                interiorAvatar.y = -InteriorScene.HUB_H * 0.5f + 24f;
+            }
             if (interiorMgmtTest) {
                 Room moduleRoom = interiorScene.room("module-0");
                 if (moduleRoom != null) {
@@ -786,7 +790,15 @@ public class MyGame implements ApplicationListener {
     /** Guarda la partida en curso (la pausa, la tienda y el cierre de la app la llaman). */
     void saveRun() {
         if (runActive && !world.isOver()) {
+            syncInteriorState();
             saves.save(session);
+        }
+    }
+
+    private void syncInteriorState() {
+        if (interiorAvatar != null && (state == INTERIOR
+                || interiorManagement)) {
+            session.saveAvatar(interiorAvatar, true);
         }
     }
 
@@ -1816,7 +1828,32 @@ public class MyGame implements ApplicationListener {
     void bindInterior(InteriorScene scene) {
         interiorScene = scene;
         interiorAvatar = new Avatar(scene);
+        session.restoreAvatar(interiorAvatar);
         interiorInput.reset();
+    }
+
+    /** Entrar al interior de la estación personal desde la gestión. */
+    void enterInterior() {
+        bindInterior(session.playerStation.buildInterior());
+        interiorManagement = false;
+        state = INTERIOR;
+        layoutUi();
+        session.saveAvatar(interiorAvatar, true);
+        logEvent("{\"event\":\"interior_enter\"}");
+    }
+
+    /** Salir del interior a la nave y desacoplar de la plataforma. */
+    void exitInterior() {
+        session.saveAvatar(interiorAvatar, false);
+        DockingSystem.undock(world);
+        interiorManagement = false;
+        interiorScene = null;
+        interiorAvatar = null;
+        resetControls();
+        state = PLAYING;
+        layoutUi();
+        saveRun();
+        logEvent("{\"event\":\"interior_exit\"}");
     }
 
     Avatar interiorAvatar() {
@@ -1914,6 +1951,11 @@ public class MyGame implements ApplicationListener {
         interiorAvatar.update(dt, interiorInput, interiorScene);
         interiorInput.reset();
         Interactable near = interiorAvatar.nearest(interiorScene);
+        if (Gdx.input.justTouched() && near != null
+                && near.action == Interactable.Action.EXIT) {
+            exitInterior();
+            return;
+        }
         if (Gdx.input.justTouched() && near != null
                 && near.action != Interactable.Action.EXIT) {
             interiorManagement = true;

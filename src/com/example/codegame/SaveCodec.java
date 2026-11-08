@@ -262,6 +262,12 @@ final class SaveCodec {
             w.set("rooms", interior.roomCount());
             w.set("doors", interior.doorCount());
             w.set("interactables", interior.interactableCount());
+            if (session.interiorRoom != null) {
+                w.set("avatarRoom", session.interiorRoom);
+                w.set("avatarX", session.interiorX);
+                w.set("avatarY", session.interiorY);
+                w.set("avatarActive", session.interiorActive);
+            }
             w.pop();
             Market playerMarket = session.playerStation.tradeMarket();
             if (playerMarket != null) {
@@ -602,6 +608,10 @@ final class SaveCodec {
                     d.interiorRooms = interior.getInt("rooms", 0);
                     d.interiorDoors = interior.getInt("doors", 0);
                     d.interiorInteractables = interior.getInt("interactables", 0);
+                    d.interiorAvatarRoom = interior.getString("avatarRoom", null);
+                    d.interiorAvatarX = interior.getFloat("avatarX", 0f);
+                    d.interiorAvatarY = interior.getFloat("avatarY", 0f);
+                    d.interiorAvatarActive = interior.getBoolean("avatarActive", false);
                 }
                 JsonValue playerMarket = playerStation.get("playerMarket");
                 if (playerMarket != null) {
@@ -899,6 +909,12 @@ final class SaveCodec {
         world.fx.clear();
         world.pilot.cancel();
         world.shake = 0f;
+        if (d.hasInterior) {
+            session.interiorRoom = d.interiorAvatarRoom;
+            session.interiorX = d.interiorAvatarX;
+            session.interiorY = d.interiorAvatarY;
+            session.interiorActive = d.interiorAvatarActive;
+        }
         if (d.hasPlayerStation) {
             session.playerStation.restore(d.playerStationBuilt,
                     d.playerStationX, d.playerStationY, d.playerStationSector);
@@ -1011,6 +1027,10 @@ final class SaveCodec {
         int interiorRooms;
         int interiorDoors;
         int interiorInteractables;
+        String interiorAvatarRoom;
+        float interiorAvatarX;
+        float interiorAvatarY;
+        boolean interiorAvatarActive;
         boolean hasPlayerMarket;
         float playerMarketSpread = PriceModel.DEFAULT_SPREAD;
         int[] playerMarketStock;

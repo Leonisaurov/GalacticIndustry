@@ -66,6 +66,8 @@ MG_ACTION1_Y=0
 MG_DEPOSIT_X=0
 MG_ACTION2_Y=0
 MG_UNDOCK_Y=0
+MG_ENTER_X=0
+MG_ENTER_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -167,6 +169,8 @@ device_geometry() {
     MG_DEPOSIT_X=$((mg_px + 20 * U + mg_half / 2))
     MG_ACTION2_Y=$((H - 101 * U))
     MG_UNDOCK_Y=$((H - 50 * U))
+    MG_ENTER_X=$((W - 74 * U))
+    MG_ENTER_Y=$((37 * U))
 }
 
 # ---------- build y SelfTest ----------

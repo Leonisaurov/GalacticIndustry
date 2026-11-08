@@ -30,6 +30,11 @@ class GameSession {
     final SectorStreamer streamer;
     /** Estación personal del jugador; vacía hasta construir módulos (T-902/T-903). */
     final PlayerStation playerStation = new PlayerStation();
+    /** Última posición conocida del avatar dentro del interior. */
+    String interiorRoom;
+    float interiorX;
+    float interiorY;
+    boolean interiorActive;
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
     GameWorld sector;
 
@@ -78,6 +83,26 @@ class GameSession {
      * Guarda el estado resumido del sector actual en el universo. Se usa al
      * salir hacia otro sector; los recursos minados quedan persistidos.
      */
+    void saveAvatar(Avatar avatar, boolean active) {
+        if (avatar == null) {
+            interiorActive = active;
+            return;
+        }
+        interiorRoom = avatar.roomId;
+        interiorX = avatar.x;
+        interiorY = avatar.y;
+        interiorActive = active;
+    }
+
+    void restoreAvatar(Avatar avatar) {
+        if (avatar == null || interiorRoom == null) {
+            return;
+        }
+        avatar.roomId = interiorRoom;
+        avatar.x = interiorX;
+        avatar.y = interiorY;
+    }
+
     SectorRuntime.Snapshot captureCurrentSector() {
         SectorRuntime.Snapshot snapshot = SectorRuntime.capture(sector,
                 currentSector == null ? "sol-prime" : currentSector.id);

@@ -7,7 +7,7 @@ prepare_device_module
 ensure_magick
 OUT=${OUT:-build/screens}
 mkdir -p "$OUT"
-rm -f "$OUT/33_base.png" "$OUT/34_modules.png" "$OUT/35_management.png"
+rm -f "$OUT/33_base.png" "$OUT/34_modules.png" "$OUT/35_management.png" "$OUT/38_entry.png"
 
 launch_app "--ez test_mode true --ez station_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de estación personal"
@@ -94,5 +94,20 @@ assert_eq "los módulos persisten" 2 "$(printf '%s' "$status" | json_get playerS
 assert_eq "los servicios persisten" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
 assert_eq "el almacen persiste" 50 "$(printf '%s' "$status" | json_get baseStorageUnits)"
 
+# T-1005: entrar al interior desde la gestión.
+launch_app "--ez test_mode true --ez module_test true"
+wait_current_state PLAYING 10 || fail "no arrancó para entrar al interior"
+sleep 0.4
+tap "$DOCK_X" "$DOCK_Y" 0.5
+wait_current_state DOCKED 5 || fail "no se acopló para entrar"
+sleep 0.4
+tap "$MG_ENTER_X" "$MG_ENTER_Y" 0.5
+wait_current_state INTERIOR 5 || fail "ENTRAR no abrió el interior"
+sleep 0.4
+status=$(latest_status)
+assert_eq "avatar en el núcleo" hub "$(printf '%s' "$status" | json_get avatarRoom)"
+shot "$OUT" 38_entry
+validate_shot "$OUT/38_entry.png"
+
 check_no_crash
-echo "OK 17_player_station: vacía, construcción, persistencia y módulos"
+echo "OK 17_player_station: vacía, construcción, persistencia, módulos e interior"

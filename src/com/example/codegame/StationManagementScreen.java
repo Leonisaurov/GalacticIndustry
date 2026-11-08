@@ -32,6 +32,7 @@ final class StationManagementScreen {
     };
     private Button btnBuild, btnUpgrade, btnDeposit, btnRepair, btnUndock;
     private Button btnRefine, btnMarket;
+    private Button btnEnter;
     private int selectedSlot;
     private int selectedCatalog;
     private boolean fromInterior;
@@ -103,6 +104,8 @@ final class StationManagementScreen {
                 py + 80f * u, halfW, 42f * u);
         btnUndock = new Button(fromInterior ? "VOLVER" : "DESPEGAR",
                 px + 20f * u, py + 28f * u, pw - 40f * u, 44f * u);
+        btnEnter = new Button("ENTRAR", px + pw - 112f * u, h - 54f * u,
+                92f * u, 34f * u);
     }
 
     int selectedSlot() {
@@ -116,6 +119,10 @@ final class StationManagementScreen {
     boolean handle() {
         if (btnUndock == null) {
             layout();
+        }
+        if (game.tapped(btnEnter)) {
+            game.enterInterior();
+            return true;
         }
         if (game.tapped(btnUndock)) {
             game.managementBack();
@@ -273,6 +280,7 @@ final class StationManagementScreen {
         ui.drawButton(btnRepair, Visuals.BTN_WARM,
                 game.session.playerStation.repair());
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
+        ui.drawButton(btnEnter, Visuals.BTN_SECONDARY, true);
         shapes.end();
 
         batch.begin();
@@ -355,6 +363,7 @@ final class StationManagementScreen {
         ui.drawButtonText(btnRefine, true);
         ui.drawButtonText(btnMarket, true);
         ui.drawButtonText(btnUndock, true);
+        ui.drawButtonText(btnEnter, true);
     }
 
     private void beginShapes() {

@@ -409,6 +409,17 @@ estáticos se reutilizan.
 - El estado del interior y de la estación se conserva al abrir/cerrar.
 - La salida (`EXIT`) queda para T-1005.
 
+## Entrada, salida y guardado del interior (T-1005)
+
+- `ENTRAR` en la gestión de la plataforma abre el interior con el avatar.
+- La salida (`EXIT`) devuelve a la nave: desacopla, cierra el interior y pasa a
+  `PLAYING`.
+- `GameSession` guarda `interiorRoom`, `interiorX`, `interiorY` e
+  `interiorActive`; se escribe en el bloque `interior` del v2.
+- Al volver a entrar, el avatar se restaura en su última posición si la sala
+  sigue existiendo.
+- Salir no rompe el guardado de vuelo: nave, sector y economía siguen intactos.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

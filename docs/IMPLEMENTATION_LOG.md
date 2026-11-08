@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T09:56:00-06:00  
+**Última actualización:** 2026-11-08T10:18:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,64 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-081 — Entrada, salida y guardado del interior
+
+- **Fecha:** 2026-11-08T10:18:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1005
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `ENTRAR` en la gestión de la plataforma abre el interior con el avatar.
+- `EXIT` devuelve a la nave: desacopla, cierra el interior y pasa a `PLAYING`.
+- `GameSession` guarda `interiorRoom`, `interiorX`, `interiorY` e
+  `interiorActive`, escritos en el bloque `interior` del v2.
+- Al volver a entrar, el avatar se restaura en su última posición.
+- Salir no rompe el guardado de vuelo.
+- Capturas `38_entry` y `39_exit`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `tools/tests/18_interiors.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `17_player_station 18_interiors`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS la posicion del avatar persiste`
+- `PASS el avatar se restaura junto al modulo`
+- `PASS salir del interior no rompe el guardado de vuelo`
+- `17_player_station`: `ENTRAR` abre `INTERIOR` (`38_entry`).
+- `18_interiors`: `EXIT` devuelve a `PLAYING` (`39_exit`).
+
+### Decisiones tomadas
+
+- La salida desacopla de la plataforma y deja la nave en el exterior.
+- La posición del avatar es estado de sesión, no de la estación.
+- El interior no se abre automáticamente al cargar; se restaura la posición.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1006 — Verificación de interiores**, que cierra S10.
 
 ---
 
