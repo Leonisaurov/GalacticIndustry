@@ -360,7 +360,7 @@ public class SelfTest {
                 levelsMatch = false;
             }
         }
-        check("loadout conserva los cinco sistemas",
+        check("loadout conserva los siete sistemas",
                 levelsMatch && up.loadout.level(Upgrades.MOTOR) == 1);
         check("piloto automatico no es innato", !up.loadout.hasAutopilot());
         check("loadout instala el modulo de piloto automatico",
@@ -1102,14 +1102,23 @@ public class SelfTest {
         SaveService.MemoryStorage oldLevelStorage = new SaveService.MemoryStorage();
         SaveService oldLevelService = new SaveService(oldLevelStorage);
         oldLevelService.save(oldLevelsSession);
-        String sixLevels = oldLevelStorage.read(SaveService.SAVE_NAME);
-        String fiveLevels = sixLevels.replace(
-                "\"levels\":[0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0]");
+        String sevenLevels = oldLevelStorage.read(SaveService.SAVE_NAME);
+        String sixLevels = sevenLevels.replace(
+                "\"levels\":[0,0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0,0]");
+        GameSession sixLevelsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un v2 con 6 niveles carga con Laser 0",
+                !sevenLevels.equals(sixLevels)
+                        && SaveCodec.decode(sixLevels, sixLevelsLoaded)
+                        && sixLevelsLoaded.cargo().capacity() == 100f
+                        && sixLevelsLoaded.upgrades().level(Upgrades.LASER) == 0);
+        String fiveLevels = sevenLevels.replace(
+                "\"levels\":[0,0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0]");
         GameSession oldLevelsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
         check("un v2 con 5 niveles carga con Bodega 0",
-                !sixLevels.equals(fiveLevels)
+                !sevenLevels.equals(fiveLevels)
                         && SaveCodec.decode(fiveLevels, oldLevelsLoaded)
-                        && oldLevelsLoaded.cargo().capacity() == 100f);
+                        && oldLevelsLoaded.cargo().capacity() == 100f
+                        && oldLevelsLoaded.upgrades().level(Upgrades.LASER) == 0);
 
         // T-401: tipos de asteroide, composición y RNG determinista.
         check("existen tres tipos de asteroide", AsteroidType.values().length == 3);
@@ -1449,6 +1458,54 @@ public class SelfTest {
         check("los fragmentos y escombros no duplican mineral",
                 largeFragUnits == Math.round(70f * GameWorld.FRAGMENT_SHARE)
                         && debrisReserve + largeFragUnits < 70);
+
+        // T-407: mejora de láser, capacitor y efectos.
+        Upgrades laserTechUp = new Upgrades(true);
+        check("laser base sin mejora",
+                laserTechUp.laserLevel() == 0 && laserTechUp.capacitorMax() == 100f);
+        laserTechUp.addCoins(1000);
+        check("la mejora Laser se compra",
+                laserTechUp.buy(Upgrades.LASER) && laserTechUp.laserLevel() == 1);
+        Ship laserTechUpShip = new Ship();
+        laserTechUpShip.reset(laserTechUp, 0f, 0f);
+        check("la nave aplica potencia y penetracion",
+                Math.abs(laserTechUpShip.laser.power() - 7.5f) < 0.001f
+                        && Math.abs(laserTechUpShip.laser.penetration() - 4f) < 0.001f);
+        check("la mejora aumenta el capacitor",
+                Math.abs(laserTechUpShip.capacitor.maxEnergy - 125f) < 0.001f
+                        && Math.abs(laserTechUpShip.capacitor.energy - 125f) < 0.001f);
+        Asteroid laserC = new Asteroid(100f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 501L);
+        Asteroid laserM = new Asteroid(150f, 0f, Asteroid.MEDIUM,
+                AsteroidType.M, 75, 75, 502L);
+        check("la mejora sube la tasa en roca C",
+                Math.abs(laserTechUpShip.laser.rate(laserTechUpShip, laserC) - 7.5f) < 0.01f);
+        check("la penetracion mejora la roca M",
+                Math.abs(laserTechUpShip.laser.rate(laserTechUpShip, laserM) - 4.5f) < 0.01f);
+        laserTechUpShip.capacitor.energy = 10f;
+        laserTechUp.buy(Upgrades.LASER);
+        laserTechUpShip.syncLaser(laserTechUp);
+        check("comprar laser conserva la carga relativa",
+                laserTechUpShip.laser.level() == 2
+                        && Math.abs(laserTechUpShip.capacitor.maxEnergy - 150f) < 0.001f
+                        && Math.abs(laserTechUpShip.capacitor.energy - 12f) < 0.01f);
+        GameSession laserSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        laserSession.startRun();
+        laserSession.upgrades().addCoins(1000);
+        laserSession.upgrades().buy(Upgrades.LASER);
+        laserSession.upgrades().buy(Upgrades.LASER);
+        laserSession.ship().syncLaser(laserSession.upgrades());
+        SaveService.MemoryStorage laserStorage = new SaveService.MemoryStorage();
+        SaveService laserService = new SaveService(laserStorage);
+        check("el nivel de laser se guarda", laserService.save(laserSession));
+        GameSession laserLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("el nivel de laser se restaura",
+                laserService.load(laserLoaded) == SaveService.LoadStatus.V2
+                        && laserLoaded.upgrades().laserLevel() == 2);
+        Ship loadedShip = new Ship();
+        loadedShip.reset(laserLoaded.upgrades(), 0f, 0f);
+        check("la nave cargada usa el capacitor mejorado",
+                Math.abs(loadedShip.capacitor.maxEnergy - 150f) < 0.001f);
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();

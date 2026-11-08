@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:36:00-06:00  
+**Última actualización:** 2026-11-08T01:43:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,80 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-035 — Mejora de láser, HUD de energía y efectos
+
+- **Fecha:** 2026-11-08T01:43:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-407
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `LASER` es la séptima mejora:
+  - +1.5 de potencia por nivel;
+  - +1 de penetración por nivel;
+  - +25 de capacidad de capacitor por nivel (100 → 225).
+- `Ship.reset()` aplica nivel y capacitor; `syncLaser()` conserva la carga
+  relativa al comprar la mejora.
+- HUD contextual: barra, rayo y porcentaje de energía solo con el haz activo o
+  el capacitor incompleto; color cian/ámbar/rojo según la carga.
+- Haz e impacto con color por tipo de roca:
+  - C: cian;
+  - S: azul claro;
+  - M: ámbar.
+- El impacto emite chispas del color del mineral extraído.
+- Sin creación de objetos en `render()`: colores estáticos y solo floats.
+- Telemetría: `energy`, `energyMax`, `mining` y `laserLevel`.
+- Migración verificada de guardados con 5 y 6 niveles: cargan con Laser 0.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ShipLoadout.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/Visuals.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/12_mining.sh`
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 12_mining`: **OK**.
+- `tools/run-tests.sh --no-build 03_controls 04_autopilot 09_wing_damage 19_melt`: **4/4 OK**.
+
+### Evidencias
+
+- `PASS laser base sin mejora`
+- `PASS la mejora Laser se compra`
+- `PASS la nave aplica potencia y penetracion`
+- `PASS la mejora aumenta el capacitor`
+- `PASS la mejora sube la tasa en roca C`
+- `PASS la penetracion mejora la roca M`
+- `PASS comprar laser conserva la carga relativa`
+- `PASS el nivel de laser se guarda/restaura`
+- `PASS un v2 con 6 niveles carga con Laser 0`
+- `12_mining`: `mining=true`, `energy < energyMax`, captura `23_mining_beam`.
+
+### Decisiones tomadas
+
+- El nivel del láser se deriva del loadout; no se guarda aparte.
+- El capacitor mejora con el mismo nivel que potencia/penetración.
+- La energía se muestra solo cuando es relevante para no cargar el panel.
+- El rayo tractor y su HUD quedan fuera de esta tarea (T-410).
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-409 — Generar fragmentos de mineral y dispersión por misiles
+  (estado persistente y recuperación)**.
 
 ---
 

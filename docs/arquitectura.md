@@ -236,6 +236,14 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - La parte `MINING_LASER` es la novena y su integridad multiplica la tasa.
 - El láser consume energía, no combustible, y se detiene al agotar la roca.
   T-403 conecta la extracción con la bodega.
+- Mejora `LASER` (séptima): +1 nivel sube potencia (+1.5), penetración (+1) y
+  capacitor (+25, hasta 225). `Ship.syncLaser()` conserva la carga relativa.
+- HUD contextual: la barra de energía y el porcentaje solo aparecen con el haz
+  activo o mientras el capacitor no está lleno. El icono y el color cambian a
+  ámbar/rojo con poca energía.
+- Cada tipo de roca tiene haz e impacto propios: C cian, S azul claro, M ámbar.
+  El impacto emite chispas del color del mineral; todo se dibuja sin crear
+  objetos en `render()` (colores estáticos y solo floats).
 
 ## Extracción y agotamiento
 

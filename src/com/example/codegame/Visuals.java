@@ -48,6 +48,21 @@ class Visuals {
     static final Color NEBULA_BLUE = new Color(0.18f, 0.42f, 0.85f, 1f);
     static final Color NEBULA_TEAL = new Color(0.12f, 0.62f, 0.68f, 1f);
 
+    /** Haz del láser según el tipo de roca: C hielo, S silicato, M metálico. */
+    static final Color LASER_C = new Color(0.45f, 0.95f, 1f, 1f);
+    static final Color LASER_S = new Color(0.86f, 0.92f, 1f, 1f);
+    static final Color LASER_M = new Color(1f, 0.76f, 0.36f, 1f);
+
+    static Color laserColor(AsteroidType type) {
+        if (type == AsteroidType.M) {
+            return LASER_M;
+        }
+        if (type == AsteroidType.S) {
+            return LASER_S;
+        }
+        return LASER_C;
+    }
+
     // ---------- texturas ----------
     private Texture glowTex;
     private Texture starTex;

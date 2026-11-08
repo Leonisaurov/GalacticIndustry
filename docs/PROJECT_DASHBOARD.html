@@ -611,24 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:36:00-06:00",
-    "lastSessionId": "S-034",
+    "lastUpdated": "2026-11-08T01:43:00-06:00",
+    "lastSessionId": "S-035",
     "lastVerification": {
-      "date": "2026-11-08T01:36:00-06:00",
+      "date": "2026-11-08T01:43:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Los misiles dispersan mineral en fragmentos recuperables",
-        "No hay entrega directa a bodega ni monedas",
-        "La pérdida de material es configurable (FRAGMENT_SHARE/FRAGMENT_LOSS)",
-        "Los escombros heredan mineral y no lo duplican",
-        "12_mining, 04_autopilot y 03_controls: OK",
+        "Mejora LASER: +potencia, +penetración y +capacitor; conserva carga relativa",
+        "HUD contextual de energía con barra y porcentaje",
+        "Haz e impacto con color por tipo de roca (C/S/M) y chispas de mineral",
+        "12_mining: energía baja y haz visible en 23_mining_beam",
+        "03_controls, 04_autopilot, 09_wing_damage y 19_melt: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-407",
+    "nextTaskId": "T-409",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2918,7 +2918,7 @@
       "description": "Completar la experiencia de minería con mejoras, energía visible, haz, impacto y partículas de mineral.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-402",
@@ -2945,10 +2945,46 @@
         "Revisión de rendimiento"
       ],
       "technicalNotes": "El rayo tractor tiene sus propias mejoras y HUD en T-410; no mezclar ambos sistemas.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-035",
+          "date": "2026-11-08T01:43:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Mejora LASER como séptimo sistema: +1.5 potencia, +1 penetración y +25 de capacitor por nivel, con sync que conserva la carga relativa. HUD contextual de energía (barra, rayo y porcentaje) y haz/impacto con color por tipo de roca (C/S/M) más chispas de mineral, sin crear objetos en render.",
+          "files": [
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/12_mining.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "12_mining",
+            "03_controls",
+            "04_autopilot",
+            "09_wing_damage",
+            "19_melt"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS laser base sin mejora; PASS la mejora Laser se compra",
+        "PASS la nave aplica potencia y penetracion",
+        "PASS la mejora aumenta el capacitor",
+        "PASS la mejora sube la tasa en roca C; PASS la penetracion mejora la roca M",
+        "PASS comprar laser conserva la carga relativa",
+        "PASS el nivel de laser se guarda/restaura",
+        "12_mining: mining=true y energy < energyMax con captura 23_mining_beam",
+        "03_controls, 04_autopilot, 09_wing_damage y 19_melt OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T01:43:00-06:00"
     },
     {
       "id": "T-408",
@@ -4941,7 +4977,7 @@
       "description": "Crear fragmentos físicos con mineral al destruir/fragmentar asteroides con misiles, con estado persistente y recuperación posterior.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-406",
@@ -5521,6 +5557,33 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-035",
+      "date": "2026-11-08T01:43:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Mejora de láser, HUD de energía y efectos",
+      "summary": "LASER se añade como séptima mejora (+potencia, +penetración, +capacitor). El HUD muestra energía contextual y el haz/impacto cambian de color por tipo de roca con chispas de mineral. Migración de guardados de 5 y 6 niveles verificada.",
+      "tasks": [
+        "T-407"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/Visuals.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/12_mining.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 12_mining",
+        "tools/run-tests.sh --no-build 03_controls 04_autopilot 09_wing_damage 19_melt"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea disponible: T-409 (fragmentos persistentes). T-408 queda bloqueada por T-409/T-410."
+    },
     {
       "id": "S-034",
       "date": "2026-11-08T01:36:00-06:00",

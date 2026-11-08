@@ -681,6 +681,8 @@ public class MyGame implements ApplicationListener {
             }
         } else if (index == Upgrades.BODEGA) {
             world.ship.syncCargo(upgrades);
+        } else if (index == Upgrades.LASER) {
+            world.ship.syncLaser(upgrades);
         }
         saveRun();
     }
@@ -818,7 +820,9 @@ public class MyGame implements ApplicationListener {
                         + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f,"
                         + "\"legacyNear\":%s,\"legacyDistance\":%.1f,"
                         + "\"cargoMass\":%.1f,\"cargoCapacity\":%.1f,\"cargoUnits\":%d,"
-                        + "\"fragments\":%d,\"fragmentUnits\":%d}",
+                        + "\"fragments\":%d,\"fragmentUnits\":%d,"
+                        + "\"energy\":%.1f,\"energyMax\":%.1f,\"mining\":%s,"
+                        + "\"laserLevel\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -842,7 +846,11 @@ public class MyGame implements ApplicationListener {
                 world.ship.cargo().capacity(),
                 world.ship.cargo().totalUnits(),
                 world.fragments.size,
-                fragmentUnits()));
+                fragmentUnits(),
+                world.ship.capacitor.energy,
+                world.ship.capacitor.maxEnergy,
+                world.ship.laser.active,
+                upgrades.laserLevel()));
     }
 
     private void logEvent(String json) {
@@ -1870,6 +1878,7 @@ public class MyGame implements ApplicationListener {
         shapes.rect(0f, h - panelH - 4f * u, w, 4f * u);
 
         drawFuelBar(w, h, panelH);
+        drawEnergyBar(w, h);
         drawHullChip(w, h);
         drawSurvivalBars(w, h);
         drawPartAlerts(w, h, panelH);
@@ -1900,6 +1909,7 @@ public class MyGame implements ApplicationListener {
         textLeft("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
                         + Math.round(world.ship.cargo().capacity()) + " UM",
                 pad + 8f * u, h - 100f * u, 0.60f * u, Visuals.TEXT_DIM);
+        drawEnergyText(w, h);
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         textCenteredMiddle(Math.round(frac * 100f) + "%",
                 pad + 44f * u + fuelBarW(w) * 0.5f, h - 86f * u, 0.78f * u, Color.WHITE);
@@ -1991,6 +2001,68 @@ public class MyGame implements ApplicationListener {
             Visuals.roundRect(shapes, barX + inset + 2f * u, barY + barH * 0.55f,
                     Math.max(0f, fw - 4f * u), barH * 0.28f, barH * 0.14f);
         }
+    }
+
+    /** El capacitor solo se muestra cuando el láser está en uso o acaba de minar. */
+    private boolean energyVisible() {
+        return runActive && (world.ship.laser.active
+                || world.ship.capacitor.fraction() < 0.999f);
+    }
+
+    private float energyBarX() {
+        return 16f * u + 30f * u;
+    }
+
+    private float energyBarY(float h) {
+        return h - 110f * u;
+    }
+
+    private float energyBarW() {
+        return 110f * u;
+    }
+
+    private Color energyColor() {
+        float frac = world.ship.capacitor.fraction();
+        if (frac > 0.5f) {
+            return Visuals.ACCENT;
+        }
+        return frac > 0.25f ? Visuals.WARN : Visuals.DANGER;
+    }
+
+    private void drawEnergyBar(float w, float h) {
+        if (!energyVisible()) {
+            return;
+        }
+        float x = energyBarX();
+        float y = energyBarY(h);
+        float bw = energyBarW();
+        float bh = 6f * u;
+        float frac = MathUtils.clamp(world.ship.capacitor.fraction(), 0f, 1f);
+        panel(x, y, bw, bh, bh * 0.5f, FUEL_TRACK_C, FUEL_EDGE_C);
+        if (frac > 0.001f) {
+            shapes.setColor(energyColor());
+            Visuals.roundRect(shapes, x + 1.5f * u, y + 1.5f * u,
+                    Math.max(bh - 3f * u, (bw - 3f * u) * frac), bh - 3f * u,
+                    (bh - 3f * u) * 0.5f);
+        }
+        // Rayo del icono.
+        float bx = energyBarX() - 13f * u;
+        float by = y + bh * 0.5f;
+        shapes.setColor(energyColor());
+        shapes.triangle(bx - 2f * u, by + 5f * u, bx + 4f * u, by + 1f * u,
+                bx - 1f * u, by + 1f * u);
+        shapes.triangle(bx + 2f * u, by - 5f * u, bx - 4f * u, by - 1f * u,
+                bx + 1f * u, by - 1f * u);
+    }
+
+    private void drawEnergyText(float w, float h) {
+        if (!energyVisible()) {
+            return;
+        }
+        int pct = Math.round(world.ship.capacitor.fraction() * 100f);
+        textLeft("ENERGIA " + pct + "%",
+                energyBarX() + energyBarW() + 8f * u, energyBarY(h) + 6f * u,
+                0.56f * u, energyColor());
     }
 
     private float hullChipW() {

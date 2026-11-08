@@ -398,6 +398,7 @@ class GameWorld {
         ship.update(dt, up, c);
         if (ship.laser.active) {
             minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor, ship.cargo);
+            emitMiningSparks();
         } else {
             minedThisFrame = 0;
             ship.capacitor.update(dt, false);
@@ -494,6 +495,44 @@ class GameWorld {
                 fx.burst(f.pos.x, f.pos.y, SPARK_WHITE, 3, 80f);
                 fragments.removeIndex(i);
             }
+        }
+    }
+
+    /** Punto de impacto del haz sobre la roca, dentro de su borde visible. */
+    private float laserImpactX(Asteroid a) {
+        float dx = a.pos.x - ship.pos.x;
+        float dy = a.pos.y - ship.pos.y;
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.001f) {
+            return a.pos.x;
+        }
+        return a.pos.x - dx / len * a.radius * 0.85f;
+    }
+
+    private float laserImpactY(Asteroid a) {
+        float dx = a.pos.x - ship.pos.x;
+        float dy = a.pos.y - ship.pos.y;
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.001f) {
+            return a.pos.y;
+        }
+        return a.pos.y - dy / len * a.radius * 0.85f;
+    }
+
+    /** Chispas y partículas de mineral en el punto de impacto del láser. */
+    private void emitMiningSparks() {
+        Asteroid target = ship.laser.target;
+        if (target == null || target.depleted()) {
+            return;
+        }
+        float ix = laserImpactX(target);
+        float iy = laserImpactY(target);
+        Color beam = Visuals.laserColor(target.type);
+        fx.trail(ix, iy, -ship.dir.x * 18f, -ship.dir.y * 18f, beam, 2.2f, 0.22f);
+        if (MathUtils.random() < 0.28f) {
+            Color mineral = OreFragment.colorFor(target.type.minerals[0]);
+            fx.trail(ix, iy, MathUtils.random(-40f, 40f), MathUtils.random(-40f, 40f),
+                    mineral, 2.6f, 0.30f);
         }
     }
 
@@ -760,6 +799,7 @@ class GameWorld {
         for (int i = 0; i < asteroids.size; i++) {
             asteroids.get(i).draw(shapes);
         }
+        drawMiningBeam(shapes);
         for (int i = 0; i < missiles.size; i++) {
             missiles.get(i).draw(shapes);
         }
@@ -767,6 +807,34 @@ class GameWorld {
         drawLegacyWreck(shapes);
         pilot.draw(shapes, ship, elapsed);
         ship.draw(shapes, elapsed);
+    }
+
+    /** Haz continuo desde el morro hasta el punto de impacto, con color por tipo. */
+    private void drawMiningBeam(ShapeRenderer shapes) {
+        Asteroid target = ship.laser.target;
+        if (!ship.laser.active || target == null || target.depleted()) {
+            return;
+        }
+        float sx = ship.pos.x + ship.dir.x * Ship.RADIUS * 0.9f;
+        float sy = ship.pos.y + ship.dir.y * Ship.RADIUS * 0.9f;
+        float ex = laserImpactX(target);
+        float ey = laserImpactY(target);
+        Color beam = Visuals.laserColor(target.type);
+        float pulse = 0.85f + 0.15f * MathUtils.sin(elapsed * 22f);
+        float energy = ship.capacitor.fraction();
+
+        shapes.setColor(beam.r, beam.g, beam.b, 0.16f * energy);
+        shapes.rectLine(sx, sy, ex, ey, (7f + 2f * pulse) * 1.6f);
+        shapes.setColor(beam.r, beam.g, beam.b, 0.55f * energy);
+        shapes.rectLine(sx, sy, ex, ey, 3.2f + 1.2f * pulse);
+        shapes.setColor(1f, 1f, 1f, 0.75f * energy);
+        shapes.rectLine(sx, sy, ex, ey, 1.2f);
+
+        // Impacto: anillo y núcleo que laten con el haz.
+        shapes.setColor(beam.r, beam.g, beam.b, 0.28f * energy);
+        shapes.circle(ex, ey, (target.radius * 0.42f + 4f) * pulse, 14);
+        shapes.setColor(1f, 0.95f, 0.75f, 0.85f * energy);
+        shapes.circle(ex, ey, 2.6f + 1.2f * pulse, 10);
     }
 
     private void drawLegacyWreck(ShapeRenderer shapes) {
@@ -790,6 +858,17 @@ class GameWorld {
         }
         for (int i = 0; i < asteroids.size; i++) {
             asteroids.get(i).drawGlow(batch, art);
+        }
+        Asteroid beamTarget = ship.laser.target;
+        if (ship.laser.active && beamTarget != null && !beamTarget.depleted()) {
+            Color beam = Visuals.laserColor(beamTarget.type);
+            float ix = laserImpactX(beamTarget);
+            float iy = laserImpactY(beamTarget);
+            float pulse = 0.75f + 0.25f * MathUtils.sin(elapsed * 22f);
+            art.glow(batch, ix, iy, beamTarget.radius * 1.9f, beam, 0.30f * pulse);
+            art.glow(batch, ship.pos.x + ship.dir.x * Ship.RADIUS,
+                    ship.pos.y + ship.dir.y * Ship.RADIUS,
+                    26f, beam, 0.18f * pulse);
         }
         for (int i = 0; i < missiles.size; i++) {
             missiles.get(i).drawGlow(batch, art);

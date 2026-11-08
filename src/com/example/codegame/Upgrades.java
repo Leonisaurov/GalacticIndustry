@@ -15,6 +15,7 @@ class Upgrades {
     static final int BLINDAJE = ShipLoadout.BLINDAJE;
     static final int GASOLINA = ShipLoadout.GASOLINA;
     static final int BODEGA = ShipLoadout.BODEGA;
+    static final int LASER = ShipLoadout.LASER;
     static final int COUNT = ShipLoadout.COUNT;
     static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
     /** Precio del combustible en la tienda temporal: 1 crédito por unidad. */
@@ -29,7 +30,7 @@ class Upgrades {
     static final int O2_REFILL_MIN = 5;
 
     static final String[] NAMES = {
-            "Motor", "Deposito", "Canon", "Blindaje", "Gasolina", "Bodega"
+            "Motor", "Deposito", "Canon", "Blindaje", "Gasolina", "Bodega", "Laser"
     };
     static final String[] DESCS = {
             "Mas aceleracion y velocidad",
@@ -37,7 +38,8 @@ class Upgrades {
             "Mas dano y cadencia de disparo",
             "Refuerza la integridad del casco",
             "Menos consumo de combustible",
-            "Mas capacidad de carga"
+            "Mas capacidad de carga",
+            "Mas potencia, penetracion y energia"
     };
 
     /** Preferencias de Android; null cuando se usa el almacén en memoria (tests). */
@@ -257,6 +259,16 @@ class Upgrades {
     /** Capacidad de bodega: 100 UM base y +25 UM por nivel de Bodega. */
     float cargoCapacity() {
         return GameData.BASE_CARGO_CAPACITY + 25f * level(BODEGA);
+    }
+
+    /** Nivel del láser minero; afecta a potencia, penetración y capacitor. */
+    int laserLevel() {
+        return level(LASER);
+    }
+
+    /** Capacidad del capacitor: 100 base y +25 por nivel de Láser. */
+    float capacitorMax() {
+        return EnergyCapacitor.BASE_MAX + 25f * level(LASER);
     }
 
     /** Conversión temporal de una entrada de carga a créditos a precio base. */

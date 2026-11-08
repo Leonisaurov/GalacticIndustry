@@ -72,6 +72,8 @@ class Ship {
         fuel = maxFuel;
         cargo.setCapacity(up.cargoCapacity());
         cargo.clear();
+        laser.setLevel(up.laserLevel());
+        capacitor.setMaxEnergy(up.capacitorMax());
         capacitor.reset();
         laser.stop();
         cooldown = 0f;
@@ -200,6 +202,15 @@ class Ship {
     /** Recalcula la capacidad de bodega tras comprar la mejora. */
     void syncCargo(Upgrades up) {
         cargo.setCapacity(up.cargoCapacity());
+    }
+
+    /** Aplica la mejora de láser conservando la carga relativa del capacitor. */
+    void syncLaser(Upgrades up) {
+        laser.setLevel(up.laserLevel());
+        float oldMax = capacitor.maxEnergy;
+        float fraction = oldMax > 0f ? capacitor.energy / oldMax : 1f;
+        capacitor.setMaxEnergy(up.capacitorMax());
+        capacitor.energy = capacitor.maxEnergy * MathUtils.clamp(fraction, 0f, 1f);
     }
 
     /** Ángulo normalizado al intervalo [-180, 180). */
