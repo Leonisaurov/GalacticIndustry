@@ -7,7 +7,7 @@ prepare_device_module
 ensure_magick
 OUT=${OUT:-build/screens}
 mkdir -p "$OUT"
-rm -f "$OUT/33_base.png" "$OUT/34_modules.png"
+rm -f "$OUT/33_base.png" "$OUT/34_modules.png" "$OUT/35_management.png"
 
 launch_app "--ez test_mode true --ez station_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de estación personal"
@@ -62,6 +62,25 @@ assert_eq "almacen vacio" 0 "$(printf '%s' "$status" | json_get baseStorageUnits
 shot "$OUT" 34_modules
 validate_shot "$OUT/34_modules.png"
 
+# T-904: acople a la plataforma y gestión modular.
+tap "$DOCK_X" "$DOCK_Y" 0.5
+wait_current_state DOCKED 5 || fail "no se acopló a la plataforma"
+sleep 0.4
+status=$(latest_status)
+assert_eq "acople en la base" true "$(printf '%s' "$status" | json_get dockedAtPlayer)"
+shot "$OUT" 35_management
+validate_shot "$OUT/35_management.png"
+tap "$MG_UPGRADE_X" "$MG_ACTION1_Y" 0.4
+sleep 0.3
+status=$(latest_status)
+assert_eq "mejora de modulo" 2 "$(printf '%s' "$status" | json_get baseModule0Level)"
+tap "$MG_DEPOSIT_X" "$MG_ACTION2_Y" 0.4
+sleep 0.3
+status=$(latest_status)
+assert_eq "descarga al almacen" 50 "$(printf '%s' "$status" | json_get baseStorageUnits)"
+tap "$((W / 2))" "$MG_UNDOCK_Y" 0.4
+wait_current_state PLAYING 5 || fail "no despegó de la plataforma"
+
 tap "$PAUSE_X" "$PAUSE_Y" 0.3
 wait_current_state PAUSED 5 || fail "no pausó para guardar los módulos"
 launch_app "--ez test_mode true"
@@ -73,6 +92,7 @@ sleep 0.4
 status=$(latest_status)
 assert_eq "los módulos persisten" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
 assert_eq "los servicios persisten" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
+assert_eq "el almacen persiste" 50 "$(printf '%s' "$status" | json_get baseStorageUnits)"
 
 check_no_crash
 echo "OK 17_player_station: vacía, construcción, persistencia y módulos"

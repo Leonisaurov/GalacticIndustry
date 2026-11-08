@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T07:36:00-06:00  
+**Última actualización:** 2026-11-08T07:56:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-074 — Pantalla de gestión modular
+
+- **Fecha:** 2026-11-08T07:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-904
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `DockingSystem` distingue la plataforma personal (`dockedAtPlayer`) de la
+  nodriza.
+- `MyGame` abre `StationManagementScreen` al acoplarse a la base.
+- La pantalla muestra:
+  - servicios activos y ocupación del almacén;
+  - 6 ranuras con módulo y nivel;
+  - catálogo de módulos;
+  - `CONSTRUIR`, `MEJORAR`, `DESCARGAR`, `REPARAR` y `DESPEGAR`.
+- Construir/mejorar cobra; descargar mueve carga; reparar exige TALLER.
+- UI vertical sin menús anidados; captura `35_management`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/StationManagementScreen.java` (nuevo)
+- `src/com/example/codegame/DockingSystem.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- Acople a la base con `dockedAtPlayer=true`.
+- Captura `35_management` con 6 ranuras y servicios.
+- Mejora de módulo: nivel 2.
+- Descarga al almacén: 50 UM.
+- Persistencia de módulos y almacén tras reiniciar.
+
+### Decisiones tomadas
+
+- La pantalla de gestión sustituye a la de la nodriza solo cuando el acople es
+  con la plataforma.
+- No se usan submenús; catálogo y acciones están en una sola vista.
+- Despegar vuelve a `PLAYING` y guarda.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-908 — Módulos de refinería y mercado**.
 
 ---
 

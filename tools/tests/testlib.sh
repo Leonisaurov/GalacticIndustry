@@ -61,6 +61,11 @@ MAP_TRAVEL_X=0
 MAP_TRAVEL_Y=0
 BASE_X=0
 BASE_Y=0
+MG_UPGRADE_X=0
+MG_ACTION1_Y=0
+MG_DEPOSIT_X=0
+MG_ACTION2_Y=0
+MG_UNDOCK_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -153,6 +158,15 @@ device_geometry() {
     # Botón CONSTRUIR BASE (centro, 54 % de altura + 23 u).
     BASE_X=$((W / 2))
     BASE_Y=$((H - (H * 54 / 100 + 23 * U)))
+    # Gestión de la estación personal.
+    local mg_px=$((8 * U))
+    local mg_pw=$((W - 16 * U))
+    local mg_half=$(( (mg_pw - 48 * U) / 2 ))
+    MG_UPGRADE_X=$((mg_px + 20 * U + mg_half + 8 * U + mg_half / 2))
+    MG_ACTION1_Y=$((H - 151 * U))
+    MG_DEPOSIT_X=$((mg_px + 20 * U + mg_half / 2))
+    MG_ACTION2_Y=$((H - 103 * U))
+    MG_UNDOCK_Y=$((H - 54 * U))
 }
 
 # ---------- build y SelfTest ----------

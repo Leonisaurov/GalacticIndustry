@@ -43,6 +43,8 @@ class GameWorld {
     final SectorDef sector;
     /** Estación personal; puede estar en otro sector y no dibujarse aquí. */
     final PlayerStation playerStation;
+    /** true si el acople actual es con la estación personal. */
+    boolean dockedAtPlayer;
     /** Estación principal del sector; su posición es fija por ahora. */
     final Station station;
     /** Simulación de mercados; tickea cada 10 s, no por frame. */

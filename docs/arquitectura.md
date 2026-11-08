@@ -322,6 +322,20 @@ estáticos se reutilizan.
   capacidad se recalcula al construir/ampliar/restaurar módulos.
 - Contenido del almacén y módulos se guardan en el v2.
 
+### Pantalla de gestión (T-904)
+
+- Al acoplarse a la plataforma, `DockingSystem` marca `dockedAtPlayer` y
+  `MyGame` abre `StationManagementScreen` en vez de la pantalla de la nodriza.
+- La pantalla muestra:
+  - servicios activos y ocupación del almacén;
+  - 6 ranuras con módulo y nivel (o vacías);
+  - catálogo de módulos, `CONSTRUIR`, `MEJORAR`, `DESCARGAR`, `REPARAR` y
+    `DESPEGAR`.
+- Construir/mejorar cobra créditos y materiales de la bodega; descargar mueve
+  carga al almacén; reparar exige TALLER.
+- Todo se dibuja con formas y texto, en vertical, sin menús anidados.
+- La UI de la nodriza sigue siendo independiente.
+
 ### Persistencia de la estación
 
 - El guardado v2 incluye `playerStation`:

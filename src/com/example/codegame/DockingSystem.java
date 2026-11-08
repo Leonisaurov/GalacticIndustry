@@ -13,16 +13,26 @@ final class DockingSystem {
     private DockingSystem() {
     }
 
-    static boolean canDock(GameWorld world) {
-        return world != null && world.station != null && world.ship != null
+    static boolean canDockPlayer(GameWorld world) {
+        return world != null && world.playerStation != null && world.ship != null
                 && !world.ship.docked
-                && world.station.canDock(world.ship.pos, world.ship.vel.len());
+                && world.playerStation.inSector(world.sector.id)
+                && world.playerStation.canDock(world.ship.pos, world.ship.vel.len());
+    }
+
+    static boolean canDock(GameWorld world) {
+        return world != null && world.ship != null && !world.ship.docked
+                && ((world.station != null
+                && world.station.canDock(world.ship.pos, world.ship.vel.len()))
+                || canDockPlayer(world));
     }
 
     static boolean dock(GameWorld world) {
         if (!canDock(world)) {
             return false;
         }
+        boolean player = canDockPlayer(world);
+        world.dockedAtPlayer = player;
         world.ship.docked = true;
         world.ship.vel.setZero();
         world.ship.thrusting = false;
@@ -37,6 +47,7 @@ final class DockingSystem {
             return;
         }
         world.ship.docked = false;
+        world.dockedAtPlayer = false;
         world.ship.vel.setZero();
         world.ship.thrusting = false;
     }

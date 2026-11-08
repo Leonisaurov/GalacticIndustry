@@ -53,6 +53,7 @@ public class MyGame implements ApplicationListener {
     private StationScreen stationScreen;
     private MarketScreen marketScreen;
     private MapScreen mapScreen;
+    private StationManagementScreen managementScreen;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -416,6 +417,7 @@ public class MyGame implements ApplicationListener {
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
         marketScreen = new MarketScreen(this, ui, batch, shapes, space);
         mapScreen = new MapScreen(this, ui, batch, shapes, space);
+        managementScreen = new StationManagementScreen(this, ui, batch, shapes, space);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
         saves = new SaveService(
@@ -620,6 +622,7 @@ public class MyGame implements ApplicationListener {
             world.fuel.clear();
             world.ship.pos.set(-1500f, 0f);
             world.ship.vel.set(0f, 0f);
+            world.ship.cargo().setCapacity(300f);
             upgrades.setCoins(1000);
             world.ship.cargo().addExact(Commodity.HIERRO, 30);
             world.ship.cargo().addExact(Commodity.COBRE, 15);
@@ -795,6 +798,9 @@ public class MyGame implements ApplicationListener {
         if (mapScreen != null) {
             mapScreen.layout(w, h);
         }
+        if (managementScreen != null) {
+            managementScreen.layout(w, h);
+        }
     }
 
 
@@ -969,7 +975,13 @@ public class MyGame implements ApplicationListener {
         switch (state) {
             case PLAYING: updatePlaying(dt); break;
             case PAUSED: handlePause(); break;
-            case DOCKED: stationScreen.handle(); break;
+            case DOCKED:
+                if (world.dockedAtPlayer) {
+                    managementScreen.handle();
+                } else {
+                    stationScreen.handle();
+                }
+                break;
             case MARKET: marketScreen.handle(); break;
             case MAP: mapScreen.handle(); break;
             case OVER: handleOver(); break;
@@ -1082,7 +1094,9 @@ public class MyGame implements ApplicationListener {
                         + "\"moduleDefs\":%d,\"playerStationX\":%.1f,"
                         + "\"playerStationY\":%.1f,\"canBuildBase\":%s,"
                         + "\"baseWhileDocked\":%s,\"baseStorageCapacity\":%.0f,"
-                        + "\"baseStorageUnits\":%d}",
+                        + "\"baseStorageUnits\":%d,\"dockedAtPlayer\":%s,"
+                        + "\"baseSlot\":%d,\"baseModule0Level\":%d,"
+                        + "\"baseMessage\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1175,7 +1189,13 @@ public class MyGame implements ApplicationListener {
                 canBuildBase(),
                 session.playerStation.built(),
                 session.playerStation.storageCapacity(),
-                session.playerStation.stationStorage().totalUnits()));
+                session.playerStation.stationStorage().totalUnits(),
+                world.dockedAtPlayer,
+                managementScreen.selectedSlot(),
+                session.playerStation.moduleAt(0) == null ? 0
+                        : session.playerStation.moduleAt(0).level(),
+                state == DOCKED && world.dockedAtPlayer
+                        ? managementScreen.message() : ""));
     }
 
     void logEvent(String json) {
@@ -1216,7 +1236,11 @@ public class MyGame implements ApplicationListener {
         state = PLAYING;
         if (world.ship.docked) {
             state = DOCKED;
-            stationScreen.enter();
+            if (world.dockedAtPlayer) {
+                managementScreen.enter();
+            } else {
+                stationScreen.enter();
+            }
             layoutUi();
         }
         if (recoveryTest) {
@@ -1399,11 +1423,17 @@ public class MyGame implements ApplicationListener {
                 resetControls();
                 bankCoins();
                 state = DOCKED;
-                stationScreen.enter();
+                if (world.dockedAtPlayer) {
+                    managementScreen.enter();
+                } else {
+                    stationScreen.enter();
+                }
                 layoutUi();
                 saveRun();
                 logEvent("{\"event\":\"dock\",\"station\":\""
-                        + world.station.def.name + "\"}");
+                        + (world.dockedAtPlayer
+                        ? session.playerStation.name : world.station.def.name)
+                        + "\"}");
             }
             return;
         }
@@ -1634,7 +1664,11 @@ public class MyGame implements ApplicationListener {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
             if (world.ship.docked) {
                 state = DOCKED;
-                stationScreen.enter();
+                if (world.dockedAtPlayer) {
+                    managementScreen.enter();
+                } else {
+                    stationScreen.enter();
+                }
                 layoutUi();
             } else {
                 state = PLAYING;
@@ -1789,7 +1823,11 @@ public class MyGame implements ApplicationListener {
         } else if (state == DYING) {
             overlay.drawDeathFlourish(w, h);
         } else if (state == DOCKED) {
-            stationScreen.draw(w, h);
+            if (world.dockedAtPlayer) {
+                managementScreen.draw(w, h);
+            } else {
+                stationScreen.draw(w, h);
+            }
         } else if (state == MARKET) {
             marketScreen.draw(w, h);
         } else if (state == MAP) {
