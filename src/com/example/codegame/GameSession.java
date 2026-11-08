@@ -28,6 +28,8 @@ class GameSession {
     SectorDef currentSector;
     /** Streaming de sectores: carga cercanos y descarga lejanos. */
     final SectorStreamer streamer;
+    /** Estación personal del jugador; vacía hasta construir módulos (T-902/T-903). */
+    final PlayerStation playerStation = new PlayerStation();
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
     GameWorld sector;
 

@@ -3273,6 +3273,58 @@ public class SelfTest {
                         && GameData.START_SECTOR_ID.equals(gateSession.currentSector.id)
                         && gateSession.sector.station.def.name.equals("NODRIZA"));
 
+        // T-901: plataforma personal vacía y módulos.
+        PlayerStation platform = new PlayerStation(0f, 0f);
+        check("la plataforma personal está vacía",
+                platform.built()
+                        && platform.moduleCount() == 0
+                        && platform.serviceMask() == 0
+                        && !platform.storage()
+                        && !platform.repair()
+                        && !platform.refinery()
+                        && !platform.market());
+        check("la plataforma no es la nave nodriza",
+                !platform.name.equals(GameData.MOTHERSHIP.name)
+                        && platform.def != GameData.MOTHERSHIP
+                        && platform.def.radius < GameData.MOTHERSHIP.radius
+                        && !platform.def.market
+                        && !platform.def.storage
+                        && !platform.def.repair);
+        check("la plataforma permite acoplar la nave",
+                platform.canDock(new Vector2(0f, 50f), 10f)
+                        && !platform.canDock(new Vector2(500f, 0f), 10f)
+                        && !platform.canDock(new Vector2(0f, 0f), 80f));
+        check("existen ranuras y definiciones de módulos",
+                platform.slotCount() == 6
+                        && ModuleDef.values().length >= 4
+                        && ModuleDef.STORAGE.creditCost > 0
+                        && ModuleDef.STORAGE.needsMaterials()
+                        && ModuleDef.STORAGE.service == ModuleDef.Service.STORAGE
+                        && ModuleDef.byId("ALMACEN") == ModuleDef.STORAGE
+                        && ModuleDef.byId("TALLER") == ModuleDef.REPAIR);
+        check("los módulos se construyen progresivamente",
+                platform.install(0, ModuleDef.REPAIR) == false
+                        && platform.install(0, ModuleDef.STORAGE)
+                        && platform.storage()
+                        && !platform.repair()
+                        && platform.install(1, ModuleDef.REPAIR)
+                        && platform.repair()
+                        && platform.install(2, ModuleDef.REFINERY)
+                        && platform.refinery()
+                        && platform.install(3, ModuleDef.MARKET)
+                        && platform.market()
+                        && platform.moduleCount() == 4
+                        && platform.freeSlots() == 2);
+        check("una ranura ocupada o invalida no acepta módulos",
+                !platform.install(0, ModuleDef.MARKET)
+                        && !platform.install(-1, ModuleDef.STORAGE)
+                        && !platform.install(PlayerStation.SLOTS, ModuleDef.STORAGE));
+        PlayerStation unplaced = new PlayerStation();
+        check("una plataforma no colocada no acopla ni construye",
+                !unplaced.built()
+                        && !unplaced.canDock(new Vector2(0f, 0f), 1f)
+                        && !unplaced.install(0, ModuleDef.STORAGE));
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

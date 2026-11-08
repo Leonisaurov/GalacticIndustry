@@ -275,6 +275,23 @@ estáticos se reutilizan.
   energía, muestra el error sin moverse.
 - Se dibuja con formas y texto, funciona en vertical y no usa red ni imágenes.
 
+## Estación personal (datos)
+
+- `PlayerStation` es una plataforma **vacía y acoplable**, distinta de la nave
+  nodriza: sin almacén, reparación, refinería ni mercado de serie.
+- Tiene **6 ranuras** y un `StationDef` propio (`PLATAFORMA`, radio 60 u).
+- `ModuleDef` define el catálogo construible:
+  - `ALMACEN` (STORAGE), `TALLER` (REPAIR), `REFINERIA` (REFINERY) y
+    `MERCADO` (MARKET);
+  - cada módulo tiene coste en créditos, materiales, requisito previo y
+    servicio.
+- Los servicios se derivan de los módulos instalados (`serviceMask()`); una
+  plataforma vacía devuelve **0**.
+- `install()` valida ranura, plaza libre, plataforma colocada y requisito. La
+  compra/construcción con créditos y materiales llega en T-903.
+- La colocación y compra de la plataforma llegan en T-902; la estación está
+  separada de la nodriza en todo momento.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

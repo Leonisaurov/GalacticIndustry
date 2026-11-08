@@ -993,7 +993,11 @@ public class MyGame implements ApplicationListener {
                         + "\"warpLevel\":%d,\"snapshotSectors\":%d,"
                         + "\"mapDiscovered\":%d,\"mapHidden\":%d,"
                         + "\"mapSelected\":\"%s\",\"mapMessage\":\"%s\","
-                        + "\"stationName\":\"%s\",\"marketSpread\":%.2f}",
+                        + "\"stationName\":\"%s\",\"marketSpread\":%.2f,"
+                        + "\"playerStationBuilt\":%s,\"playerStationSlots\":%d,"
+                        + "\"playerStationModules\":%d,\"playerStationServices\":%d,"
+                        + "\"moduleDefs\":%d,\"playerStationX\":%.1f,"
+                        + "\"playerStationY\":%.1f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1075,7 +1079,14 @@ public class MyGame implements ApplicationListener {
                 mapScreen.selectedSectorId(),
                 state == MAP ? mapScreen.message() : "",
                 world.station.def.name,
-                world.station.market.spread()));
+                world.station.market.spread(),
+                session.playerStation.built(),
+                session.playerStation.slotCount(),
+                session.playerStation.moduleCount(),
+                session.playerStation.serviceMask(),
+                ModuleDef.values().length,
+                session.playerStation.pos.x,
+                session.playerStation.pos.y));
     }
 
     void logEvent(String json) {

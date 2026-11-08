@@ -79,6 +79,10 @@ final class GameData {
             "RELEVO MINERO", 120f, 160f, 320f, false, true, false, false, true, true);
     static final StationDef FORGE = new StationDef(
             "FORJA", 150f, 190f, 380f, true, true, false, true, true, true);
+    /** Plataforma personal vacía: sin servicios de serie (T-901). */
+    static final StationDef PLAYER_PLATFORM = new StationDef(
+            "PLATAFORMA", 60f, 110f, 150f,
+            false, false, false, false, false, false);
     /** Naves nodriza propias de cada galaxia (T-806). */
     static final StationDef ANDROMEDA_MOTHERSHIP = new StationDef(
             "NODRIZA ANDROMEDA", 215f, 270f, 500f, true, true, true, true, true, true);

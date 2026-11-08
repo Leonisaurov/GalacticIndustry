@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T06:12:00-06:00  
+**Última actualización:** 2026-11-08T06:28:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-069 — Plataforma personal vacía y módulos
+
+- **Fecha:** 2026-11-08T06:28:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-901
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `PlayerStation`: plataforma **vacía y acoplable**, distinta de la nodriza.
+- Sin almacén, reparación, refinería ni mercado de serie.
+- **6 ranuras** y `StationDef` propio (`PLATAFORMA`, radio 60 u).
+- `ModuleDef` con `ALMACEN`, `TALLER`, `REFINERIA` y `MERCADO`:
+  - coste en créditos y materiales;
+  - requisito previo;
+  - servicio asociado.
+- Los servicios se derivan solo de módulos instalados (`serviceMask()`).
+- `install()` valida plataforma colocada, ranura libre y requisito.
+- Colocación/compra y construcción transaccional quedan para T-902/T-903.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PlayerStation.java` (nuevo)
+- `src/com/example/codegame/ModuleDef.java` (nuevo)
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- `PASS la plataforma personal está vacía`
+- `PASS la plataforma no es la nave nodriza`
+- `PASS la plataforma permite acoplar la nave`
+- `PASS existen ranuras y definiciones de módulos`
+- `PASS los módulos se construyen progresivamente`
+- `PASS una ranura ocupada o invalida no acepta módulos`
+- `PASS una plataforma no colocada no acopla ni construye`
+- `17_player_station`: 6 ranuras y 0 servicios.
+
+### Decisiones tomadas
+
+- La plataforma no ofrece servicios implícitos.
+- El catálogo de módulos es un enum ampliable; el núcleo no cambia.
+- La instalación no cobra todavía; T-903 añadirá el coste transaccional.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-902 — Construir el núcleo/plataforma vacía**.
 
 ---
 
