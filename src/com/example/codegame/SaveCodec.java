@@ -107,6 +107,7 @@ final class SaveCodec {
             w.set("coinsEarned", world.coinsEarned);
             w.set("score", world.score);
             w.set("elapsed", world.elapsed);
+            w.set("lastSimTime", System.currentTimeMillis());
             w.set("legacyWreck", world.legacyWreck);
             w.set("legacyX", world.legacyWreckPos.x);
             w.set("legacyY", world.legacyWreckPos.y);
@@ -210,6 +211,7 @@ final class SaveCodec {
                 w.set("maxFuel", agent.maxFuel);
                 w.set("credits", agent.credits);
                 w.set("commodity", agent.commodity.name());
+                w.set("timer", agent.timer);
                 w.set("objective", agent.objective);
                 w.name("cargo").array();
                 for (Cargo cargo : agent.cargo.entries()) {
@@ -340,6 +342,7 @@ final class SaveCodec {
             d.coinsEarned = sector.getInt("coinsEarned", 0);
             d.score = sector.getInt("score", 0);
             d.elapsed = sector.getFloat("elapsed", 0f);
+            d.lastSimTime = sector.getLong("lastSimTime", 0L);
             d.legacyWreck = sector.getBoolean("legacyWreck", false);
             d.legacyX = sector.getFloat("legacyX", 0f);
             d.legacyY = sector.getFloat("legacyY", 0f);
@@ -461,6 +464,7 @@ final class SaveCodec {
                         data.credits = a.getInt("credits", 200);
                         data.commodity = Commodity.byDisplayName(
                                 a.getString("commodity", Commodity.SILICATO.name()));
+                        data.timer = a.getFloat("timer", 0f);
                         data.objective = a.getString("objective", "NODRIZA");
                         JsonValue agentCargo = a.get("cargo");
                         if (agentCargo != null && agentCargo.isArray()) {
@@ -615,6 +619,7 @@ final class SaveCodec {
                 if (data.commodity != null) {
                     agent.commodity = data.commodity;
                 }
+                agent.timer = Math.max(0f, data.timer);
                 agent.objective = data.objective;
                 agent.cargo.clear();
                 for (int k = 0; k < data.cargo.size(); k++) {
@@ -643,6 +648,13 @@ final class SaveCodec {
             }
         }
         world.ship.docked = d.docked;
+        if (d.lastSimTime > 0L) {
+            float seconds = Math.max(0f,
+                    (System.currentTimeMillis() - d.lastSimTime) / 1000f);
+            if (seconds >= SimClock.OFFLINE_SECONDS) {
+                world.economy.updateOffline(seconds, world);
+            }
+        }
         world.missiles.clear();
         world.fx.clear();
         world.pilot.cancel();
@@ -690,6 +702,7 @@ final class SaveCodec {
         int coinsEarned;
         int score;
         float elapsed;
+        long lastSimTime;
         boolean docked;
         float stationX = GameData.MOTHERSHIP_X;
         float stationY = GameData.MOTHERSHIP_Y;
@@ -735,6 +748,7 @@ final class SaveCodec {
         float maxFuel = AgentRoster.MAX_FUEL;
         int credits = 200;
         Commodity commodity = Commodity.SILICATO;
+        float timer;
         String objective = "NODRIZA";
         final List<CargoData> cargo = new ArrayList<>();
     }

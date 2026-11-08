@@ -2534,6 +2534,57 @@ public class SelfTest {
         check("un agente no compra sin capacidad",
                 agentMarket.buyTo(full, Commodity.HIELO, 1) == 0);
 
+        // T-705: simulación offline y lastSimTime.
+        GameSession offlineSave = new GameSession(new PlayerProfile(new Upgrades(true)));
+        offlineSave.startRun();
+        SaveService.MemoryStorage offlineStore = new SaveService.MemoryStorage();
+        SaveService offlineService = new SaveService(offlineStore);
+        check("el guardado escribe lastSimTime", offlineService.save(offlineSave));
+        String offlineText = offlineStore.read(SaveService.SAVE_NAME);
+        check("lastSimTime está en el guardado",
+                offlineText.contains("\"lastSimTime\":"));
+        long twelveHoursAgo = System.currentTimeMillis() - 12L * 3600L * 1000L;
+        String offline12 = offlineText.replaceAll("\"lastSimTime\":\\d+",
+                "\"lastSimTime\":" + twelveHoursAgo);
+        GameSession offlineLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("12 h offline se simulan al cargar",
+                !offlineText.equals(offline12)
+                        && SaveCodec.decode(offline12, offlineLoaded)
+                        && offlineLoaded.sector.station.market.stock(Commodity.HIELO)
+                        != GameData.MARKET_INITIAL * GameData.MARKET_HIELO);
+        boolean offlineBounded = true;
+        for (Commodity c : Commodity.values()) {
+            int stock = offlineLoaded.sector.station.market.stock(c);
+            float price = offlineLoaded.sector.station.market.buyPrice(c);
+            offlineBounded = offlineBounded && stock >= 0
+                    && stock <= offlineLoaded.sector.station.market.target(c)
+                    * EconomySim.MAX_STOCK_FACTOR
+                    && price > 0f && price < 10000f;
+        }
+        check("los precios offline no se descontrolan", offlineBounded);
+        check("los agentes siguen tras 12 h offline",
+                offlineLoaded.sector.agents.size() == 8
+                        && offlineLoaded.sector.agents.get(0).credits >= 0);
+        String offline24 = offlineText.replaceAll("\"lastSimTime\":\\d+",
+                "\"lastSimTime\":" + (System.currentTimeMillis()
+                        - 24L * 3600L * 1000L));
+        GameSession offline24Loaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        SaveCodec.decode(offline24, offline24Loaded);
+        boolean offlineCapped = true;
+        for (Commodity c : Commodity.values()) {
+            offlineCapped = offlineCapped
+                    && offline24Loaded.sector.station.market.stock(c)
+                    == offlineLoaded.sector.station.market.stock(c);
+        }
+        check("el catch-up se limita a 12 h", offlineCapped);
+        String noSimTime = offlineText.replaceAll(",\"lastSimTime\":\\d+", "");
+        GameSession noSimLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un guardado sin lastSimTime no simula offline",
+                !offlineText.equals(noSimTime)
+                        && SaveCodec.decode(noSimTime, noSimLoaded)
+                        && noSimLoaded.sector.station.market.stock(Commodity.HIELO)
+                        == GameData.MARKET_INITIAL * GameData.MARKET_HIELO);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

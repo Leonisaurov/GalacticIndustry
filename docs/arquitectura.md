@@ -420,6 +420,8 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   60 s**. Acumula tiempo y solo dispara ticks completos.
 - `EconomySim` usa cerca para **agentes** (cada 2 s) y 10 s para **mercados**;
   nunca se ejecuta trabajo por frame. `updateOffline()` limita a 12 h.
+- El guardado escribe `lastSimTime` (epoch). Al cargar, si han pasado ≥60 s,
+  se simulan pasos de 60 s hasta un máximo de 12 h; sin red ni hilos.
 - Con 24 agentes el tick sigue siendo ligero (bench en `SelfTest`).
 - `EconomySim` tickea cada **10 s** de simulación, nunca por frame.
 - Cada tick: `stock += producción − consumo + round((objetivo − stock) · 0,02)`,

@@ -4,23 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T04:14:00-06:00",
-    "lastSessionId": "S-057",
+    "lastUpdated": "2026-11-08T04:22:00-06:00",
+    "lastSessionId": "S-058",
     "lastVerification": {
-      "date": "2026-11-08T04:14:00-06:00",
+      "date": "2026-11-08T04:22:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Market.sellTo/buyTo mueven stock, precio y créditos del agente",
-        "Ventas suben stock y bajan precio; compras al revés",
-        "Sin carga, créditos, stock o capacidad la operación falla sin crear créditos",
-        "15_agents: el agente vende y gana créditos",
+        "lastSimTime se escribe en el guardado",
+        "12 h offline en pasos de 60 s; stock/precios acotados",
+        "Catch-up limitado a 12 h; guardados sin lastSimTime no simulan",
+        "Agentes persisten y siguen tras el catch-up",
+        "15_agents sigue en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S7",
     "currentTaskId": null,
-    "nextTaskId": "T-705",
+    "nextTaskId": "T-706",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3715,7 +3716,7 @@
       "description": "Permitir que el universo avance al cerrar el juego con un límite y sin servidor.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-703",
@@ -3742,10 +3743,38 @@
         "Test offline 12 h"
       ],
       "technicalNotes": "D-007 resuelta técnicamente: 8 inicial, 24 máximo, 12 h de catch-up.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-058",
+          "date": "2026-11-08T04:22:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "lastSimTime en el guardado y catch-up offline de hasta 12 h en pasos de 60 s (EconomySim.updateOffline). Precios acotados, agentes persisten y sin red/hilos. Test de 12/24 h y guardados sin lastSimTime.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Test offline 12 h"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el guardado escribe lastSimTime",
+        "PASS 12 h offline se simulan al cargar",
+        "PASS los precios offline no se descontrolan",
+        "PASS los agentes siguen tras 12 h offline",
+        "PASS el catch-up se limita a 12 h",
+        "PASS un guardado sin lastSimTime no simula offline"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:22:00-06:00"
     },
     {
       "id": "T-706",
@@ -3754,7 +3783,7 @@
       "description": "Mostrar algunas naves de agentes entrando/saliendo para que el universo se sienta activo, sin simulación visual completa.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-704",
@@ -5673,6 +5702,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-058",
+      "date": "2026-11-08T04:22:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Simulación offline y persistencia de agentes",
+      "summary": "El guardado incluye lastSimTime; al cargar se simulan hasta 12 h en pasos de 60 s sin red. Precios acotados y agentes persistentes.",
+      "tasks": [
+        "T-705"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/DECISIONS.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-706 (tráfico cosmético cerca de la estación)."
+    },
     {
       "id": "S-057",
       "date": "2026-11-08T04:14:00-06:00",

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:14:00-06:00  
+**Última actualización:** 2026-11-08T04:22:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-058 — Simulación offline y persistencia de agentes
+
+- **Fecha:** 2026-11-08T04:22:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-705
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El guardado escribe **`lastSimTime`** (epoch).
+- Al cargar se calculan los segundos transcurridos y se simulan pasos de
+  **60 s** hasta **12 h**.
+- Si el guardado no tiene `lastSimTime`, no hay catch-up.
+- Los precios y stocks quedan acotados tras 12 h; los agentes persisten.
+- Sin red, hilos ni servicio en segundo plano.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/EconomySim.java`
+- `src/com/example/codegame/PilotAgent.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/DECISIONS.md`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS el guardado escribe lastSimTime`
+- `PASS 12 h offline se simulan al cargar`
+- `PASS los precios offline no se descontrolan`
+- `PASS los agentes siguen tras 12 h offline`
+- `PASS el catch-up se limita a 12 h`
+- `PASS un guardado sin lastSimTime no simula offline`
+
+### Decisiones tomadas
+
+- El catch-up usa epoch y pasos de 60 s, capado a 12 h.
+- Los agentes y el mercado continúan durante el offline.
+- No se simula en segundo plano ni se usan hilos.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-706 — Añadir tráfico cosmético cerca de la estación**.
 
 ---
 
