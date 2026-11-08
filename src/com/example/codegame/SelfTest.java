@@ -646,7 +646,7 @@ public class SelfTest {
         check("tiempo estimado incluye la fuga",
                 Math.abs(leak.estimatedSeconds(o2Session.pilot, leakShip) - 1090.9f) < 5f);
         o2Session.sector.fx.clear();
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 120; i++) {
             o2Session.sector.asteroids.clear();
             o2Session.update(dt, new Controls());
         }
@@ -934,6 +934,95 @@ public class SelfTest {
         GameSession legacyCargo = new GameSession(new PlayerProfile(new Upgrades(true)));
         check("una partida sin bodega carga vacia",
                 legacyCargo.restoreLegacy(noCargoSave) && legacyCargo.cargo().isEmpty());
+
+        // T-303: masa en movimiento y consumo.
+        CargoHold emptyMass = new CargoHold(100f);
+        CargoHold fullMass = new CargoHold(100f);
+        fullMass.addExact(Commodity.SILICATO, 100);
+        check("MassModel calcula carga 0 y 1",
+                MassModel.load(emptyMass) == 0f
+                        && Math.abs(MassModel.load(fullMass) - 1f) < 0.001f);
+        check("factores de masa a carga completa",
+                Math.abs(MassModel.accelerationFactor(fullMass) - 0.75f) < 0.001f
+                        && Math.abs(MassModel.speedFactor(fullMass) - 0.88f) < 0.001f
+                        && Math.abs(MassModel.turnFactor(fullMass) - 0.90f) < 0.001f
+                        && Math.abs(MassModel.fuelFactor(fullMass) - 1.35f) < 0.001f);
+        CargoHold overMass = new CargoHold(100f);
+        overMass.restore(Commodity.SILICATO, 150);
+        check("la masa por encima de capacidad se limita",
+                MassModel.load(overMass) == 1f
+                        && Math.abs(MassModel.fuelFactor(overMass) - 1.35f) < 0.001f);
+        GameWorld emptyShip = new GameWorld(new Upgrades(true));
+        emptyShip.start();
+        emptyShip.immortal = true;
+        emptyShip.asteroids.clear();
+        emptyShip.fuel.clear();
+        GameWorld fullShip = new GameWorld(new Upgrades(true));
+        fullShip.start();
+        fullShip.immortal = true;
+        fullShip.asteroids.clear();
+        fullShip.fuel.clear();
+        fullShip.ship.cargo().addExact(Commodity.SILICATO, 100);
+        for (int i = 0; i < 30; i++) {
+            emptyShip.asteroids.clear();
+            fullShip.asteroids.clear();
+            emptyShip.update(dt, false, false, true, false);
+            fullShip.update(dt, false, false, true, false);
+        }
+        float emptySpeed = emptyShip.ship.vel.len();
+        float fullSpeed = fullShip.ship.vel.len();
+        check("carga completa reduce la aceleracion ~25%",
+                Math.abs(fullSpeed / emptySpeed - 0.75f) < 0.05f);
+        float emptyFuelUsed = emptyShip.ship.maxFuel - emptyShip.ship.fuel;
+        float fullFuelUsed = fullShip.ship.maxFuel - fullShip.ship.fuel;
+        check("carga completa sube el consumo ~35%",
+                Math.abs(fullFuelUsed / emptyFuelUsed - 1.35f) < 0.05f);
+        GameWorld emptyMax = new GameWorld(new Upgrades(true));
+        emptyMax.start();
+        emptyMax.asteroids.clear();
+        emptyMax.ship.vel.set(0f, 500f);
+        emptyMax.update(dt, false, false, false, false);
+        GameWorld fullMax = new GameWorld(new Upgrades(true));
+        fullMax.start();
+        fullMax.asteroids.clear();
+        fullMax.ship.cargo().addExact(Commodity.SILICATO, 100);
+        fullMax.ship.vel.set(0f, 500f);
+        fullMax.update(dt, false, false, false, false);
+        check("carga completa reduce la velocidad ~12%",
+                Math.abs(fullMax.ship.vel.len() / emptyMax.ship.vel.len() - 0.88f) < 0.02f);
+        Controls massTurn = new Controls();
+        massTurn.turn = 1f;
+        GameWorld emptyTurn = new GameWorld(new Upgrades(true));
+        emptyTurn.start();
+        emptyTurn.asteroids.clear();
+        float emptyHeading = emptyTurn.ship.heading;
+        emptyTurn.update(dt, massTurn);
+        float emptyTurned = Math.abs(Ship.wrapDeg(emptyTurn.ship.heading - emptyHeading));
+        GameWorld fullTurn = new GameWorld(new Upgrades(true));
+        fullTurn.start();
+        fullTurn.asteroids.clear();
+        fullTurn.ship.cargo().addExact(Commodity.SILICATO, 100);
+        float fullHeading = fullTurn.ship.heading;
+        fullTurn.update(dt, massTurn);
+        float fullTurned = Math.abs(Ship.wrapDeg(fullTurn.ship.heading - fullHeading));
+        check("carga completa reduce el giro ~10%",
+                Math.abs(fullTurned / emptyTurned - 0.90f) < 0.03f);
+        check("la nave cargada sigue siendo controlable",
+                fullSpeed > 0f && fullTurned > 0f);
+        GameWorld trip = new GameWorld(new Upgrades(true));
+        trip.start();
+        trip.immortal = true;
+        trip.ship.cargo().addExact(Commodity.SILICATO, 100);
+        float startX = trip.ship.pos.x;
+        float startY = trip.ship.pos.y;
+        for (int i = 0; i < 300; i++) {
+            trip.asteroids.clear();
+            trip.fuel.clear();
+            trip.update(dt, false, false, true, false);
+        }
+        float travelled = trip.ship.pos.dst(startX, startY);
+        check("viaje de 800 u con carga completa",
+                travelled > 800f && trip.ship.fuel > 0f);
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();

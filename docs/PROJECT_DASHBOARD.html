@@ -611,23 +611,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:39:00-06:00",
-    "lastSessionId": "S-024",
+    "lastUpdated": "2026-11-08T00:42:00-06:00",
+    "lastSessionId": "S-025",
     "lastVerification": {
-      "date": "2026-11-08T00:39:00-06:00",
+      "date": "2026-11-08T00:42:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Ship/GameSession exponen CargoHold",
-        "La bodega se guarda y restaura en v2 con masa correcta",
-        "Una partida sin campo cargo carga con bodega vacía",
+        "Carga completa: aceleración -25 %, velocidad -12 %, giro -10 %, consumo +35 %",
+        "La nave cargada sigue controlable",
+        "Viaje de 800 u con carga completa y combustible restante",
         "tools/run-tests.sh --no-build 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-303",
+    "nextTaskId": "T-304",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2244,7 +2244,7 @@
       "description": "Hacer que la carga afecte a aceleración, velocidad, giro y consumo de combustible con topes.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-302"
@@ -2268,10 +2268,38 @@
         "Test de viaje de 800 u"
       ],
       "technicalNotes": "No incluir la masa del combustible en la primera versión.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-025",
+          "date": "2026-11-08T00:42:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MassModel traduce la carga en factores de aceleración/velocidad/giro/consumo y Ship los aplica con topes. Probado vacío vs lleno y viaje de 800 u con carga completa.",
+          "files": [
+            "src/com/example/codegame/MassModel.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test vacío vs lleno",
+            "Test de viaje de 800 u",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS factores de masa a carga completa",
+        "PASS carga completa reduce la aceleracion ~25%",
+        "PASS carga completa sube el consumo ~35%",
+        "PASS carga completa reduce la velocidad ~12%",
+        "PASS carga completa reduce el giro ~10%",
+        "PASS la nave cargada sigue siendo controlable",
+        "PASS viaje de 800 u con carga completa"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:42:00-06:00"
     },
     {
       "id": "T-304",
@@ -2280,7 +2308,7 @@
       "description": "Ajustar la capacidad base y el consumo para que una expedición con carga completa sea viable.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-303"
@@ -5220,6 +5248,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-025",
+      "date": "2026-11-08T00:42:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Masa en movimiento y consumo",
+      "summary": "MassModel convierte la carga en factores de aceleración, velocidad, giro y consumo; Ship los aplica con topes. Una nave llena sigue siendo controlable y cubre 800 u con combustible restante.",
+      "tasks": [
+        "T-303"
+      ],
+      "files": [
+        "src/com/example/codegame/MassModel.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test vacío vs lleno",
+        "Test de viaje de 800 u",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-304 (rebalancear depósito y consumo)."
+    },
     {
       "id": "S-024",
       "date": "2026-11-08T00:39:00-06:00",

@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S3` — Inventario, almacenamiento y peso.
 - No hay tarea en progreso.
-- Última tarea completada: `T-302` — Integrar la bodega en Ship/GameSession y el guardado.
-- Primera tarea disponible: `T-303` — Aplicar la masa al movimiento y al consumo.
+- Última tarea completada: `T-303` — Aplicar la masa al movimiento y al consumo.
+- Primera tarea disponible: `T-304` — Rebalancear depósito y consumo.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **21 %** (17 de 81 tareas de progreso).
+- La implementación del juego está al **22 %** (18 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

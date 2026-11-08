@@ -82,11 +82,15 @@ class Ship {
     void update(float dt, Upgrades up, Controls c) {
         float wing = wingFactor();
         float steer = steerFactor() * (0.55f + 0.45f * wing);
+        float massTurn = MassModel.turnFactor(cargo);
+        float massAccel = MassModel.accelerationFactor(cargo);
+        float massSpeed = MassModel.speedFactor(cargo);
+        float massFuel = MassModel.fuelFactor(cargo);
         if (c.aiming) {
-            float step = TURN_SPEED * steer * dt;
+            float step = TURN_SPEED * steer * massTurn * dt;
             heading += MathUtils.clamp(wrapDeg(c.aimDeg - heading), -step, step);
         } else {
-            heading += c.turn * TURN_SPEED * steer * dt;
+            heading += c.turn * TURN_SPEED * steer * massTurn * dt;
         }
         // Con un ala perdida la nave vira sola hacia el lado danado.
         heading = wrapDeg(heading + wingBalance() * 9f * dt);
@@ -96,10 +100,10 @@ class Ship {
         float engine = engineFactor();
         thrusting = level > 0.01f && fuel > 0f;
         if (thrusting) {
-            vel.mulAdd(dir, up.thrust() * engine * level * dt);
-            fuel = Math.max(0f, fuel - FUEL_PER_SEC_THRUST * up.fuelUse() * level * dt);
+            vel.mulAdd(dir, up.thrust() * engine * level * massAccel * dt);
+            fuel = Math.max(0f, fuel - FUEL_PER_SEC_THRUST * up.fuelUse() * massFuel * level * dt);
         }
-        float max = up.maxSpeed() * (0.35f + 0.65f * engine) * (0.78f + 0.22f * wing);
+        float max = up.maxSpeed() * (0.35f + 0.65f * engine) * (0.78f + 0.22f * wing) * massSpeed;
         if (vel.len2() > max * max) {
             vel.setLength(max);
         }

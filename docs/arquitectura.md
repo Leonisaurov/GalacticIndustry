@@ -207,6 +207,16 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   `GameSession.cargo()` delega en la nave. El guardado v2 conserva las entradas
   con masa y las partidas antiguas sin campo `cargo` cargan vacías.
   La minería llega en S4; la masa en movimiento, en T-303.
+
+## Masa y movimiento
+
+- `MassModel.load()` usa `usado/capacidad` (0–1) y aplica topes.
+- A carga completa: aceleración ×0.75, velocidad ×0.88, giro ×0.90 y consumo
+  ×1.35.
+- `Ship.update()` aplica los cuatro factores; la masa del combustible no se
+  incluye todavía.
+- La nave llena sigue siendo controlable y cubre 800 u con combustible
+  restante.
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

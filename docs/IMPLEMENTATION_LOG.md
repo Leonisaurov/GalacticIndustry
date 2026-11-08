@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:39:00-06:00  
+**Última actualización:** 2026-11-08T00:42:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,62 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-025 — Masa en movimiento y consumo
+
+- **Fecha:** 2026-11-08T00:42:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-303
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `MassModel` calcula la carga normalizada y cuatro factores:
+  - aceleración: `1 − 0.25·carga`;
+  - velocidad: `1 − 0.12·carga`;
+  - giro: `1 − 0.10·carga`;
+  - consumo: `1 + 0.35·carga`.
+- `Ship.update()` aplica esos factores a empuje, límite de velocidad, giro y
+  combustible.
+- La carga por encima de capacidad se limita a 1 y no dispara los factores.
+- La masa del combustible queda fuera de esta versión.
+- La nave llena sigue siendo controlable y cubre 800 u con combustible restante.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MassModel.java` (nuevo)
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+
+### Evidencias
+
+- `PASS factores de masa a carga completa`
+- `PASS carga completa reduce la aceleracion ~25%`
+- `PASS carga completa sube el consumo ~35%`
+- `PASS carga completa reduce la velocidad ~12%`
+- `PASS carga completa reduce el giro ~10%`
+- `PASS la nave cargada sigue siendo controlable`
+- `PASS viaje de 800 u con carga completa`
+
+### Decisiones tomadas
+
+- La penalización depende de la fracción de capacidad ocupada, no de una masa
+  fija, para que la mejora de bodega de T-305 funcione.
+- Los factores se calculan por frame desde la bodega; no se cachean.
+- Los topes de carga evitan naves incontrolables.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-304 — Rebalancear depósito y consumo**.
 
 ---
 
