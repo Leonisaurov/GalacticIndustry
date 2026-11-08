@@ -68,6 +68,7 @@ MG_ACTION2_Y=0
 MG_UNDOCK_Y=0
 MG_ENTER_X=0
 MG_ENTER_Y=0
+MUTE_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -171,6 +172,8 @@ device_geometry() {
     MG_UNDOCK_Y=$((H - 50 * U))
     MG_ENTER_X=$((W - 74 * U))
     MG_ENTER_Y=$((37 * U))
+    # Botón de silencio en la pausa.
+    MUTE_Y=$((H - (H * 44 / 100 - 43 * U)))
 }
 
 # ---------- build y SelfTest ----------

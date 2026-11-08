@@ -179,6 +179,7 @@ final class StationManagementScreen {
                 game.world.ship.cargo());
         message = result.ok ? "CONSTRUIDO" : result.error;
         if (result.ok) {
+            game.playSfx(AudioService.Sfx.MODULE);
             game.saveRun();
         }
     }
@@ -188,6 +189,7 @@ final class StationManagementScreen {
                 selectedSlot, game.upgrades, game.world.ship.cargo());
         message = result.ok ? "MEJORADO" : result.error;
         if (result.ok) {
+            game.playSfx(AudioService.Sfx.MODULE);
             game.saveRun();
         }
     }

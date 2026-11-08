@@ -446,6 +446,16 @@ estáticos se reutilizan.
   estación (no a la plataforma personal).
 - El guardado v2 conserva ofertas, estado y plazo restante.
 
+## Audio y efectos (T-1104)
+
+- `AudioService` carga WAV locales desde `assets/audio/` con `Gdx.audio`.
+- Efectos: motor, láser, misil, explosión, impacto, recogida, alarma, acople,
+  comercio, módulo y warp.
+- Motor en bucle mientras se acelera; el resto son one-shot.
+- Silencio global persisted en `Upgrades.audioMuted()`; botón `SONIDO ON/OFF`
+  en la pausa.
+- No usa red ni recursos de jars; todos los assets van en `assets/audio`.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T11:18:00-06:00  
+**Última actualización:** 2026-11-08T11:38:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,62 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-085 — Infraestructura de audio y efectos
+
+- **Fecha:** 2026-11-08T11:38:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1104
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `AudioService` carga WAV locales desde `assets/audio/`.
+- Efectos: motor en bucle, láser, misil, explosión, impacto, recogida, alarma,
+  acople, comercio, módulo y warp.
+- Silencio global persistido en `Upgrades.audioMuted()`.
+- Botón `SONIDO ON/OFF` en la pausa.
+- Sin red ni recursos de jars; assets locales.
+- `19_audio` verifica activar/silenciar/reanudar.
+
+### Archivos modificados
+
+- `src/com/example/codegame/AudioService.java` (nuevo)
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/OverlayRenderer.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `assets/audio/*.wav` (nuevos)
+- `tools/tests/19_audio.sh` (nuevo)
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 19_audio`: **OK**.
+
+### Evidencias
+
+- Assets WAV presentes en `assets/audio` del APK.
+- Telemetría `audioMuted`.
+- `19_audio`: activo, silencio on/off y reanudación.
+
+### Decisiones tomadas
+
+- Efectos cortos WAV locales; sin streaming ni red.
+- El motor usa bucle y se detiene al pausar.
+- La música/ambientes quedan para T-1108.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1105 — Balance, telemetría y rendimiento**.
 
 ---
 

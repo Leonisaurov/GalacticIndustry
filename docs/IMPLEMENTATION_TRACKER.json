@@ -4,22 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T11:18:00-06:00",
-    "lastSessionId": "S-084",
+    "lastUpdated": "2026-11-08T11:38:00-06:00",
+    "lastSessionId": "S-085",
     "lastVerification": {
-      "date": "2026-11-08T11:18:00-06:00",
+      "date": "2026-11-08T11:38:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "La estacion ofrece contratos con objetivo, recompensa y plazo",
-        "Aceptar, avanzar plazo, completar con carga y caducar",
-        "Las misiones se guardan y restauran",
+        "AudioService local con efectos principales y motor en bucle",
+        "Assets WAV en assets/audio, sin red ni jars",
+        "Silencio global persistido y conmutable desde la pausa",
+        "19_audio en dispositivo",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1104",
+    "nextTaskId": "T-1105",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5398,7 +5399,7 @@
       "description": "Añadir el sistema de audio y los efectos de motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -5422,10 +5423,37 @@
         "Regresión"
       ],
       "technicalNotes": "D-009 aprobada. La música/ambientes se implementan en T-1108.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-085",
+          "date": "2026-11-08T11:38:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "AudioService local con WAV en assets/audio: motor en bucle, laser, misil, explosion, impacto, recogida, alarma, acople, comercio, modulo y warp. Silencio global persistido y boton SONIDO en pausa. 19_audio.",
+          "files": [
+            "src/com/example/codegame/AudioService.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "assets/audio/*",
+            "tools/tests/19_audio.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "Revisión en dispositivo",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Assets WAV presentes en assets/audio del APK",
+        "Telemetria audioMuted",
+        "19_audio: activo, silencio on/off y reanudacion"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T11:38:00-06:00"
     },
     {
       "id": "T-1105",
@@ -5434,7 +5462,7 @@
       "description": "Medir tiempos, beneficio, mortalidad, FPS y memoria; ajustar parámetros.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -6497,6 +6525,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-085",
+      "date": "2026-11-08T11:38:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Infraestructura de audio y efectos",
+      "summary": "Audio local con efectos principales, motor en bucle y silencio persistido. Assets WAV locales y prueba 19_audio.",
+      "tasks": [
+        "T-1104"
+      ],
+      "files": [
+        "src/com/example/codegame/AudioService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "assets/audio/*",
+        "tools/tests/19_audio.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 19_audio",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1105 (balance, telemetria y rendimiento)."
+    },
     {
       "id": "S-084",
       "date": "2026-11-08T11:18:00-06:00",
@@ -8643,5 +8695,6 @@
       ],
       "createdAt": "2026-11-07"
     }
-  ]
+  ],
+  "status": null
 }

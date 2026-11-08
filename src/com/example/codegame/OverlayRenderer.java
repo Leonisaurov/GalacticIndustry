@@ -189,6 +189,7 @@ final class OverlayRenderer {
         shapes.rect(px + pw * 0.25f, py + ph - 4f * game.u, pw * 0.5f, 3f * game.u);
         ui.drawButton(game.btnResume, Visuals.BTN_PRIMARY, true);
         ui.drawButton(game.btnMenu, Visuals.BTN_SECONDARY, true);
+        ui.drawButton(game.btnMute, Visuals.BTN_SECONDARY, true);
         shapes.end();
 
         batch.begin();
@@ -197,6 +198,7 @@ final class OverlayRenderer {
                 w * 0.5f, h * 0.5f + 105f * game.u, 0.92f * game.u, Visuals.ACCENT);
         ui.drawButtonText(game.btnResume, true);
         ui.drawButtonText(game.btnMenu, true);
+        ui.drawButtonText(game.btnMute, true);
         batch.end();
     }
 

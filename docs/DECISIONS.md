@@ -356,6 +356,14 @@ Set mínimo local en Etapa 11, con opción de silencio.
 
 Afecta a la Etapa 11 y al tamaño del APK.
 
+### Implementación actual (T-1104)
+
+- `AudioService` con WAV locales en `assets/audio/`.
+- Efectos para motor, láser, misil, explosión, impacto, recogida, alarma,
+  acople, comercio, módulo y warp.
+- Silencio global persistido y botón en la pausa.
+- La música/ambientes quedan para T-1108.
+
 ---
 
 ## D-010 — Naves múltiples, módulos y personalización

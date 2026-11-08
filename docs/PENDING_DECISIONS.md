@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T11:18:00-06:00  
+**Última actualización:** 2026-11-08T11:38:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -35,4 +35,4 @@ Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
 - `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
 - `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
 
-Las Etapas 1, 2, 3, 4, 5, 6, 7, 8, 9 y 10 están completadas. La siguiente tarea de implementación es **T-1104 — Infraestructura de audio y efectos de sonido** (Etapa 11).
+Las Etapas 1, 2, 3, 4, 5, 6, 7, 8, 9 y 10 están completadas. La siguiente tarea de implementación es **T-1105 — Balance, telemetría y rendimiento** (Etapa 11).

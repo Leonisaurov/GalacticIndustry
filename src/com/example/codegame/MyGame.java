@@ -137,7 +137,7 @@ public class MyGame implements ApplicationListener {
     private static final String TAG = "AsteroidsTelemetry";
 
 
-    Button btnPlay, btnResume, btnMenu, btnRetry, btnOverMenu;
+    Button btnPlay, btnResume, btnMenu, btnRetry, btnOverMenu, btnMute;
     /** Barra de aceleración: su rectángulo es btnThrust.bounds. */
     private Button btnThrust, btnPause;
     /** Recuperar la nave del personaje anterior cuando se está cerca. */
@@ -153,6 +153,13 @@ public class MyGame implements ApplicationListener {
     /** Zonas invisibles solo para pruebas de warp. */
     private Button btnWarpDebug, btnWarpBackDebug;
     private final RescueService rescue = new RescueService();
+    /** Audio local; se crea al inicializar Gdx. */
+    private AudioService audio;
+    private boolean laserWasActive;
+    private int lastMissiles;
+    private float lastHull;
+    private int lastCargoUnits;
+    private boolean alarmWas;
 
     // Joystick (izquierda) y barra de aceleración (derecha), en coordenadas de pantalla.
     private float joyCx, joyCy, joyR;
@@ -462,6 +469,7 @@ public class MyGame implements ApplicationListener {
         session = new GameSession();
         upgrades = session.upgrades();
         world = session.sector;
+        audio = new AudioService(upgrades);
         playHud = new PlayHud(ui, world, session, upgrades, batch, shapes, art, hud);
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
         marketScreen = new MarketScreen(this, ui, batch, shapes, space);
@@ -727,6 +735,7 @@ public class MyGame implements ApplicationListener {
 
     /** El casco llegó a 0: la nave explota y termina la partida. */
     private void triggerDeath() {
+        playSfx(AudioService.Sfx.EXPLOSION);
         finishRun(true, "hull");
     }
 
@@ -852,6 +861,9 @@ public class MyGame implements ApplicationListener {
         btnRetry = stacked(recoveryTest ? "RECUPERAR (DEBUG)" : "NUEVO PERSONAJE",
                 cx, overCy, bw, bh, gap, 0, 2);
         btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
+        boolean muted = audio != null && audio.muted();
+        btnMute = new Button(muted ? "SONIDO OFF" : "SONIDO ON",
+                cx, pauseCy - bh * 1.18f, bw, bh * 0.82f);
 
         joyR = 70f * u;
         joyCx = pad + joyR * 1.06f;
@@ -1090,6 +1102,9 @@ public class MyGame implements ApplicationListener {
             default: handleMenu(); break;
         }
 
+        if (audio != null && state != PLAYING) {
+            audio.setEngine(false);
+        }
         if (state == INTERIOR) {
             drawInterior();
         } else if (state == PLAYING || state == PAUSED || state == OVER
@@ -1205,7 +1220,8 @@ public class MyGame implements ApplicationListener {
                         + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
                         + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
                         + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
-                        + "\"interiorManagement\":%s,\"shipClass\":\"%s\"}",
+                        + "\"interiorManagement\":%s,\"shipClass\":\"%s\","
+                        + "\"audioMuted\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1313,7 +1329,8 @@ public class MyGame implements ApplicationListener {
                 interiorAvatar == null ? 0f : interiorAvatar.x,
                 interiorAvatar == null ? 0f : interiorAvatar.y,
                 interiorManagement,
-                session.upgrades().shipClass().id));
+                session.upgrades().shipClass().id,
+                audio != null && audio.muted()));
     }
 
     void logEvent(String json) {
@@ -1547,6 +1564,7 @@ public class MyGame implements ApplicationListener {
                     stationScreen.enter();
                 }
                 layoutUi();
+                playSfx(AudioService.Sfx.DOCK);
                 saveRun();
                 logEvent("{\"event\":\"dock\",\"station\":\""
                         + (world.dockedAtPlayer
@@ -1582,6 +1600,7 @@ public class MyGame implements ApplicationListener {
         c.thrust = throttle;
         c.fire = keyFire || freeTap;
         session.update(dt, c);
+        updateAudio(dt);
         if (world.pilot.active()) {
             // El piloto ha tomado los controles: la barra muestra su empuje.
             throttle = c.thrust;
@@ -1766,6 +1785,7 @@ public class MyGame implements ApplicationListener {
         }
         world = session.sector;
         playHud.setWorld(world);
+        playSfx(AudioService.Sfx.WARP);
         resetControls();
         saveRun();
         logEvent(String.format(Locale.US,
@@ -1779,6 +1799,15 @@ public class MyGame implements ApplicationListener {
     }
 
     private void handlePause() {
+        if (tapped(btnMute)) {
+            if (audio != null) {
+                audio.toggleMuted();
+            }
+            resetControls();
+            layoutUi();
+            saveRun();
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
             if (world.ship.docked) {
                 state = DOCKED;
@@ -1888,6 +1917,45 @@ public class MyGame implements ApplicationListener {
         layoutUi();
     }
 
+    void playSfx(AudioService.Sfx sfx) {
+        if (audio != null) {
+            audio.play(sfx);
+        }
+    }
+
+    private void updateAudio(float dt) {
+        if (audio == null) {
+            return;
+        }
+        audio.setEngine(world.ship.thrusting && !world.ship.docked);
+        if (world.ship.laser.active && !laserWasActive) {
+            audio.play(AudioService.Sfx.LASER);
+        }
+        laserWasActive = world.ship.laser.active;
+        if (world.missiles.size > lastMissiles) {
+            audio.play(AudioService.Sfx.MISSILE);
+        }
+        lastMissiles = world.missiles.size;
+        if (lastHull <= 0f) {
+            lastHull = world.ship.part[Ship.HULL];
+        } else if (world.ship.part[Ship.HULL] < lastHull - 0.5f) {
+            audio.play(AudioService.Sfx.IMPACT);
+            lastHull = world.ship.part[Ship.HULL];
+        } else {
+            lastHull = world.ship.part[Ship.HULL];
+        }
+        int cargoUnits = world.ship.cargo().totalUnits();
+        if (cargoUnits > lastCargoUnits) {
+            audio.play(AudioService.Sfx.PICKUP);
+        }
+        lastCargoUnits = cargoUnits;
+        boolean alarm = session.pilot.o2AlertLevel() > 0 || canRescue();
+        if (alarm && !alarmWas) {
+            audio.play(AudioService.Sfx.ALARM);
+        }
+        alarmWas = alarm;
+    }
+
     /** Aceptar un contrato de la estación acoplada. */
     boolean acceptMission(String missionId) {
         if (state != DOCKED || world.dockedAtPlayer || world.station == null) {
@@ -1896,6 +1964,7 @@ public class MyGame implements ApplicationListener {
         if (!world.station.missions.accept(missionId)) {
             return false;
         }
+        playSfx(AudioService.Sfx.MODULE);
         saveRun();
         logEvent("{\"event\":\"mission_accept\",\"id\":\""
                 + missionId + "\"}");
@@ -1910,6 +1979,7 @@ public class MyGame implements ApplicationListener {
         int paid = world.station.missions.complete(missionId,
                 world.ship.cargo(), upgrades);
         if (paid > 0) {
+            playSfx(AudioService.Sfx.TRADE);
             saveRun();
             logEvent(String.format(Locale.US,
                     "{\"event\":\"mission_complete\",\"id\":\"%s\","
@@ -1921,6 +1991,7 @@ public class MyGame implements ApplicationListener {
     /** Registro de una transacción de mercado. */
     void logTrade(TradeService.Trade trade) {
         if (trade != null) {
+            playSfx(AudioService.Sfx.TRADE);
             logEvent(trade.toJson());
         }
     }
@@ -1938,6 +2009,7 @@ public class MyGame implements ApplicationListener {
 
     /** DESPEGAR desde la pantalla de estación. */
     void undockFromStation() {
+        playSfx(AudioService.Sfx.DOCK);
         DockingSystem.undock(world);
         resetControls();
         state = PLAYING;
@@ -2167,6 +2239,9 @@ public class MyGame implements ApplicationListener {
 
     @Override
     public void dispose() {
+        if (audio != null) {
+            audio.dispose();
+        }
         if (saves != null) {
             saveRun();
         }
