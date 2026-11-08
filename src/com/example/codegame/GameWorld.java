@@ -383,7 +383,7 @@ class GameWorld {
         }
         ship.update(dt, up, c);
         if (ship.laser.active) {
-            minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor);
+            minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor, ship.cargo);
         } else {
             minedThisFrame = 0;
             ship.capacitor.update(dt, false);
@@ -439,6 +439,10 @@ class GameWorld {
         for (int i = asteroids.size - 1; i >= 0; i--) {
             Asteroid a = asteroids.get(i);
             a.update(dt);
+            if (a.depleted()) {
+                asteroids.removeIndex(i);
+                continue;
+            }
             if (a.pos.dst(ship.pos) > DESPAWN_DIST) {
                 asteroids.removeIndex(i);
             }

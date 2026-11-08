@@ -234,6 +234,14 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - El láser consume energía, no combustible, y se detiene al agotar la roca.
   T-403 conecta la extracción con la bodega.
 
+## Extracción y agotamiento
+
+- Cada roca precalcula sus unidades por mineral con el método de mayor resto.
+- `MiningLaser.tick()` reparte el lote exacto y `CargoHold.addAll()` lo acepta
+  solo si toda la masa cabe; si no, el láser se detiene sin perder reserva.
+- Las rocas agotadas se eliminan del mundo sin explosión ni monedas.
+- Reserva, carga y chunks persisten; una roca agotada no reaparece al cargar.
+
 ## Masa y movimiento
 
 - `MassModel.load()` usa `usado/capacidad` (0–1) y aplica topes.

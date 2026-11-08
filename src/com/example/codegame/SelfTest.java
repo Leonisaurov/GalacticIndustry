@@ -647,12 +647,15 @@ public class SelfTest {
                 Math.abs(leak.estimatedSeconds(o2Session.pilot, leakShip) - 1090.9f) < 5f);
         o2Session.sector.fx.clear();
         o2Session.sector.attachLifeSupport(o2Session.lifeSupport);
+        boolean leakParticles = false;
         for (int i = 0; i < 600; i++) {
             o2Session.sector.asteroids.clear();
             o2Session.update(dt, new Controls());
+            if (o2Session.sector.fx.particleCount() > 0) {
+                leakParticles = true;
+            }
         }
-        check("la fuga emite particulas en el mundo",
-                o2Session.sector.fx.particleCount() > 0);
+        check("la fuga emite particulas en el mundo", leakParticles);
 
         // T-204: asfixia, gracia, salud y estados del piloto.
         Pilot asphyxia = new Pilot();
@@ -1282,6 +1285,60 @@ public class SelfTest {
         }
         check("GameWorld integra el laser",
                 mineTarget.reserve == 9);
+
+        // T-403: extracción a bodega, bodega llena y persistencia.
+        GameSession mineSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        mineSession.startRun();
+        mineSession.sector.immortal = true;
+        mineSession.sector.asteroids.clear();
+        Asteroid cargoRock = new Asteroid(100f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 201L);
+        cargoRock.vel.set(0f, 0f);
+        mineSession.sector.asteroids.add(cargoRock);
+        mineSession.ship().laser.aim(cargoRock);
+        float coinsBeforeMining = mineSession.sector.coinsEarned;
+        for (int i = 0; i < 180; i++) {
+            mineSession.update(dt, new Controls());
+        }
+        check("el mineral entra en la bodega",
+                mineSession.cargo().totalUnits() == 15
+                        && mineSession.cargo().amount(Commodity.HIELO) == 7
+                        && mineSession.cargo().amount(Commodity.SILICATO) == 5
+                        && mineSession.cargo().amount(Commodity.HIERRO) == 2
+                        && mineSession.cargo().amount(Commodity.COBRE) == 1);
+        check("la masa de la carga es correcta",
+                Math.abs(mineSession.cargo().usedMass() - 14.5f) < 0.01f);
+        check("la roca agotada desaparece",
+                cargoRock.depleted()
+                        && !mineSession.sector.asteroids.contains(cargoRock, true));
+        check("minar no da monedas",
+                mineSession.sector.coinsEarned == coinsBeforeMining);
+        GameSession fullMineSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        fullMineSession.startRun();
+        fullMineSession.sector.immortal = true;
+        fullMineSession.sector.asteroids.clear();
+        Asteroid fullRock = new Asteroid(100f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 202L);
+        fullRock.vel.set(0f, 0f);
+        fullMineSession.sector.asteroids.add(fullRock);
+        fullMineSession.cargo().addExact(Commodity.SILICATO, 100);
+        fullMineSession.ship().laser.aim(fullRock);
+        for (int i = 0; i < 60; i++) {
+            fullMineSession.update(dt, new Controls());
+        }
+        check("la bodega llena detiene la extraccion",
+                !fullMineSession.ship().laser.active
+                        && fullRock.reserve == 15
+                        && fullMineSession.cargo().amount(Commodity.SILICATO) == 100);
+        SaveService.MemoryStorage minedStorage = new SaveService.MemoryStorage();
+        SaveService minedService = new SaveService(minedStorage);
+        check("la roca agotada se guarda", minedService.save(mineSession));
+        GameSession minedLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("la roca agotada no reaparece",
+                minedService.load(minedLoaded) == SaveService.LoadStatus.V2
+                        && minedLoaded.sector.asteroids.size == 0
+                        && minedLoaded.cargo().totalUnits() == 15
+                        && Math.abs(minedLoaded.cargo().usedMass() - 14.5f) < 0.01f);
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();

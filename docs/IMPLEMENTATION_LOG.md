@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:07:00-06:00  
+**Última actualización:** 2026-11-08T01:15:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,65 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-031 — Extracción a bodega y agotamiento
+
+- **Fecha:** 2026-11-08T01:15:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-403
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Cada asteroide precalcula su composición exacta por mineral.
+- `MiningLaser` extrae en lotes y los pasa a `CargoHold` respetando masa y
+  capacidad.
+- Si el lote no cabe, el láser se detiene sin perder reserva.
+- Las rocas agotadas desaparecen del mundo sin explosión ni monedas.
+- La reserva, la carga y el mundo persisten; una roca agotada no reaparece.
+- Se corrigió la distribución fraccionaria de la composición y se estabilizó
+  la prueba de partículas de fuga.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Asteroid.java`
+- `src/com/example/codegame/CargoHold.java`
+- `src/com/example/codegame/MiningLaser.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK** (dos ejecuciones).
+- `tools/run-tests.sh --no-build 03_controls 04_autopilot`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS el mineral entra en la bodega`
+- `PASS la masa de la carga es correcta`
+- `PASS la roca agotada desaparece`
+- `PASS minar no da monedas`
+- `PASS la bodega llena detiene la extraccion`
+- `PASS la roca agotada se guarda`
+- `PASS la roca agotada no reaparece`
+- `03_controls` y `04_autopilot` OK.
+
+### Decisiones tomadas
+
+- La composición se precalcula con el método de mayor resto y se consume en
+  orden de mineral, de forma determinista y reconstruible.
+- La extracción es atómica por lote: no se pierde reserva si no cabe en bodega.
+- La recompensa legacy en monedas de `Asteroid` se mantiene hasta T-405; minar
+  no la usa.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-404 — Añadir Autopilot.MINE y selección de objetivo**.
 
 ---
 

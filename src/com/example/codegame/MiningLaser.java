@@ -94,21 +94,39 @@ final class MiningLaser {
 
     /**
      * Extrae hasta {@code dt} segundos del objetivo y consume energía.
-     * Devuelve las UM extraídas; T-403 las moverá a la bodega.
+     * Devuelve las UM extraídas; si se pasa una bodega, el mineral entra en
+     * ella respetando masa y capacidad. T-403 usa esta variante.
      */
     int tick(float dt, Ship ship, EnergyCapacitor capacitor) {
+        return tick(dt, ship, capacitor, null);
+    }
+
+    int tick(float dt, Ship ship, EnergyCapacitor capacitor, CargoHold cargo) {
         if (!canMine(ship, capacitor)) {
             return 0;
         }
         float rate = rate(ship, target);
         partial += rate * dt;
         int units = (int) Math.floor(partial);
-        capacitor.update(dt, true);
         if (units <= 0) {
+            capacitor.update(dt, true);
             return 0;
         }
+        units = Math.min(units, target.reserve);
+        Cargo[] batch = null;
+        if (cargo != null) {
+            batch = target.compositionBatch(units);
+            if (!cargo.canAddAll(batch)) {
+                stop();
+                return 0;
+            }
+        }
         partial -= units;
-        int taken = target.takeReserve(units);
+        int taken = target.commitExtraction(batch, units);
+        if (cargo != null && taken > 0) {
+            cargo.addAll(batch);
+        }
+        capacitor.update(dt, true);
         if (taken < units || target.depleted()) {
             partial = 0f;
             stop();

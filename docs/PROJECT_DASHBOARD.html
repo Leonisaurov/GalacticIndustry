@@ -611,23 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:07:00-06:00",
-    "lastSessionId": "S-030",
+    "lastUpdated": "2026-11-08T01:15:00-06:00",
+    "lastSessionId": "S-031",
     "lastVerification": {
-      "date": "2026-11-08T01:07:00-06:00",
+      "date": "2026-11-08T01:15:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK (2 ejecuciones)",
-        "Capacitor: 3/s minando, 8/s tras 1 s",
-        "Tasas C/S/M: 6/4.8/3 UM/s y tiempos dentro del plan",
-        "El láser requiere objetivo/energía, agota la roca y no consume combustible",
-        "03_controls y 09_wing_damage: OK",
+        "La extracción llena la bodega con masa y composición correctas",
+        "La bodega llena detiene el láser",
+        "La roca agotada desaparece, se guarda y no reaparece",
+        "Minar no da monedas",
+        "03_controls y 04_autopilot: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-403",
+    "nextTaskId": "T-404",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2643,7 +2644,7 @@
       "description": "Transferir mineral a la bodega, detener la extracción al llenarse y agotar la roca.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-402"
@@ -2668,10 +2669,41 @@
         "Test de persistencia de roca"
       ],
       "technicalNotes": "No dar monedas al minar.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-031",
+          "date": "2026-11-08T01:15:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "La extracción se reparte por la composición precalculada de la roca, entra en CargoHold con masa y capacidad, se detiene con bodega llena y elimina rocas agotadas. Sin monedas; el estado persiste.",
+          "files": [
+            "src/com/example/codegame/Asteroid.java",
+            "src/com/example/codegame/CargoHold.java",
+            "src/com/example/codegame/MiningLaser.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de bodega llena",
+            "Test de persistencia de roca",
+            "03_controls",
+            "04_autopilot"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mineral entra en la bodega",
+        "PASS la masa de la carga es correcta",
+        "PASS la roca agotada desaparece",
+        "PASS minar no da monedas",
+        "PASS la bodega llena detiene la extraccion",
+        "PASS la roca agotada se guarda; PASS no reaparece",
+        "03_controls y 04_autopilot OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T01:15:00-06:00"
     },
     {
       "id": "T-404",
@@ -2680,7 +2712,7 @@
       "description": "Permitir que el piloto automático se aproxime a una roca y mantenga la minería sin disparar.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-403"
@@ -5398,6 +5430,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-031",
+      "date": "2026-11-08T01:15:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Extracción a bodega y agotamiento",
+      "summary": "La composición se precalcula por roca y se extrae en lotes exactos hacia CargoHold; la bodega llena detiene el láser y las rocas agotadas desaparecen sin monedas ni reaparición. Estado persistente.",
+      "tasks": [
+        "T-403"
+      ],
+      "files": [
+        "src/com/example/codegame/Asteroid.java",
+        "src/com/example/codegame/CargoHold.java",
+        "src/com/example/codegame/MiningLaser.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de bodega llena",
+        "Test de persistencia de roca",
+        "tools/run-tests.sh --no-build 03_controls 04_autopilot"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-404 (Autopilot.MINE y selección de objetivo)."
+    },
     {
       "id": "S-030",
       "date": "2026-11-08T01:07:00-06:00",

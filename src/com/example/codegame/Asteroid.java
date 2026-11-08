@@ -29,6 +29,8 @@ class Asteroid {
     int hp;
     int reserve;
     final int maxReserve;
+    /** Unidades de cada mineral que quedan en la roca. */
+    final int[] mineralUnits;
     float flash;
 
     private float rot;
@@ -61,6 +63,8 @@ class Asteroid {
         int rolledReserve = reserve >= 0 ? reserve : this.type.rollReserve(random);
         this.maxReserve = Math.max(rolledReserve, maxReserve);
         this.reserve = Math.min(rolledReserve, this.maxReserve);
+        mineralUnits = new int[this.type.minerals.length];
+        rebuildComposition();
         vel.set(random.nextFloat() * 2f - 1f, random.nextFloat() * 2f - 1f)
                 .nor().scl(15f + random.nextFloat() * 65f);
         spin = -60f + random.nextFloat() * 120f;
@@ -97,13 +101,89 @@ class Asteroid {
 
     /** Extrae hasta {@code amount} UM de reserva y devuelve lo extraído. */
     int takeReserve(int amount) {
-        int taken = Math.min(reserve, Math.max(0, amount));
-        reserve -= taken;
-        return taken;
+        int requested = Math.min(reserve, Math.max(0, amount));
+        if (requested <= 0) {
+            return 0;
+        }
+        Cargo[] batch = compositionBatch(requested);
+        return commitExtraction(batch, requested);
     }
 
     boolean depleted() {
         return reserve <= 0;
+    }
+
+    /**
+     * Reparte {@code units} UM tomando de la composición precalculada de la
+     * roca. No modifica la reserva; el llamador confirma con
+     * {@link #commitExtraction(Cargo[], int)}.
+     */
+    Cargo[] compositionBatch(int units) {
+        int requested = Math.min(Math.max(0, units), reserve);
+        Cargo[] batch = new Cargo[type.minerals.length];
+        int left = requested;
+        for (int i = 0; i < type.minerals.length; i++) {
+            int amount = Math.min(left, mineralUnits[i]);
+            batch[i] = new Cargo(type.minerals[i], amount);
+            left -= amount;
+        }
+        return batch;
+    }
+
+    /** Confirma una extracción ya repartida. */
+    int commitExtraction(Cargo[] batch, int units) {
+        int committed = Math.min(Math.max(0, units), reserve);
+        if (batch != null) {
+            for (int i = 0; i < mineralUnits.length && i < batch.length; i++) {
+                mineralUnits[i] = Math.max(0, mineralUnits[i] - batch[i].amount);
+            }
+        }
+        reserve -= committed;
+        return committed;
+    }
+
+    /**
+     * Recalcula la composición pendiente a partir de la reserva extraída.
+     * La extracción se consume en orden de mineral, así que el estado se puede
+     * reconstruir desde {@code maxReserve - reserve} sin guardar el array.
+     */
+    private void rebuildComposition() {
+        int[] full = new int[type.minerals.length];
+        int assigned = 0;
+        float[] remainders = new float[type.minerals.length];
+        for (int i = 0; i < type.minerals.length; i++) {
+            float exact = maxReserve * type.fractions[i];
+            int base = (int) Math.floor(exact + 0.0001f);
+            full[i] = base;
+            remainders[i] = exact - base;
+            assigned += base;
+        }
+        int left = maxReserve - assigned;
+        boolean[] used = new boolean[type.minerals.length];
+        while (left > 0) {
+            int pick = -1;
+            float best = -1f;
+            for (int i = 0; i < remainders.length; i++) {
+                if (!used[i] && remainders[i] > best) {
+                    best = remainders[i];
+                    pick = i;
+                }
+            }
+            if (pick < 0) {
+                used = new boolean[type.minerals.length];
+                continue;
+            }
+            full[pick]++;
+            used[pick] = true;
+            left--;
+        }
+        int mined = Math.max(0, maxReserve - reserve);
+        for (int i = 0; i < mineralUnits.length; i++) {
+            int take = Math.min(mined, full[i]);
+            full[i] -= take;
+            mined -= take;
+            mineralUnits[i] = full[i];
+        }
     }
 
     void update(float dt) {

@@ -113,6 +113,33 @@ class CargoHold {
         return true;
     }
 
+    /** Indica si todas las entradas de un lote caben juntas. */
+    boolean canAddAll(Cargo[] batch) {
+        if (batch == null) {
+            return true;
+        }
+        float needed = 0f;
+        for (Cargo cargo : batch) {
+            if (cargo != null && cargo.amount > 0) {
+                needed += cargo.mass();
+            }
+        }
+        return needed <= freeMass() + EPSILON;
+    }
+
+    /** Añade un lote completo o no modifica nada. */
+    boolean addAll(Cargo[] batch) {
+        if (!canAddAll(batch)) {
+            return false;
+        }
+        for (Cargo cargo : batch) {
+            if (cargo != null && cargo.amount > 0) {
+                items.put(cargo.commodity, amount(cargo.commodity) + cargo.amount);
+            }
+        }
+        return true;
+    }
+
     /** Quita hasta la cantidad disponible y devuelve lo retirado. */
     int remove(Commodity commodity, int amount) {
         if (commodity == null || amount <= 0) {

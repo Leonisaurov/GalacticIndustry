@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:07:00-06:00  
+**Última actualización:** 2026-11-08T01:15:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -35,4 +35,4 @@ Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
 - `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
 - `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
 
-Las Etapas 1, 2 y 3 están completadas. La siguiente tarea de implementación es **T-403 — Integrar extracción, bodega y agotamiento** (Etapa 4).
+Las Etapas 1, 2 y 3 están completadas. La siguiente tarea de implementación es **T-404 — Añadir Autopilot.MINE y selección de objetivo** (Etapa 4).
