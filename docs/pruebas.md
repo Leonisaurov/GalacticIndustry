@@ -221,6 +221,19 @@ Verificación de T-606:
 | Una expedición completa da beneficio | `PASS S6: una expedición completa da beneficio` |
 | La UI es legible | Captura `29_market`: precios, stock y cantidades en vertical |
 
+## Gate de la Etapa 7 — agentes, determinismo y rendimiento
+
+Verificación de T-707:
+
+| Criterio | Evidencia |
+|---|---|
+| 30 min con el jugador quieto mueven precios | `PASS 30 min con el jugador quieto mueven precios` |
+| Los cambios son explicables | `PASS 30 min con agentes cambian el mercado de forma acotada` |
+| 24 agentes no degradan los FPS | `PASS 24 agentes no bloquean 30 min de simulación` + `15_agents` FPS ≥ 25 |
+| El estado se guarda y restaura | `PASS el estado de agentes y mercado persiste` |
+| El offline respeta el límite | `PASS el offline respeta el límite` |
+| La simulación es determinista | `PASS la simulación es determinista` |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

@@ -29,8 +29,10 @@ for _ in $(seq 1 60); do
     sleep 0.5
 done
 assert_ge "el agente gana créditos vendiendo" 201 "$credits"
+fps=$(latest_status | json_get fps)
+assert_ge "fps con agentes y tráfico" 25 "$fps"
 shot "$OUT" 30_traffic
 validate_shot "$OUT/30_traffic.png"
 
 check_no_crash
-echo "OK 15_agents: 8 mineros, ciclo, venta y 3 naves de tráfico"
+echo "OK 15_agents: 8 mineros, ciclo, venta, 3 naves y fps estable"

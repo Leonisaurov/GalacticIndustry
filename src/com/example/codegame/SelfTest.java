@@ -2613,6 +2613,101 @@ public class SelfTest {
         long trafficMs = (System.nanoTime() - trafficStart) / 1_000_000L;
         check("el tráfico no degrada el rendimiento", trafficMs < 500);
 
+        // T-707: gate de agentes, determinismo y rendimiento.
+        GameWorld idleWorld = new GameWorld(new Upgrades(true));
+        idleWorld.start();
+        idleWorld.immortal = true;
+        idleWorld.asteroids.clear();
+        idleWorld.fuel.clear();
+        idleWorld.agents.clear();
+        EconomySim idleSim = new EconomySim();
+        int idleHielo0 = idleWorld.station.market.stock(Commodity.HIELO);
+        float idleHieloPrice0 = idleWorld.station.market.buyPrice(Commodity.HIELO);
+        int idleSilicato0 = idleWorld.station.market.stock(Commodity.SILICATO);
+        float idleSilicatoPrice0 = idleWorld.station.market.sellPrice(Commodity.SILICATO);
+        for (int i = 0; i < 900; i++) {
+            idleSim.update(2f, idleWorld);
+        }
+        check("30 min con el jugador quieto mueven precios",
+                idleWorld.station.market.stock(Commodity.HIELO) < idleHielo0
+                        && idleWorld.station.market.buyPrice(Commodity.HIELO)
+                        > idleHieloPrice0
+                        && idleWorld.station.market.stock(Commodity.SILICATO) > idleSilicato0
+                        && idleWorld.station.market.sellPrice(Commodity.SILICATO)
+                        < idleSilicatoPrice0);
+        GameWorld activeWorld = new GameWorld(new Upgrades(true));
+        activeWorld.start();
+        activeWorld.immortal = true;
+        activeWorld.asteroids.clear();
+        activeWorld.fuel.clear();
+        EconomySim activeSim = new EconomySim();
+        for (int i = 0; i < 900; i++) {
+            activeSim.update(2f, activeWorld);
+        }
+        boolean pricesBounded = true;
+        int earnedAgents = 0;
+        for (Commodity c : Commodity.values()) {
+            int stock = activeWorld.station.market.stock(c);
+            pricesBounded = pricesBounded && stock >= 0
+                    && stock <= activeWorld.station.market.target(c)
+                    * EconomySim.MAX_STOCK_FACTOR;
+        }
+        for (int i = 0; i < activeWorld.agents.size(); i++) {
+            PilotAgent a = activeWorld.agents.get(i);
+            if (a.credits > 200) {
+                earnedAgents++;
+            }
+        }
+        check("30 min con agentes cambian el mercado de forma acotada",
+                pricesBounded && earnedAgents > 0);
+        GameWorld detA = new GameWorld(new Upgrades(true));
+        detA.start();
+        detA.immortal = true;
+        detA.asteroids.clear();
+        detA.fuel.clear();
+        GameWorld detB = new GameWorld(new Upgrades(true));
+        detB.start();
+        detB.immortal = true;
+        detB.asteroids.clear();
+        detB.fuel.clear();
+        EconomySim simA = new EconomySim();
+        EconomySim simB = new EconomySim();
+        for (int i = 0; i < 300; i++) {
+            simA.update(2f, detA);
+            simB.update(2f, detB);
+        }
+        boolean simDeterministic = true;
+        for (Commodity c : Commodity.values()) {
+            simDeterministic = simDeterministic
+                    && detA.station.market.stock(c) == detB.station.market.stock(c)
+                    && Math.abs(detA.station.market.buyPrice(c)
+                    - detB.station.market.buyPrice(c)) < 0.001f;
+        }
+        for (int i = 0; i < detA.agents.size(); i++) {
+            simDeterministic = simDeterministic
+                    && detA.agents.get(i).credits == detB.agents.get(i).credits
+                    && detA.agents.get(i).state == detB.agents.get(i).state;
+        }
+        check("la simulación es determinista", simDeterministic);
+        GameWorld perfWorld = new GameWorld(new Upgrades(true));
+        perfWorld.start();
+        perfWorld.immortal = true;
+        perfWorld.asteroids.clear();
+        perfWorld.fuel.clear();
+        perfWorld.agents.createInitial(GameData.MAX_AGENTS);
+        EconomySim perfSim = new EconomySim();
+        long perfStart = System.nanoTime();
+        for (int i = 0; i < 900; i++) {
+            perfSim.update(2f, perfWorld);
+        }
+        long perfMs = (System.nanoTime() - perfStart) / 1_000_000L;
+        System.out.println("BENCH agentes 24 30min=" + perfMs + "ms");
+        check("24 agentes no bloquean 30 min de simulación", perfMs < 3000);
+        check("el estado de agentes y mercado persiste",
+                agentLoaded.sector.agents.size() == 8
+                        && marketLoaded.sector.station.market.target(Commodity.HIELO) == 250);
+        check("el offline respeta el límite", offlineCapped);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

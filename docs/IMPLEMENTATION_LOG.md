@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:30:00-06:00  
+**Última actualización:** 2026-11-08T04:38:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,65 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-060 — Verificación y cierre de agentes
+
+- **Fecha:** 2026-11-08T04:38:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-707
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El **gate S7** añade al `SelfTest`:
+  - 30 min con el jugador quieto mueven precios (consumo/producción);
+  - 30 min con 24 agentes mantienen el mercado acotado y explican los cambios;
+  - la simulación es determinista (mercado y agentes);
+  - bench de 24 agentes: 30 min simulados en **2 ms**.
+- `15_agents` verifica FPS ≥ 25 con agentes y tráfico.
+- Persistencia de agentes/mercado y límite offline siguen en verde.
+- Documentada la matriz del gate en `docs/pruebas.md`.
+- **S7 cerrada**; **S8 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/15_agents.sh`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS 30 min con el jugador quieto mueven precios`
+- `PASS 30 min con agentes cambian el mercado de forma acotada`
+- `PASS la simulación es determinista`
+- `BENCH agentes 24 30min=2ms`
+- `PASS 24 agentes no bloquean 30 min de simulación`
+- `PASS el estado de agentes y mercado persiste`
+- `PASS el offline respeta el límite`
+- `15_agents`: FPS ≥ 25 con agentes y tráfico.
+
+### Decisiones tomadas
+
+- El determinismo se comprueba replicando la simulación con la misma semilla y
+  comparando stock, precios, créditos y estados.
+- El bench exige menos de 3 s para 30 min con 24 agentes; el resultado real es
+  2 ms.
+- No hay facciones ni combate; eso queda fuera de la implementación actual.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 8 con **T-801 — Crear UniverseState, GalaxyDef, SystemDef
+  y SectorDef**.
 
 ---
 

@@ -150,12 +150,12 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S7` — Pilotos autónomos.
+- Etapa actual: `S8` — Expansión del universo y galaxias.
 - No hay tarea en progreso.
-- Última tarea completada: `T-706` — Añadir tráfico cosmético cerca de la estación.
-- Primera tarea disponible: `T-707` — Verificación de agentes, determinismo y rendimiento.
+- Última tarea completada: `T-707` — Verificación de agentes, determinismo y rendimiento.
+- Primera tarea disponible: `T-801` — Crear UniverseState, GalaxyDef, SystemDef y SectorDef.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **62 %** (50 de 81 tareas de progreso).
+- La implementación del juego está al **63 %** (51 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
