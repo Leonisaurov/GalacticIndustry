@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T09:16:00-06:00  
+**Última actualización:** 2026-11-08T09:36:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,62 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-079 — InteriorRenderer y cámara
+
+- **Fecha:** 2026-11-08T09:36:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1003
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `InteriorRenderer` dibuja el interior cenital con formas:
+  - salas, paredes y pasillos de puertas;
+  - interactuables pulsantes;
+  - avatar con sombra y dirección.
+- Etiquetas con el `BitmapFont` existente; **sin objetos por frame**.
+- Cámara sigue al avatar (zoom 1,1) con `ExtendViewport`.
+- HUD de interior con instrucciones de movimiento y salida.
+- `interior_test` permite revisar el render; captura `36_interior`.
+- FPS del interior ≥ 25.
+
+### Archivos modificados
+
+- `src/com/example/codegame/InteriorRenderer.java` (nuevo)
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/18_interiors.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 18_interiors`: **OK**.
+
+### Evidencias
+
+- Render de salas, puertas e interactuables.
+- Cámara centrada en el avatar.
+- Captura `36_interior`.
+- FPS interior ≥ 25.
+
+### Decisiones tomadas
+
+- El render usa solo formas y la fuente existente.
+- La cámara no hace zoom dinámico todavía.
+- La interacción por proximidad llega en T-1004.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1004 — Implementar interacción con módulos**.
 
 ---
 

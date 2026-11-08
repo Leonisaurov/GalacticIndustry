@@ -30,6 +30,7 @@ public class MyGame implements ApplicationListener {
     static final int DOCKED = 6;
     static final int MARKET = 7;
     static final int MAP = 8;
+    static final int INTERIOR = 9;
 
     private static final float MIN_W = 480f;
     private static final float MIN_H = 800f;
@@ -54,6 +55,7 @@ public class MyGame implements ApplicationListener {
     private MarketScreen marketScreen;
     private MapScreen mapScreen;
     private StationManagementScreen managementScreen;
+    private InteriorRenderer interiorRenderer;
     /** Interior activo y avatar; la entrada/render llegan en T-1003/T-1005. */
     private InteriorScene interiorScene;
     private Avatar interiorAvatar;
@@ -122,6 +124,8 @@ public class MyGame implements ApplicationListener {
     private final boolean baseTest;
     /** Arranca con base y módulos ya construidos para probar servicios. */
     private final boolean moduleTest;
+    /** Arranca dentro del interior con el avatar. */
+    private final boolean interiorTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -367,6 +371,22 @@ public class MyGame implements ApplicationListener {
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest, boolean boundsTest, boolean warpTest,
                   boolean baseTest, boolean moduleTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, boundsTest, warpTest, baseTest, moduleTest, false);
+    }
+
+    /**
+     * @param interiorTest arranca dentro del interior con el avatar.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest, boolean warpTest,
+                  boolean baseTest, boolean moduleTest, boolean interiorTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -387,11 +407,13 @@ public class MyGame implements ApplicationListener {
         this.warpTest = warpTest;
         this.baseTest = baseTest;
         this.moduleTest = moduleTest;
+        this.interiorTest = interiorTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
                 || dockingTest || stationServiceTest || rescueTest || marketTest
-                || boundsTest || warpTest || baseTest || moduleTest;
+                || boundsTest || warpTest || baseTest || moduleTest
+                || interiorTest;
     }
 
     @Override
@@ -422,6 +444,7 @@ public class MyGame implements ApplicationListener {
         marketScreen = new MarketScreen(this, ui, batch, shapes, space);
         mapScreen = new MapScreen(this, ui, batch, shapes, space);
         managementScreen = new StationManagementScreen(this, ui, batch, shapes, space);
+        interiorRenderer = new InteriorRenderer(shapes, batch, font);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
         saves = new SaveService(
@@ -640,6 +663,30 @@ public class MyGame implements ApplicationListener {
                     world.ship.cargo());
             session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
                     world.ship.cargo());
+        } else if (interiorTest) {
+            session.startRun();
+            session.playerStation.restore(false, 0f, 0f, null);
+            runActive = true;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(-1500f, 0f);
+            world.ship.vel.set(0f, 0f);
+            world.ship.cargo().setCapacity(300f);
+            upgrades.setCoins(1000);
+            world.ship.cargo().addExact(Commodity.HIERRO, 30);
+            world.ship.cargo().addExact(Commodity.COBRE, 15);
+            world.ship.cargo().addExact(Commodity.SILICATO, 25);
+            ConstructionService.buildCore(session, -1500f, 0f);
+            upgrades.setCoins(2000);
+            world.ship.cargo().addExact(Commodity.HIERRO, 40);
+            world.ship.cargo().addExact(Commodity.COBRE, 20);
+            world.ship.cargo().addExact(Commodity.SILICATO, 30);
+            session.playerStation.build(0, ModuleDef.STORAGE, upgrades,
+                    world.ship.cargo());
+            session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
+                    world.ship.cargo());
+            bindInterior(session.playerStation.buildInterior());
+            state = INTERIOR;
         }
     }
 
@@ -988,12 +1035,16 @@ public class MyGame implements ApplicationListener {
                 break;
             case MARKET: marketScreen.handle(); break;
             case MAP: mapScreen.handle(); break;
+            case INTERIOR: updateInterior(dt); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
         }
 
-        if (state == PLAYING || state == PAUSED || state == OVER || state == DYING) {
+        if (state == INTERIOR) {
+            drawInterior();
+        } else if (state == PLAYING || state == PAUSED || state == OVER
+                || state == DYING) {
             drawWorld();
         }
         drawHud();
@@ -1009,6 +1060,7 @@ public class MyGame implements ApplicationListener {
             case DOCKED: return "DOCKED";
             case MARKET: return "MARKET";
             case MAP: return "MAP";
+            case INTERIOR: return "INTERIOR";
             case OVER: return "OVER";
             case DYING: return "DYING";
             default: return "MENU";
@@ -1102,7 +1154,8 @@ public class MyGame implements ApplicationListener {
                         + "\"baseSlot\":%d,\"baseModule0Level\":%d,"
                         + "\"baseMessage\":\"%s\",\"interiorKind\":\"%s\","
                         + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
-                        + "\"interiorInteractables\":%d}",
+                        + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
+                        + "\"avatarX\":%.1f,\"avatarY\":%.1f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1205,7 +1258,10 @@ public class MyGame implements ApplicationListener {
                 session.playerStation.buildInterior().kind.name(),
                 session.playerStation.buildInterior().roomCount(),
                 session.playerStation.buildInterior().doorCount(),
-                session.playerStation.buildInterior().interactableCount()));
+                session.playerStation.buildInterior().interactableCount(),
+                interiorAvatar == null ? "" : interiorAvatar.roomId,
+                interiorAvatar == null ? 0f : interiorAvatar.x,
+                interiorAvatar == null ? 0f : interiorAvatar.y));
     }
 
     void logEvent(String json) {
@@ -1791,6 +1847,53 @@ public class MyGame implements ApplicationListener {
     public void resume() {
     }
 
+    private void updateInterior(float dt) {
+        if (interiorAvatar == null) {
+            closeInterior();
+            return;
+        }
+        float mx = (Gdx.input.isKeyPressed(Input.Keys.LEFT) ? -1f : 0f)
+                + (Gdx.input.isKeyPressed(Input.Keys.RIGHT) ? 1f : 0f);
+        float my = (Gdx.input.isKeyPressed(Input.Keys.DOWN) ? -1f : 0f)
+                + (Gdx.input.isKeyPressed(Input.Keys.UP) ? 1f : 0f);
+        if (joyAiming || joyPointer >= 0) {
+            mx += knobX / Math.max(1f, joyR);
+            my += knobY / Math.max(1f, joyR);
+        }
+        interiorInput.set(mx, my);
+        interiorAvatar.update(dt, interiorInput, interiorScene);
+        interiorInput.reset();
+    }
+
+    private void closeInterior() {
+        interiorScene = null;
+        interiorAvatar = null;
+        state = PLAYING;
+        layoutUi();
+    }
+
+    private void drawInterior() {
+        float cx = interiorAvatar == null ? 0f : interiorAvatar.x;
+        float cy = interiorAvatar == null ? 0f : interiorAvatar.y;
+        worldCam.zoom = 1.1f;
+        worldCam.position.set(cx, cy, 0f);
+        worldCam.update();
+        worldView.apply();
+        float ww = worldView.getWorldWidth() * worldCam.zoom;
+        float wh = worldView.getWorldHeight() * worldCam.zoom;
+        shapes.setProjectionMatrix(worldCam.combined);
+        batch.setProjectionMatrix(worldCam.combined);
+        beginShapes();
+        shapes.setColor(0.020f, 0.030f, 0.060f, 1f);
+        shapes.rect(cx - ww * 0.5f, cy - wh * 0.5f, ww, wh);
+        interiorRenderer.draw(interiorScene, interiorAvatar, time);
+        shapes.end();
+        batch.begin();
+        Visuals.normal(batch);
+        interiorRenderer.drawLabels(interiorScene, interiorAvatar);
+        batch.end();
+    }
+
     // ---------- dibujo: mundo ----------
 
     /** Deja el estado de mezcla normal y arranca ShapeRenderer. */
@@ -1866,6 +1969,15 @@ public class MyGame implements ApplicationListener {
             marketScreen.draw(w, h);
         } else if (state == MAP) {
             mapScreen.draw(w, h);
+        } else if (state == INTERIOR) {
+            batch.begin();
+            ui.textCentered("INTERIOR DE LA ESTACION",
+                    w * 0.5f, h - 40f * u, 0.95f * u, Visuals.ACCENT);
+            ui.textCentered("MUEVETE CON EL JOYSTICK O LAS FLECHAS",
+                    w * 0.5f, h - 68f * u, 0.70f * u, Visuals.TEXT_DIM);
+            ui.textCentered("ACERCATE A LA SALIDA PARA VOLVER",
+                    w * 0.5f, 42f * u, 0.65f * u, Visuals.TEXT_OFF);
+            batch.end();
         } else {
             hud.state = state;
             hud.runActive = runActive;

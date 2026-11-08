@@ -4,23 +4,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T09:16:00-06:00",
-    "lastSessionId": "S-078",
+    "lastUpdated": "2026-11-08T09:36:00-06:00",
+    "lastSessionId": "S-079",
     "lastVerification": {
-      "date": "2026-11-08T09:16:00-06:00",
+      "date": "2026-11-08T09:36:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Avatar se mueve sin gravedad ni combate",
-        "Las paredes bloquean y deslizan; solo se cruza por puertas",
-        "Se alcanza la salida y se puede volver a la nave",
-        "El avatar tambien camina en una nave",
+        "InteriorRenderer dibuja salas, puertas, interactuables y avatar",
+        "Camara sigue al avatar y el HUD muestra instrucciones",
+        "18_interiors: captura 36_interior y FPS >= 25",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S10",
     "currentTaskId": null,
-    "nextTaskId": "T-1003",
+    "nextTaskId": "T-1004",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4964,7 +4963,7 @@
       "description": "Dibujar el interior cenital con ShapeRenderer y cámara estable.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -4988,10 +4987,36 @@
         "Revisión de FPS"
       ],
       "technicalNotes": "Mantener el orden shapes → aditivo → texto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-079",
+          "date": "2026-11-08T09:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "InteriorRenderer cenital con salas, paredes, puertas, interactuables y avatar; etiquetas con BitmapFont y sin objetos por frame. Camara sigue al avatar (zoom 1.1) y HUD de instrucciones. interior_test y captura 36_interior.",
+          "files": [
+            "src/com/example/codegame/InteriorRenderer.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors visual",
+            "Revisión de FPS"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Render de salas, puertas e interactuables",
+        "Camara centrada en el avatar",
+        "Captura 36_interior",
+        "FPS interior >= 25"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:36:00-06:00"
     },
     {
       "id": "T-1004",
@@ -5000,7 +5025,7 @@
       "description": "Permitir abrir almacén, reparación, refinería y mercado desde el interior.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -6325,6 +6350,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-079",
+      "date": "2026-11-08T09:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "InteriorRenderer y cámara",
+      "summary": "Render cenital del interior con formas, etiquetas sin asignaciones, cámara sobre el avatar y HUD de instrucciones. Prueba visual 36_interior.",
+      "tasks": [
+        "T-1003"
+      ],
+      "files": [
+        "src/com/example/codegame/InteriorRenderer.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 18_interiors",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1004 (interaccion con modulos)."
+    },
     {
       "id": "S-078",
       "date": "2026-11-08T09:16:00-06:00",

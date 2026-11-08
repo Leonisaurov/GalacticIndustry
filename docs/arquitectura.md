@@ -386,6 +386,19 @@ estáticos se reutilizan.
 - `MyGame` guarda el interior/avatar y expone `moveInterior()` para que la UI de
   T-1003/T-1005 la use.
 
+## Render de interiores (T-1003)
+
+- `InteriorRenderer` dibuja el interior cenital con `ShapeRenderer`:
+  - suelo y paredes por sala;
+  - puertas como anillos;
+  - interactuables con pulso;
+  - avatar con sombra y dirección.
+- Las etiquetas usan el `BitmapFont` existente; no se crean objetos por frame.
+- La cámara sigue al avatar con zoom 1,1 y `ExtendViewport`.
+- El HUD del interior solo muestra instrucciones; la gestión sigue en su
+  pantalla y la entrada/salida formal llega en T-1005.
+- `interior_test` permite revisar el render y medir FPS (captura `36_interior`).
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),
