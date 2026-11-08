@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:08:00-06:00",
-    "lastSessionId": "S-047",
+    "lastUpdated": "2026-11-08T03:12:00-06:00",
+    "lastSessionId": "S-048",
     "lastVerification": {
-      "date": "2026-11-08T03:08:00-06:00",
+      "date": "2026-11-08T03:12:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Gate S5: acople/despegue, descarga/venta, combustible/O2, reparación y mejoras",
-        "Rescate evita el softlock; economía fuera de la pausa",
-        "Persistencia de almacén y acople verificada",
-        "13_station, 02_navigation, 03_controls y 09_wing_damage: OK",
+        "PriceModel: factor con límites 0,5–2,0 y spread 8 %",
+        "Market: stock/objetivo por mineral y datos configurables",
+        "Cada estación tiene su mercado; stock inicial 80 % del objetivo",
+        "14_market: hierro 120/150 y oro 32/40 con compra > venta",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S6",
     "currentTaskId": null,
-    "nextTaskId": "T-601",
+    "nextTaskId": "T-602",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3044,7 +3044,7 @@
       "description": "Implementar stock, target, precio base, spread y límites por estación y mineral.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-503"
@@ -3069,10 +3069,43 @@
         "Test de precios"
       ],
       "technicalNotes": "No añadir todavía producción/consumo complejos ni NPC.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-048",
+          "date": "2026-11-08T03:12:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Market y PriceModel: stock/objetivo por mineral, factor con límites, spread configurable y precios de compra/venta. GameData define objetivos iniciales y la estación crea su mercado; telemetría y 14_market verifican los valores.",
+          "files": [
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/PriceModel.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/tests/14_market.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de precios"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el factor de precio depende del stock",
+        "PASS el precio medio usa el factor",
+        "PASS el spread separa compra y venta",
+        "PASS los precios tienen limites",
+        "PASS cada mineral tiene stock y objetivo",
+        "PASS compra por encima del medio y venta por debajo",
+        "PASS el spread es configurable",
+        "PASS la estación tiene mercado",
+        "14_market: hierro 120/150 y oro 32/40"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:12:00-06:00"
     },
     {
       "id": "T-602",
@@ -3081,7 +3114,7 @@
       "description": "Permitir comprar y vender con validación de créditos, capacidad y stock.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -5366,6 +5399,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-048",
+      "date": "2026-11-08T03:12:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Mercado y modelo de precios",
+      "summary": "Market por estación con stock/objetivo y PriceModel con factor limitado y spread configurable. Objetivos iniciales en GameData, telemetría y prueba 14_market.",
+      "tasks": [
+        "T-601"
+      ],
+      "files": [
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/PriceModel.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/tests/14_market.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-602 (TradeService y transacciones)."
+    },
     {
       "id": "S-047",
       "date": "2026-11-08T03:08:00-06:00",

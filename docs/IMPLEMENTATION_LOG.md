@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:08:00-06:00  
+**Última actualización:** 2026-11-08T03:12:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-048 — Mercado y modelo de precios
+
+- **Fecha:** 2026-11-08T03:12:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-601
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `PriceModel`: factor `clamp(sqrt(objetivo/stock), 0,5, 2,0)`, precio medio,
+  compra y venta con spread.
+- `Market`: stock y objetivo por mineral, spread configurable, `addStock()`
+  sin bajar de cero.
+- `GameData` define los objetivos iniciales y la estación crea su mercado.
+- Stock inicial al **80 %** del objetivo.
+- Telemetría de mercado y prueba `14_market`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Market.java` (nuevo)
+- `src/com/example/codegame/PriceModel.java` (nuevo)
+- `src/com/example/codegame/Station.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/SelfTest.java`
+- `src/com/example/codegame/MyGame.java`
+- `tools/tests/14_market.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 14_market`: **OK**.
+
+### Evidencias
+
+- `PASS el factor de precio depende del stock`
+- `PASS el precio medio usa el factor`
+- `PASS el spread separa compra y venta`
+- `PASS los precios tienen limites`
+- `PASS cada mineral tiene stock y objetivo`
+- `PASS compra por encima del medio y venta por debajo`
+- `PASS el spread es configurable`
+- `PASS la estación tiene mercado`
+- `14_market`: hierro 120/150 y oro 32/40; compra > venta.
+
+### Decisiones tomadas
+
+- El mercado es por estación; no hay mercado global.
+- El spread se configura por mercado (8 % por defecto).
+- No hay producción/consumo ni NPC todavía; stock y precios son datos.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-602 — Implementar TradeService y transacciones del jugador**.
 
 ---
 

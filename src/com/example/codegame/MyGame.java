@@ -862,7 +862,10 @@ public class MyGame implements ApplicationListener {
                         + "\"stationStorageMass\":%.1f,\"stationStorageUnits\":%d,"
                         + "\"motorLevel\":%d,"
                         + "\"rescueActive\":%s,\"rescueSeconds\":%.1f,"
-                        + "\"canRescue\":%s}",
+                        + "\"canRescue\":%s,"
+                        + "\"marketIronStock\":%d,\"marketIronTarget\":%d,"
+                        + "\"marketIronBuy\":%.2f,\"marketIronSell\":%.2f,"
+                        + "\"marketOroStock\":%d,\"marketOroTarget\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -904,7 +907,13 @@ public class MyGame implements ApplicationListener {
                 world.station.storage.usedMass(),
                 world.station.storage.totalUnits(),
                 upgrades.level(Upgrades.MOTOR),
-                rescue.active(), rescue.remaining(), canRescue()));
+                rescue.active(), rescue.remaining(), canRescue(),
+                world.station.market.stock(Commodity.HIERRO),
+                world.station.market.target(Commodity.HIERRO),
+                world.station.market.buyPrice(Commodity.HIERRO),
+                world.station.market.sellPrice(Commodity.HIERRO),
+                world.station.market.stock(Commodity.ORO),
+                world.station.market.target(Commodity.ORO)));
     }
 
     void logEvent(String json) {

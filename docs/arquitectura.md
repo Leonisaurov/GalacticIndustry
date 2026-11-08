@@ -358,6 +358,20 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   verde-cian distintos del láser.
 - Telemetría: `tractorActive`, `tractorTargets` y `tractorLevel`.
 
+## Mercado y precios
+
+- Cada `Station` tiene un `Market` con stock y objetivo por mineral.
+- `PriceModel` aplica:
+  - `factor = clamp(sqrt(objetivo / max(stock,1)), 0,5, 2,0)`;
+  - `venta = base · factor · (1 − spread)`;
+  - `compra = base · factor · (1 + spread)`.
+- Spread inicial del **8 %**; configurable por mercado con `setSpread`.
+- Objetivos iniciales: Hielo/Silicato 200, Hierro 150, Cobre 100, Titanio 60
+  y Oro 40. El stock arranca al 80 % del objetivo.
+- `addStock()` mueve el stock sin bajar de cero. Las transacciones del jugador
+  y la reacción de precios llegan en T-602.
+- No hay producción/consumo ni NPC todavía (T-604/T-7xx).
+
 ## Venta en estación
 
 - Destruir o minar no concede monedas; el valor está en el mineral de la bodega.

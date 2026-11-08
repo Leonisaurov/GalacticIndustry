@@ -15,6 +15,28 @@ final class GameData {
     static final StationDef MOTHERSHIP = new StationDef(
             "NODRIZA", 200f, 260f, 480f, true, true, true, true, true, true);
 
+    /** Objetivos de stock del mercado inicial. */
+    static final int MARKET_HIELO = 200;
+    static final int MARKET_SILICATO = 200;
+    static final int MARKET_HIERRO = 150;
+    static final int MARKET_COBRE = 100;
+    static final int MARKET_TITANIO = 60;
+    static final int MARKET_ORO = 40;
+    /** El stock inicial arranca al 80 % del objetivo. */
+    static final float MARKET_INITIAL = 0.8f;
+
+    static Market newMarket() {
+        java.util.EnumMap<Commodity, Integer> targets =
+                new java.util.EnumMap<>(Commodity.class);
+        targets.put(Commodity.HIELO, MARKET_HIELO);
+        targets.put(Commodity.SILICATO, MARKET_SILICATO);
+        targets.put(Commodity.HIERRO, MARKET_HIERRO);
+        targets.put(Commodity.COBRE, MARKET_COBRE);
+        targets.put(Commodity.TITANIO, MARKET_TITANIO);
+        targets.put(Commodity.ORO, MARKET_ORO);
+        return new Market(targets, MARKET_INITIAL);
+    }
+
     private GameData() {
     }
 

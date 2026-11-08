@@ -2105,6 +2105,46 @@ public class SelfTest {
         }
         check("S5: la economia no depende de la pausa", !shopField);
 
+        // T-601: modelo de precios y mercado por estación.
+        check("el factor de precio depende del stock",
+                Math.abs(PriceModel.factor(100, 100) - 1f) < 0.001f
+                        && Math.abs(PriceModel.factor(1, 100) - 2f) < 0.001f
+                        && Math.abs(PriceModel.factor(1000, 100) - 0.5f) < 0.001f);
+        check("el precio medio usa el factor",
+                Math.abs(PriceModel.midPrice(2f, 100, 100) - 2f) < 0.001f
+                        && Math.abs(PriceModel.midPrice(2f, 1, 100) - 4f) < 0.001f
+                        && Math.abs(PriceModel.midPrice(2f, 1000, 100) - 1f) < 0.001f);
+        check("el spread separa compra y venta",
+                Math.abs(PriceModel.buyPrice(2f, 100, 100, 0.08f) - 2.16f) < 0.001f
+                        && Math.abs(PriceModel.sellPrice(2f, 100, 100, 0.08f) - 1.84f) < 0.001f);
+        check("los precios tienen limites",
+                PriceModel.buyPrice(2f, 1, 100, 0.08f) <= 2f * 2f * 1.08f + 0.001f
+                        && PriceModel.sellPrice(2f, 1000, 100, 0.08f) >= 2f * 0.5f * 0.92f - 0.001f);
+        Market market = GameData.newMarket();
+        check("cada mineral tiene stock y objetivo",
+                market.stock(Commodity.HIERRO) == 120
+                        && market.target(Commodity.HIERRO) == 150
+                        && market.stock(Commodity.ORO) == 32
+                        && market.target(Commodity.ORO) == 40);
+        check("compra por encima del medio y venta por debajo",
+                market.buyPrice(Commodity.HIERRO) > market.midPrice(Commodity.HIERRO)
+                        && market.sellPrice(Commodity.HIERRO) < market.midPrice(Commodity.HIERRO));
+        market.setSpread(0.10f);
+        check("el spread es configurable",
+                Math.abs(market.buyPrice(Commodity.HIERRO)
+                        - market.midPrice(Commodity.HIERRO) * 1.10f) < 0.001f
+                        && Math.abs(market.sellPrice(Commodity.HIERRO)
+                        - market.midPrice(Commodity.HIERRO) * 0.90f) < 0.001f);
+        market.setTarget(Commodity.COBRE, 80);
+        market.setStock(Commodity.COBRE, 200);
+        check("el stock y el objetivo son configurables",
+                market.target(Commodity.COBRE) == 80
+                        && market.stock(Commodity.COBRE) == 200
+                        && market.addStock(Commodity.COBRE, -500) == 0);
+        check("la estación tiene mercado",
+                stationWorld.station.market != null
+                        && stationWorld.station.market.target(Commodity.ORO) == 40);
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

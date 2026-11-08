@@ -23,12 +23,15 @@ final class Station {
     final StationDef def;
     final Vector2 pos = new Vector2();
     final StationStorage storage;
+    /** Mercado de la estación (stock y precios). */
+    final Market market;
     private float rotation;
 
     Station(StationDef def, float x, float y) {
         this.def = def;
         this.pos.set(x, y);
         this.storage = new StationStorage(STORAGE_CAPACITY);
+        this.market = GameData.newMarket();
     }
 
     void update(float dt) {

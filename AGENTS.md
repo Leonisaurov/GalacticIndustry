@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S6` — Economía comercial básica.
 - No hay tarea en progreso.
-- Última tarea completada: `T-507` — Verificación de estación y ciclo económico.
-- Primera tarea disponible: `T-601` — Crear Market y PriceModel.
+- Última tarea completada: `T-601` — Crear Market y PriceModel.
+- Primera tarea disponible: `T-602` — Implementar TradeService y transacciones del jugador.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **47 %** (38 de 81 tareas de progreso).
+- La implementación del juego está al **48 %** (39 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
