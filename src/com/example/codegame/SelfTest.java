@@ -2157,6 +2157,53 @@ public class SelfTest {
                 stationWorld.station.market != null
                         && stationWorld.station.market.target(Commodity.ORO) == 40);
 
+        // T-604: producción, consumo y deriva de precios.
+        Market ecoMarket = GameData.newMarket();
+        int hieloBefore = ecoMarket.stock(Commodity.HIELO);
+        int silicatoBefore = ecoMarket.stock(Commodity.SILICATO);
+        float hieloPriceBefore = ecoMarket.buyPrice(Commodity.HIELO);
+        float silicatoPriceBefore = ecoMarket.sellPrice(Commodity.SILICATO);
+        for (int i = 0; i < 180; i++) {
+            EconomySim.tick(ecoMarket);
+        }
+        check("30 min simulados mueven el stock",
+                ecoMarket.stock(Commodity.HIELO) != hieloBefore
+                        && ecoMarket.stock(Commodity.SILICATO) != silicatoBefore);
+        check("el consumo sube el precio del hielo",
+                ecoMarket.buyPrice(Commodity.HIELO) > hieloPriceBefore);
+        check("la producción baja el precio del silicato",
+                ecoMarket.sellPrice(Commodity.SILICATO) < silicatoPriceBefore);
+        boolean bounded = true;
+        for (Commodity c : Commodity.values()) {
+            int stock = ecoMarket.stock(c);
+            bounded = bounded && stock >= 0
+                    && stock <= ecoMarket.target(c) * EconomySim.MAX_STOCK_FACTOR;
+        }
+        check("el stock queda acotado", bounded);
+        int last = ecoMarket.stock(Commodity.HIELO);
+        for (int i = 0; i < 20; i++) {
+            EconomySim.tick(ecoMarket);
+        }
+        check("la economia no oscila sin control",
+                Math.abs(ecoMarket.stock(Commodity.HIELO) - last) <= 3);
+        Market configurable = new Market();
+        configurable.setProduction(Commodity.HIERRO, 5);
+        configurable.setConsumption(Commodity.HIERRO, 2);
+        int configurableBefore = configurable.stock(Commodity.HIERRO);
+        EconomySim.tick(configurable);
+        check("producción y consumo son configurables",
+                configurable.stock(Commodity.HIERRO) >= configurableBefore + 2);
+        EconomySim sim = new EconomySim();
+        GameWorld simWorld = new GameWorld(new Upgrades(true));
+        simWorld.start();
+        int simBefore = simWorld.station.market.stock(Commodity.HIELO);
+        for (int i = 0; i < 30; i++) {
+            sim.update(0.5f, simWorld);
+        }
+        check("el tick usa intervalos, no cada frame",
+                EconomySim.TICK_SECONDS >= 5f
+                        && simWorld.station.market.stock(Commodity.HIELO) != simBefore);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

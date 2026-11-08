@@ -389,6 +389,19 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   `VOLVER`. Refleja créditos y masa de bodega en la cabecera.
 - El mercado no se persiste todavía; T-605 lo guardará.
 
+## Simulación económica
+
+- `EconomySim` tickea cada **10 s** de simulación, nunca por frame.
+- Cada tick: `stock += producción − consumo + round((objetivo − stock) · 0,02)`,
+  acotado a `[0, objetivo · 3]`.
+- La reversión al objetivo evita precios desbocados y oscilaciones infinitas.
+- La nodriza consume Hielo (soporte vital), Hierro y Cobre (mantenimiento), y
+  produce Silicato. El resto queda estable.
+- Producción y consumo son configurables por mercado con `setProduction()` y
+  `setConsumption()`.
+- Los mercados se actualizan en `GameWorld.update()`; el acumulador se reinicia
+  al empezar una partida.
+
 ## Venta en estación
 
 - Destruir o minar no concede monedas; el valor está en el mineral de la bodega.

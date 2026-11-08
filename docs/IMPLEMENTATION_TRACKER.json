@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:24:00-06:00",
-    "lastSessionId": "S-050",
+    "lastUpdated": "2026-11-08T03:30:00-06:00",
+    "lastSessionId": "S-051",
     "lastVerification": {
-      "date": "2026-11-08T03:24:00-06:00",
+      "date": "2026-11-08T03:30:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "MarketScreen: precios de compra/venta, stock/objetivo y créditos/bodega",
-        "Selección de cantidad -10/-1/+1/+10, TODO/NADA y confirmación",
-        "14_market: venta parcial/total, NADA, compra y vuelta a estación",
-        "13_station, 09_wing_damage, 02_navigation y 03_controls: OK",
+        "EconomySim tickea cada 10 s con producción/consumo y reversión",
+        "30 min simulados mueven stock y precios de forma coherente",
+        "Stock acotado y sin oscilaciones desbocadas",
+        "14_market y 13_station siguen en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S6",
     "currentTaskId": null,
-    "nextTaskId": "T-604",
+    "nextTaskId": "T-605",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3249,7 +3249,7 @@
       "description": "Hacer que las estaciones consuman/produzcan mineral y que los precios tiendan a su base.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -3273,10 +3273,40 @@
         "Test de 30 min simulados"
       ],
       "technicalNotes": "No simular por frame; usar intervalos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-051",
+          "date": "2026-11-08T03:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "EconomySim con tick de 10 s, producción/consumo por mercado y reversión al objetivo acotada. La nodriza consume hielo/hierro/cobre y produce silicato. Test de 30 min simulados, estabilidad y configurabilidad.",
+          "files": [
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de 30 min simulados"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS 30 min simulados mueven el stock",
+        "PASS el consumo sube el precio del hielo",
+        "PASS la producción baja el precio del silicato",
+        "PASS el stock queda acotado",
+        "PASS la economia no oscila sin control",
+        "PASS producción y consumo son configurables",
+        "PASS el tick usa intervalos, no cada frame"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:30:00-06:00"
     },
     {
       "id": "T-605",
@@ -3285,7 +3315,7 @@
       "description": "Guardar y restaurar stock, precios y almacén sin duplicar transacciones.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-601",
@@ -5462,6 +5492,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-051",
+      "date": "2026-11-08T03:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Consumo, producción y deriva de precios",
+      "summary": "EconomySim tickea cada 10 s y mueve stock con producción/consumo y reversión al objetivo. La nodriza consume hielo/hierro/cobre y produce silicato; 30 min simulados verifican precios y estabilidad.",
+      "tasks": [
+        "T-604"
+      ],
+      "files": [
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-605 (persistir mercados y almacenes)."
+    },
     {
       "id": "S-050",
       "date": "2026-11-08T03:24:00-06:00",

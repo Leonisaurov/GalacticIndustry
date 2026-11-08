@@ -14,6 +14,8 @@ final class Market {
 
     private final EnumMap<Commodity, Integer> stock = new EnumMap<>(Commodity.class);
     private final EnumMap<Commodity, Integer> target = new EnumMap<>(Commodity.class);
+    private final EnumMap<Commodity, Integer> production = new EnumMap<>(Commodity.class);
+    private final EnumMap<Commodity, Integer> consumption = new EnumMap<>(Commodity.class);
     private float spread = PriceModel.DEFAULT_SPREAD;
 
     Market() {
@@ -32,6 +34,8 @@ final class Market {
                     : Math.max(1, targets.getOrDefault(commodity, DEFAULT_TARGET));
             target.put(commodity, targetValue);
             stock.put(commodity, Math.max(0, Math.round(targetValue * fraction)));
+            production.put(commodity, 0);
+            consumption.put(commodity, 0);
         }
     }
 
@@ -54,6 +58,28 @@ final class Market {
     void setTarget(Commodity commodity, int value) {
         if (commodity != null) {
             target.put(commodity, Math.max(1, value));
+        }
+    }
+
+    int production(Commodity commodity) {
+        Integer value = production.get(commodity);
+        return value == null ? 0 : value;
+    }
+
+    int consumption(Commodity commodity) {
+        Integer value = consumption.get(commodity);
+        return value == null ? 0 : value;
+    }
+
+    void setProduction(Commodity commodity, int value) {
+        if (commodity != null) {
+            production.put(commodity, Math.max(0, value));
+        }
+    }
+
+    void setConsumption(Commodity commodity, int value) {
+        if (commodity != null) {
+            consumption.put(commodity, Math.max(0, value));
         }
     }
 

@@ -34,7 +34,14 @@ final class GameData {
         targets.put(Commodity.COBRE, MARKET_COBRE);
         targets.put(Commodity.TITANIO, MARKET_TITANIO);
         targets.put(Commodity.ORO, MARKET_ORO);
-        return new Market(targets, MARKET_INITIAL);
+        Market market = new Market(targets, MARKET_INITIAL);
+        // La nodriza consume hielo para soporte vital y hierro/cobre para
+        // mantenimiento; produce algo de silicato. El resto queda estable.
+        market.setConsumption(Commodity.HIELO, 2);
+        market.setConsumption(Commodity.HIERRO, 1);
+        market.setConsumption(Commodity.COBRE, 1);
+        market.setProduction(Commodity.SILICATO, 1);
+        return market;
     }
 
     private GameData() {

@@ -42,6 +42,8 @@ class GameWorld {
     /** Nave nodriza del sector inicial; su posición es fija. */
     final Station station = new Station(GameData.MOTHERSHIP,
             GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y);
+    /** Simulación de mercados; tickea cada 10 s, no por frame. */
+    final EconomySim economy = new EconomySim();
     /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
     LifeSupport lifeSupport;
     /** Restos de la nave del personaje anterior, en el punto de muerte. */
@@ -116,6 +118,7 @@ class GameWorld {
         wave = 1;
         elapsed = 0f;
         shake = 0f;
+        economy.reset();
         deathTimer = 0f;
         deathStage = 0;
         ignoredHits = 0;
@@ -415,6 +418,7 @@ class GameWorld {
         elapsed += dt;
         wave = 1 + (int) (elapsed / 45f);
         station.update(dt);
+        economy.update(dt, this);
 
         if (pilot.active()) {
             pilot.steer(c, this, dt);

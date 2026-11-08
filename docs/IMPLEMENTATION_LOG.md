@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:24:00-06:00  
+**Última actualización:** 2026-11-08T03:30:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,64 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-051 — Consumo, producción y deriva de precios
+
+- **Fecha:** 2026-11-08T03:30:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-604
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `EconomySim` tickea cada **10 s**, nunca por frame:
+  - `stock += producción − consumo + round((objetivo − stock) · 0,02)`;
+  - stock acotado a `[0, objetivo · 3]`.
+- La nodriza consume Hielo (soporte vital), Hierro y Cobre (mantenimiento) y
+  produce Silicato; el resto queda estable.
+- Producción y consumo son configurables por mercado.
+- `GameWorld.update()` alimenta el acumulador; `start()` lo reinicia.
+- Verificación de **30 min simulados**, estabilidad y precios coherentes.
+
+### Archivos modificados
+
+- `src/com/example/codegame/EconomySim.java` (nuevo)
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/Station.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `14_market 13_station`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS 30 min simulados mueven el stock`
+- `PASS el consumo sube el precio del hielo`
+- `PASS la producción baja el precio del silicato`
+- `PASS el stock queda acotado`
+- `PASS la economia no oscila sin control`
+- `PASS producción y consumo son configurables`
+- `PASS el tick usa intervalos, no cada frame`
+
+### Decisiones tomadas
+
+- El tick económico es de 10 s y solo corre durante la simulación de partida.
+- La reversión al objetivo es suave (2 % por tick) para evitar oscilaciones.
+- El stock máximo es 3× el objetivo.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-605 — Persistir mercados y almacenes**.
 
 ---
 
