@@ -17,3 +17,7 @@ deps.installed.json
 # Generado por aapt2/apkc-deps en cada build: no editar a mano
 src/**/R.java
 src/**/Manifest.java
+
+# Python generado
+__pycache__/
+*.pyc
