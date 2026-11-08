@@ -6,7 +6,7 @@
 **Estado:** auditoría y preparación completadas; implementación del juego **no iniciada**  
 **Última actualización:** 2026-11-07  
 **Fuente canónica de ejecución:** [`docs/IMPLEMENTATION_TRACKER.json`](IMPLEMENTATION_TRACKER.json)  
-**Panel:** [`docs/PROJECT_DASHBOARD.html`](PROJECT_DASHBOARD.html)  
+**Panel:** [`docs/dashboard/index.html`](dashboard/index.html)  
 **Registro cronológico:** [`docs/IMPLEMENTATION_LOG.md`](IMPLEMENTATION_LOG.md)  
 **Decisiones:** [`docs/DECISIONS.md`](DECISIONS.md)
 
@@ -887,7 +887,10 @@ Una etapa está terminada cuando todas sus tareas `countsForProgress` están `CO
 | `docs/IMPLEMENTATION_LOG.md` | Historial cronológico |
 | `docs/DECISIONS.md` | Decisiones y propuestas |
 | `docs/PENDING_DECISIONS.md` | Preguntas pendientes para conversar y plantilla de respuestas |
-| `docs/PROJECT_DASHBOARD.html` | Panel visual con datos integrados |
+| `docs/dashboard/index.html` | Panel visual con datos integrados |
+| `docs/dashboard/dashboard.css` | Estilos del panel |
+| `docs/dashboard/dashboard.js` | Lógica del panel |
+| `docs/PROJECT_DASHBOARD.html` | Redirección de compatibilidad al panel nuevo |
 | `tools/sync-dashboard.py` | Validación y sincronización JSON → HTML |
 
 El panel no inventa estados: representa el tracker. Si el HTML y el JSON no coinciden, el JSON manda y hay que ejecutar la sincronización.

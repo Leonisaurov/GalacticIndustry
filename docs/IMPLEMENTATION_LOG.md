@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:14:00-06:00  
+**Última actualización:** 2026-11-08T02:20:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,80 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-040 — Panel de continuidad dividido y mejorado
+
+- **Fecha:** 2026-11-08T02:20:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** — (infraestructura de continuidad)
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El panel deja de ser un monolito: `docs/dashboard/` separa estructura,
+  estilos y lógica.
+  - `index.html`: estructura y bloque `tracker-data` embebido para `file://`.
+  - `dashboard.css`: tema oscuro/claro, tarjetas, badges, tablas y responsive.
+  - `dashboard.js`: render, filtros, orden, temas, enlaces y refresco HTTP.
+  - `README.md`: mapa de archivos y flujo de sincronización.
+- `docs/PROJECT_DASHBOARD.html` queda como redirección de compatibilidad.
+- Mejoras de lectura y uso:
+  - tema claro/oscuro persistido y aplicado antes del primer pintado;
+  - ocho tarjetas de resumen y distribución interactiva por estado;
+  - etapa actual resaltada, gate visible y tarjeta de última verificación;
+  - búsqueda por varios términos, orden configurable y agrupación por etapa;
+  - enlaces directos `#task-T-XXX`, botón «Abrir en la lista» y atajo `/`;
+  - historial plegable, decisiones resolubles/ocultables e incidencias con
+    severidad, estado y tareas afectadas;
+  - sección de reglas y definiciones de estado;
+  - botón de volver arriba y estilos de impresión.
+- `tools/sync-dashboard.py` apunta a `docs/dashboard/index.html` y comprueba que
+  existan `dashboard.css` y `dashboard.js`.
+
+### Archivos modificados
+
+- `docs/dashboard/index.html`
+- `docs/dashboard/dashboard.css`
+- `docs/dashboard/dashboard.js`
+- `docs/dashboard/README.md`
+- `docs/PROJECT_DASHBOARD.html` (redirección)
+- `tools/sync-dashboard.py`
+- `AGENTS.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `python3 tools/sync-dashboard.py --check`: **OK**.
+- Firefox headless: capturas a `1400×1200` y `390×1600` en tema claro y oscuro.
+- Marionette: **17/17** comprobaciones del panel.
+- Servidor HTTP local: el botón **Actualizar** relee el tracker sin recargar la
+  página y muestra `JSON en vivo`.
+
+### Evidencias
+
+- `PASS` resumen con 8 tarjetas, 12 etapas y 92 tareas.
+- `PASS` filtro por segmento, limpieza de filtros, agrupación y desagrupación.
+- `PASS` búsqueda, orden por ID, cambio de tema y atajo `/`.
+- `PASS` historial desplegable, decisiones plegables y enlace directo a tarea.
+- `PASS` fuente `embebidos (file://)` y recarga `JSON en vivo` por HTTP.
+- No se modificó ninguna tarea ni código de juego.
+
+### Decisiones tomadas
+
+- Separar CSS y JS del HTML; los datos siguen embebidos en `index.html` porque
+  `file://` no permite leer el JSON con `fetch()`.
+- Mantener `docs/PROJECT_DASHBOARD.html` como redirección para no romper enlaces
+  antiguos.
+- No añadir dependencias, servicios ni CDN.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-501 — Crear Station y la nave nodriza del sector inicial**
+  (Etapa 5). El panel ya refleja `S5` y el 38 % de implementación.
 
 ---
 

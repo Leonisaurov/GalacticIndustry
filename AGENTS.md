@@ -36,10 +36,13 @@ Al empezar cualquier sesión, en este orden:
 | `docs/IMPLEMENTATION_LOG.md` | Historial cronológico de sesiones |
 | `docs/DECISIONS.md` | Decisiones de producto y técnicas |
 | `docs/PENDING_DECISIONS.md` | Resumen de decisiones cerradas; ya no hay pendientes |
-| `docs/PROJECT_DASHBOARD.html` | Panel visual autocontenido; datos embebidos en `file://` y refresco JSON por HTTP |
+| `docs/dashboard/index.html` | Panel visual autocontenido; datos embebidos en `file://` y refresco JSON por HTTP |
+| `docs/dashboard/dashboard.css` | Estilos del panel |
+| `docs/dashboard/dashboard.js` | Lógica del panel (filtros, temas, enlaces y render) |
+| `docs/PROJECT_DASHBOARD.html` | Redirección de compatibilidad a `docs/dashboard/index.html` |
 | `tools/sync-dashboard.py` | Validación del tracker y sincronización JSON → HTML |
 
-No edites a mano el bloque `tracker-data` del HTML salvo que sea imprescindible.
+No edites a mano el bloque `tracker-data` de `docs/dashboard/index.html` salvo que sea imprescindible.
 Después de modificar el JSON, ejecuta:
 
 ```sh
@@ -165,7 +168,7 @@ No confundas “plan escrito” con “funcionalidad implementada”.
 - [Log de implementación](docs/IMPLEMENTATION_LOG.md)
 - [Decisiones](docs/DECISIONS.md)
 - [Decisiones cerradas](docs/PENDING_DECISIONS.md)
-- [Panel](docs/PROJECT_DASHBOARD.html)
+- [Panel](docs/dashboard/index.html)
 - [Build, dependencias y layout](docs/build.md)
 - [Pruebas y telemetría](docs/pruebas.md)
 - [Arquitectura, render y piloto automático](docs/arquitectura.md)

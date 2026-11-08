@@ -18,7 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TRACKER = ROOT / "docs" / "IMPLEMENTATION_TRACKER.json"
-DASHBOARD = ROOT / "docs" / "PROJECT_DASHBOARD.html"
+DASHBOARD = ROOT / "docs" / "dashboard" / "index.html"
+DASHBOARD_CSS = ROOT / "docs" / "dashboard" / "dashboard.css"
+DASHBOARD_JS = ROOT / "docs" / "dashboard" / "dashboard.js"
 START = "<!-- TRACKER_DATA_START -->"
 END = "<!-- TRACKER_DATA_END -->"
 
@@ -287,6 +289,10 @@ def sync(tracker: dict, check_only: bool) -> bool:
     if not DASHBOARD.exists():
         err(f"No existe {DASHBOARD}")
         return False
+    for asset in (DASHBOARD_CSS, DASHBOARD_JS):
+        if not asset.exists():
+            err(f"Falta el recurso del panel: {asset}")
+            return False
     html = DASHBOARD.read_text(encoding="utf-8")
     if START not in html or END not in html:
         err(f"El panel no contiene los marcadores {START} / {END}.")
