@@ -1,6 +1,7 @@
 package com.example.codegame;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
@@ -26,6 +27,8 @@ class GameWorld {
 
     final Upgrades up;
     final Ship ship = new Ship();
+    /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
+    LifeSupport lifeSupport;
     final Array<Asteroid> asteroids = new Array<>();
     final Array<Missile> missiles = new Array<>();
     final Array<FuelPickup> fuel = new Array<>();
@@ -37,14 +40,45 @@ class GameWorld {
     int score;
     int wave = 1;
     float elapsed;
+    /** Magnitud del temblor de cámara, en unidades del mundo. */
+    float shake;
+    /** Modo de pruebas: la nave no recibe dano al chocar. */
+    boolean immortal;
+    /** Impactos absorbidos por el modo inmortal (telemetría de pruebas). */
+    int ignoredHits;
+    private float deathTimer;
+    private int deathStage;
+
+    private static final Color SPARK_WARM = new Color(1f, 0.72f, 0.30f, 1f);
+    private static final Color SPARK_WHITE = new Color(1f, 1f, 0.90f, 1f);
+    private static final Color SPARK_GREEN = new Color(0.40f, 1f, 0.60f, 1f);
+    private static final Color SHOCK_GOLD = new Color(1f, 0.85f, 0.45f, 1f);
+    private static final Color SHOCK_GREEN = new Color(0.40f, 1f, 0.60f, 1f);
+    private static final Color EXPLOSION_ORANGE = new Color(1f, 0.50f, 0.20f, 1f);
+    private static final Color TRAIL_ORANGE = new Color(1f, 0.55f, 0.18f, 1f);
+    private static final Color WING_SMOKE = new Color(0.38f, 0.38f, 0.44f, 1f);
+    private static final Color WING_DEBRIS = new Color(0.70f, 0.70f, 0.75f, 1f);
+    private static final Color LEAK_GAS = new Color(0.72f, 0.88f, 1f, 1f);
+
     private final HashSet<Long> generated = new HashSet<>();
     private final Vector2 tmp = new Vector2();
+
+    /** Zonas ya generadas; lo usa SaveCodec para restaurar el sector sin regenerar. */
+    HashSet<Long> generatedChunks() {
+        return generated;
+    }
 
     GameWorld(Upgrades up) {
         this.up = up;
     }
 
+    /** La sesión conecta su soporte vital para fugas y avisos visuales. */
+    void attachLifeSupport(LifeSupport lifeSupport) {
+        this.lifeSupport = lifeSupport;
+    }
+
     void start() {
+        pilot.cancel();
         ship.reset(up, 0f, 0f);
         asteroids.clear();
         missiles.clear();
@@ -55,21 +89,83 @@ class GameWorld {
         score = 0;
         wave = 1;
         elapsed = 0f;
+        shake = 0f;
+        deathTimer = 0f;
+        deathStage = 0;
+        ignoredHits = 0;
         updateChunks();
     }
 
     boolean isOver() {
-        return ship.lives <= 0;
+        return !immortal && ship.hullGone();
     }
 
-    /** Estado de la partida en texto (nave, contadores, zonas visitadas, meteoritos y bidones). */
+    /** Inicia la secuencia de destrucción de la nave: explosión, ondas y temblor. */
+    void beginDeath() {
+        deathTimer = 0f;
+        deathStage = 0;
+        pilot.cancel();
+        fx.clear();
+        ship.wrecked = true;
+        shake = Math.max(shake, 28f);
+        fx.shock(ship.pos.x, ship.pos.y, SHOCK_GOLD, 250f);
+        fx.shock(ship.pos.x, ship.pos.y, SPARK_WHITE, 150f);
+        fx.burst(ship.pos.x, ship.pos.y, SPARK_WHITE, 34, 430f);
+        fx.burst(ship.pos.x, ship.pos.y, EXPLOSION_ORANGE, 46, 330f);
+        fx.burst(ship.pos.x, ship.pos.y, new Color(0.95f, 0.20f, 0.12f, 1f), 28, 260f);
+    }
+
+    /** Avanza solo los efectos de la explosión final; el resto del mundo queda congelado. */
+    void updateDeath(float dt) {
+        deathTimer += dt;
+        fx.update(dt);
+        shake = Math.max(0f, shake - dt * 26f);
+        if (deathStage == 0 && deathTimer > 0.20f) {
+            deathStage = 1;
+            float ox = ship.pos.x + MathUtils.random(-16f, 16f);
+            float oy = ship.pos.y + MathUtils.random(-16f, 16f);
+            fx.shock(ox, oy, EXPLOSION_ORANGE, 170f);
+            fx.burst(ox, oy, EXPLOSION_ORANGE, 26, 260f);
+            fx.burst(ox, oy, SPARK_WARM, 16, 220f);
+            shake = Math.max(shake, 16f);
+        }
+        if (deathStage == 1 && deathTimer > 0.55f) {
+            deathStage = 2;
+            float ox = ship.pos.x + MathUtils.random(-24f, 24f);
+            float oy = ship.pos.y + MathUtils.random(-24f, 24f);
+            fx.shock(ox, oy, SHOCK_GOLD, 120f);
+            fx.burst(ox, oy, EXPLOSION_ORANGE, 18, 190f);
+            fx.burst(ox, oy, SPARK_WHITE, 10, 160f);
+            shake = Math.max(shake, 9f);
+        }
+        if (deathStage == 2 && deathTimer > 0.95f) {
+            deathStage = 3;
+            float ox = ship.pos.x + MathUtils.random(-30f, 30f);
+            float oy = ship.pos.y + MathUtils.random(-30f, 30f);
+            fx.shock(ox, oy, EXPLOSION_ORANGE, 95f);
+            fx.burst(ox, oy, EXPLOSION_ORANGE, 14, 160f);
+            fx.burst(ox, oy, SPARK_WARM, 10, 130f);
+            shake = Math.max(shake, 6f);
+        }
+        if (deathStage == 3 && deathTimer > 1.35f) {
+            deathStage = 4;
+            fx.burst(ship.pos.x, ship.pos.y, new Color(0.75f, 0.35f, 0.18f, 1f), 10, 100f);
+        }
+    }
+
+    /** Estado de la partida en texto (nave, partes, contadores, zonas, meteoritos y bidones). */
     String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("ship ").append(ship.pos.x).append(' ').append(ship.pos.y).append(' ')
                 .append(ship.vel.x).append(' ').append(ship.vel.y).append(' ')
                 .append(ship.heading).append(' ').append(ship.fuel).append(' ')
-                .append(ship.lives).append(' ').append(ship.maxLives).append(' ')
+                .append(ship.part[Ship.HULL]).append(' ')
                 .append(ship.invulnerable).append('\n');
+        sb.append("parts");
+        for (int i = 0; i < Ship.PART_COUNT; i++) {
+            sb.append(' ').append(ship.part[i]);
+        }
+        sb.append('\n');
         sb.append("world ").append(coinsEarned).append(' ').append(score).append(' ')
                 .append(elapsed).append('\n');
         sb.append("chunks");
@@ -94,38 +190,57 @@ class GameWorld {
     /** Restaura una partida guardada con {@link #serialize()}. Devuelve false si el texto no es válido. */
     boolean restore(String text) {
         try {
-            String[] lines = text.split("\n");
-            String[] sh = lines[0].split(" ");
-            String[] wd = lines[1].split(" ");
-            String[] ch = lines[2].split(" ");
-            float x = Float.parseFloat(sh[1]);
-            float y = Float.parseFloat(sh[2]);
-            float vx = Float.parseFloat(sh[3]);
-            float vy = Float.parseFloat(sh[4]);
-            float heading = Float.parseFloat(sh[5]);
-            float fuelLeft = Float.parseFloat(sh[6]);
-            int lives = Integer.parseInt(sh[7]);
-            int maxLives = Integer.parseInt(sh[8]);
-            float invuln = Float.parseFloat(sh[9]);
-            int coins = Integer.parseInt(wd[1]);
-            int pts = Integer.parseInt(wd[2]);
-            float time = Float.parseFloat(wd[3]);
-            HashSet<Long> chunks = new HashSet<>();
-            for (int i = 1; i < ch.length; i++) {
-                chunks.add(Long.parseLong(ch[i]));
+            float x = 0f, y = 0f, vx = 0f, vy = 0f, heading = 90f, fuelLeft = 0f;
+            float hull = -1f, invuln = 0f;
+            int coins = 0, pts = 0;
+            float time = 0f;
+            float[] parts = new float[Ship.PART_COUNT];
+            for (int i = 0; i < parts.length; i++) {
+                parts[i] = i == Ship.HULL ? -1f : Ship.PART_MAX;
             }
+            HashSet<Long> chunks = new HashSet<>();
             Array<Asteroid> rocks = new Array<>();
             Array<FuelPickup> cells = new Array<>();
-            for (int i = 3; i < lines.length; i++) {
-                String[] p = lines[i].split(" ");
-                if (p[0].equals("a")) {
-                    Asteroid a = new Asteroid(Float.parseFloat(p[1]), Float.parseFloat(p[2]), Integer.parseInt(p[5]));
+
+            for (String line : text.split("\n")) {
+                if (line.isEmpty()) {
+                    continue;
+                }
+                String[] p = line.split(" ");
+                if (p[0].equals("ship")) {
+                    x = Float.parseFloat(p[1]);
+                    y = Float.parseFloat(p[2]);
+                    vx = Float.parseFloat(p[3]);
+                    vy = Float.parseFloat(p[4]);
+                    heading = Float.parseFloat(p[5]);
+                    fuelLeft = Float.parseFloat(p[6]);
+                    hull = Float.parseFloat(p[7]);
+                    invuln = Float.parseFloat(p[8]);
+                } else if (p[0].equals("parts")) {
+                    for (int i = 0; i < Ship.PART_COUNT && i + 1 < p.length; i++) {
+                        parts[i] = Float.parseFloat(p[i + 1]);
+                    }
+                } else if (p[0].equals("world")) {
+                    coins = Integer.parseInt(p[1]);
+                    pts = Integer.parseInt(p[2]);
+                    time = Float.parseFloat(p[3]);
+                } else if (p[0].equals("chunks")) {
+                    for (int i = 1; i < p.length; i++) {
+                        chunks.add(Long.parseLong(p[i]));
+                    }
+                } else if (p[0].equals("a")) {
+                    Asteroid a = new Asteroid(Float.parseFloat(p[1]), Float.parseFloat(p[2]),
+                            Integer.parseInt(p[5]));
                     a.vel.set(Float.parseFloat(p[3]), Float.parseFloat(p[4]));
                     a.hp = Integer.parseInt(p[6]);
                     rocks.add(a);
                 } else if (p[0].equals("f")) {
-                    cells.add(new FuelPickup(Float.parseFloat(p[1]), Float.parseFloat(p[2]), Float.parseFloat(p[3])));
+                    cells.add(new FuelPickup(Float.parseFloat(p[1]), Float.parseFloat(p[2]),
+                            Float.parseFloat(p[3])));
                 }
+            }
+            if (hull < 0f) {
+                return false;
             }
 
             // Solo se modifica el mundo cuando todo el texto se ha leído bien.
@@ -133,9 +248,12 @@ class GameWorld {
             ship.vel.set(vx, vy);
             ship.heading = heading;
             ship.dir.set(MathUtils.cosDeg(heading), MathUtils.sinDeg(heading));
-            ship.fuel = fuelLeft;
-            ship.lives = lives;
-            ship.maxLives = maxLives;
+            ship.part[Ship.HULL] = Math.min(hull, ship.maxHull);
+            for (int i = 1; i < Ship.PART_COUNT; i++) {
+                ship.part[i] = MathUtils.clamp(parts[i], 0f, Ship.PART_MAX);
+            }
+            ship.syncFuel(up);
+            ship.fuel = Math.min(fuelLeft, ship.maxFuel);
             ship.invulnerable = invuln;
             coinsEarned = coins;
             score = pts;
@@ -149,6 +267,8 @@ class GameWorld {
             fuel.addAll(cells);
             missiles.clear();
             fx.clear();
+            pilot.cancel();
+            shake = 0f;
             return true;
         } catch (RuntimeException e) {
             return false;
@@ -164,9 +284,21 @@ class GameWorld {
             pilot.steer(c, this, dt);
         }
         ship.update(dt, up, c);
+        if (lifeSupport != null) {
+            lifeSupport.updateLeak(ship);
+        }
+        emitLeak(dt);
+        emitWingDamage(dt);
         if (c.fire && ship.canFire()) {
             missiles.add(ship.fire(up));
         }
+        if (ship.thrusting) {
+            float ex = ship.pos.x - ship.dir.x * Ship.RADIUS * 1.32f;
+            float ey = ship.pos.y - ship.dir.y * Ship.RADIUS * 1.32f;
+            fx.trail(ex, ey, -ship.dir.x * 40f + ship.vel.x * 0.15f,
+                    -ship.dir.y * 40f + ship.vel.y * 0.15f, TRAIL_ORANGE, 3.4f, 0.36f);
+        }
+        shake = Math.max(0f, shake - dt * 42f);
 
         updateMissiles(dt);
         updateAsteroids(dt);
@@ -189,8 +321,12 @@ class GameWorld {
 
     private void updateMissiles(float dt) {
         for (int i = missiles.size - 1; i >= 0; i--) {
-            if (!missiles.get(i).update(dt)) {
+            Missile m = missiles.get(i);
+            if (!m.update(dt)) {
                 missiles.removeIndex(i);
+            } else {
+                fx.trail(m.pos.x, m.pos.y, -m.vel.x * 0.07f, -m.vel.y * 0.07f,
+                        TRAIL_ORANGE, 2.4f, 0.28f);
             }
         }
     }
@@ -214,15 +350,32 @@ class GameWorld {
     }
 
     private void collideShipAsteroids() {
+        if (immortal) {
+            // Modo de pruebas: los impactos no hacen daño; se consume la roca para
+            // que la nave no se quede atascada dentro de ella.
+            for (int i = asteroids.size - 1; i >= 0; i--) {
+                Asteroid a = asteroids.get(i);
+                if (a.hit(ship.pos, Ship.RADIUS)) {
+                    ignoredHits++;
+                    fx.burst(a.pos.x, a.pos.y, SPARK_WARM, 8, 150f);
+                    asteroids.removeIndex(i);
+                    return;
+                }
+            }
+            return;
+        }
         if (ship.invulnerable > 0f) {
             return;
         }
         for (int i = asteroids.size - 1; i >= 0; i--) {
             Asteroid a = asteroids.get(i);
             if (a.hit(ship.pos, Ship.RADIUS)) {
-                ship.lives--;
+                damageShip(a);
                 ship.invulnerable = 1.5f;
-                fx.burst(ship.pos.x, ship.pos.y, new Color(1f, 0.5f, 0.3f, 1f), 20, 320f);
+                shake = Math.max(shake, 20f);
+                fx.burst(ship.pos.x, ship.pos.y, EXPLOSION_ORANGE, 22, 340f);
+                fx.burst(ship.pos.x, ship.pos.y, SPARK_WHITE, 8, 220f);
+                fx.shock(ship.pos.x, ship.pos.y, SHOCK_GOLD, 130f);
                 fx.burst(a.pos.x, a.pos.y, new Color(0.8f, 0.8f, 0.8f, 1f), 14, 220f);
                 asteroids.removeIndex(i);
                 return;
@@ -230,12 +383,85 @@ class GameWorld {
         }
     }
 
+    /**
+     * Un impacto siempre muerde el casco y ademas dana un sistema al azar.
+     * El casco a cero destruye la nave; los sistemas a cero aplican su penalizacion.
+     */
+    private void damageShip(Asteroid a) {
+        float base = a.size == Asteroid.SMALL ? 14f : a.size == Asteroid.MEDIUM ? 24f : 36f;
+        ship.damage(Ship.HULL, base * MathUtils.random(0.85f, 1.20f));
+        if (lifeSupport != null) {
+            lifeSupport.onHullDamage(ship, base);
+        }
+        int system = Ship.ENGINE + MathUtils.random(0, Ship.PART_COUNT - 2);
+        boolean wasOk = ship.part[system] > 0f;
+        ship.damage(system, base * MathUtils.random(0.70f, 1.30f));
+        if (wasOk && ship.part[system] <= 0f) {
+            // Aviso extra cuando un sistema queda fuera de servicio.
+            if (system == Ship.WING_LEFT || system == Ship.WING_RIGHT) {
+                fx.burst(ship.pos.x, ship.pos.y, WING_DEBRIS, 18, 260f);
+                fx.burst(ship.pos.x, ship.pos.y, EXPLOSION_ORANGE, 10, 180f);
+            }
+            fx.burst(ship.pos.x, ship.pos.y, new Color(1f, 0.32f, 0.42f, 1f), 16, 240f);
+            fx.shock(ship.pos.x, ship.pos.y, SHOCK_GOLD, 90f);
+        }
+    }
+
+    /** Gas escapando del casco dañado; más denso cuando hay brecha crítica. */
+    private void emitLeak(float dt) {
+        if (lifeSupport == null || lifeSupport.leak <= 0.01f) {
+            return;
+        }
+        float rate = (lifeSupport.breach ? 9f : 4f) + lifeSupport.leak * 0.8f;
+        if (MathUtils.random() > Math.min(1f, dt * rate)) {
+            return;
+        }
+        float angle = MathUtils.random(360f);
+        float ox = MathUtils.cosDeg(angle) * Ship.RADIUS * 0.9f;
+        float oy = MathUtils.sinDeg(angle) * Ship.RADIUS * 0.9f;
+        fx.trail(ship.pos.x + ox, ship.pos.y + oy,
+                -ship.dir.x * 24f + ox * 1.8f, -ship.dir.y * 24f + oy * 1.8f,
+                LEAK_GAS, lifeSupport.breach ? 3.2f : 2.4f,
+                lifeSupport.breach ? 0.55f : 0.38f);
+    }
+
+    /** Humo y chispas desde el muñón de cada ala perdida. */
+    private void emitWingDamage(float dt) {        if (ship.part[Ship.WING_LEFT] > 0f && ship.part[Ship.WING_RIGHT] > 0f) {
+            return;
+        }
+        float size = Ship.RADIUS * 1.28f;
+        float c = MathUtils.cosDeg(ship.heading);
+        float sn = MathUtils.sinDeg(ship.heading);
+        if (ship.part[Ship.WING_LEFT] <= 0f) {
+            emitWingSmoke(0.42f, c, sn, size, dt);
+        }
+        if (ship.part[Ship.WING_RIGHT] <= 0f) {
+            emitWingSmoke(-0.42f, c, sn, size, dt);
+        }
+    }
+
+    private void emitWingSmoke(float lateral, float c, float sn, float size, float dt) {
+        if (MathUtils.random() > dt * 13f) {
+            return;
+        }
+        float wx = ship.pos.x - lateral * sn * size;
+        float wy = ship.pos.y + lateral * c * size;
+        float vx = -ship.dir.x * 35f + ship.vel.x * 0.20f;
+        float vy = -ship.dir.y * 35f + ship.vel.y * 0.20f;
+        fx.trail(wx, wy, vx, vy, WING_SMOKE, 3.2f, 0.55f);
+        if (MathUtils.random() < 0.35f) {
+            fx.trail(wx, wy, vx * 1.2f, vy * 1.2f, SPARK_WARM, 2.2f, 0.30f);
+        }
+    }
+
     private void collideShipFuel() {
         for (int i = fuel.size - 1; i >= 0; i--) {
             FuelPickup f = fuel.get(i);
-            if (f.pos.dst(ship.pos) < FuelPickup.RADIUS + Ship.RADIUS) {
+            if (f.pos.dst(ship.pos) < FuelPickup.RADIUS + Ship.RADIUS + FuelPickup.CAPTURE_PAD) {
                 ship.refuel(FuelPickup.AMOUNT);
-                fx.burst(f.pos.x, f.pos.y, new Color(0.4f, 1f, 0.6f, 1f), 10, 150f);
+                fx.burst(f.pos.x, f.pos.y, SPARK_GREEN, 14, 170f);
+                fx.burst(f.pos.x, f.pos.y, SPARK_WHITE, 6, 110f);
+                fx.shock(f.pos.x, f.pos.y, SHOCK_GREEN, 70f);
                 fuel.removeIndex(i);
             }
         }
@@ -252,7 +478,7 @@ class GameWorld {
                 missiles.removeIndex(m);
                 a.hp -= miss.damage;
                 a.flash = 0.08f;
-                fx.burst(miss.pos.x, miss.pos.y, new Color(1f, 0.8f, 0.4f, 1f), 4, 120f);
+                fx.burst(miss.pos.x, miss.pos.y, SPARK_WARM, 5, 140f);
                 if (a.hp <= 0) {
                     destroyAsteroid(i);
                 }
@@ -265,7 +491,11 @@ class GameWorld {
         Asteroid a = asteroids.get(index);
         coinsEarned += a.reward;
         score += a.reward * 10;
-        fx.burst(a.pos.x, a.pos.y, new Color(1f, 0.85f, 0.3f, 1f), 18, 260f);
+        shake = Math.max(shake, a.size == Asteroid.LARGE ? 12f : a.size == Asteroid.MEDIUM ? 7f : 4f);
+        fx.burst(a.pos.x, a.pos.y, SPARK_WARM, 20, 280f);
+        fx.burst(a.pos.x, a.pos.y, EXPLOSION_ORANGE, 10, 190f);
+        fx.burst(a.pos.x, a.pos.y, SPARK_WHITE, 6, 150f);
+        fx.shock(a.pos.x, a.pos.y, SHOCK_GOLD, a.radius * 5.5f);
         asteroids.removeIndex(index);
         if (a.size == Asteroid.LARGE) {
             splitAsteroid(a, Asteroid.MEDIUM);
@@ -299,7 +529,7 @@ class GameWorld {
 
     private void generateChunk(int cx, int cy) {
         Random rnd = new Random(cx * 73856093L ^ cy * 19349663L);
-        int count = 1 + rnd.nextInt(3) + Math.min(wave / 2, 2);
+        int count = 2 + rnd.nextInt(3) + Math.min(wave / 2, 2);
         for (int i = 0; i < count && asteroids.size < MAX_ASTEROIDS; i++) {
             float x = (cx + rnd.nextFloat()) * CHUNK;
             float y = (cy + rnd.nextFloat()) * CHUNK;
@@ -337,7 +567,23 @@ class GameWorld {
             missiles.get(i).draw(shapes);
         }
         fx.draw(shapes);
-        pilot.draw(shapes);
-        ship.draw(shapes);
+        pilot.draw(shapes, ship, elapsed);
+        ship.draw(shapes, elapsed);
+    }
+
+    /** Brillos aditivos del mundo: motores, impactos, objetivos y partículas. */
+    void drawGlow(SpriteBatch batch, Visuals art) {
+        for (int i = 0; i < fuel.size; i++) {
+            fuel.get(i).drawGlow(batch, art);
+        }
+        for (int i = 0; i < asteroids.size; i++) {
+            asteroids.get(i).drawGlow(batch, art);
+        }
+        for (int i = 0; i < missiles.size; i++) {
+            missiles.get(i).drawGlow(batch, art);
+        }
+        pilot.drawGlow(batch, art, ship, elapsed);
+        ship.drawGlow(batch, art, elapsed);
+        fx.drawGlow(batch, art);
     }
 }

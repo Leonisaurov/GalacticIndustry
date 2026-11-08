@@ -1,5 +1,7 @@
 package com.example.codegame;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
@@ -16,6 +18,8 @@ class Autopilot {
     static final int NONE = 0;
     static final int FUEL = 1;
     static final int ASTEROID = 2;
+    /** Fase de frenada tras perder el objetivo (destruido, recogido o desaparecido). */
+    static final int STOP = 3;
 
     /** Distancia a la que se para frente a un meteorito para dispararle (el misil llega a unas 600 u). */
     static final float FIRE_DIST = 220f;
@@ -35,10 +39,21 @@ class Autopilot {
     static final float BRAKE_MARGIN = 0.7f;
     /** Ángulo máximo de desalineación para empujar; por encima solo se gira. */
     static final float THRUST_CONE = 35f;
+    /** Por debajo de esta velocidad se considera que la nave ya está parada. */
+    static final float STOP_SPEED = 10f;
+    /** Tiempo máximo de frenada; si no puede frenar (sin combustible), se cancela. */
+    static final float STOP_TIMEOUT = 5f;
+    /** Por debajo de esta velocidad se modula el empuje para no pasarse de frenada. */
+    static final float BRAKE_TAPER = 45f;
+    /** Distancia extra al bidón en la que se fuerza una velocidad mínima de llegada. */
+    static final float FUEL_ARRIVAL_BAND = 30f;
+    /** Velocidad mínima hacia el bidón cuando ya está muy cerca (evita quedarse corto). */
+    static final float FUEL_MIN_APPROACH = 55f;
 
     private int kind = NONE;
     private Asteroid rock;
     private FuelPickup cell;
+    private float stopTime;
 
     private final Vector2 targetVel = new Vector2();
     private final Vector2 toTarget = new Vector2();
@@ -50,10 +65,16 @@ class Autopilot {
         return kind != NONE;
     }
 
+    /** Modo actual, para telemetría y pruebas. */
+    int mode() {
+        return kind;
+    }
+
     void cancel() {
         kind = NONE;
         rock = null;
         cell = null;
+        stopTime = 0f;
     }
 
     void target(Asteroid a) {
@@ -68,14 +89,22 @@ class Autopilot {
         cell = f;
     }
 
-    /** Rellena los controles de este fotograma. Si el objetivo ya no existe, el piloto se cancela. */
+    /** Rellena los controles de este fotograma. Si el objetivo desaparece, pasa a frenar. */
     void steer(Controls c, GameWorld w, float dt) {
+        if (kind == NONE) {
+            return;
+        }
         c.fire = false;
         c.turn = 0f;
         c.aiming = false;
         c.thrust = 0f;
+        if (kind == STOP) {
+            steerStop(c, w, dt);
+            return;
+        }
         if (!stillThere(w)) {
-            cancel();
+            beginStop();
+            steerStop(c, w, dt);
             return;
         }
         Ship ship = w.ship;
@@ -105,6 +134,12 @@ class Autopilot {
         float approach = slow > 0f
                 ? Math.min(vmax, (float) Math.sqrt(2f * brake * slow))
                 : -Math.min(vmax * 0.3f, (float) Math.sqrt(2f * brake * -slow) * 0.5f);
+        if (kind == FUEL && dist < FuelPickup.RADIUS + Ship.RADIUS + FUEL_ARRIVAL_BAND) {
+            // Cerca del bidón no conviene llegar con velocidad casi nula: se pasaría
+            // de frenada y el piloto tendría que volver a acelerar. Se fuerza un
+            // empuje mínimo para atravesar el radio de recogida.
+            approach = Math.max(approach, FUEL_MIN_APPROACH);
+        }
         desired.set(d).scl(approach).add(targetVel);
 
         if (kind == ASTEROID) {
@@ -157,6 +192,37 @@ class Autopilot {
                     c.fire = true;
                 }
             }
+        }
+    }
+
+    /** Pasa a la fase de frenada cuando el objetivo ya no existe. */
+    private void beginStop() {
+        kind = STOP;
+        rock = null;
+        cell = null;
+        stopTime = 0f;
+    }
+
+    /**
+     * Frena la nave apuntando en contra de la velocidad y modulando el empuje.
+     * Se queda activo hasta que la velocidad baja o se agota el tiempo (por ejemplo, sin combustible).
+     */
+    private void steerStop(Controls c, GameWorld w, float dt) {
+        Ship ship = w.ship;
+        stopTime += dt;
+        float speed = ship.vel.len();
+        if (speed < STOP_SPEED || stopTime > STOP_TIMEOUT) {
+            cancel();
+            return;
+        }
+        float aimDeg = MathUtils.atan2(-ship.vel.y, -ship.vel.x) * MathUtils.radiansToDegrees;
+        float misalign = Math.abs(Ship.wrapDeg(aimDeg - ship.heading));
+        c.aiming = true;
+        c.aimDeg = aimDeg;
+        if (misalign < THRUST_CONE) {
+            float level = speed > BRAKE_TAPER ? 1f
+                    : MathUtils.clamp(speed / BRAKE_TAPER, 0.08f, 1f);
+            c.thrust = level;
         }
     }
 
@@ -255,16 +321,67 @@ class Autopilot {
     }
 
     /** Anillo de puntos alrededor del objetivo, para verlo en el juego. */
-    void draw(ShapeRenderer shapes) {
-        if (!active()) {
+    void draw(ShapeRenderer shapes, Ship ship, float time) {
+        if (kind == NONE) {
+            return;
+        }
+        if (kind == STOP) {
+            float r = Ship.RADIUS * 2.15f + MathUtils.sin(time * 6f) * 1.5f;
+            shapes.setColor(1f, 0.62f, 0.22f, 0.80f);
+            for (int i = 0; i < 8; i++) {
+                float a = i * 45f + time * 70f;
+                shapes.circle(ship.pos.x + MathUtils.cosDeg(a) * r,
+                        ship.pos.y + MathUtils.sinDeg(a) * r, 2.2f, 4);
+            }
             return;
         }
         Vector2 p = kind == ASTEROID ? rock.pos : cell.pos;
-        float r = kind == ASTEROID ? rock.radius + 10f : FuelPickup.RADIUS + 12f;
-        shapes.setColor(0.6f, 0.9f, 1f, 0.8f);
-        for (int i = 0; i < 16; i++) {
-            float a = i * 22.5f;
-            shapes.circle(p.x + MathUtils.cosDeg(a) * r, p.y + MathUtils.sinDeg(a) * r, 2.5f, 4);
+        float r = kind == ASTEROID ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        float pulse = 1f + 0.06f * MathUtils.sin(time * 5f);
+        if (kind == ASTEROID) {
+            shapes.setColor(0.45f, 0.85f, 1f, 0.85f);
+        } else {
+            shapes.setColor(0.40f, 1f, 0.62f, 0.85f);
+        }
+        for (int i = 0; i < 12; i++) {
+            float a = i * 30f + time * 45f;
+            shapes.circle(p.x + MathUtils.cosDeg(a) * r * pulse,
+                    p.y + MathUtils.sinDeg(a) * r * pulse, 2.2f, 4);
+        }
+        shapes.setColor(1f, 1f, 1f, 0.35f);
+        for (int i = 0; i < 6; i++) {
+            float a = i * 60f - time * 30f;
+            shapes.circle(p.x + MathUtils.cosDeg(a) * r * 1.22f,
+                    p.y + MathUtils.sinDeg(a) * r * 1.22f, 1.4f, 4);
+        }
+    }
+
+    /** Halo del objetivo, en la pasada aditiva. */
+    void drawGlow(SpriteBatch batch, Visuals art, Ship ship, float time) {
+        if (kind == NONE) {
+            return;
+        }
+        if (kind == STOP) {
+            float pulse = 0.6f + 0.4f * MathUtils.sin(time * 6f);
+            art.glow(batch, ship.pos.x, ship.pos.y, Ship.RADIUS * 5.5f,
+                    Visuals.WARN, 0.10f * pulse);
+            float r = Ship.RADIUS * 2.15f + MathUtils.sin(time * 6f) * 1.5f;
+            for (int i = 0; i < 8; i++) {
+                float a = i * 45f + time * 70f;
+                art.glow(batch, ship.pos.x + MathUtils.cosDeg(a) * r,
+                        ship.pos.y + MathUtils.sinDeg(a) * r, 9f, Visuals.WARN, 0.28f);
+            }
+            return;
+        }
+        Vector2 p = kind == ASTEROID ? rock.pos : cell.pos;
+        float r = kind == ASTEROID ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        float pulse = 0.6f + 0.4f * MathUtils.sin(time * 5f);
+        Color c = kind == ASTEROID ? Visuals.ACCENT : Visuals.GOOD;
+        art.glow(batch, p.x, p.y, r * 3.2f, c, 0.10f * pulse);
+        for (int i = 0; i < 12; i++) {
+            float a = i * 30f + time * 45f;
+            art.glow(batch, p.x + MathUtils.cosDeg(a) * r,
+                    p.y + MathUtils.sinDeg(a) * r, 10f, c, 0.35f);
         }
     }
 }

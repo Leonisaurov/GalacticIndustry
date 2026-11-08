@@ -1,0 +1,429 @@
+# REGISTRO DE DECISIONES — GalacticIndustry
+
+**Última actualización:** 2026-11-07T22:30:00-06:00  
+**Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
+**Plan maestro:** `docs/MASTER_PLAN.md`  
+**Preguntas para conversar con otro agente:** `docs/PENDING_DECISIONS.md`
+
+Este archivo explica el **contexto** y la **respuesta** de cada decisión. El estado operativo vive en el tracker. Si hay discrepancia, el tracker manda.
+
+## Estados
+
+| Estado | Significado |
+|---|---|
+| `PENDIENTE` | El usuario todavía no ha decidido. |
+| `APROBADA` | El usuario aprobó una opción; puede implementarse cuando toque. |
+| `RECHAZADA` | El usuario rechazó la propuesta. |
+| `APLAZADA` | Se decidió conscientemente no implementarla todavía. |
+| `TÉCNICA RESUELTA` | Decisión de arquitectura de bajo nivel, revisable por el usuario. |
+
+## Resumen
+
+| ID | Decisión | Estado | Respuesta |
+|---|---|---|---|
+| D-001 | Muerte permanente, mundo persistente y nave legado | **APROBADA** | Muerte permanente del personaje en el juego normal. No hay reaparición del mismo personaje. Se puede crear un personaje nuevo, que entra en el mism... |
+| D-002 | Retirada de la tienda económica de la pausa | **APROBADA** | Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas... |
+| D-003 | Láser, misiles y rayo tractor | **APROBADA** | Separar tres sistemas: (1) láser minero como extracción principal, controlada y eficiente; (2) misiles como destrucción/fragmentación rápida, con m... |
+| D-004 | Viaje warp libre y streaming del universo | **APROBADA** | Viaje libre mediante propulsión warp, sin puertas de salto obligatorias. Universo/mapa muy grande con carga dinámica de sectores/regiones: cargar l... |
+| D-005 | Estación personal vacía y modular | **APROBADA** | La primera estación personal empieza completamente vacía: una plataforma sencilla, básicamente un cuadrado donde el jugador puede colocar y acoplar... |
+| D-006 | Interiores de estaciones y naves | **APROBADA** | A largo plazo el personaje podrá caminar dentro de estaciones espaciales, estaciones construidas por el jugador e interiores de naves, abandonando ... |
+| D-007 | Cantidad de agentes y simulación offline | **TÉCNICA RESUELTA** | Se adopta la recomendación como valor inicial ajustable por telemetría. |
+| D-008 | Formato y ubicación del guardado | **TÉCNICA RESUELTA** | Se adopta JSON local con backup; no se usa red. |
+| D-009 | Audio, música y ambientación | **APROBADA** | Experiencia audiovisual completa: música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones; efectos para ... |
+| D-010 | Naves múltiples, módulos y personalización | **APROBADA** | Varias naves con modelos, formas, características y capacidades distintas, no simples variaciones visuales. Personalización mediante colores/aparie... |
+| D-011 | Galaxias reales y ficticias | **APROBADA** | Usar galaxias reales, empezando por la Vía Láctea y añadiendo otras galaxias conocidas; también se pueden incorporar galaxias ficticias cuando conv... |
+| D-012 | Facciones, combate y online futuro | **APLAZADA** | Mantener la prioridad en minería, exploración, supervivencia, economía y desarrollo de naves/estaciones. No implementar ahora IA hostil ni un siste... |
+
+---
+
+## D-001 — Muerte permanente, mundo persistente y nave legado
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-208, T-209, T-210, T-506
+
+### Respuesta
+
+Muerte permanente del personaje en el juego normal. No hay reaparición del mismo personaje. Se puede crear un personaje nuevo, que entra en el mismo mundo persistente, no en una copia reiniciada. La nave del personaje anterior permanece en las coordenadas exactas de la muerte, junto con los objetos/restos/recursos que sigan existiendo según el estado real del mundo; el nuevo personaje puede viajar hasta allí y encontrarla. La nave nodriza no es punto automático de reaparición. Durante desarrollo y pruebas debe existir un modo especial de recuperación/continuación para no perder el personaje, separado del comportamiento normal.
+
+### Contexto
+
+La nave nodriza no debe ser un punto de reaparición automático. Hay que decidir qué ocurre al destruirse la nave o morir el piloto.
+
+### Opciones consideradas
+
+- Arcade actual: se pierde la partida y se conservan monedas/mejoras.
+- Cápsula de escape + rescate a la estación más cercana, con pérdida de carga/nave.
+- Seguro: pagar prima y recuperar parte de la nave/carga.
+- Permadeath de perfil.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Cápsula de escape + rescate a la estación más cercana; el piloto sobrevive, se pierde la carga y la nave queda destruida o recuperable con coste. Las mejoras de cuenta se conservan en la primera versión.
+
+### Impacto
+
+Afecta a la Etapa 2 (asfixia) y a la Etapa 5 (rescate). No bloquea la Etapa 1.
+
+---
+
+## D-002 — Retirada de la tienda económica de la pausa
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-504
+
+### Respuesta
+
+Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas. La pausa no es una tienda alternativa.
+
+### Contexto
+
+La visión exige que la economía principal esté en la estación, pero la tienda de pausa actual es cómoda y los tests dependen de ella.
+
+### Opciones consideradas
+
+- Mantener la tienda de pausa.
+- Retirarla y dejar solo la estación.
+- Dejar servicios de emergencia limitados y caros.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Dejar servicios de emergencia limitados durante la transición y retirar la economía principal de la pausa cuando la estación esté validada.
+
+### Impacto
+
+Afecta a la Etapa 5 y a los tests 02/03.
+
+---
+
+## D-003 — Láser, misiles y rayo tractor
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-406, T-409, T-410
+
+### Respuesta
+
+Separar tres sistemas: (1) láser minero como extracción principal, controlada y eficiente; (2) misiles como destrucción/fragmentación rápida, con mineral disperso que puede perderse; (3) rayo tractor para atraer fragmentos, con mejoras de alcance, velocidad y capacidad. No fijar porcentajes definitivos de eficiencia ni pérdida; se determinarán por pruebas y balance.
+
+### Contexto
+
+Los misiles son la mecánica actual de destrucción; la minería láser debe ser la principal.
+
+### Opciones consideradas
+
+- Eliminar los misiles del bucle de minería.
+- Mantenerlos como herramienta secundaria con rendimiento reducido.
+- Convertirlos en arma de combate futura.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Mantenerlos como herramienta secundaria: rompen rocas y recuperan ~35 % del mineral. No dan monedas.
+
+### Impacto
+
+Afecta a la Etapa 4 y al autopiloto.
+
+---
+
+## D-004 — Viaje warp libre y streaming del universo
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-804, T-805, T-806, T-808
+
+### Respuesta
+
+Viaje libre mediante propulsión warp, sin puertas de salto obligatorias. Universo/mapa muy grande con carga dinámica de sectores/regiones: cargar lo cercano, descargar o simplificar lo lejano, sin mantener todo el universo cargado. Preparar escalas entre sistemas y galaxias. El warp se integra con combustible, energía y equipamiento; viaje libre no significa combustible ilimitado. Las puertas pueden existir como atajos, no como requisito.
+
+### Contexto
+
+La visión pide varias galaxias, pero no una simulación astronómica ni vuelo real a escala.
+
+### Opciones consideradas
+
+- Puertas de salto entre nodos.
+- Warp libre con coste por distancia.
+- Rutas/lanes con encuentros.
+- Vuelo real en 2D.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Puertas de salto para sistemas y una puerta mayor para galaxias; sin vuelo real entre sistemas.
+
+### Impacto
+
+Afecta a la Etapa 8 y al mapa.
+
+---
+
+## D-005 — Estación personal vacía y modular
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-901, T-902, T-903, T-904, T-905, T-906, T-907, T-908
+
+### Respuesta
+
+La primera estación personal empieza completamente vacía: una plataforma sencilla, básicamente un cuadrado donde el jugador puede colocar y acoplar su nave. No incluye almacén, reparación, mercado ni otros servicios de serie. El jugador construye y amplía módulos progresivamente (almacenes, talleres, refinerías, mercados, producción y otros). La arquitectura debe ser modular y extensible.
+
+### Contexto
+
+La estación personal puede crecer mucho; hay que acotar la primera versión.
+
+### Opciones consideradas
+
+- Solo almacén y reparación.
+- Almacén, reparación, refinería y mercado.
+- Añadir hábitat, defensa y astillero desde el inicio.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Primera versión con almacén, reparación, refinería y mercado; hábitat como preparación de interiores.
+
+### Impacto
+
+Afecta a la Etapa 9.
+
+---
+
+## D-006 — Interiores de estaciones y naves
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-1001, T-1002, T-1003, T-1004, T-1005, T-1006, T-1007
+
+### Respuesta
+
+A largo plazo el personaje podrá caminar dentro de estaciones espaciales, estaciones construidas por el jugador e interiores de naves, abandonando los controles de pilotaje para interactuar. No implementar en las primeras etapas, pero la arquitectura debe preverlo. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan como extensión posterior.
+
+### Contexto
+
+Los interiores son costosos y no deben adelantarse.
+
+### Opciones consideradas
+
+- No implementarlos.
+- Solo estación propia.
+- Estación propia y algunas naves.
+- Todas las estaciones y naves.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Solo estación propia en la Etapa 10; el resto, futuro.
+
+### Impacto
+
+Afecta a la Etapa 10; puede posponerse sin bloquear el resto.
+
+---
+
+## D-007 — Cantidad de agentes y simulación offline
+
+**Estado:** `TÉCNICA RESUELTA`  
+**Decidido por:** Arquitectura del plan maestro  
+**Fecha:** 2026-11-07  
+**Tareas afectadas:** T-705, T-707
+
+### Respuesta
+
+Se adopta la recomendación como valor inicial ajustable por telemetría.
+
+### Contexto
+
+La economía autónoma debe ser ligera en Android.
+
+### Opciones consideradas
+
+- 8 agentes, tick 2-5 s, offline 12 h.
+- 16-24 agentes, más detalle.
+- Cientos de agentes agregados.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+8 iniciales, 24 máximo, tick 2-5 s, offline 12 h en pasos de 60 s.
+
+### Impacto
+
+Afecta a la Etapa 7 y al rendimiento.
+
+---
+
+## D-008 — Formato y ubicación del guardado
+
+**Estado:** `TÉCNICA RESUELTA`  
+**Decidido por:** Arquitectura del plan maestro  
+**Fecha:** 2026-11-07  
+**Tareas afectadas:** T-104, T-605, T-803
+
+### Respuesta
+
+Se adopta JSON local con backup; no se usa red.
+
+### Contexto
+
+El guardado actual es texto en SharedPreferences y no tiene versión.
+
+### Opciones consideradas
+
+- Seguir con SharedPreferences.
+- Archivo JSON local con backup.
+- Base de datos local.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Archivo JSON local en almacenamiento privado, escritura atómica y backup; perfil pequeño puede seguir en Preferences.
+
+### Impacto
+
+Afecta a la Etapa 1 y a todas las siguientes.
+
+---
+
+## D-009 — Audio, música y ambientación
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-1104, T-1108
+
+### Respuesta
+
+Experiencia audiovisual completa: música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones; efectos para motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos. Se desarrolla en refinamiento sin bloquear las mecánicas fundamentales.
+
+### Contexto
+
+El juego no tiene audio; no es requisito de la visión inicial, pero ayuda a la identidad.
+
+### Opciones consideradas
+
+- Sin audio.
+- Set mínimo (motor, láser, impactos, alarmas, acople).
+- Banda sonora y voces.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Set mínimo local en Etapa 11, con opción de silencio.
+
+### Impacto
+
+Afecta a la Etapa 11 y al tamaño del APK.
+
+---
+
+## D-010 — Naves múltiples, módulos y personalización
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-103, T-1101, T-1109
+
+### Respuesta
+
+Varias naves con modelos, formas, características y capacidades distintas, no simples variaciones visuales. Personalización mediante colores/apariencia, piezas, componentes intercambiables, herramientas, propulsión, radares, navegación, minería y módulos especializados con funciones reales. El piloto automático puede ser un módulo instalable, no una capacidad innata de todas las naves. Preparar arquitectura de ranuras/módulos y especializaciones (minería, exploración, transporte, etc.).
+
+### Contexto
+
+La visión menciona adquirir nuevas naves, pero no es necesario en las primeras etapas.
+
+### Opciones consideradas
+
+- Una sola nave para siempre.
+- Varias naves compradas y seleccionables.
+- Flota con gestión avanzada.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Arquitectura preparada para varias naves; implementación real en Etapa 8/11.
+
+### Impacto
+
+Afecta a ShipLoadout y a la estación.
+
+---
+
+## D-011 — Galaxias reales y ficticias
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-806
+
+### Respuesta
+
+Usar galaxias reales, empezando por la Vía Láctea y añadiendo otras galaxias conocidas; también se pueden incorporar galaxias ficticias cuando convenga. No se reproduce exactitud astronómica: prioridad a un universo jugable, interesante y amplio.
+
+### Contexto
+
+La visión propone una galaxia inicial inspirada en la Vía Láctea; el nombre y el contenido son creativos.
+
+### Opciones consideradas
+
+- Vía Láctea real.
+- Galaxia ficticia inspirada.
+- Nombre genérico provisional.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Galaxia ficticia inspirada en la Vía Láctea; dejar los nombres definitivos para Etapa 8.
+
+### Impacto
+
+Afecta a datos y textos, no a la arquitectura.
+
+---
+
+## D-012 — Facciones, combate y online futuro
+
+**Estado:** `APLAZADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-07T22:30:00-06:00  
+**Tareas afectadas:** T-107, T-1103
+
+### Respuesta
+
+Mantener la prioridad en minería, exploración, supervivencia, economía y desarrollo de naves/estaciones. No implementar ahora IA hostil ni un sistema completo de facciones. A futuro: atacar/saquear naves, piratas, NPC hostiles y pacíficos, facciones de pilotos/jugadores, expediciones conjuntas, relaciones y cooperación. La arquitectura no debe cerrar la posibilidad de una modalidad online, pero no se implementa multijugador, servidores ni combate avanzado en esta etapa. La simulación económica actual se centra en minería, transporte y comercio.
+
+### Contexto
+
+La visión no exige combate, pero un universo activo puede beneficiarse de facciones y peligro.
+
+### Opciones consideradas
+
+- Sin facciones ni combate.
+- Facciones económicas sin combate.
+- Facciones + piratas + combate.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Aplazar; priorizar minería, comercio, estaciones y economía. Si se añade, empezar por facciones económicas.
+
+### Impacto
+
+Afecta a Etapa 11 y al alcance.
+
+---
+
+## Decisiones técnicas durante una tarea
+
+Si un agente necesita resolver una decisión técnica no listada:
+
+1. Elegir la opción más simple compatible con el plan.
+2. Documentarla en el log de la sesión.
+3. Añadirla a este archivo si tiene impacto duradero.
+4. No presentarla como decisión de producto.
+5. Si afecta al usuario, crear una decisión pendiente y detenerse.
+
+## Reglas de cambio
+
+- No cambiar IDs de decisiones.
+- No convertir una propuesta no aprobada en requisito.
+- Si una decisión se divide, crear IDs nuevos.
+- Si se reabre una decisión, marcarla `PENDIENTE` y actualizar el tracker.

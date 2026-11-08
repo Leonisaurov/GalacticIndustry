@@ -1,0 +1,1046 @@
+# REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
+
+**Última actualización:** 2026-11-08T00:06:00-06:00  
+**Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
+**Plan maestro:** `docs/MASTER_PLAN.md`  
+**Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
+
+Este archivo es el historial cronológico de las sesiones. El estado operativo de cada tarea vive en el tracker; aquí se explica qué ocurrió, qué se probó y qué quedó pendiente.
+
+## Formato de una entrada
+
+```markdown
+## S-XXX — Título de la sesión
+
+- **Fecha:** YYYY-MM-DDTHH:MM:SS-06:00
+- **Agente:** nombre/modelo
+- **Tarea(s):** T-XXX
+- **Resultado:** COMPLETADO | EN_PROGRESO | BLOQUEADO | REQUIERE_DECISION
+- **Archivos modificados:** ...
+- **Pruebas ejecutadas:** ...
+- **Evidencias:** ...
+- **Decisiones tomadas:** ...
+- **Pendiente / siguiente paso:** ...
+```
+
+Reglas:
+
+- Una sesión debe registrar **una tarea principal**. Si se tocaron varias, explicar por qué.
+- No declarar una tarea completada sin pruebas y criterios verificados.
+- Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
+- No borrar entradas antiguas.
+- No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-017 — Recarga de O2 y reparación de soporte
+
+- **Fecha:** 2026-11-08T00:06:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-206
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- La pestaña `REPARAR` incluye una tarjeta `OXIGENO`.
+- Coste: 0,5 créditos por unidad faltante, mínimo 5; si está lleno muestra
+  `O2 OK`.
+- Al pagar se llena la reserva, se repone la gracia y `HYPOXIC` vuelve a `OK`.
+- `LIFE_SUPPORT` aparece como `SOPORTE` y se repara con la misma fórmula que
+  las demás partes.
+- La recarga se guarda en v2 y sobrevive a la carga.
+- El servicio es temporal; se moverá a la estación en la Etapa 5.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/Pilot.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 02_navigation 03_controls 09_wing_damage`:
+  **3/3 OK**.
+
+### Evidencias
+
+- `PASS O2 lleno no cuesta`
+- `PASS O2 a 40 unidades cuesta 20`
+- `PASS O2 tiene coste minimo`
+- `PASS la recarga de O2 descuenta creditos`
+- `PASS reabastecer O2 llena y reactiva`
+- `PASS LIFE_SUPPORT se repara como las demas partes`
+- `PASS la recarga de O2 no rompe el guardado`
+- `build/screens/12_shop_repair.png`: `SOPORTE 100 %` y `OXIGENO / O2 OK`.
+
+### Decisiones tomadas
+
+- El O2 usa precio lineal de 0,5/unidad con mínimo 5, no el contador
+  exponencial del combustible.
+- La recarga no revive a un piloto `INCAPACITATED`; solo recupera O2 y el
+  estado `HYPOXIC`.
+- La tarjeta se elimina/traslada cuando exista la estación física.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-207 — Integración y balance de supervivencia**.
+
+---
+
+## S-016 — HUD y alertas de supervivencia
+
+- **Fecha:** 2026-11-08T00:03:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-205
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Se añadió una fila compacta de supervivencia justo debajo del panel superior:
+  barra `O2` y barra `HP`, separadas del casco.
+- Iconos ASCII: anillo de O2 y cruz de salud; texto con porcentaje.
+- Aviso de O2 al 25 % (`O2 BAJO`) y al 10 % (`O2 CRITICO`).
+- La fuga se muestra como `FUGA` en la barra y `FUGA O2`/`BRECHA O2` debajo.
+- La barra de O2 y su borde cambian de color con la alerta y la brecha.
+- Se añadió `survival_test` y la prueba `10_survival`.
+- La telemetría incluye `pilotLeak`, `pilotBreach` y `o2Alert`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/Visuals.java`
+- `src/com/example/codegame/Pilot.java`
+- `src/com/example/codegame/LifeSupport.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/10_survival.sh` (nuevo)
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 10_survival`: **OK**, con captura validada.
+
+### Evidencias
+
+- `build/screens/20_survival_hud.png`: O2 24 %, HP 70 %, CASCO 50 %,
+  `O2 BAJO 24 %` y `BRECHA O2`.
+- `PASS O2 normal sin alerta`
+- `PASS O2 al 25% activa aviso`
+- `PASS O2 al 10% activa alerta critica`
+- `PASS O2 a 0 sigue en alerta critica`
+- Telemetría de `10_survival`: `o2Alert=1`, `pilotLeak≈4.5`,
+  `pilotBreach=true`.
+
+### Decisiones tomadas
+
+- Las barras de supervivencia van debajo del panel superior para no saturarlo.
+- Los avisos usan texto ASCII y color; no dependen solo del color.
+- `10_survival` es una prueba de telemetría + captura; las alertas de 25/10 %
+  se comprueban también en lógica.
+- El modo `survival_test` arranca con O2 24 %, salud 70 %, casco 50 % y brecha.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-206 — Reabastecer O2 y reparar soporte vital**.
+
+---
+
+## S-015 — Asfixia, salud y estados del piloto
+
+- **Fecha:** 2026-11-07T23:59:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-204
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Con O2 a 0 hay 5 s de gracia sin daño.
+- Pasada la gracia, la salud baja 1 HP/s.
+- Con O2 disponible la salud no baja y la gracia se repone.
+- Salud 0 deja al piloto `INCAPACITATED`.
+- La salud del piloto es independiente del casco.
+- `oxygenGrace` se guarda en la línea legacy y como `grace` en v2.
+- La telemetría muestra `pilotStatus` y `pilotGrace`.
+- La muerte permanente y el mundo persistente quedan para T-208.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Pilot.java`
+- `src/com/example/codegame/LifeSupport.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+
+### Evidencias
+
+- `PASS 5 s de gracia sin perder salud`
+- `PASS tras la gracia la salud baja 1 HP/s`
+- `PASS salud 0 deja al piloto incapacitado`
+- `PASS con O2 la salud no baja`
+- `PASS la asfixia no toca el casco`
+- `PASS LifeSupport aplica la asfixia`
+- `PASS guardado antiguo de piloto usa 5 s de gracia`
+- `PASS save v2 conserva asfixia y gracia`
+- Telemetría real: `pilotStatus="OK"`, `pilotGrace=5.0`.
+
+### Decisiones tomadas
+
+- La gracia se aplica de forma prorrateada dentro del frame.
+- La incapacitación no dispara todavía la muerte permanente; T-208 la conecta.
+- La salud y el casco no se mezclan.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-205 — Añadir HUD y alertas de O2, salud y fuga**.
+
+---
+
+## S-014 — Fugas por casco y brecha
+
+- **Fecha:** 2026-11-07T23:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-203
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- La fuga de O2 depende de la integridad del casco: 0/min al 100 %, 3/min al
+  50 %, 4.8/min al 20 % y 6/min al 0 %.
+- Una brecha crítica añade un 50 % de fuga y puede repararse.
+- Un impacto fuerte (asteroide grande) con el casco ya castigado, o un casco por
+  debajo del 20 %, abre brecha. Un impacto fuerte con casco intacto no la abre.
+- La fuga consume O2 y se incluye en el tiempo estimado.
+- `GameWorld` emite partículas de gas desde el casco dañado.
+- `MyGame` muestra un aviso mínimo `FUGA O2` / `BRECHA O2` en el HUD.
+
+### Archivos modificados
+
+- `src/com/example/codegame/LifeSupport.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/Effects.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+
+### Evidencias
+
+- `PASS sin fuga con casco intacto`
+- `PASS fuga al 50% de casco ~3/min`
+- `PASS fuga al 20% de casco ~4.8/min`
+- `PASS brecha aumenta la fuga un 50%`
+- `PASS reparar brecha devuelve la fuga base`
+- `PASS impacto fuerte con casco intacto no abre brecha`
+- `PASS impacto fuerte con casco dañado abre brecha`
+- `PASS la fuga reduce el O2 a 60 s`
+- `PASS tiempo estimado incluye la fuga`
+- `PASS la fuga emite particulas en el mundo`
+
+### Decisiones tomadas
+
+- La fuga usa la fórmula `6·(1 − casco/cascoMax)·(1 + 0.5·brecha)` por minuto.
+- La brecha se abre por impacto fuerte con casco ≤70 % o por casco ≤20 %.
+- El aviso de HUD es mínimo; T-205 ampliará la información de supervivencia.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-204 — Implementar asfixia, salud y estados del piloto**.
+
+---
+
+## S-013 — Consumo de O2 y filtro
+
+- **Fecha:** 2026-11-07T23:53:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-202
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El piloto consume 4 unidades de O2 por minuto.
+- El filtro efectivo regenera 1.5/min con soporte intacto y se modula por la
+  integridad de `LIFE_SUPPORT`: 100 % → 100 %, 50 % → 60 %, 0 % → 20 %.
+- La pérdida neta con soporte intacto es 2.5/min; 100 de O2 duran ~40 min.
+- `GameSession.update()` aplica el consumo cada frame.
+- `filterEffectiveness()`, `netOxygenPerMinute()` y `estimatedSeconds()` quedan
+  disponibles para HUD y decisiones.
+- No se añadió energía de soporte vital, asfixia ni HUD.
+
+### Archivos modificados
+
+- `src/com/example/codegame/LifeSupport.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+
+### Evidencias
+
+- `PASS la sesion consume O2`
+- `PASS consumo de O2 a 60 s ~2.5`
+- `PASS filtro intacto al 100%`
+- `PASS filtro al 50% de soporte`
+- `PASS filtro al 0% de soporte cae al 20%`
+- `PASS tiempo estimado de O2 ~2400 s`
+- Telemetría real: `pilotOxygen` bajó de 100.0 a 99.5 durante la partida.
+
+### Decisiones tomadas
+
+- El filtro se calcula como `(0.20 + 0.80·LIFE/100) · filter/100`.
+- El nivel de mejora de soporte se deja a 0; la fórmula admite un bonus futuro.
+- Las fugas y la asfixia quedan para T-203/T-204.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-203 — Implementar fugas por daño de casco y brecha**.
+
+---
+
+## S-012 — LIFE_SUPPORT y persistencia de supervivencia
+
+- **Fecha:** 2026-11-07T23:50:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-201
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se añadió la base de la supervivencia sin activar consumo:
+
+- `LIFE_SUPPORT` es la última parte de `Ship` (índice 7), reparable como las demás.
+- `LifeSupport` guarda `filter`, `leak` y `breach`.
+- `GameSession` agrupa el soporte vital y lo reinicia al empezar.
+- El guardado v2 incluye `lifeSupport`; el formato legacy añade una línea `life`.
+- Los guardados anteriores de 7 partes cargan con `LIFE_SUPPORT` a 100.
+- No hay consumo de O2, fugas automáticas ni HUD.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/LifeSupport.java` (nuevo)
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK** como smoke test del cambio de partes.
+
+### Evidencias
+
+- `PASS soporte vital es la ultima parte`
+- `PASS soporte vital inicial intacto`
+- `PASS soporte vital inicia lleno`
+- `PASS save v2 conserva LIFE_SUPPORT`
+- `PASS save v2 conserva soporte vital`
+- `PASS guardado de 7 partes rellena LIFE_SUPPORT`
+
+### Decisiones tomadas
+
+- `LIFE_SUPPORT` se añade al final para no romper índices antiguos.
+- El soporte vital vive en `GameSession`, no en `Ship`; la parte solo mide integridad.
+- La compatibilidad de 7 partes se resuelve rellenando la parte nueva con 100.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-202 — Implementar consumo de O2 y filtro**.
+
+---
+
+## S-011 — Cierre de la Etapa 1
+
+- **Fecha:** 2026-11-07T23:47:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-106
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se cerró la Etapa 1 verificando que la separación piloto/nave y el guardado v2
+no cambiaron el comportamiento visible:
+
+- `01_logic` en verde con todas las comprobaciones nuevas.
+- `03_controls`, `04_autopilot` y `05_death` sin regresiones.
+- Migración `run2` → v2 probada en SelfTest.
+- Reinicio real: la app vuelve en `PAUSED` con combustible y posición restaurados.
+- Revisión de extensibilidad T-107 documentada.
+- `S1` marcada `COMPLETADO`; `S2` queda `LISTO`.
+
+### Archivos modificados
+
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+- `docs/MASTER_PLAN.md`
+- `docs/PROJECT_DASHBOARD.html` (sincronizado)
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls 04_autopilot 05_death`: **3/3 OK**.
+
+### Evidencias
+
+- `03_controls`: PLAYING → PAUSED → SHOP → PLAYING.
+- `04_autopilot`: ASTEROID → STOP → NONE.
+- `05_death`: DYING → OVER → REINTENTAR.
+- Migración y backup cubiertos por las 17 comprobaciones de guardado del SelfTest.
+
+### Decisiones tomadas
+
+- La Etapa 1 cumple su gate: guardado v1 migra a v2 y el juego se comporta igual.
+- La siguiente etapa es S2 (Supervivencia); no se adelantan sus mecánicas aquí.
+
+### Pendiente / siguiente paso
+
+- Empezar **T-201 — Añadir LIFE_SUPPORT y campos de supervivencia**.
+
+---
+
+## S-010 — Extensibilidad de identidad y online futuro
+
+- **Fecha:** 2026-11-07T23:46:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-107
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se preparó la arquitectura sin implementar red ni combate:
+
+- `PlayerProfile` separa `playerId` (cuenta/jugador) de `id` (personaje).
+- El guardado v2 persiste `playerId` y `characterId`, manteniendo `id` por compatibilidad.
+- `SaveService` acepta slots (`slot1`, `slot2`…) y sanea nombres inválidos.
+- `docs/arquitectura.md` y `docs/MASTER_PLAN.md` documentan los límites de la simulación local y los puntos de extensión futuros.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PlayerProfile.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SaveService.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- Revisión documental de límites y puntos de extensión.
+
+### Evidencias
+
+- `PASS perfil tiene identidad por defecto`
+- `PASS save v2 escribe identidad de jugador y personaje`
+- `PASS save v2 restaura identidad de jugador y personaje`
+- `PASS slots de guardado separados`
+- `PASS slot invalido cae al por defecto`
+
+### Decisiones tomadas
+
+- No hay red, multijugador, PvP ni facciones; solo se evita cerrar la puerta.
+- El guardado local no se considera seguro ni autoritativo.
+- Los slots y la identidad doble preparan varios personajes sin rehacer el formato.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-106 — Verificación de paridad de la Etapa 1**.
+
+---
+
+## S-009 — Integración de SaveService en MyGame
+
+- **Fecha:** 2026-11-07T23:43:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-105
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se conectó el guardado v2 con el ciclo real del juego:
+
+- `MyGame.create()` crea `SaveService` con `FileStorage` sobre `Gdx.files.local("save")` y el `Upgrades` de la sesión.
+- `loadRun()` usa `SaveService.load()`: v2, backup o migración `run2`. Si carga, entra en `PAUSED`.
+- `saveRun()` escribe v2 en pausa, al abrir la tienda y en `dispose()`.
+- `clearRun()` borra v2, backup y la clave legacy, y desactiva la sesión.
+- `SaveCodec` marca la sesión como activa al aplicar un v2 válido.
+- No se tocaron la navegación, el HUD, la secuencia de muerte ni la economía.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 02_navigation 03_controls 04_autopilot 05_death`: **4/4 OK**.
+
+### Evidencias
+
+- Reinicio real: tras `am force-stop`, relanzar la app entra directamente en `PAUSED` con `fuel=82.2` y posición `x=0.0, y=454.7`, restaurados desde v2.
+- `03_controls` sigue pasando por menú → partida → pausa → tienda → partida.
+- `05_death` sigue pasando por `DYING → OVER → REINTENTAR`, y al morir se limpia el guardado.
+
+### Decisiones tomadas
+
+- `MyGame` es el propietario de `SaveService`; `GameSession` conserva el formato legacy solo para migración y pruebas.
+- `SaveService.load()` decide entre v2, backup y `run2`; el juego no duplica esa lógica.
+- `dispose()` guarda antes de liberar recursos, con guarda por si `create()` no llegó a completarse.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-107 — Revisar arquitectura para identidad, facciones y online futuro**.
+- Después, **T-106** cierra la Etapa 1.
+
+---
+
+## S-008 — SaveService v2 y migración
+
+- **Fecha:** 2026-11-07T23:41:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-104
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se sustituyó el guardado monolítico por una capa versionada:
+
+- `SaveCodec` convierte `GameSession` a JSON v2 con `version`, `profile`, `pilot`, `ship` y `sector`.
+- `SaveService` abstrae el almacenamiento (`FileStorage` en disco, `MemoryStorage` en tests).
+- `FileStorage` escribe a un archivo temporal y hace rename atómico; conserva `slot1.json.bak`.
+- Ante JSON inválido, `load()` prueba el backup. Si no hay v2 válido, migra `run2` y limpia la clave antigua.
+- `GameSession.restoreLegacy()` centraliza la lectura del formato anterior.
+- `PlayerProfile` puede restaurar identidad; `Upgrades` permite fijar monedas y recargas.
+- `GameWorld` expone sus chunks generados para que el códec restaure el sector sin regenerarlo.
+
+`MyGame` todavía no usa `SaveService`; esa integración es T-105.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SaveCodec.java` (nuevo)
+- `src/com/example/codegame/SaveService.java` (nuevo)
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/PlayerProfile.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- Guardado v2 completo, carga, backup, corrupción y migración `run2` → v2.
+
+### Evidencias
+
+- `build/test-logs/selftest.txt`:
+  - `PASS save v2 incluye version, perfil, piloto, nave y sector`
+  - `PASS save v2 conserva el perfil / piloto / nave / sector`
+  - `PASS save v2 escribe backup`
+  - `PASS save v2 cae al backup`
+  - `PASS el texto corrupto no borra el backup`
+  - `PASS migracion run2 a v2`
+  - `PASS migracion conserva casco y combustible`
+  - `PASS migracion conserva partes y monedas`
+  - `PASS migracion conserva asteroides`
+  - `PASS migracion crea el archivo v2`
+  - `PASS migracion limpia run2`
+
+### Decisiones tomadas
+
+- El guardado v2 es JSON local con backup y rename atómico (D-008).
+- El códec valida todo el texto antes de aplicar la partida; un guardado corrupto no deja media sesión cargada.
+- `run2` solo se usa como fuente de migración y se elimina tras crear el v2.
+- La integración con el ciclo de `MyGame` queda para T-105.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-105 — Integrar GameSession y guardado en MyGame/GameWorld**.
+
+---
+
+## S-007 — ShipLoadout modular
+
+- **Fecha:** 2026-11-07T23:37:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-103
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se extrajo el estado de mejoras de la nave a un loadout modular:
+
+- `ShipLoadout` es la fuente única de los niveles `MOTOR`, `DEPOSITO`, `CANON`, `BLINDAJE` y `GASOLINA`.
+- Incluye `MODULE_SLOTS` ranuras genéricas, con instalación, retirada, búsqueda y persistencia.
+- `AUTOPILOT_MODULE` queda definido como capacidad instalable; no se exige todavía para volar, así que el comportamiento visible no cambia.
+- `Upgrades` actúa como fachada: `level()` y `buy()` delegación en el loadout, sin guardar una segunda copia.
+- Las claves de persistencia (`lvl0`…`lvl4`) y las fórmulas de movimiento/combate se mantienen intactas.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ShipLoadout.java` (nuevo)
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- Comprobaciones nuevas: nivel comprado visible en ambas fachadas, cinco sistemas, módulo de piloto automático, ranuras genéricas, límites de ranura y relectura desde el almacén.
+
+### Evidencias
+
+- `build/test-logs/selftest.txt`:
+  - `PASS loadout refleja el nivel comprado`
+  - `PASS loadout conserva los cinco sistemas`
+  - `PASS piloto automatico no es innato`
+  - `PASS loadout instala el modulo de piloto automatico`
+  - `PASS loadout relee niveles del almacen`
+  - `PASS loadout relee modulos del almacen`
+- `TODO OK` al final del SelfTest.
+
+### Decisiones tomadas
+
+- `ShipLoadout` conserva los niveles en memoria y escribe a través de su `Store`; `Upgrades` no duplica niveles.
+- Las fórmulas de movimiento y combate siguen en `Upgrades` para garantizar paridad en esta tarea.
+- El módulo de piloto automático se prepara, pero no se impone todavía.
+- El catálogo de naves/piezas no se implementa en esta tarea.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-104 — Implementar SaveService v2 y migración v1**.
+
+---
+
+## S-006 — Pilot y persistencia de salud/O2
+
+- **Fecha:** 2026-11-07T23:31:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-102
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se separó al piloto de la nave:
+
+- `Pilot` tiene `health`, `maxHealth`, `oxygen`, `o2Max`, `status` (`OK`/`HYPOXIC`/`INCAPACITATED`/`DEAD`) y `aboard`.
+- Los valores iniciales son 100/100 y el piloto permanece a bordo.
+- `GameSession` agrupa el piloto, lo reinicia al empezar y lo guarda/carga junto al sector.
+- El guardado añade una línea `pilot <health> <maxHealth> <oxygen> <o2Max> <status>`. Los guardados anteriores sin esa línea cargan con 100/100.
+- `MyGame` expone los valores en la telemetría de depuración, sin HUD ni consumo.
+- `Ship` documenta que la integridad del casco no es la salud del piloto.
+
+No se implementó consumo de O2, asfixia, fugas ni HUD: eso es Etapa 2.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Pilot.java` (nuevo)
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- Comprobaciones nuevas del piloto: 100/100 inicial, independencia del casco, guardado/carga y compatibilidad con guardados antiguos.
+- `tools/run-tests.sh --no-build 03_controls`: **OK** como smoke test tras cambiar la telemetría.
+
+### Evidencias
+
+- `build/test-logs/selftest.txt`:
+  - `PASS piloto inicia con salud y O2 al 100`
+  - `PASS salud del piloto no modifica el casco`
+  - `PASS sesion guarda el piloto`
+  - `PASS sesion carga el piloto`
+  - `PASS guardado antiguo carga piloto 100/100`
+- Telemetría real del dispositivo:
+  `pilotHealth=100.0, pilotMaxHealth=100.0, pilotOxygen=100.0, pilotO2Max=100.0, pilotStatus=OK`.
+
+### Decisiones tomadas
+
+- El piloto vive en `GameSession`, no en `Ship` ni en `GameWorld`.
+- El estado del piloto se serializa como una línea independiente del mundo; el formato `run2` sigue siendo legible.
+- La telemetría puede mostrar salud/O2, pero el HUD y el consumo quedan para la Etapa 2.
+- Los estados del piloto se definen ahora, pero solo `OK` se usa en esta tarea.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-103 — Separar ShipState y ShipLoadout modular**.
+- No conectar todavía O2, fugas ni asfixia.
+
+---
+
+## S-005 — PlayerProfile y GameSession
+
+- **Fecha:** 2026-11-07T23:27:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-101
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se creó la primera composición de la Etapa 1 sin cambiar el comportamiento visible:
+
+- `PlayerProfile` agrupa la identidad del jugador y la referencia al progreso existente (`Upgrades`). No se movió la economía ni se añadieron monedas nuevas.
+- `GameSession` agrupa el perfil, el sector activo (`GameWorld`, que contiene la nave) y los servicios de guardado heredados. Conserva temporalmente la clave `run2` y delega en `GameWorld.serialize()`/`restore()`.
+- `MyGame` crea una instancia de `GameSession` en `create()`, usa su sector como mundo activo, arranca/carga/guarda a través de ella y actualiza el sector mediante `session.update()`.
+- `SelfTest` añade comprobaciones de identidad del perfil, composición de la sesión y guardado/carga/limpieza.
+
+La clase `Pilot` y el loadout modular no se adelantan: llegan en T-102 y T-103.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PlayerProfile.java` (nuevo)
+- `src/com/example/codegame/GameSession.java` (nuevo)
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**, incluidas las comprobaciones nuevas.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+- `tools/run-tests.sh --no-build 04_autopilot`: **OK**.
+
+Nota: el primer intento de `03_controls` falló con «no empezó la partida» por un toque perdido durante la carga; al repetirlo pasó. No hay traza de excepción ni cambio de layout.
+
+### Evidencias
+
+- `build/test-logs/selftest.txt` termina en `TODO OK`.
+- `03_controls`: PLAYING (inmortal, consume combustible) → PAUSED → SHOP → PLAYING.
+- `04_autopilot`: ASTEROID → STOP → NONE, velocidad final < 12 u/s y acelerador 0.
+- `GameSession` conserva la partida en `run2`; T-104 la sustituirá por `SaveService` v2.
+
+### Decisiones tomadas
+
+- `PlayerProfile` contiene la identidad y una referencia a `Upgrades`; no se duplica el estado ni se crea economía nueva.
+- `GameSession` asume temporalmente el arranque, la actualización y el guardado heredado; la migración a `SaveService` v2 queda para T-104.
+- `MyGame` mantiene alias (`upgrades`, `world`) que apuntan a los objetos de la sesión; no hay estado duplicado.
+- La entidad `Pilot` se crea en T-102, tal como marca el plan.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-102 — Crear Pilot y migrar salud/O2**.
+- No implementar todavía O2, fugas ni supervivencia (Etapa 2).
+
+---
+
+## S-004 — Tema oscuro del panel
+
+- **Fecha:** 2026-11-07T23:16:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** mantenimiento visual del panel
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se cambió `docs/PROJECT_DASHBOARD.html` a un tema oscuro completo: fondo negro/azul profundo, tarjetas oscuras, texto claro, badges y estados con contraste adaptado. Se mantuvieron los datos, filtros, detalles, enlaces, recarga manual y auto-recarga.
+
+### Archivos modificados
+
+- `docs/PROJECT_DASHBOARD.html`
+- `docs/IMPLEMENTATION_TRACKER.json` (sesión S-004)
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `python3 tools/sync-dashboard.py --check`: correcto.
+- Firefox headless con `file://`: render correcto.
+- Marionette: 14/14 comprobaciones (render, filtros, búsqueda, detalle, recarga manual y auto-recarga).
+
+### Evidencias
+
+- Panel oscuro abierto en Brave mediante `file://`.
+- Sin recursos externos ni red.
+- La primera tarea de implementación sigue siendo `T-101`.
+
+### Pendiente / siguiente paso
+
+- Ninguno para el panel.
+- Continuar con `T-101` cuando se pida implementar.
+
+---
+
+## S-003 — Cierre de decisiones de diseño y reorganización
+
+- **Fecha:** 2026-11-07T22:30:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** ninguna de implementación; revisión de planificación
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se aplicaron las respuestas del usuario a las decisiones pendientes:
+
+- D-001: muerte permanente, mundo persistente y nave legado; modo de desarrollo para recuperación.
+- D-002: eliminar la tienda económica de la pausa.
+- D-003: separar láser, misiles y rayo tractor.
+- D-004: viaje warp libre con carga dinámica de sectores, sin puertas obligatorias.
+- D-005: estación personal inicial vacía y modular.
+- D-006: interiores de estaciones y naves a largo plazo.
+- D-009: audio completo, música y ambientes.
+- D-010: naves distintas y personalización por módulos.
+- D-011: galaxias reales y ficticias.
+- D-012: facciones/combate/online aplazados; arquitectura abierta.
+
+No se implementó ninguna mecánica del juego.
+
+### Archivos modificados
+
+- `docs/DECISIONS.md`
+- `docs/PENDING_DECISIONS.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/PROJECT_DASHBOARD.html`
+- `AGENTS.md` (referencia al archivo de decisiones cerradas)
+
+### Tareas reorganizadas
+
+- Nuevas tareas: `T-107`, `T-209`, `T-210`, `T-409`, `T-410`, `T-808`, `T-907`, `T-908`, `T-1007`, `T-1108`, `T-1109`.
+- Reactivadas: `T-208`, `T-406`, `T-504`, `T-804`, `T-903`, `T-1001`…`T-1006`, `T-1104`.
+- Pospuestas: `T-1103`, `T-1007`.
+- Dependencias actualizadas: `T-106`, `T-408`, `T-807`, `T-906`, `T-1107`.
+
+### Pruebas ejecutadas
+
+- `python3 tools/sync-dashboard.py --check`: correcto.
+- Validación de IDs, etapas, dependencias y decisiones.
+- Sin decisiones pendientes.
+
+### Evidencias
+
+- Tracker con 91 tareas, 12 etapas y 12 decisiones.
+- Cero tareas en `REQUIERE_DECISION`.
+- Panel sincronizado.
+
+### Pendiente / siguiente paso
+
+- La primera tarea de implementación sigue siendo `T-101`.
+- No implementar `T-1103` ni `T-1007` hasta que el usuario lo pida.
+
+---
+
+## S-002 — Pendientes para conversar y apertura del panel
+
+- **Fecha:** 2026-11-07T22:15:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-003, T-006 (mantenimiento de continuidad)
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se creó `docs/PENDING_DECISIONS.md` con las diez decisiones pendientes, contexto, opciones, recomendación, tareas afectadas y una plantilla para devolver respuestas. Se enlazó desde `AGENTS.md` y `docs/DECISIONS.md`. Se abrió `docs/PROJECT_DASHBOARD.html` en Brave mediante `file://`.
+
+### Archivos modificados
+
+- `docs/PENDING_DECISIONS.md` (nuevo)
+- `AGENTS.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/PROJECT_DASHBOARD.html` (sincronizado)
+
+### Pruebas ejecutadas
+
+- `python3 tools/sync-dashboard.py --check`: correcto.
+- Apertura de `file:///home/leonisauro/Develop/Android/GalacticIndustry/docs/PROJECT_DASHBOARD.html` con Brave: proceso activo.
+
+### Evidencias
+
+- El panel abrió la URL `file://` en Brave.
+- El tracker mantiene 80 tareas, 12 etapas y 12 decisiones.
+- La primera tarea de implementación sigue siendo `T-101`.
+
+### Pendiente / siguiente paso
+
+- El usuario conversará las decisiones con otro agente y devolverá respuestas.
+- Al recibirlas, actualizar `DECISIONS.md`, el tracker y `PENDING_DECISIONS.md`.
+- No implementar mecánicas hasta que el usuario lo pida.
+
+---
+
+## S-001 — Infraestructura de continuidad
+
+- **Fecha:** 2026-11-07T21:41:24-06:00 (inicio) — 2026-11-07T22:06:00-06:00 (cierre)
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-003, T-006
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se construyó la infraestructura persistente de continuidad:
+
+- `AGENTS.md` actualizado como punto de entrada y protocolo.
+- `docs/MASTER_PLAN.md` con visión, arquitectura, etapas, fórmulas y riesgos.
+- `docs/IMPLEMENTATION_TRACKER.json` con etapas, tareas, dependencias, criterios, decisiones, sesiones y problemas.
+- `docs/IMPLEMENTATION_LOG.md` (este archivo).
+- `docs/DECISIONS.md` con las decisiones de producto pendientes y las técnicas resueltas.
+- `docs/PROJECT_DASHBOARD.html` autocontenido para abrir con `file://`.
+- `tools/sync-dashboard.py` para validar el tracker y sincronizar los datos integrados en el HTML.
+
+### Archivos modificados/creados
+
+- `AGENTS.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+- `docs/DECISIONS.md`
+- `docs/PROJECT_DASHBOARD.html`
+- `tools/sync-dashboard.py`
+
+### Pruebas ejecutadas
+
+- Validación de estructura del JSON.
+- Comprobación de IDs únicos.
+- Comprobación de dependencias existentes.
+- Comprobación de ausencia de ciclos.
+- Sincronización JSON → HTML.
+- Comprobación de que el HTML no referencia recursos externos (CDN, fetch, XHR, WebSocket).
+- Firefox 159 headless con `file://`: render completo del panel sin servidor.
+- Marionette: 14 comprobaciones (render inicial, filtros por estado, búsqueda, detalle de tarea, clic de etapa, limpieza de filtros, activación/desactivación de auto-recarga, recarga manual y auto-recarga real de 10 s). Resultado: **14/14 PASS**.
+- Comprobación estructural de que el panel puede abrirse con `file://`.
+
+### Evidencias
+
+- `python3 tools/sync-dashboard.py --check` termina sin errores.
+- El panel contiene el bloque `tracker-data` con la copia del tracker.
+- El panel se renderizó en Firefox headless desde `file://`.
+- No se modificó ningún archivo de mecánicas del juego.
+
+### Decisiones tomadas
+
+- El tracker JSON es la fuente canónica.
+- El HTML contiene una copia integrada porque `fetch()` no es fiable con `file://`.
+- La auto-recarga del panel es opcional y se puede pausar.
+- Las tareas de preparación no cuentan para el progreso de implementación.
+- La primera tarea de implementación será `T-101`.
+
+### Pendiente / siguiente paso
+
+- Iniciar `T-101` en una sesión nueva: crear `PlayerProfile` y `GameSession`.
+- Antes de modificarlo, contrastar el estado real del código.
+- No implementar O2, carga, minería ni estación en esa sesión.
+
+---
+
+## S-000 — Auditoría y plan maestro
+
+- **Fecha:** 2026-11-07T21:41:24-06:00
+- **Agente:** OpenCode — sesión de arquitectura
+- **Tarea(s):** T-001, T-002, T-004, T-005
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+Se auditó el proyecto existente y se redactó el plan maestro de transformación. Se distinguieron sistemas existentes, parciales y ausentes. Se documentaron fórmulas, valores actuales, guardado, tests, riesgos y decisiones pendientes.
+
+### Archivos revisados
+
+- `AGENTS.md`
+- `docs/arquitectura.md`
+- `docs/build.md`
+- `docs/pruebas.md`
+- `docs/convenciones.md`
+- `src/com/example/codegame/*.java`
+- `tools/tests/*`
+- `AndroidManifest.xml`, `deps.json`, `app/module.toml`
+
+### Pruebas ejecutadas
+
+- `SelfTest` sobre `build/classes`: 5 ejecuciones.
+- Resultado: 4 ejecuciones `TODO OK`; 1 ejecución con `1 prueba(s) fallida(s)` no identificada.
+- No se ejecutaron los tests de dispositivo `02–09`.
+- No se midió FPS, memoria ni batería.
+
+### Evidencias
+
+- Auditoría incorporada a `docs/MASTER_PLAN.md`.
+- Lista de decisiones en `docs/DECISIONS.md`.
+- Problema `I-001` registrado en el tracker por la flakiness.
+
+### Decisiones tomadas
+
+- Mantener Java + LibGDX y la base existente.
+- No reescribir el juego.
+- Separar piloto/nave antes de añadir supervivencia.
+- Introducir guardado versionado antes de añadir datos nuevos.
+- Usar sectores finitos en lugar de un infinito uniforme.
+- Usar agentes ligeros y deterministas, no LLM ni servicios externos.
+
+### Pendiente / siguiente paso
+
+- Crear la infraestructura de continuidad (hecho en S-001).
+- Resolver decisiones de producto cuando las etapas las necesiten.
+
+---
+
+## Plantilla para la próxima sesión
+
+```markdown
+## S-00X — Título
+
+- **Fecha:**
+- **Agente:**
+- **Tarea(s):**
+- **Resultado:**
+
+### Resumen
+
+### Archivos modificados
+
+### Pruebas ejecutadas
+
+### Evidencias
+
+### Decisiones tomadas
+
+### Pendiente / siguiente paso
+```
+
+---
+
+## Nota sobre interrupciones
+
+Si una sesión se interrumpe:
+
+1. El tracker debe dejar la tarea en `EN_PROGRESO`.
+2. Este log debe anotar qué se hizo y qué falta.
+3. El siguiente agente debe leer el log, inspeccionar el código y continuar la misma tarea.
+4. No debe asumir que la tarea está terminada ni empezar otra.
+5. Si no puede continuar, debe marcarla `BLOQUEADO` con el motivo exacto.

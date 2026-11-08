@@ -9,22 +9,26 @@ import java.util.Map;
 /** Mejoras de la tienda y monedas guardadas entre partidas. */
 class Upgrades {
 
-    static final int MOTOR = 0;
-    static final int DEPOSITO = 1;
-    static final int CANON = 2;
-    static final int BLINDAJE = 3;
-    static final int GASOLINA = 4;
-    static final int COUNT = 5;
-    static final int MAX_LEVEL = 5;
+    static final int MOTOR = ShipLoadout.MOTOR;
+    static final int DEPOSITO = ShipLoadout.DEPOSITO;
+    static final int CANON = ShipLoadout.CANON;
+    static final int BLINDAJE = ShipLoadout.BLINDAJE;
+    static final int GASOLINA = ShipLoadout.GASOLINA;
+    static final int COUNT = ShipLoadout.COUNT;
+    static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
     /** Precio base de la recarga de emergencia; se duplica con cada compra. */
     static final int REFILL_BASE = 10;
+    /** Precio del O2 en la tienda temporal: 0,5 créditos por unidad. */
+    static final float O2_PRICE_PER_UNIT = 0.5f;
+    /** Coste mínimo de una recarga de O2. */
+    static final int O2_REFILL_MIN = 5;
 
     static final String[] NAMES = {"Motor", "Deposito", "Canon", "Blindaje", "Gasolina"};
     static final String[] DESCS = {
             "Mas aceleracion y velocidad",
             "Mas combustible maximo",
             "Mas dano y cadencia de disparo",
-            "Mas vidas al empezar",
+            "Refuerza la integridad del casco",
             "Menos consumo de combustible"
     };
 
@@ -32,14 +36,61 @@ class Upgrades {
     private final Preferences prefs;
     private final Map<String, Integer> memory = new HashMap<>();
     private final Map<String, String> memoryText = new HashMap<>();
+    private final ShipLoadout.Store store;
+    /** Fuente unica de niveles y ranuras; Upgrades no duplica esos datos. */
+    final ShipLoadout loadout;
 
     Upgrades() {
         this.prefs = Gdx.app.getPreferences("codegame");
+        this.store = new ShipLoadout.Store() {
+            @Override
+            public int getInteger(String key) {
+                return getInt(key);
+            }
+
+            @Override
+            public void putInteger(String key, int value) {
+                putInt(key, value);
+            }
+
+            @Override
+            public String getString(String key) {
+                return getText(key);
+            }
+
+            @Override
+            public void putString(String key, String value) {
+                putText(key, value);
+            }
+        };
+        this.loadout = new ShipLoadout(store);
     }
 
     /** Constructor sin Gdx, para pruebas de lógica en la JVM. */
     Upgrades(boolean inMemory) {
         this.prefs = null;
+        this.store = new ShipLoadout.Store() {
+            @Override
+            public int getInteger(String key) {
+                return getInt(key);
+            }
+
+            @Override
+            public void putInteger(String key, int value) {
+                putInt(key, value);
+            }
+
+            @Override
+            public String getString(String key) {
+                return getText(key);
+            }
+
+            @Override
+            public void putString(String key, String value) {
+                putText(key, value);
+            }
+        };
+        this.loadout = new ShipLoadout(store);
     }
 
     private int getInt(String key) {
@@ -67,8 +118,18 @@ class Upgrades {
         putInt("coins", coins() + amount);
     }
 
+    /** Fija el saldo al cargar una partida; nunca deja valores negativos. */
+    void setCoins(int value) {
+        putInt("coins", Math.max(0, value));
+    }
+
+    /** Fija el contador de recargas al cargar una partida. */
+    void setRefillCount(int value) {
+        putInt("refills", Math.max(0, value));
+    }
+
     int level(int index) {
-        return getInt("lvl" + index);
+        return loadout.level(index);
     }
 
     int cost(int index) {
@@ -92,6 +153,17 @@ class Upgrades {
 
     void recordRefill() {
         putInt("refills", refillCount() + 1);
+    }
+
+    /**
+     * Coste de rellenar O2: 0 si está lleno; si falta algo, 0,5 créditos por
+     * unidad con un mínimo de 5. No usa el contador de recargas de combustible.
+     */
+    int o2RefillCost(float missingOxygen) {
+        if (missingOxygen < 0.5f) {
+            return 0;
+        }
+        return Math.max(O2_REFILL_MIN, (int) Math.ceil(missingOxygen * O2_PRICE_PER_UNIT));
     }
 
     /** Texto guardado (p. ej. la partida en curso). Con null borra la entrada. */
@@ -131,7 +203,7 @@ class Upgrades {
             return false;
         }
         putInt("coins", coins() - cost(index));
-        putInt("lvl" + index, level(index) + 1);
+        loadout.upgrade(index);
         return true;
     }
 
@@ -155,12 +227,18 @@ class Upgrades {
         return 0.35f - 0.04f * level(CANON);
     }
 
-    int lives() {
-        return 3 + level(BLINDAJE);
+    /** Integridad maxima del casco: 100 sin mejora y 225 al nivel 5 de Blindaje. */
+    float hull() {
+        return 100f + 25f * level(BLINDAJE);
     }
 
     /** Multiplicador del consumo de combustible: 1 sin mejora, 0.6 con nivel máximo. */
     float fuelUse() {
         return 1f - 0.08f * level(GASOLINA);
+    }
+
+    /** Loadout activo de la nave; lo usara tambien ShipState en tareas posteriores. */
+    ShipLoadout loadout() {
+        return loadout;
     }
 }

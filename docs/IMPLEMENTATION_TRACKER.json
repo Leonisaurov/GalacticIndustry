@@ -1,0 +1,4910 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "project": "GalacticIndustry",
+    "displayName": "GalacticIndustry / Asteroides",
+    "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
+    "lastUpdated": "2026-11-08T00:06:00-06:00",
+    "lastSessionId": "S-017",
+    "lastVerification": {
+      "date": "2026-11-08T00:06:00-06:00",
+      "result": "OK",
+      "checks": [
+        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
+        "Recarga de O2 a 0,5 créditos/unidad con mínimo 5 y descuento real",
+        "LIFE_SUPPORT se repara como las demás partes",
+        "La recarga de O2 persiste en el guardado v2",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls 09_wing_damage: 3/3 OK",
+        "Captura 12_shop_repair muestra SOPORTE y OXIGENO sin saturar",
+        "python3 tools/sync-dashboard.py --check"
+      ]
+    },
+    "currentStageId": "S2",
+    "currentTaskId": null,
+    "nextTaskId": "T-207",
+    "preparationComplete": true,
+    "implementationStarted": true,
+    "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
+    "oneTaskPerSession": true,
+    "statusSource": "Este JSON es la fuente canónica. El HTML contiene una copia integrada para funcionar con file://.",
+    "rules": [
+      "Una tarea por sesión.",
+      "No marcar COMPLETADO sin verificar criterios y pruebas.",
+      "No cambiar IDs existentes.",
+      "No eliminar tareas o etapas silenciosamente.",
+      "Actualizar JSON, log, decisiones y HTML al terminar.",
+      "Si una tarea queda EN_PROGRESO, la siguiente sesión debe recuperarla antes de empezar otra.",
+      "Al añadir tareas, actualizar taskCount e implementationTaskCount de la etapa."
+    ]
+  },
+  "statusDefinitions": {
+    "PENDIENTE": {
+      "label": "Pendiente",
+      "description": "Todavía no se ha iniciado o no cumple sus dependencias."
+    },
+    "LISTO": {
+      "label": "Listo",
+      "description": "Todas sus dependencias están completadas y puede ejecutarse."
+    },
+    "EN_PROGRESO": {
+      "label": "En progreso",
+      "description": "Un agente está trabajando en ella. Si la sesión se interrumpe, debe recuperarse."
+    },
+    "COMPLETADO": {
+      "label": "Completado",
+      "description": "Implementada, probada y con criterios de aceptación verificados."
+    },
+    "BLOQUEADO": {
+      "label": "Bloqueado",
+      "description": "Existe un problema técnico o una dependencia que impide continuar."
+    },
+    "POSPUESTO": {
+      "label": "Pospuesto",
+      "description": "Se decidió conscientemente dejarla para más adelante."
+    },
+    "REQUIERE_DECISION": {
+      "label": "Requiere decisión",
+      "description": "Necesita una decisión del usuario antes de implementarse o completarse."
+    }
+  },
+  "stages": [
+    {
+      "id": "S0",
+      "order": 0,
+      "name": "Auditoría y preparación",
+      "status": "COMPLETADO",
+      "type": "preparation",
+      "objective": "Conocer el proyecto real, fijar la visión, registrar decisiones y dejar el sistema de continuidad operativo.",
+      "gate": "Auditoría, plan maestro, tracker, panel, decisiones y protocolo de agentes listos.",
+      "taskCount": 6,
+      "implementationTaskCount": 0
+    },
+    {
+      "id": "S1",
+      "order": 1,
+      "name": "Separación del piloto y la nave",
+      "status": "COMPLETADO",
+      "type": "implementation",
+      "objective": "Introducir GameSession, PlayerProfile, Pilot y ShipLoadout, y un guardado versionado, sin cambiar el comportamiento visible.",
+      "gate": "Guardado v1 migra a v2 y el juego se comporta igual.",
+      "taskCount": 7,
+      "implementationTaskCount": 6
+    },
+    {
+      "id": "S2",
+      "order": 2,
+      "name": "Supervivencia",
+      "status": "EN_PROGRESO",
+      "type": "implementation",
+      "objective": "Añadir oxígeno, soporte vital, fugas, salud del piloto y sus consecuencias.",
+      "gate": "Una expedición puede agotar O2 o sufrir una fuga sin depender solo del casco.",
+      "taskCount": 10,
+      "implementationTaskCount": 9
+    },
+    {
+      "id": "S3",
+      "order": 3,
+      "name": "Inventario, almacenamiento y peso",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Añadir bodega, minerales, capacidad, masa y su efecto en el movimiento y el combustible.",
+      "gate": "Una bodega llena sigue siendo viable y el consumo de combustible está rebalanceado.",
+      "taskCount": 6,
+      "implementationTaskCount": 6
+    },
+    {
+      "id": "S4",
+      "order": 4,
+      "name": "Minería láser y recursos",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Sustituir la destrucción por minería láser, introducir tipos de asteroides y minerales, y eliminar las monedas directas.",
+      "gate": "Minar llena la bodega y no hay monedas directas.",
+      "taskCount": 10,
+      "implementationTaskCount": 10
+    },
+    {
+      "id": "S5",
+      "order": 5,
+      "name": "Nave nodriza y acoplamiento",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Convertir la tienda abstracta en una estación física acoplable, con almacén y servicios.",
+      "gate": "El ciclo minar-volver-descargar-vender-reparar funciona desde la estación.",
+      "taskCount": 7,
+      "implementationTaskCount": 7
+    },
+    {
+      "id": "S6",
+      "order": 6,
+      "name": "Economía comercial básica",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Introducir mercado, stock, precios, spread y compraventa de minerales.",
+      "gate": "Los precios reaccionan al stock y no hay arbitraje trivial.",
+      "taskCount": 6,
+      "implementationTaskCount": 6
+    },
+    {
+      "id": "S7",
+      "order": 7,
+      "name": "Pilotos autónomos",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Simular una cantidad limitada de pilotos que minen, transporten y comercien, afectando a los mercados.",
+      "gate": "Los precios cambian sin intervención del jugador y la simulación es determinista y ligera.",
+      "taskCount": 7,
+      "implementationTaskCount": 7
+    },
+    {
+      "id": "S8",
+      "order": 8,
+      "name": "Expansión del universo y galaxias",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Estructurar galaxias, sistemas, sectores y puertas de salto; añadir una segunda galaxia de contenido.",
+      "gate": "Dos sistemas y dos galaxias con viaje, persistencia y mapas.",
+      "taskCount": 8,
+      "implementationTaskCount": 8
+    },
+    {
+      "id": "S9",
+      "order": 9,
+      "name": "Estación espacial personal",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Permitir construir y ampliar una estación propia con módulos, almacén y servicios.",
+      "gate": "Núcleo, módulos y servicios persisten y son utilizables.",
+      "taskCount": 8,
+      "implementationTaskCount": 8
+    },
+    {
+      "id": "S10",
+      "order": 10,
+      "name": "Interiores y actividades avanzadas",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Permitir moverse a pie por la estación propia e interactuar con sus módulos.",
+      "gate": "Se entra, camina, interactúa y se vuelve a la nave.",
+      "taskCount": 7,
+      "implementationTaskCount": 6
+    },
+    {
+      "id": "S11",
+      "order": 11,
+      "name": "Expansión y refinamiento",
+      "status": "PENDIENTE",
+      "type": "implementation",
+      "objective": "Ampliar contenido, pulir balance, identidad visual, audio, accesibilidad y rendimiento.",
+      "gate": "Regresión completa y rendimiento aceptable en el dispositivo objetivo.",
+      "taskCount": 9,
+      "implementationTaskCount": 8
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T-001",
+      "stageId": "S0",
+      "title": "Auditoría técnica del proyecto",
+      "description": "Leer el código real, documentar clases, sistemas, fórmulas, estados, guardado, tests y limitaciones; distinguir lo existente de lo deseado.",
+      "category": "preparation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [],
+      "decisionIds": [],
+      "files": [
+        "AGENTS.md",
+        "docs/arquitectura.md",
+        "docs/build.md",
+        "docs/pruebas.md",
+        "docs/convenciones.md",
+        "src/com/example/codegame/*.java",
+        "tools/tests/*"
+      ],
+      "acceptanceCriteria": [
+        "Inventario de clases y responsabilidades.",
+        "Matriz existente/parcial/ausente.",
+        "Fórmulas y valores actuales registrados.",
+        "Riesgos y deudas técnicas identificados.",
+        "Lo no verificado declarado explícitamente."
+      ],
+      "tests": [
+        "Lectura completa del código propio.",
+        "SelfTest ejecutado 5 veces: 4 TODO OK y 1 fallo esporádico no reproducido.",
+        "No se ejecutaron los tests de dispositivo 02-09."
+      ],
+      "technicalNotes": "Base: commit a0b0ba4 más los cambios locales del árbol de trabajo. El fallo esporádico obliga a fijar semillas en las pruebas.",
+      "executionLog": [
+        {
+          "sessionId": "S-000",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Auditoría del estado real y línea base.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/MASTER_PLAN.md (auditoría)",
+        "docs/IMPLEMENTATION_LOG.md S-000"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-002",
+      "stageId": "S0",
+      "title": "Redactar el plan maestro persistente",
+      "description": "Convertir la visión y la auditoría en un documento permanente con arquitectura, etapas, fórmulas y criterios.",
+      "category": "preparation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-001"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/MASTER_PLAN.md",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "Plan maestro guardado en docs/MASTER_PLAN.md.",
+        "Etapas, dependencias y criterios generales definidos.",
+        "Fórmulas y parámetros iniciales documentados.",
+        "Decisiones pendientes separadas de los requisitos aprobados."
+      ],
+      "tests": [
+        "Revisión documental",
+        "Comprobación de enlaces y rutas"
+      ],
+      "technicalNotes": "El plan es la visión estable; el tracker es la ejecución granular.",
+      "executionLog": [
+        {
+          "sessionId": "S-000",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Plan maestro persistente redactado.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/MASTER_PLAN.md",
+        "docs/DECISIONS.md"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-003",
+      "stageId": "S0",
+      "title": "Crear el sistema de continuidad",
+      "description": "Crear AGENTS.md, tracker JSON, log, decisiones, panel HTML y herramienta de sincronización, sin tocar mecánicas del juego.",
+      "category": "preparation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-002"
+      ],
+      "decisionIds": [],
+      "files": [
+        "AGENTS.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/DECISIONS.md",
+        "docs/PROJECT_DASHBOARD.html",
+        "tools/sync-dashboard.py"
+      ],
+      "acceptanceCriteria": [
+        "Cualquier agente puede identificar la siguiente tarea leyendo AGENTS.md.",
+        "El tracker tiene IDs únicos, dependencias y estados.",
+        "El panel funciona con file:// y datos integrados.",
+        "Existe un procedimiento de recuperación para tareas EN_PROGRESO.",
+        "No se modificó ninguna mecánica del juego."
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Validación de JSON y dependencias",
+        "Apertura estructural del HTML sin servidor"
+      ],
+      "technicalNotes": "La infraestructura es la única implementación de esta sesión.",
+      "executionLog": [
+        {
+          "sessionId": "S-001",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Infraestructura de continuidad creada.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        },
+        {
+          "sessionId": "S-002",
+          "date": "2026-11-07T22:15:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pendientes consolidados en docs/PENDING_DECISIONS.md y panel abierto en Brave.",
+          "files": [
+            "docs/PENDING_DECISIONS.md"
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "Brave file://"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/PROJECT_DASHBOARD.html",
+        "python3 tools/sync-dashboard.py --check"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:15:00-06:00"
+    },
+    {
+      "id": "T-004",
+      "stageId": "S0",
+      "title": "Registrar decisiones iniciales y riesgos",
+      "description": "Documentar las decisiones de producto pendientes y las decisiones técnicas ya resueltas por la arquitectura.",
+      "category": "preparation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-002"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/DECISIONS.md",
+        "docs/IMPLEMENTATION_TRACKER.json"
+      ],
+      "acceptanceCriteria": [
+        "Cada decisión tiene ID, contexto, opciones, recomendación y tareas afectadas.",
+        "Las propuestas no se presentan como requisitos aprobados.",
+        "Los riesgos principales están registrados."
+      ],
+      "tests": [
+        "Revisión cruzada con el tracker"
+      ],
+      "technicalNotes": "Las decisiones técnicas de bajo nivel pueden resolverse en la tarea; las de producto requieren usuario.",
+      "executionLog": [
+        {
+          "sessionId": "S-000",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Decisiones y riesgos iniciales registrados.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/DECISIONS.md"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-005",
+      "stageId": "S0",
+      "title": "Fijar la línea base de pruebas y convenciones",
+      "description": "Registrar cómo se construye, cómo se prueba y qué invariantes no se deben romper.",
+      "category": "preparation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-001"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/pruebas.md",
+        "docs/convenciones.md",
+        "SelfTest.java",
+        "tools/run-tests.sh"
+      ],
+      "acceptanceCriteria": [
+        "Comandos de build y test documentados.",
+        "Invariantes de render y economía registrados.",
+        "Se conoce la diferencia entre pruebas de lógica y de dispositivo.",
+        "La flakiness observada queda registrada."
+      ],
+      "tests": [
+        "SelfTest",
+        "Revisión de docs/pruebas.md"
+      ],
+      "technicalNotes": "No se ejecutaron tests de dispositivo en la sesión de preparación.",
+      "executionLog": [
+        {
+          "sessionId": "S-000",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Línea base y convenciones registradas.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/pruebas.md",
+        "docs/convenciones.md"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-006",
+      "stageId": "S0",
+      "title": "Validar el panel y la sincronización",
+      "description": "Comprobar que el JSON es válido, que los IDs y dependencias son coherentes y que el HTML contiene exactamente los mismos datos.",
+      "category": "preparation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-003"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html",
+        "tools/sync-dashboard.py"
+      ],
+      "acceptanceCriteria": [
+        "El script de validación termina sin errores.",
+        "El HTML no referencia recursos externos.",
+        "El bloque JSON integrado coincide con el tracker.",
+        "El panel se puede abrir mediante file://."
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Firefox headless con file://: render correcto",
+        "Marionette: filtros, búsqueda, detalle, recarga manual y auto-recarga (14/14)",
+        "Comprobación de HTML sin CDN, fetch, XHR ni WebSocket"
+      ],
+      "technicalNotes": "La comprobación visual se hizo con Firefox 159 headless y el panel se abrió con file:// sin servidor. La auto-recarga se probó esperando un ciclo real de 10 s.",
+      "executionLog": [
+        {
+          "sessionId": "S-001",
+          "date": "2026-11-07T22:06:00-06:00",
+          "agent": "OpenCode - preparación",
+          "status": "COMPLETADO",
+          "summary": "Tracker y panel validados.",
+          "files": [],
+          "tests": [],
+          "outcome": "Completado"
+        },
+        {
+          "sessionId": "S-002",
+          "date": "2026-11-07T22:15:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pendientes consolidados en docs/PENDING_DECISIONS.md y panel abierto en Brave.",
+          "files": [
+            "docs/PENDING_DECISIONS.md"
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "Brave file://"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "docs/PROJECT_DASHBOARD.html",
+        "tools/sync-dashboard.py",
+        "Marionette: 14/14 comprobaciones OK"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:15:00-06:00"
+    },
+    {
+      "id": "T-101",
+      "stageId": "S1",
+      "title": "Crear PlayerProfile y GameSession",
+      "description": "Introducir los contenedores de estado del jugador y de la sesión, sin cambiar el comportamiento visible del juego.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-003"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/PlayerProfile.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/GameWorld.java"
+      ],
+      "acceptanceCriteria": [
+        "GameSession agrupa perfil, piloto, nave, sector y servicios de guardado.",
+        "MyGame usa una instancia de sesión en create/update.",
+        "El menú, la partida y la tienda se comportan igual.",
+        "No se introduce economía nueva."
+      ],
+      "tests": [
+        "01_logic",
+        "03_controls",
+        "04_autopilot"
+      ],
+      "technicalNotes": "No mover todavía la lógica de Upgrades; solo crear la estructura y la composición.",
+      "executionLog": [
+        {
+          "sessionId": "S-005",
+          "date": "2026-11-07T23:24:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-101: inspección de MyGame, GameWorld, Upgrades y SelfTest; se creará la composición sin tocar economía ni comportamiento.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-005",
+          "date": "2026-11-07T23:27:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "PlayerProfile y GameSession creados; MyGame compone la sesión, usa el sector y delega el guardado existente. Sin economía nueva ni cambios visibles.",
+          "files": [
+            "src/com/example/codegame/PlayerProfile.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "03_controls",
+            "04_autopilot"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "build/test-logs/selftest.txt: TODO OK",
+        "03_controls: OK (primer intento con toque perdido; repetido OK)",
+        "04_autopilot: OK",
+        "GameSession conserva la clave run2 y delega en GameWorld.serialize/restore hasta T-104"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:27:00-06:00"
+    },
+    {
+      "id": "T-102",
+      "stageId": "S1",
+      "title": "Crear Pilot y migrar salud/O2",
+      "description": "Separar conceptualmente al piloto de la nave con salud, oxígeno y estado, todavía sin consumo.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-101"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "Pilot tiene health, oxygen, maxHealth, o2Max y status.",
+        "La nave no es dueña de la salud del piloto.",
+        "Los valores iniciales son 100/100.",
+        "El piloto permanece a bordo; no hay movimiento a pie."
+      ],
+      "tests": [
+        "01_logic",
+        "Guardado de pilot"
+      ],
+      "technicalNotes": "No conectar todavía la asfixia ni el HUD; eso es Etapa 2.",
+      "executionLog": [
+        {
+          "sessionId": "S-006",
+          "date": "2026-11-07T23:31:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-102: se creará Pilot independiente de Ship, se integrará en GameSession y se añadirá su persistencia al guardado heredado.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-006",
+          "date": "2026-11-07T23:31:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pilot creado con salud, O2, maxHealth, o2Max, estado y a bordo. GameSession lo agrupa, lo reinicia al empezar y lo guarda/carga; los guardados antiguos usan 100/100.",
+          "files": [
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Guardado/carga del piloto",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "build/test-logs/selftest.txt: PASS piloto inicia con salud y O2 al 100; PASS sesion guarda/carga el piloto; PASS guardado antiguo carga piloto 100/100",
+        "03_controls: OK",
+        "Telemetría: pilotHealth=100.0, pilotMaxHealth=100.0, pilotOxygen=100.0, pilotO2Max=100.0, pilotStatus=OK"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:31:00-06:00"
+    },
+    {
+      "id": "T-103",
+      "stageId": "S1",
+      "title": "Separar ShipState y ShipLoadout modular",
+      "description": "Extraer el estado y las mejoras de la nave a un loadout con ranuras de módulos, manteniendo Upgrades como fachada compatible y sin cambiar el comportamiento visible.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-101"
+      ],
+      "decisionIds": [
+        "D-010"
+      ],
+      "files": [
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "ShipLoadout contiene motor, depósito, cañón, blindaje y gasolina, más ranuras genéricas de módulos.",
+        "El piloto automático no se asume como capacidad innata de todas las naves; puede depender de un módulo.",
+        "Upgrades lee/escribe el loadout activo sin duplicar niveles.",
+        "Los valores de movimiento y combate no cambian en esta etapa.",
+        "La partida actual sigue usando las mismas mejoras."
+      ],
+      "tests": [
+        "01_logic",
+        "Compra de mejoras",
+        "Comparación de valores antes/después"
+      ],
+      "technicalNotes": "Preparar la arquitectura de módulos/ranuras, pero no implementar todavía el catálogo completo de naves ni piezas.",
+      "executionLog": [
+        {
+          "sessionId": "S-007",
+          "date": "2026-11-07T23:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-103: se creará ShipLoadout como fuente única de niveles y ranuras, y Upgrades delegará en él manteniendo la misma API y valores.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-007",
+          "date": "2026-11-07T23:37:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "ShipLoadout creado con niveles, ranuras genéricas y módulo de piloto automático; Upgrades delega niveles y compra sin duplicarlos. Comportamiento y fórmulas intactos.",
+          "files": [
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Compra de mejoras",
+            "Comparación de valores antes/después"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "build/test-logs/selftest.txt: PASS loadout refleja el nivel comprado; PASS loadout conserva los cinco sistemas; PASS loadout relee niveles del almacén",
+        "ShipLoadout no guarda copia en Upgrades; las claves lvl0..lvl4 siguen siendo las mismas",
+        "Módulo AUTOPILOT instalable pero no exigido todavía para volar"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:37:00-06:00"
+    },
+    {
+      "id": "T-104",
+      "stageId": "S1",
+      "title": "Implementar SaveService v2 y migración v1",
+      "description": "Crear un guardado versionado con migración desde run2 y copia de seguridad, sin perder la partida actual.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-101",
+        "T-103"
+      ],
+      "decisionIds": [
+        "D-008"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveService.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El guardado v2 incluye versión, perfil, piloto, nave y sector.",
+        "Una partida run2 se migra conservando casco, combustible, partes, monedas y asteroides.",
+        "El guardado se escribe de forma atómica y conserva backup.",
+        "Un texto inválido no destruye la partida anterior."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de migración v1 a v2",
+        "Test de guardado/carga"
+      ],
+      "technicalNotes": "Decisión técnica D-008 resuelta: archivo JSON local con backup. No usar SharedPreferences para el estado completo.",
+      "executionLog": [
+        {
+          "sessionId": "S-008",
+          "date": "2026-11-07T23:41:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SaveCodec v2 y SaveService con almacenamiento abstraído, escritura atómica, backup, fallback y migración run2. Pruebas de estructura, carga, backup, corrupción y migración en SelfTest.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SaveService.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/PlayerProfile.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Migración run2→v2",
+            "Guardado/carga v2 y backup"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "build/test-logs/selftest.txt: PASS save v2 incluye version, perfil, piloto, nave y sector",
+        "PASS save v2 cae al backup; PASS el texto corrupto no borra el backup",
+        "PASS migracion run2 a v2 y conservación de casco, combustible, partes, monedas y asteroides"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:41:00-06:00"
+    },
+    {
+      "id": "T-105",
+      "stageId": "S1",
+      "title": "Integrar GameSession y guardado en MyGame/GameWorld",
+      "description": "Conectar la nueva sesión con el ciclo create/load/save/restore y los estados actuales de la aplicación.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-102",
+        "T-103",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameSession.java"
+      ],
+      "acceptanceCriteria": [
+        "loadRun usa SaveService v2; guarda y restaura sin duplicar estado.",
+        "pause, dispose y cambio de estado siguen guardando.",
+        "Los modos de prueba siguen funcionando.",
+        "No cambia la navegación ni el HUD."
+      ],
+      "tests": [
+        "02_navigation",
+        "03_controls",
+        "04_autopilot",
+        "05_death"
+      ],
+      "technicalNotes": "No cambiar todavía la secuencia de muerte ni la economía de monedas.",
+      "executionLog": [
+        {
+          "sessionId": "S-009",
+          "date": "2026-11-07T23:43:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MyGame crea SaveService con FileStorage, carga v2/backup/migración, guarda en pausa/tienda/dispose y limpia al morir. Reinicio real restaura la partida en PAUSED.",
+          "files": [
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java"
+          ],
+          "tests": [
+            "02_navigation",
+            "03_controls",
+            "04_autopilot",
+            "05_death"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "02_navigation OK; 03_controls OK; 04_autopilot OK; 05_death OK",
+        "Force-stop + relanzar: state PAUSED, fuel 82.2 y posición x=0.0 y=454.7 restaurados",
+        "SaveService.FileStorage usa slot1.json con temporal y backup slot1.json.bak"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:43:00-06:00"
+    },
+    {
+      "id": "T-106",
+      "stageId": "S1",
+      "title": "Verificación de paridad de la Etapa 1",
+      "description": "Cerrar la etapa comprobando que la separación no cambió el juego y actualizando documentación y tracker.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-105",
+        "T-107"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/MASTER_PLAN.md",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "01_logic pasa de forma determinista.",
+        "03_controls, 04_autopilot y 05_death no presentan regresiones.",
+        "La migración v1 a v2 está probada.",
+        "La revisión T-107 está documentada.",
+        "La documentación y el tracker reflejan el estado real."
+      ],
+      "tests": [
+        "01_logic",
+        "03_controls",
+        "04_autopilot",
+        "05_death"
+      ],
+      "technicalNotes": "Si hay tests de dispositivo, ejecutar solo los necesarios; no lanzar --all por costumbre.",
+      "executionLog": [
+        {
+          "sessionId": "S-011",
+          "date": "2026-11-07T23:47:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Etapa 1 verificada: 01_logic, 03_controls, 04_autopilot y 05_death en verde; migración v2 y reinicio real comprobados; revisión T-107 documentada. Etapa cerrada.",
+          "files": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/IMPLEMENTATION_LOG.md",
+            "docs/PROJECT_DASHBOARD.html"
+          ],
+          "tests": [
+            "01_logic",
+            "03_controls",
+            "04_autopilot",
+            "05_death"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "01_logic TODO OK; 03_controls OK; 04_autopilot OK; 05_death OK",
+        "Migración run2→v2 y backup cubiertos por SelfTest",
+        "Reinicio real: PAUSED con combustible y posición restaurados",
+        "S1 marcada COMPLETADO; siguiente etapa S2"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:47:00-06:00"
+    },
+    {
+      "id": "T-201",
+      "stageId": "S2",
+      "title": "Añadir LIFE_SUPPORT y campos de supervivencia",
+      "description": "Incorporar la parte de soporte vital, los campos de O2/salud y su persistencia.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-102",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Ship.java",
+        "Pilot.java",
+        "LifeSupport.java",
+        "SaveService.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "LIFE_SUPPORT existe como parte reparable al final del array.",
+        "Pilot guarda O2 y salud; LifeSupport guarda filtro y fugas.",
+        "El guardado conserva los campos nuevos.",
+        "No hay consumo todavía."
+      ],
+      "tests": [
+        "01_logic",
+        "Guardado/carga de supervivencia"
+      ],
+      "technicalNotes": "Añadir la parte al final para no romper índices antiguos.",
+      "executionLog": [
+        {
+          "sessionId": "S-012",
+          "date": "2026-11-07T23:50:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-201: LIFE_SUPPORT al final de Ship y LifeSupport con filtro/fugas; persistencia y compatibilidad con guardados de 7 partes.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-012",
+          "date": "2026-11-07T23:50:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "LIFE_SUPPORT añadido al final del array (índice 7) y LifeSupport con filtro, fuga y brecha. GameSession lo agrupa, guarda y carga; SaveCodec v2 y el formato legacy lo conservan; los guardados de 7 partes se completan con 100.",
+          "files": [
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Guardado/carga de supervivencia",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS soporte vital es la ultima parte; PASS soporte vital inicial intacto",
+        "PASS save v2 conserva LIFE_SUPPORT; PASS save v2 conserva soporte vital",
+        "PASS guardado de 7 partes rellena LIFE_SUPPORT",
+        "03_controls OK"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:50:00-06:00"
+    },
+    {
+      "id": "T-202",
+      "stageId": "S2",
+      "title": "Implementar consumo de O2 y filtro",
+      "description": "Hacer que el piloto consuma O2 y que el soporte vital lo regenere según su integridad y mejoras.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-201"
+      ],
+      "decisionIds": [],
+      "files": [
+        "LifeSupport.java",
+        "Pilot.java",
+        "Ship.java",
+        "GameWorld.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "O2 baja con el tiempo.",
+        "El filtro reduce la pérdida y depende de LIFE_SUPPORT.",
+        "Con soporte vital a 0 el filtro cae al 20 %.",
+        "La reserva y el tiempo estimado son consultables."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de tasas a 60 s",
+        "Test de filtro 100/50/0 %"
+      ],
+      "technicalNotes": "No añadir todavía energía de soporte vital.",
+      "executionLog": [
+        {
+          "sessionId": "S-013",
+          "date": "2026-11-07T23:53:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-202: consumo de O2 y filtro efectivo por integridad de LIFE_SUPPORT; reserva y tiempo estimado consultables.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-013",
+          "date": "2026-11-07T23:53:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Consumo de O2 integrado en GameSession a 4/min; filtro efectivo 1.5/min modulado por LIFE_SUPPORT (20% al 0%) y por el estado del filtro. Reserva y tiempo estimado expuestos. Sin energía ni asfixia.",
+          "files": [
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de tasas a 60 s",
+            "Test de filtro 100/50/0 %",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la sesion consume O2",
+        "PASS consumo de O2 a 60 s ~2.5",
+        "PASS filtro intacto al 100%; PASS filtro al 50% de soporte; PASS filtro al 0% de soporte cae al 20%",
+        "PASS tiempo estimado de O2 ~2400 s",
+        "Telemetría real: pilotOxygen 99.5 tras la partida"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:53:00-06:00"
+    },
+    {
+      "id": "T-203",
+      "stageId": "S2",
+      "title": "Implementar fugas por daño de casco y brecha",
+      "description": "Conectar la integridad del casco con una fuga de O2 gradual y con brechas críticas tras impactos fuertes.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-201"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Ship.java",
+        "GameWorld.java",
+        "LifeSupport.java",
+        "Effects.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El casco dañado genera fuga.",
+        "Una brecha añade fuga extra y aviso.",
+        "La fuga es visible en el HUD y en el mundo.",
+        "Un impacto fuerte no mata instantáneamente."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de fuga a 100/50/20 % de casco"
+      ],
+      "technicalNotes": "La fuga debe ser gradual y reparable.",
+      "executionLog": [
+        {
+          "sessionId": "S-014",
+          "date": "2026-11-07T23:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Fuga gradual por casco (6/min al 0 %), brecha crítica +50 % tras impactos fuertes, reparación de brecha, consumo de O2 afectado, aviso mínimo de HUD y partículas de gas en el mundo.",
+          "files": [
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/Effects.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de fuga a 100/50/20 % de casco",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin fuga con casco intacto",
+        "PASS fuga al 50% de casco ~3/min; PASS fuga al 20% de casco ~4.8/min",
+        "PASS brecha aumenta la fuga un 50%; PASS reparar brecha devuelve la fuga base",
+        "PASS impacto fuerte con casco intacto no abre brecha; PASS impacto fuerte con casco dañado abre brecha",
+        "PASS la fuga reduce el O2 a 60 s; PASS tiempo estimado incluye la fuga",
+        "PASS la fuga emite particulas en el mundo"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:56:00-06:00"
+    },
+    {
+      "id": "T-204",
+      "stageId": "S2",
+      "title": "Implementar asfixia, salud y estados del piloto",
+      "description": "Añadir la pérdida de salud con O2 a 0, la gracia inicial y los estados del piloto.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-202",
+        "T-203"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Pilot.java",
+        "LifeSupport.java",
+        "GameWorld.java",
+        "MyGame.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Con O2 0 hay 5 s de gracia y luego -1 HP/s.",
+        "La salud no baja mientras haya O2.",
+        "Salud 0 deja al piloto incapacitado.",
+        "El casco y la salud son independientes."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de asfixia",
+        "Test de independencia casco/salud"
+      ],
+      "technicalNotes": "La política de muerte definitiva queda pendiente en D-001.",
+      "executionLog": [
+        {
+          "sessionId": "S-015",
+          "date": "2026-11-07T23:59:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-204: gracia de 5 s, daño de 1 HP/s con O2 a 0, estados HYPOXIC/INCAPACITATED y persistencia.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-015",
+          "date": "2026-11-07T23:59:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Asfixia implementada: 5 s de gracia, luego 1 HP/s; estados OK/HYPOXIC/INCAPACITATED; la salud no baja con O2 y es independiente del casco. Gracia y estado persisten en v2 y en el formato legacy.",
+          "files": [
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de asfixia",
+            "Test de independencia casco/salud",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS 5 s de gracia sin perder salud",
+        "PASS tras la gracia la salud baja 1 HP/s",
+        "PASS salud 0 deja al piloto incapacitado",
+        "PASS con O2 la salud no baja",
+        "PASS la asfixia no toca el casco",
+        "PASS LifeSupport aplica la asfixia",
+        "PASS guardado antiguo de piloto usa 5 s de gracia",
+        "PASS save v2 conserva asfixia y gracia",
+        "Telemetría real con pilotStatus=OK y pilotGrace=5.0"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:59:00-06:00"
+    },
+    {
+      "id": "T-205",
+      "stageId": "S2",
+      "title": "Añadir HUD y alertas de O2, salud y fuga",
+      "description": "Mostrar la información de supervivencia de forma legible en vertical y avisar antes de una situación crítica.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-202",
+        "T-203"
+      ],
+      "decisionIds": [],
+      "files": [
+        "MyGame.java",
+        "Visuals.java",
+        "Pilot.java",
+        "LifeSupport.java"
+      ],
+      "acceptanceCriteria": [
+        "HUD muestra O2 y salud separados del casco.",
+        "Hay avisos al 25 % y 10 % de O2.",
+        "La fuga tiene indicador visible.",
+        "No se satura el panel superior."
+      ],
+      "tests": [
+        "10_survival (visual/telemetría)",
+        "Revisión en pantalla vertical"
+      ],
+      "technicalNotes": "Usar iconos y texto ASCII; no depender solo del color.",
+      "executionLog": [
+        {
+          "sessionId": "S-016",
+          "date": "2026-11-08T00:03:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "HUD de supervivencia con barras O2/HP separadas del casco, iconos ASCII, avisos al 25/10 % y aviso de FUGA/BRECHA. Modo survival_test y prueba 10_survival con captura validada.",
+          "files": [
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/10_survival.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "10_survival (visual/telemetría)",
+            "Revisión en pantalla vertical"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "build/screens/20_survival_hud.png: O2 24 %, HP 70 %, CASCO 50 %, O2 BAJO 24 %, BRECHA O2",
+        "10_survival: OK con captura validada",
+        "PASS O2 al 25% activa aviso; PASS O2 al 10% activa alerta critica",
+        "Telemetría: o2Alert=1, pilotLeak=4.5, pilotBreach=true"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-08T00:03:00-06:00"
+    },
+    {
+      "id": "T-206",
+      "stageId": "S2",
+      "title": "Reabastecer O2 y reparar soporte vital",
+      "description": "Añadir el servicio de O2 y la reparación de LIFE_SUPPORT en la tienda temporal, antes de la estación.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-202"
+      ],
+      "decisionIds": [],
+      "files": [
+        "MyGame.java",
+        "Upgrades.java",
+        "Ship.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Se puede rellenar O2 pagando créditos.",
+        "LIFE_SUPPORT se repara como las demás partes.",
+        "El coste es coherente y no gratuito.",
+        "La recarga no rompe el guardado."
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls"
+      ],
+      "technicalNotes": "Este servicio se moverá a la estación en la Etapa 5.",
+      "executionLog": [
+        {
+          "sessionId": "S-017",
+          "date": "2026-11-08T00:06:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Servicio temporal de O2 a 0,5 créditos/unidad (mínimo 5) con tarjeta propia en REPARAR; LIFE_SUPPORT aparece y se repara como las demás partes. La recarga actualiza O2/gracia/estado y se guarda.",
+          "files": [
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "09_wing_damage (visual)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS O2 lleno no cuesta; PASS O2 a 40 unidades cuesta 20; PASS O2 tiene coste minimo",
+        "PASS la recarga de O2 descuenta creditos",
+        "PASS reabastecer O2 llena y reactiva",
+        "PASS LIFE_SUPPORT se repara como las demas partes",
+        "PASS la recarga de O2 no rompe el guardado",
+        "build/screens/12_shop_repair.png: SOPORTE y OXIGENO visibles en la tienda"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-08T00:06:00-06:00"
+    },
+    {
+      "id": "T-207",
+      "stageId": "S2",
+      "title": "Integración y balance de supervivencia",
+      "description": "Verificar el ciclo completo de O2, fugas y salud con una expedición de 10 minutos y ajustar los valores.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "LISTO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-204",
+        "T-205",
+        "T-206"
+      ],
+      "decisionIds": [],
+      "files": [
+        "LifeSupport.java",
+        "MyGame.java",
+        "SelfTest.java",
+        "docs/pruebas.md"
+      ],
+      "acceptanceCriteria": [
+        "10 min sin daño dejan más del 50 % de O2.",
+        "Casco al 50 % produce aviso de fuga.",
+        "O2 0 da al menos 60 s de margen.",
+        "Reparar soporte vital recupera el filtro.",
+        "La documentación y el tracker se actualizan."
+      ],
+      "tests": [
+        "01_logic",
+        "10_survival",
+        "Prueba de expedición de 10 min"
+      ],
+      "technicalNotes": "Cierra la etapa; no implementar estación ni interiores.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-208",
+      "stageId": "S2",
+      "title": "Implementar muerte permanente y mundo persistente",
+      "description": "Aplicar la política de muerte permanente del personaje sin reiniciar el universo. La nave anterior queda en el lugar de la muerte y el nuevo personaje entra en el mismo mundo.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "LISTO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-204",
+        "T-104"
+      ],
+      "decisionIds": [
+        "D-001"
+      ],
+      "files": [
+        "Pilot.java",
+        "GameWorld.java",
+        "MyGame.java",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "Al morir, el personaje no reaparece ni se recupera.",
+        "El universo no se reinicia; el nuevo personaje entra en el mismo estado persistente.",
+        "La nave anterior permanece en las coordenadas exactas de la muerte.",
+        "Los restos/recursos existentes se conservan según el estado del mundo.",
+        "La nave nodriza no se usa como reaparición automática.",
+        "El modo de pruebas de recuperación está separado del juego normal."
+      ],
+      "tests": [
+        "01_logic",
+        "05_death",
+        "08_visual_death",
+        "Guardado de mundo"
+      ],
+      "technicalNotes": "La persistencia del mundo es requisito; si el guardado aún no cubre el estado necesario, bloquear la tarea y documentarlo.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-301",
+      "stageId": "S3",
+      "title": "Definir Commodity y Cargo",
+      "description": "Crear la tabla de minerales/materiales y el contenedor de bodega con masa por unidad y capacidad.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-103"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Commodity.java",
+        "Cargo.java",
+        "CargoHold.java",
+        "GameData.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Existen Hielo, Silicato, Hierro, Cobre, Titanio y Oro.",
+        "Cada mineral tiene masa y precio base.",
+        "Cargo suma masa y rechaza el exceso.",
+        "La API permite añadir, quitar y consultar."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de capacidad y masa"
+      ],
+      "technicalNotes": "No conectar todavía la minería; se puede probar con carga inyectada.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-302",
+      "stageId": "S3",
+      "title": "Integrar la bodega en Ship/GameSession y el guardado",
+      "description": "Hacer que la nave tenga una bodega persistente y que el guardado v2 la conserve.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-301",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Ship.java",
+        "GameSession.java",
+        "SaveService.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "La nave expone su Cargo.",
+        "La bodega se guarda y restaura.",
+        "Una partida sin bodega carga con bodega vacía.",
+        "No se pierde el inventario al pausar."
+      ],
+      "tests": [
+        "01_logic",
+        "Guardado/carga de carga"
+      ],
+      "technicalNotes": "Migrar cualquier campo futuro de carga con valores por defecto.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-303",
+      "stageId": "S3",
+      "title": "Aplicar la masa al movimiento y al consumo",
+      "description": "Hacer que la carga afecte a aceleración, velocidad, giro y consumo de combustible con topes.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-302"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Ship.java",
+        "MassModel.java",
+        "Upgrades.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Con carga completa la aceleración baja ~25 %.",
+        "La velocidad baja ~12 % y el giro ~10 %.",
+        "El consumo sube ~35 %.",
+        "La nave sigue siendo controlable."
+      ],
+      "tests": [
+        "01_logic",
+        "Test vacío vs lleno",
+        "Test de viaje de 800 u"
+      ],
+      "technicalNotes": "No incluir la masa del combustible en la primera versión.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-304",
+      "stageId": "S3",
+      "title": "Rebalancear depósito y consumo",
+      "description": "Ajustar la capacidad base y el consumo para que una expedición con carga completa sea viable.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-303"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Upgrades.java",
+        "Ship.java",
+        "SelfTest.java",
+        "docs/MASTER_PLAN.md"
+      ],
+      "acceptanceCriteria": [
+        "Depósito base 160 y consumo base 10.",
+        "Ida y vuelta de 800 u con carga completa deja margen.",
+        "Los bidones siguen siendo útiles.",
+        "El coste de repostar es coherente."
+      ],
+      "tests": [
+        "01_logic",
+        "Bench de viaje",
+        "SelfTest completo"
+      ],
+      "technicalNotes": "No convertir la carga completa en un softlock.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-305",
+      "stageId": "S3",
+      "title": "Añadir la mejora Bodega y el HUD de masa",
+      "description": "Introducir la mejora de capacidad y mostrar masa/capacidad en la interfaz.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-302"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Upgrades.java",
+        "MyGame.java",
+        "ShipLoadout.java",
+        "docs/arquitectura.md"
+      ],
+      "acceptanceCriteria": [
+        "Bodega sube capacidad por nivel.",
+        "El HUD muestra masa y capacidad.",
+        "La mejora se guarda y aplica a la nave.",
+        "No hay más de una barra nueva sin jerarquía."
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls"
+      ],
+      "technicalNotes": "La mejora puede añadir masa base para que no sea gratis.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-306",
+      "stageId": "S3",
+      "title": "Verificación de carga, masa y combustible",
+      "description": "Cerrar la etapa con pruebas de capacidad, masa, consumo, guardado y viabilidad.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-303",
+        "T-304",
+        "T-305"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Capacidad y masa son correctas.",
+        "El viaje de 800 u es viable.",
+        "La carga persiste.",
+        "La nave sigue controlable.",
+        "La documentación está actualizada."
+      ],
+      "tests": [
+        "01_logic",
+        "11_cargo"
+      ],
+      "technicalNotes": "No implementar minería ni estación en esta etapa.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-401",
+      "stageId": "S4",
+      "title": "Definir AsteroidType, composición y RNG determinista",
+      "description": "Añadir tipos C/S/M, dureza, reserva, composición y generación reproducible.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-301",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Asteroid.java",
+        "AsteroidType.java",
+        "GameData.java",
+        "GameWorld.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Cada asteroide tiene tipo, dureza, reserva y composición.",
+        "La generación usa una semilla estable.",
+        "La composición se guarda o se reconstruye de forma determinista.",
+        "No hay monedas directas en el nuevo tipo."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de determinismo",
+        "Test de composición"
+      ],
+      "technicalNotes": "Corrige el uso actual de MathUtils.random fuera de la semilla del chunk.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-402",
+      "stageId": "S4",
+      "title": "Implementar MiningLaser y EnergyCapacitor",
+      "description": "Crear el láser continuo con potencia, penetración, energía y recarga.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-401",
+        "T-302"
+      ],
+      "decisionIds": [],
+      "files": [
+        "MiningLaser.java",
+        "EnergyCapacitor.java",
+        "Ship.java",
+        "GameWorld.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El láser requiere objetivo y energía.",
+        "La tasa depende de potencia, dureza y penetración.",
+        "El capacitor se agota y recarga.",
+        "El láser no consume combustible."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de energía",
+        "Test de tiempos C/S/M"
+      ],
+      "technicalNotes": "El capacitor evita que minar consuma el combustible de vuelta.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-403",
+      "stageId": "S4",
+      "title": "Integrar extracción, bodega y agotamiento",
+      "description": "Transferir mineral a la bodega, detener la extracción al llenarse y agotar la roca.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-402"
+      ],
+      "decisionIds": [],
+      "files": [
+        "GameWorld.java",
+        "MiningLaser.java",
+        "Cargo.java",
+        "Asteroid.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El mineral entra en la bodega con la masa correcta.",
+        "La bodega llena detiene la extracción.",
+        "La roca agotada desaparece sin explosión.",
+        "El estado se guarda y no reaparece."
+      ],
+      "tests": [
+        "01_logic",
+        "Test de bodega llena",
+        "Test de persistencia de roca"
+      ],
+      "technicalNotes": "No dar monedas al minar.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-404",
+      "stageId": "S4",
+      "title": "Añadir Autopilot.MINE y selección de objetivo",
+      "description": "Permitir que el piloto automático se aproxime a una roca y mantenga la minería sin disparar.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-403"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Autopilot.java",
+        "MyGame.java",
+        "GameWorld.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El piloto se aproxima a la roca y se detiene a distancia segura.",
+        "Mantiene el láser si hay energía y bodega.",
+        "Se detiene al llenar la bodega o agotar la roca.",
+        "No dispara misiles en modo MINE."
+      ],
+      "tests": [
+        "04_autopilot",
+        "12_mining",
+        "01_logic"
+      ],
+      "technicalNotes": "Reutilizar la lógica de aproximación y evitación existente.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-405",
+      "stageId": "S4",
+      "title": "Sustituir monedas directas por mineral y fundición temporal",
+      "description": "Eliminar la recompensa en monedas de los asteroides y añadir una conversión temporal de mineral a créditos.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-403",
+        "T-401"
+      ],
+      "decisionIds": [],
+      "files": [
+        "GameWorld.java",
+        "Asteroid.java",
+        "MyGame.java",
+        "Upgrades.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Destruir/minar rocas no suma monedas.",
+        "El mineral va a la bodega.",
+        "La tienda temporal permite fundir mineral a precio base.",
+        "El puente desaparece cuando exista estación."
+      ],
+      "tests": [
+        "01_logic",
+        "12_mining",
+        "03_controls"
+      ],
+      "technicalNotes": "Mantener el juego jugable entre Etapa 4 y Etapa 5.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-406",
+      "stageId": "S4",
+      "title": "Misiles: fragmentación y dispersión de mineral",
+      "description": "Conservar los misiles como herramienta de destrucción/fragmentación rápida. Al impactar, el asteroide se rompe y el mineral queda disperso en fragmentos recuperables, con posible pérdida.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-403",
+        "T-401"
+      ],
+      "decisionIds": [
+        "D-003"
+      ],
+      "files": [
+        "Missile.java",
+        "GameWorld.java",
+        "Asteroid.java",
+        "SelfTest.java",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "Los misiles destruyen o fragmentan asteroides.",
+        "El mineral no se entrega directamente a la bodega.",
+        "Se generan fragmentos recuperables en el espacio.",
+        "Parte del material puede perderse; el porcentaje se ajusta por balance, no se fija aquí.",
+        "No se dan monedas directas."
+      ],
+      "tests": [
+        "01_logic",
+        "12_mining",
+        "04_autopilot"
+      ],
+      "technicalNotes": "No fijar porcentajes definitivos de pérdida. El rayo tractor se implementa en T-410.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-407",
+      "stageId": "S4",
+      "title": "Añadir mejoras de láser, HUD de energía y efectos visuales",
+      "description": "Completar la experiencia de minería con mejoras, energía visible, haz, impacto y partículas de mineral.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-402",
+        "T-403",
+        "T-305"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Upgrades.java",
+        "MyGame.java",
+        "Effects.java",
+        "Visuals.java",
+        "Ship.java"
+      ],
+      "acceptanceCriteria": [
+        "La mejora de láser aumenta potencia/penetración/capacitor.",
+        "El HUD muestra energía contextual.",
+        "El haz y el impacto se distinguen por tipo de roca.",
+        "No se crean objetos en render."
+      ],
+      "tests": [
+        "12_mining (visual/telemetría)",
+        "01_logic",
+        "Revisión de rendimiento"
+      ],
+      "technicalNotes": "El rayo tractor tiene sus propias mejoras y HUD en T-410; no mezclar ambos sistemas.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-408",
+      "stageId": "S4",
+      "title": "Verificación de minería y recursos",
+      "description": "Cerrar la etapa con pruebas de tipos, tiempos, energía, bodega, autopiloto y persistencia.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-403",
+        "T-404",
+        "T-405",
+        "T-406",
+        "T-407",
+        "T-409",
+        "T-410"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se minan C, S y M con tiempos distintos.",
+        "La energía limita y recarga.",
+        "La bodega llena detiene la extracción.",
+        "Los misiles fragmentan y dispersan mineral.",
+        "El rayo tractor recupera fragmentos.",
+        "No hay monedas directas.",
+        "La roca agotada y los fragmentos persisten.",
+        "La fundición temporal funciona."
+      ],
+      "tests": [
+        "01_logic",
+        "12_mining"
+      ],
+      "technicalNotes": "No implementar mercado ni estación en esta etapa.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-501",
+      "stageId": "S5",
+      "title": "Crear Station y la nave nodriza del sector inicial",
+      "description": "Introducir la entidad estación, su definición, posición, radio y zona segura.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-403",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Station.java",
+        "StationDef.java",
+        "GameWorld.java",
+        "GameData.java"
+      ],
+      "acceptanceCriteria": [
+        "La nodriza existe en el sector inicial.",
+        "Tiene posición, radio, servicios y almacén.",
+        "No hay asteroides en su zona segura.",
+        "Se dibuja a gran escala."
+      ],
+      "tests": [
+        "01_logic",
+        "13_station",
+        "Revisión visual"
+      ],
+      "technicalNotes": "No implementar todavía la pantalla de servicios.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-502",
+      "stageId": "S5",
+      "title": "Implementar acoplamiento y Autopilot.STATION",
+      "description": "Permitir aproximarse, frenar, acoplar, desacoplar y que el piloto automático lleve a la estación.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-501"
+      ],
+      "decisionIds": [],
+      "files": [
+        "DockingSystem.java",
+        "Autopilot.java",
+        "MyGame.java",
+        "GameWorld.java"
+      ],
+      "acceptanceCriteria": [
+        "El HUD muestra ACOPLAR dentro de la zona y a baja velocidad.",
+        "Al acoplar se pasa a DOCKED y se abre la estación.",
+        "DESPEGAR devuelve la nave al exterior.",
+        "El piloto STATION frena y no colisiona."
+      ],
+      "tests": [
+        "13_station",
+        "04_autopilot",
+        "01_logic"
+      ],
+      "technicalNotes": "No implementar interiores; es una transición de estado.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-503",
+      "stageId": "S5",
+      "title": "Crear StationScreen y servicios básicos",
+      "description": "Añadir descarga, venta a precio base, combustible, O2, reparaciones y mejoras desde la estación.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-502",
+        "T-403"
+      ],
+      "decisionIds": [],
+      "files": [
+        "StationScreen.java",
+        "Station.java",
+        "StationStorage.java",
+        "MyGame.java",
+        "Upgrades.java"
+      ],
+      "acceptanceCriteria": [
+        "Se descarga mineral al almacén.",
+        "Se vende a precio base.",
+        "Se reposta combustible y O2.",
+        "Se reparan partes y se compran mejoras.",
+        "El jugador puede despegar."
+      ],
+      "tests": [
+        "13_station",
+        "02_navigation",
+        "03_controls"
+      ],
+      "technicalNotes": "La venta a precio base es un puente hasta el mercado de la Etapa 6.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-504",
+      "stageId": "S5",
+      "title": "Retirar la tienda económica de la pausa",
+      "description": "Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-503"
+      ],
+      "decisionIds": [
+        "D-002"
+      ],
+      "files": [
+        "MyGame.java",
+        "docs/DECISIONS.md",
+        "docs/arquitectura.md",
+        "tools/tests/02_navigation.sh",
+        "tools/tests/03_controls.sh"
+      ],
+      "acceptanceCriteria": [
+        "La pausa no permite comprar mejoras, combustible ni servicios económicos.",
+        "La economía principal ocurre en estaciones físicas.",
+        "Existe una transición documentada para los tests.",
+        "Los tests de navegación se actualizan."
+      ],
+      "tests": [
+        "02_navigation",
+        "03_controls",
+        "13_station"
+      ],
+      "technicalNotes": "D-002 aprobada: eliminar la tienda de pausa; no dejar una vía de economía infinita desde la pausa.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-505",
+      "stageId": "S5",
+      "title": "Persistir estación, almacén y estado acoplado",
+      "description": "Guardar y restaurar estaciones, almacén, posición y estado de acoplamiento.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-501",
+        "T-503"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SaveService.java",
+        "Station.java",
+        "StationStorage.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "La estación y su almacén se guardan.",
+        "El estado DOCKED se restaura correctamente.",
+        "No se duplican minerales al cargar.",
+        "El guardado sigue siendo compatible."
+      ],
+      "tests": [
+        "01_logic",
+        "13_station",
+        "Guardado/carga"
+      ],
+      "technicalNotes": "Cuidado con guardar dos veces la misma transacción.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-506",
+      "stageId": "S5",
+      "title": "Añadir rescate para combustible agotado",
+      "description": "Evitar el softlock cuando el jugador no puede volver a la estación, sin convertir el rescate en una resurrección automática ni en un punto de reaparición.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-502"
+      ],
+      "decisionIds": [
+        "D-001"
+      ],
+      "files": [
+        "RescueService.java",
+        "MyGame.java",
+        "Station.java",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "Sin combustible, el jugador puede pedir rescate.",
+        "El rescate tiene coste o pérdida de carga.",
+        "No es gratis ni instantáneo.",
+        "El estado se registra en el log."
+      ],
+      "tests": [
+        "13_station",
+        "01_logic"
+      ],
+      "technicalNotes": "D-001 aprobada: la muerte es permanente; este rescate es solo para combustible/estado, no para revivir personajes.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-507",
+      "stageId": "S5",
+      "title": "Verificación de estación y ciclo económico",
+      "description": "Cerrar la etapa comprobando acople, servicios, persistencia, rescate y retirada de la tienda de pausa.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-503",
+        "T-505",
+        "T-506"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se acopla y desacopla.",
+        "Se descarga/vende/reposta/repara/mejora.",
+        "El rescate evita el softlock.",
+        "El estado persiste.",
+        "La economía ya no depende de la pausa."
+      ],
+      "tests": [
+        "01_logic",
+        "13_station",
+        "02_navigation",
+        "03_controls"
+      ],
+      "technicalNotes": "No implementar mercado dinámico ni NPC.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-601",
+      "stageId": "S6",
+      "title": "Crear Market y PriceModel",
+      "description": "Implementar stock, target, precio base, spread y límites por estación y mineral.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-503"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Market.java",
+        "PriceModel.java",
+        "Station.java",
+        "GameData.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Cada estación tiene stock por mineral.",
+        "El precio depende del stock y tiene límites.",
+        "El spread separa compra y venta.",
+        "Los datos son configurables."
+      ],
+      "tests": [
+        "01_logic",
+        "14_market",
+        "Test de precios"
+      ],
+      "technicalNotes": "No añadir todavía producción/consumo complejos ni NPC.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-602",
+      "stageId": "S6",
+      "title": "Implementar TradeService y transacciones del jugador",
+      "description": "Permitir comprar y vender con validación de créditos, capacidad y stock.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-601"
+      ],
+      "decisionIds": [],
+      "files": [
+        "TradeService.java",
+        "Market.java",
+        "Cargo.java",
+        "StationStorage.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Vender sube stock y baja precio; comprar lo contrario.",
+        "No se puede vender lo que no se tiene.",
+        "No se puede comprar sin créditos o capacidad.",
+        "Las transacciones se registran."
+      ],
+      "tests": [
+        "01_logic",
+        "14_market",
+        "Test de abuso"
+      ],
+      "technicalNotes": "No permitir beneficio en la misma estación por el spread.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-603",
+      "stageId": "S6",
+      "title": "Crear MarketScreen y flujo de compraventa",
+      "description": "Añadir la pantalla de mercado con precios, stock, cantidades y confirmación.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-602"
+      ],
+      "decisionIds": [],
+      "files": [
+        "MarketScreen.java",
+        "MyGame.java",
+        "UiKit.java",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se ven precios de compra y venta.",
+        "Se puede vender todo, parte o nada.",
+        "La capacidad y los créditos se reflejan.",
+        "La UI funciona en vertical."
+      ],
+      "tests": [
+        "14_market",
+        "Revisión visual"
+      ],
+      "technicalNotes": "Extraer UiKit si MyGame crece demasiado.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-604",
+      "stageId": "S6",
+      "title": "Añadir consumo, producción y deriva de precios",
+      "description": "Hacer que las estaciones consuman/produzcan mineral y que los precios tiendan a su base.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-601"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Market.java",
+        "Station.java",
+        "EconomySim.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El stock cambia con el tiempo de simulación.",
+        "El precio se mueve de forma coherente.",
+        "No hay oscilaciones infinitas.",
+        "El tick es ligero."
+      ],
+      "tests": [
+        "01_logic",
+        "14_market",
+        "Test de 30 min simulados"
+      ],
+      "technicalNotes": "No simular por frame; usar intervalos.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-605",
+      "stageId": "S6",
+      "title": "Persistir mercados y almacenes",
+      "description": "Guardar y restaurar stock, precios y almacén sin duplicar transacciones.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-601",
+        "T-602"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SaveService.java",
+        "Market.java",
+        "StationStorage.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El mercado se guarda y restaura.",
+        "El almacén no se duplica.",
+        "Los precios se recalculan si faltan campos.",
+        "El guardado es compatible."
+      ],
+      "tests": [
+        "01_logic",
+        "14_market",
+        "Guardado/carga"
+      ],
+      "technicalNotes": "Guardar después de transacciones y al pausar.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-606",
+      "stageId": "S6",
+      "title": "Verificación de mercado y anti-exploit",
+      "description": "Cerrar la etapa con pruebas de precios, stock, spread, capacidad, persistencia y rentabilidad.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-603",
+        "T-604",
+        "T-605"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Los precios reaccionan al stock.",
+        "No hay arbitraje trivial.",
+        "El mercado persiste.",
+        "Una expedición completa da beneficio.",
+        "La UI es legible."
+      ],
+      "tests": [
+        "01_logic",
+        "14_market"
+      ],
+      "technicalNotes": "No implementar NPC todavía.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-701",
+      "stageId": "S7",
+      "title": "Crear PilotAgent y AgentRoster",
+      "description": "Introducir agentes con nave resumida, carga, combustible, estado y objetivo.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-606"
+      ],
+      "decisionIds": [],
+      "files": [
+        "PilotAgent.java",
+        "AgentRoster.java",
+        "GameData.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Existen 8 agentes iniciales configurables.",
+        "Cada agente tiene rol, carga, combustible y estado.",
+        "Los agentes se guardan y restauran.",
+        "No se renderizan todos."
+      ],
+      "tests": [
+        "01_logic",
+        "15_agents",
+        "Guardado de agentes"
+      ],
+      "technicalNotes": "Empezar con mineros; dejar transportistas para más adelante.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-702",
+      "stageId": "S7",
+      "title": "Implementar AgentBrain y máquina de estados",
+      "description": "Hacer que los agentes elijan destino, viajen, minen, vuelvan, vendan y reposten.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-701"
+      ],
+      "decisionIds": [],
+      "files": [
+        "AgentBrain.java",
+        "PilotAgent.java",
+        "Market.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El agente completa un ciclo minero.",
+        "La decisión usa utilidad, no azar puro.",
+        "Si no hay beneficio, espera.",
+        "Los estados son observables."
+      ],
+      "tests": [
+        "01_logic",
+        "15_agents",
+        "Test de ciclo completo"
+      ],
+      "technicalNotes": "No usar pathfinding 2D; el viaje es abstracto.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-703",
+      "stageId": "S7",
+      "title": "Crear EconomySim con tick y LOD",
+      "description": "Actualizar agentes y mercados por intervalos, con distinto detalle según distancia.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-702"
+      ],
+      "decisionIds": [],
+      "files": [
+        "EconomySim.java",
+        "SimClock.java",
+        "GameWorld.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "La economía no se ejecuta cada frame.",
+        "Cerca: 2 s; lejos: 5 s; offline: 60 s.",
+        "El rendimiento es estable con 24 agentes.",
+        "El jugador puede seguir jugando."
+      ],
+      "tests": [
+        "15_agents",
+        "Bench de rendimiento",
+        "01_logic"
+      ],
+      "technicalNotes": "No crear hilos; el tick va en el bucle de simulación.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-704",
+      "stageId": "S7",
+      "title": "Conectar transacciones de agentes con el mercado",
+      "description": "Hacer que las compras/ventas de los agentes muevan stock y precios.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-703",
+        "T-601"
+      ],
+      "decisionIds": [],
+      "files": [
+        "EconomySim.java",
+        "Market.java",
+        "PilotAgent.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Las ventas de agentes suben stock y bajan precio.",
+        "Las compras bajan stock y suben precio.",
+        "No se generan créditos de la nada.",
+        "Los cambios son explicables."
+      ],
+      "tests": [
+        "01_logic",
+        "15_agents",
+        "Test de impacto"
+      ],
+      "technicalNotes": "Registrar transacciones para depuración.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-705",
+      "stageId": "S7",
+      "title": "Simulación offline y persistencia de agentes",
+      "description": "Permitir que el universo avance al cerrar el juego con un límite y sin servidor.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-703",
+        "T-104"
+      ],
+      "decisionIds": [
+        "D-007"
+      ],
+      "files": [
+        "EconomySim.java",
+        "SaveService.java",
+        "PilotAgent.java",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "Se guarda lastSimTime.",
+        "Al cargar se simulan hasta 12 h en pasos de 60 s.",
+        "Los precios no se descontrolan.",
+        "No se requiere red ni servicio en segundo plano."
+      ],
+      "tests": [
+        "01_logic",
+        "15_agents",
+        "Test offline 12 h"
+      ],
+      "technicalNotes": "D-007 resuelta técnicamente: 8 inicial, 24 máximo, 12 h de catch-up.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-706",
+      "stageId": "S7",
+      "title": "Añadir tráfico cosmético cerca de la estación",
+      "description": "Mostrar algunas naves de agentes entrando/saliendo para que el universo se sienta activo, sin simulación visual completa.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-704",
+        "T-502"
+      ],
+      "decisionIds": [],
+      "files": [
+        "GameWorld.java",
+        "Station.java",
+        "Effects.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "Se ven 2-4 naves cerca de la estación.",
+        "No colisionan ni afectan a la economía.",
+        "Se activan/desactivan por distancia.",
+        "No degradan el rendimiento."
+      ],
+      "tests": [
+        "15_agents visual",
+        "Revisión de FPS"
+      ],
+      "technicalNotes": "Es cosmético; no confundir con la simulación real.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-707",
+      "stageId": "S7",
+      "title": "Verificación de agentes, determinismo y rendimiento",
+      "description": "Cerrar la etapa comprobando ciclos, impacto de mercado, offline, persistencia y FPS.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-704",
+        "T-705",
+        "T-706"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Con el jugador quieto, los precios cambian en 30 min.",
+        "Los cambios son explicables.",
+        "24 agentes no degradan los FPS de forma perceptible.",
+        "El estado se guarda y restaura.",
+        "La simulación offline respeta el límite."
+      ],
+      "tests": [
+        "01_logic",
+        "15_agents",
+        "Bench de rendimiento"
+      ],
+      "technicalNotes": "No implementar facciones ni combate.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-801",
+      "stageId": "S8",
+      "title": "Crear UniverseState, GalaxyDef, SystemDef y SectorDef",
+      "description": "Definir la jerarquía de universo y sus datos configurables.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-606",
+        "T-501"
+      ],
+      "decisionIds": [],
+      "files": [
+        "UniverseState.java",
+        "GalaxyDef.java",
+        "SystemDef.java",
+        "SectorDef.java",
+        "GameData.java"
+      ],
+      "acceptanceCriteria": [
+        "Universo contiene galaxias, sistemas y sectores.",
+        "Cada galaxia tiene seed, paleta y sesgos de minerales.",
+        "Cada sector tiene límites, perfil y estaciones.",
+        "Los IDs son estables."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Validación de datos"
+      ],
+      "technicalNotes": "No simular astronomía real.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-802",
+      "stageId": "S8",
+      "title": "Convertir GameWorld en SectorRuntime finito",
+      "description": "Hacer que el mundo tenga límites, perfil de generación y carga/descarga por sector.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-801",
+        "T-403"
+      ],
+      "decisionIds": [],
+      "files": [
+        "GameWorld.java",
+        "SectorRuntime.java",
+        "Asteroid.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El sector es finito y tiene borde visible.",
+        "La generación usa el perfil del sector.",
+        "Los recursos minados no reaparecen.",
+        "El rendimiento no depende del tamaño total."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Test de límites"
+      ],
+      "technicalNotes": "Evitar romper el mundo infinito actual antes de que el sector esté probado.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-803",
+      "stageId": "S8",
+      "title": "Persistir y descargar sectores",
+      "description": "Guardar el estado resumido de un sector al salir y reconstruirlo al volver.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-801",
+        "T-802",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SaveService.java",
+        "SectorRuntime.java",
+        "UniverseState.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Al salir se guarda el sector.",
+        "Al volver se restaura sin duplicar minerales.",
+        "Los chunks no visitados no se guardan enteros.",
+        "El guardado sigue siendo válido."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Guardado/carga de sector"
+      ],
+      "technicalNotes": "Usar semilla + estado de recursos, no guardar todos los asteroides inactivos.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-804",
+      "stageId": "S8",
+      "title": "Implementar propulsión warp y TravelService",
+      "description": "Añadir viaje libre mediante propulsión warp, sin puertas obligatorias. El coste se integra con combustible, energía y equipamiento; el mapa puede ser muy grande y cargarse dinámicamente.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-801",
+        "T-803",
+        "T-808"
+      ],
+      "decisionIds": [
+        "D-004"
+      ],
+      "files": [
+        "JumpGate.java",
+        "TravelService.java",
+        "UniverseState.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El jugador puede viajar a coordenadas/sistemas sin depender de una puerta obligatoria.",
+        "El viaje consume combustible/energía y requiere equipamiento.",
+        "El destino se carga de forma dinámica.",
+        "Las puertas, si existen, son atajos opcionales.",
+        "El jugador puede regresar al sector/sistema anterior."
+      ],
+      "tests": [
+        "16_universe",
+        "01_logic",
+        "Prueba de viaje warp",
+        "Bench de carga"
+      ],
+      "technicalNotes": "D-004 aprobada. No implementar vuelo real continuo a escala astronómica; usar viaje abstracto/local con carga dinámica.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-805",
+      "stageId": "S8",
+      "title": "Crear MapScreen y navegación warp",
+      "description": "Añadir el mapa de sectores/sistemas/galaxias con posición actual, destinos, coste estimado y descubrimiento, orientado a viaje libre warp.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-804"
+      ],
+      "decisionIds": [
+        "D-004"
+      ],
+      "files": [
+        "MapScreen.java",
+        "UniverseState.java",
+        "MyGame.java",
+        "UiKit.java"
+      ],
+      "acceptanceCriteria": [
+        "El mapa muestra la posición actual y los destinos descubiertos.",
+        "Se puede seleccionar un destino y calcular el coste.",
+        "Los nodos no descubiertos no revelan detalles.",
+        "El viaje no depende de una puerta obligatoria.",
+        "Funciona en vertical y sin servidor."
+      ],
+      "tests": [
+        "16_universe",
+        "Revisión visual"
+      ],
+      "technicalNotes": "No usar imágenes externas; dibujar con formas.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-806",
+      "stageId": "S8",
+      "title": "Añadir Vía Láctea, galaxias reales y ficticias",
+      "description": "Crear la galaxia inicial Vía Láctea y al menos otra galaxia real, con posibilidad de añadir galaxias ficticias. Diferenciar composición, precios, estaciones y nave nodriza.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-801",
+        "T-805"
+      ],
+      "decisionIds": [
+        "D-011"
+      ],
+      "files": [
+        "GameData.java",
+        "GalaxyDef.java",
+        "SectorDef.java",
+        "Station.java",
+        "Market.java"
+      ],
+      "acceptanceCriteria": [
+        "Existe la Vía Láctea como galaxia inicial.",
+        "Existe al menos otra galaxia real o ficticia con contenido diferenciado.",
+        "Cada galaxia tiene su propia nave nodriza y contexto económico.",
+        "No se intenta reproducir exactitud astronómica.",
+        "El viaje entre galaxias usa warp/equipamiento, no una puerta obligatoria."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Prueba de contenido"
+      ],
+      "technicalNotes": "D-011 aprobada: galaxias reales y ficticias; prioridad a jugabilidad, no a astronomía exacta.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-807",
+      "stageId": "S8",
+      "title": "Verificación del universo",
+      "description": "Cerrar la etapa comprobando viaje, persistencia, mapa, diferencias económicas y rendimiento.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-803",
+        "T-804",
+        "T-805",
+        "T-806",
+        "T-808"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se viaja libremente con warp y se vuelve.",
+        "Cada sector/región conserva su estado.",
+        "El mapa muestra descubrimientos y costes.",
+        "La Vía Láctea y otra galaxia difieren.",
+        "El streaming no mantiene todo el universo cargado.",
+        "No se simulan galaxias inactivas en detalle."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Bench de rendimiento"
+      ],
+      "technicalNotes": "No implementar estación propia todavía.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-901",
+      "stageId": "S9",
+      "title": "Crear PlayerStation y ModuleDef para plataforma vacía",
+      "description": "Definir la estación del jugador como una plataforma vacía acoplable, con ranuras y definiciones de módulos, sin servicios de serie.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-601",
+        "T-801"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "PlayerStation.java",
+        "ModuleDef.java",
+        "Station.java",
+        "GameData.java"
+      ],
+      "acceptanceCriteria": [
+        "La estación inicial es una plataforma vacía donde se puede acoplar la nave.",
+        "No incluye almacén, reparación, refinería ni mercado por defecto.",
+        "Existen ranuras y definiciones de módulos.",
+        "Los módulos se construyen progresivamente.",
+        "No se confunde con la nave nodriza."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station"
+      ],
+      "technicalNotes": "D-005 aprobada: nada de estación completa de serie. La arquitectura debe ser modular y extensible.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-902",
+      "stageId": "S9",
+      "title": "Construir el núcleo/plataforma vacía",
+      "description": "Permitir comprar/colocar la plataforma inicial vacía en una ubicación válida, pagando créditos y materiales, sin servicios automáticos.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-901"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "ConstructionService.java",
+        "PlayerStation.java",
+        "GameWorld.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El núcleo cuesta créditos y materiales.",
+        "No se puede colocar en zona inválida.",
+        "La plataforma aparece vacía y permite acoplar la nave.",
+        "No se añaden servicios automáticos.",
+        "El estado se guarda."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station",
+        "Prueba de ubicación"
+      ],
+      "technicalNotes": "Sin interiores; solo entidad y pantalla de gestión.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-903",
+      "stageId": "S9",
+      "title": "Implementar sistema modular genérico de estación",
+      "description": "Crear el sistema de ranuras, requisitos, construcción y ampliación de módulos. Los servicios solo existen si el jugador construye el módulo correspondiente.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-902"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "StationModule.java",
+        "PlayerStation.java",
+        "Market.java",
+        "Cargo.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Se pueden construir módulos en ranuras válidas.",
+        "Cada módulo tiene coste, requisitos y función.",
+        "Construir un módulo es la única forma de obtener su servicio.",
+        "La estación vacía no ofrece servicios por defecto.",
+        "La arquitectura admite nuevos módulos sin reescribir el núcleo."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station",
+        "Prueba de servicios"
+      ],
+      "technicalNotes": "D-005 aprobada. Este task implementa el sistema, no el catálogo completo de módulos.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-904",
+      "stageId": "S9",
+      "title": "Crear StationManagementScreen modular",
+      "description": "Añadir la pantalla de gestión de la plataforma vacía, construcción de módulos, almacén y servicios disponibles según lo construido.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-903",
+        "T-907"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "StationManagementScreen.java",
+        "MyGame.java",
+        "UiKit.java"
+      ],
+      "acceptanceCriteria": [
+        "Se ven módulos y estado.",
+        "Se puede construir/mejorar.",
+        "Se puede transferir carga.",
+        "La UI es legible en vertical."
+      ],
+      "tests": [
+        "17_player_station",
+        "Revisión visual"
+      ],
+      "technicalNotes": "No convertir la pantalla en un árbol de menús interminable.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-905",
+      "stageId": "S9",
+      "title": "Persistir la estación personal",
+      "description": "Guardar y restaurar plataforma, módulos construidos, almacén y servicios disponibles.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-901",
+        "T-902",
+        "T-903"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "SaveService.java",
+        "PlayerStation.java",
+        "StationModule.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "La estación se guarda y restaura.",
+        "Los módulos y almacén son correctos.",
+        "No se duplican recursos.",
+        "El guardado sigue siendo compatible."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station",
+        "Guardado/carga"
+      ],
+      "technicalNotes": "Guardar tras construcción/transacción.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-906",
+      "stageId": "S9",
+      "title": "Verificación de la estación personal",
+      "description": "Cerrar la etapa comprobando construcción, módulos, servicios y persistencia.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-904",
+        "T-905",
+        "T-907",
+        "T-908"
+      ],
+      "decisionIds": [],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se construye la plataforma vacía y se acopla la nave.",
+        "Se construye al menos un módulo.",
+        "El almacén y la reparación solo funcionan tras construir sus módulos.",
+        "La refinería y el mercado solo funcionan tras construir sus módulos.",
+        "La estación persiste.",
+        "No hay movimiento a pie."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station"
+      ],
+      "technicalNotes": "D-005 aprobada: la estación no entrega servicios de serie; el jugador los construye.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1001",
+      "stageId": "S10",
+      "title": "Crear marco de interiores para estaciones y naves",
+      "description": "Definir un marco genérico de interiores aplicable a estaciones espaciales, estación propia y naves: salas, puertas, interactuables y relación con módulos.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-906"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "InteriorScene.java",
+        "Room.java",
+        "Door.java",
+        "Interactable.java",
+        "PlayerStation.java"
+      ],
+      "acceptanceCriteria": [
+        "Cada módulo puede mapearse a una habitación.",
+        "Las puertas conectan salas.",
+        "Los interactuables tienen posición y acción.",
+        "El modelo se guarda."
+      ],
+      "tests": [
+        "01_logic",
+        "18_interiors"
+      ],
+      "technicalNotes": "D-006 aprobada a largo plazo. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan en T-1007.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1002",
+      "stageId": "S10",
+      "title": "Implementar Avatar, movimiento y colisión",
+      "description": "Añadir el personaje a pie con joystick, colisiones y límites de sala.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1001"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "Avatar.java",
+        "InteriorInput.java",
+        "InteriorScene.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El personaje se mueve a pie.",
+        "Las paredes bloquean.",
+        "No hay gravedad ni combate.",
+        "Se puede volver a la nave."
+      ],
+      "tests": [
+        "18_interiors",
+        "Revisión de controles"
+      ],
+      "technicalNotes": "La velocidad debe ser cómoda; evitar caminar largos pasillos vacíos.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1003",
+      "stageId": "S10",
+      "title": "Crear InteriorRenderer y cámara",
+      "description": "Dibujar el interior cenital con ShapeRenderer y cámara estable.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1001"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "InteriorRenderer.java",
+        "Visuals.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El interior se dibuja con formas.",
+        "La cámara sigue al personaje.",
+        "No se crean objetos en render.",
+        "El rendimiento es aceptable."
+      ],
+      "tests": [
+        "18_interiors visual",
+        "Revisión de FPS"
+      ],
+      "technicalNotes": "Mantener el orden shapes → aditivo → texto.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1004",
+      "stageId": "S10",
+      "title": "Implementar interacción con módulos",
+      "description": "Permitir abrir almacén, reparación, refinería y mercado desde el interior.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1002",
+        "T-1003",
+        "T-903"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "Interactable.java",
+        "StationManagementScreen.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El jugador puede interactuar por proximidad.",
+        "Se abre la pantalla correspondiente.",
+        "No se rompe la gestión desde pantalla.",
+        "El estado se conserva."
+      ],
+      "tests": [
+        "18_interiors",
+        "17_player_station"
+      ],
+      "technicalNotes": "No duplicar la lógica de servicios; reutilizar las pantallas existentes.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1005",
+      "stageId": "S10",
+      "title": "Implementar entrada, salida y guardado del interior",
+      "description": "Permitir entrar/salir de la estación y guardar la posición del personaje.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1002",
+        "T-1004"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "InteriorScene.java",
+        "SaveService.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "Se entra desde la estación.",
+        "Se sale a la nave.",
+        "La posición se guarda y restaura.",
+        "No se rompe el guardado de vuelo."
+      ],
+      "tests": [
+        "18_interiors",
+        "Guardado/carga"
+      ],
+      "technicalNotes": "La salida debe ser rápida y clara.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1006",
+      "stageId": "S10",
+      "title": "Verificación de interiores",
+      "description": "Cerrar la etapa comprobando movimiento, colisión, interacción, salida y persistencia.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1005"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "SelfTest.java",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "acceptanceCriteria": [
+        "Se camina y se colisiona.",
+        "Se interactúa con módulos.",
+        "Se vuelve a la nave.",
+        "El estado se guarda.",
+        "No hay regresiones en vuelo/minería/comercio."
+      ],
+      "tests": [
+        "01_logic",
+        "18_interiors",
+        "Regresión 03/12/13"
+      ],
+      "technicalNotes": "D-006 aprobada: interiores de estación propia primero; naves y estaciones no propias quedan como extensión posterior.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1101",
+      "stageId": "S11",
+      "title": "Modelos de nave, especializaciones y contenido",
+      "description": "Añadir modelos de nave distintos en formas, características y capacidades, no simples variaciones visuales; preparar especializaciones (minería, exploración, transporte).",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-807"
+      ],
+      "decisionIds": [
+        "D-010"
+      ],
+      "files": [
+        "GameData.java",
+        "ShipClassDef.java",
+        "GalaxyDef.java",
+        "Station.java"
+      ],
+      "acceptanceCriteria": [
+        "Existen al menos dos clases de nave con características distintas.",
+        "Las naves se diferencian en forma, capacidad y función, no solo color.",
+        "La personalización usa piezas/módulos intercambiables.",
+        "El contenido nuevo no rompe partidas anteriores."
+      ],
+      "tests": [
+        "01_logic",
+        "16_universe",
+        "Regresión"
+      ],
+      "technicalNotes": "Priorizar contenido con función económica, no decoración vacía.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1102",
+      "stageId": "S11",
+      "title": "Añadir contratos y misiones de estación",
+      "description": "Permitir encargos de transporte/minería que conecten economía y progresión.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1101",
+        "T-606"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Mission.java",
+        "MissionService.java",
+        "Station.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "Una estación ofrece contratos.",
+        "El contrato tiene objetivo, recompensa y plazo.",
+        "Se puede aceptar/completar.",
+        "El estado se guarda."
+      ],
+      "tests": [
+        "01_logic",
+        "Contratos",
+        "Regresión"
+      ],
+      "technicalNotes": "No convertirlo en una lista infinita de fetch quests.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-1103",
+      "stageId": "S11",
+      "title": "Facciones, combate y online (futuro)",
+      "description": "Implementación futura de facciones, combate, piratas, saqueo y cooperación online. No implementar ahora; la arquitectura debe permitirlo.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "POSPUESTO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-1101"
+      ],
+      "decisionIds": [
+        "D-012"
+      ],
+      "files": [
+        "Faction.java",
+        "Reputation.java",
+        "CombatSystem.java",
+        "docs/DECISIONS.md"
+      ],
+      "acceptanceCriteria": [
+        "No se implementa IA hostil ni combate en las etapas iniciales.",
+        "La arquitectura no cierra la posibilidad de facciones u online.",
+        "La simulación actual se centra en minería, transporte y comercio.",
+        "Si se retoma, se empieza por facciones económicas y NPC pacíficos."
+      ],
+      "tests": [
+        "01_logic",
+        "Combate",
+        "Regresión"
+      ],
+      "technicalNotes": "D-012 aplazada. T-107 revisa la extensibilidad online; T-1103 es la implementación futura.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1104",
+      "stageId": "S11",
+      "title": "Infraestructura de audio y efectos de sonido",
+      "description": "Añadir el sistema de audio y los efectos de motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1101"
+      ],
+      "decisionIds": [
+        "D-009"
+      ],
+      "files": [
+        "AudioService.java",
+        "MyGame.java",
+        "assets/audio/*"
+      ],
+      "acceptanceCriteria": [
+        "Existe un servicio de audio local con opción de silencio.",
+        "Los sistemas principales tienen efectos propios.",
+        "No se usan recursos de jars; los assets van en assets/audio.",
+        "No hay dependencia de red."
+      ],
+      "tests": [
+        "Revisión en dispositivo",
+        "Regresión"
+      ],
+      "technicalNotes": "D-009 aprobada. La música/ambientes se implementan en T-1108.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1105",
+      "stageId": "S11",
+      "title": "Balance, telemetría y rendimiento",
+      "description": "Medir tiempos, beneficio, mortalidad, FPS y memoria; ajustar parámetros.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1101"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/MASTER_PLAN.md",
+        "SelfTest.java",
+        "MyGame.java",
+        "tools/tests/*"
+      ],
+      "acceptanceCriteria": [
+        "Hay datos de una expedición completa.",
+        "Se ajustan precios/consumos si hace falta.",
+        "60 FPS en gama media, 30 en baja.",
+        "No hay fugas de memoria evidentes."
+      ],
+      "tests": [
+        "Bench",
+        "16_universe",
+        "Regresión"
+      ],
+      "technicalNotes": "No ajustar a ciegas; usar telemetría.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-1106",
+      "stageId": "S11",
+      "title": "Accesibilidad y localización",
+      "description": "Mejorar legibilidad, tamaños táctiles, avisos no cromáticos y textos.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1105"
+      ],
+      "decisionIds": [],
+      "files": [
+        "MyGame.java",
+        "UiKit.java",
+        "docs/convenciones.md"
+      ],
+      "acceptanceCriteria": [
+        "Textos legibles en pantallas pequeñas.",
+        "Avisos no dependen solo del color.",
+        "La fuente ASCII se respeta.",
+        "No hay textos cortados."
+      ],
+      "tests": [
+        "Revisión visual",
+        "Regresión"
+      ],
+      "technicalNotes": "La localización completa puede quedar para más adelante; priorizar accesibilidad.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "T-1107",
+      "stageId": "S11",
+      "title": "Regresión final y cierre del proyecto",
+      "description": "Ejecutar la regresión completa, revisar guardado, economía y rendimiento, y cerrar la documentación.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1101",
+        "T-1102",
+        "T-1104",
+        "T-1105",
+        "T-1106",
+        "T-1108",
+        "T-1109",
+        "T-906",
+        "T-1006"
+      ],
+      "decisionIds": [],
+      "files": [
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html",
+        "docs/IMPLEMENTATION_LOG.md"
+      ],
+      "acceptanceCriteria": [
+        "La regresión completa pasa.",
+        "El guardado de partidas largas funciona.",
+        "La economía no se descontrola.",
+        "El panel refleja el estado final.",
+        "No hay tareas críticas abiertas."
+      ],
+      "tests": [
+        "01_logic",
+        "03_controls",
+        "04_autopilot",
+        "05_death",
+        "12_mining",
+        "13_station",
+        "14_market",
+        "15_agents",
+        "16_universe",
+        "17_player_station",
+        "18_interiors"
+      ],
+      "technicalNotes": "Solo ejecutar --all si el usuario lo pide.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-107",
+      "stageId": "S1",
+      "title": "Revisar arquitectura para identidad, facciones y online futuro",
+      "description": "Documentar y preparar los puntos de extensión para identidad de jugador, facciones, PvP y una eventual modalidad online, sin implementar multijugador ni servidores.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-105"
+      ],
+      "decisionIds": [
+        "D-012"
+      ],
+      "files": [
+        "docs/MASTER_PLAN.md",
+        "docs/arquitectura.md",
+        "GameSession.java",
+        "PlayerProfile.java",
+        "SaveService.java"
+      ],
+      "acceptanceCriteria": [
+        "PlayerProfile permite identidad estable de personaje/jugador.",
+        "El guardado puede migrar a un modelo con varios personajes y, eventualmente, servidor.",
+        "No hay suposiciones rígidas de un único jugador en la capa de sesión.",
+        "Los límites de la simulación local están documentados.",
+        "No se implementa red, multijugador ni combate."
+      ],
+      "tests": [
+        "Revisión documental",
+        "01_logic"
+      ],
+      "technicalNotes": "No implementar online ahora. Solo evitar decisiones que cierren esa puerta.",
+      "executionLog": [
+        {
+          "sessionId": "S-010",
+          "date": "2026-11-07T23:46:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "PlayerProfile separa playerId y characterId; SaveCodec los persiste; SaveService acepta slots con nombres saneados. Límites de simulación local y puntos de extensión documentados, sin red ni combate.",
+          "files": [
+            "src/com/example/codegame/PlayerProfile.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SaveService.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/arquitectura.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "Revisión documental",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS perfil tiene identidad por defecto",
+        "PASS save v2 escribe/restaura identidad de jugador y personaje",
+        "PASS slots de guardado separados; PASS slot invalido cae al por defecto",
+        "docs/arquitectura.md § Extensión futura y MASTER_PLAN.md § 11.6"
+      ],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T23:46:00-06:00"
+    },
+    {
+      "id": "T-209",
+      "stageId": "S2",
+      "title": "Crear flujo de nuevo personaje y nave legado",
+      "description": "Permitir crear un personaje nuevo tras la muerte y entrar en el mismo mundo persistente, con la nave anterior en el lugar de la muerte y recuperable por el nuevo personaje.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-208",
+        "T-101",
+        "T-104"
+      ],
+      "decisionIds": [],
+      "files": [
+        "PlayerProfile.java",
+        "GameSession.java",
+        "MyGame.java",
+        "SaveService.java",
+        "GameWorld.java"
+      ],
+      "acceptanceCriteria": [
+        "Se puede crear un personaje nuevo tras la muerte.",
+        "El personaje nuevo carga el mismo universo, no una copia reiniciada.",
+        "La nave anterior aparece en las coordenadas de la muerte.",
+        "El nuevo personaje puede viajar hasta ella y encontrarla/recuperarla según el estado del mundo.",
+        "Los objetos y restos del lugar se conservan."
+      ],
+      "tests": [
+        "05_death",
+        "01_logic",
+        "Guardado de mundo",
+        "16_universe"
+      ],
+      "technicalNotes": "No implementar reaparición en la nodriza. La nave legado no debe duplicarse.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-210",
+      "stageId": "S2",
+      "title": "Modo de desarrollo de recuperación tras muerte",
+      "description": "Añadir un modo de pruebas que permita continuar o recuperar al personaje tras la muerte sin alterar el comportamiento normal del juego.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-208"
+      ],
+      "decisionIds": [
+        "D-001"
+      ],
+      "files": [
+        "MainActivity.java",
+        "MyGame.java",
+        "GameWorld.java",
+        "docs/pruebas.md"
+      ],
+      "acceptanceCriteria": [
+        "Existe un extra/flag de desarrollo para recuperar o continuar tras la muerte.",
+        "El modo normal sigue siendo muerte permanente.",
+        "El flag no se activa en una partida normal.",
+        "Los tests pueden usarlo para evitar perder el estado."
+      ],
+      "tests": [
+        "05_death",
+        "08_visual_death"
+      ],
+      "technicalNotes": "Es una herramienta de test, no una mecánica de juego. Documentarla en docs/pruebas.md.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-409",
+      "stageId": "S4",
+      "title": "Generar fragmentos de mineral y dispersión por misiles",
+      "description": "Crear fragmentos físicos con mineral al destruir/fragmentar asteroides con misiles, con estado persistente y recuperación posterior.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-406",
+        "T-403"
+      ],
+      "decisionIds": [],
+      "files": [
+        "Asteroid.java",
+        "OreFragment.java",
+        "GameWorld.java",
+        "Cargo.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "Los fragmentos tienen mineral y posición/velocidad.",
+        "Los fragmentos se conservan al guardar/cargar.",
+        "Se pueden recuperar con el rayo tractor.",
+        "La pérdida de material es configurable y se ajusta por balance."
+      ],
+      "tests": [
+        "01_logic",
+        "12_mining",
+        "Guardado de fragmentos"
+      ],
+      "technicalNotes": "No fijar porcentajes definitivos. La dispersión debe ser visible y comprensible.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-410",
+      "stageId": "S4",
+      "title": "Implementar rayo tractor y captura de fragmentos",
+      "description": "Añadir un sistema de recuperación que atraiga fragmentos minerales hacia la nave, con alcance, velocidad y capacidad mejorables.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-409",
+        "T-402"
+      ],
+      "decisionIds": [],
+      "files": [
+        "TractorBeam.java",
+        "EnergyCapacitor.java",
+        "Ship.java",
+        "Upgrades.java",
+        "GameWorld.java"
+      ],
+      "acceptanceCriteria": [
+        "El rayo tractor atrae fragmentos dentro de su alcance.",
+        "La captura consume energía o el recurso que se defina.",
+        "Alcance, velocidad y capacidad se pueden mejorar.",
+        "El HUD muestra el estado del rayo tractor.",
+        "El jugador puede perder fragmentos si no los recupera."
+      ],
+      "tests": [
+        "01_logic",
+        "12_mining",
+        "04_autopilot"
+      ],
+      "technicalNotes": "No fijar eficiencias definitivas; usar valores iniciales y ajustar con telemetría.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-808",
+      "stageId": "S8",
+      "title": "Implementar streaming dinámico de sectores y regiones",
+      "description": "Cargar las zonas cercanas al jugador y descargar o simplificar las lejanas, sin mantener todo el universo cargado. Preparar la escala para viajes entre sistemas y galaxias.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-802",
+        "T-803"
+      ],
+      "decisionIds": [
+        "D-004"
+      ],
+      "files": [
+        "SectorRuntime.java",
+        "GameWorld.java",
+        "UniverseState.java",
+        "SaveService.java"
+      ],
+      "acceptanceCriteria": [
+        "Solo se mantiene cargado el detalle de regiones cercanas.",
+        "Las regiones lejanas se descargan o simplifican.",
+        "El estado persistente no se pierde al descargar.",
+        "El sistema soporta escalas de sistema y galaxia.",
+        "El rendimiento no depende del tamaño total del universo."
+      ],
+      "tests": [
+        "16_universe",
+        "Bench de carga/descarga",
+        "01_logic"
+      ],
+      "technicalNotes": "No cargar todo el universo. La simulación lejana puede ser agregada; el jugador no debe notar cortes.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-907",
+      "stageId": "S9",
+      "title": "Módulos de almacenamiento y reparación",
+      "description": "Añadir módulos construibles de almacenamiento y taller de reparación. Solo proporcionan capacidad/servicio después de construirlos.",
+      "category": "implementation",
+      "priority": "P0",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-903"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "StationModule.java",
+        "PlayerStation.java",
+        "StationStorage.java",
+        "Cargo.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "El módulo de almacenamiento aumenta capacidad solo al construirse.",
+        "El taller permite reparar la nave solo al construirse.",
+        "Los módulos consumen créditos y materiales.",
+        "El estado se guarda con la estación."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station",
+        "Prueba de servicios"
+      ],
+      "technicalNotes": "No dar estos servicios en la plataforma vacía.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-908",
+      "stageId": "S9",
+      "title": "Módulos de refinería y mercado",
+      "description": "Añadir módulos construibles de refinería y mercado, con sus funciones económicas y requisitos.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-903",
+        "T-907",
+        "T-601"
+      ],
+      "decisionIds": [
+        "D-005"
+      ],
+      "files": [
+        "StationModule.java",
+        "PlayerStation.java",
+        "Market.java",
+        "Cargo.java",
+        "SelfTest.java"
+      ],
+      "acceptanceCriteria": [
+        "La refinería convierte hielo en O2/combustible solo al construirse.",
+        "El mercado permite comerciar solo al construirse.",
+        "Los módulos tienen coste, requisitos y capacidad.",
+        "El estado se guarda con la estación."
+      ],
+      "tests": [
+        "01_logic",
+        "17_player_station",
+        "14_market"
+      ],
+      "technicalNotes": "La estación vacía no comercia ni refina por defecto.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1007",
+      "stageId": "S10",
+      "title": "Interiores de naves y estaciones no propias",
+      "description": "Extender el sistema de interiores a naves y estaciones que no pertenecen al jugador, cuando la base de la estación propia esté consolidada.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "POSPUESTO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-1006"
+      ],
+      "decisionIds": [
+        "D-006"
+      ],
+      "files": [
+        "InteriorScene.java",
+        "InteriorRenderer.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "El sistema de interiores puede cargar una nave o estación no propia.",
+        "No se implementa en la primera versión de la Etapa 10.",
+        "La arquitectura no queda cerrada a un único tipo de interior."
+      ],
+      "tests": [
+        "Revisión de arquitectura",
+        "18_interiors"
+      ],
+      "technicalNotes": "D-006 aprobada: es una extensión futura. No bloquear la Etapa 10 con esto.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1109",
+      "stageId": "S11",
+      "title": "Catálogo de módulos de nave y ranuras",
+      "description": "Implementar el catálogo de módulos de nave: autopiloto, minería, radar, propulsión, herramientas y otros, con ranuras y funciones reales.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1101",
+        "T-103"
+      ],
+      "decisionIds": [
+        "D-010"
+      ],
+      "files": [
+        "ShipModule.java",
+        "ShipLoadout.java",
+        "GameData.java",
+        "Upgrades.java",
+        "MyGame.java"
+      ],
+      "acceptanceCriteria": [
+        "Las naves tienen ranuras de módulos.",
+        "El piloto automático es un módulo instalable, no una capacidad universal.",
+        "Los módulos de minería, radar, propulsión y herramientas tienen efectos reales.",
+        "Se pueden crear configuraciones especializadas.",
+        "Los módulos se guardan y se reflejan en el HUD."
+      ],
+      "tests": [
+        "01_logic",
+        "11_cargo",
+        "12_mining",
+        "Prueba de especialización"
+      ],
+      "technicalNotes": "D-010 aprobada. Empezar por un catálogo pequeño con funciones claras, no por docenas de módulos numéricos.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "T-1108",
+      "stageId": "S11",
+      "title": "Música y ambientes dinámicos",
+      "description": "Añadir música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones, con transiciones suaves.",
+      "category": "implementation",
+      "priority": "P2",
+      "status": "PENDIENTE",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1104"
+      ],
+      "decisionIds": [
+        "D-009"
+      ],
+      "files": [
+        "AudioService.java",
+        "MyGame.java",
+        "assets/audio/music/*",
+        "docs/MASTER_PLAN.md"
+      ],
+      "acceptanceCriteria": [
+        "Hay música ambiental para exploración.",
+        "Hay al menos otra pieza para situación de tensión/peligro.",
+        "Las transiciones no son bruscas.",
+        "Se puede silenciar la música por separado.",
+        "Los assets son locales."
+      ],
+      "tests": [
+        "Revisión en dispositivo",
+        "Regresión"
+      ],
+      "technicalNotes": "D-009 aprobada. No bloquear las mecánicas; el audio llega en refinamiento.",
+      "executionLog": [],
+      "evidence": [],
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D-001",
+      "title": "Muerte permanente, mundo persistente y nave legado",
+      "status": "APROBADA",
+      "context": "La nave nodriza no debe ser un punto de reaparición automático. Hay que decidir qué ocurre al destruirse la nave o morir el piloto.",
+      "options": [
+        "Arcade actual: se pierde la partida y se conservan monedas/mejoras.",
+        "Cápsula de escape + rescate a la estación más cercana, con pérdida de carga/nave.",
+        "Seguro: pagar prima y recuperar parte de la nave/carga.",
+        "Permadeath de perfil."
+      ],
+      "recommendation": "Cápsula de escape + rescate a la estación más cercana; el piloto sobrevive, se pierde la carga y la nave queda destruida o recuperable con coste. Las mejoras de cuenta se conservan en la primera versión.",
+      "impact": "Afecta a la Etapa 2 (asfixia) y a la Etapa 5 (rescate). No bloquea la Etapa 1.",
+      "affectedTasks": [
+        "T-208",
+        "T-209",
+        "T-210",
+        "T-506"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Muerte permanente del personaje en el juego normal. No hay reaparición del mismo personaje. Se puede crear un personaje nuevo, que entra en el mismo mundo persistente, no en una copia reiniciada. La nave del personaje anterior permanece en las coordenadas exactas de la muerte, junto con los objetos/restos/recursos que sigan existiendo según el estado real del mundo; el nuevo personaje puede viajar hasta allí y encontrarla. La nave nodriza no es punto automático de reaparición. Durante desarrollo y pruebas debe existir un modo especial de recuperación/continuación para no perder el personaje, separado del comportamiento normal.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-002",
+      "title": "Retirada de la tienda económica de la pausa",
+      "status": "APROBADA",
+      "context": "La visión exige que la economía principal esté en la estación, pero la tienda de pausa actual es cómoda y los tests dependen de ella.",
+      "options": [
+        "Mantener la tienda de pausa.",
+        "Retirarla y dejar solo la estación.",
+        "Dejar servicios de emergencia limitados y caros."
+      ],
+      "recommendation": "Dejar servicios de emergencia limitados durante la transición y retirar la economía principal de la pausa cuando la estación esté validada.",
+      "impact": "Afecta a la Etapa 5 y a los tests 02/03.",
+      "affectedTasks": [
+        "T-504"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas. La pausa no es una tienda alternativa.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-003",
+      "title": "Láser, misiles y rayo tractor",
+      "status": "APROBADA",
+      "context": "Los misiles son la mecánica actual de destrucción; la minería láser debe ser la principal.",
+      "options": [
+        "Eliminar los misiles del bucle de minería.",
+        "Mantenerlos como herramienta secundaria con rendimiento reducido.",
+        "Convertirlos en arma de combate futura."
+      ],
+      "recommendation": "Mantenerlos como herramienta secundaria: rompen rocas y recuperan ~35 % del mineral. No dan monedas.",
+      "impact": "Afecta a la Etapa 4 y al autopiloto.",
+      "affectedTasks": [
+        "T-406",
+        "T-409",
+        "T-410"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Separar tres sistemas: (1) láser minero como extracción principal, controlada y eficiente; (2) misiles como destrucción/fragmentación rápida, con mineral disperso que puede perderse; (3) rayo tractor para atraer fragmentos, con mejoras de alcance, velocidad y capacidad. No fijar porcentajes definitivos de eficiencia ni pérdida; se determinarán por pruebas y balance.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-004",
+      "title": "Viaje warp libre y streaming del universo",
+      "status": "APROBADA",
+      "context": "La visión pide varias galaxias, pero no una simulación astronómica ni vuelo real a escala.",
+      "options": [
+        "Puertas de salto entre nodos.",
+        "Warp libre con coste por distancia.",
+        "Rutas/lanes con encuentros.",
+        "Vuelo real en 2D."
+      ],
+      "recommendation": "Puertas de salto para sistemas y una puerta mayor para galaxias; sin vuelo real entre sistemas.",
+      "impact": "Afecta a la Etapa 8 y al mapa.",
+      "affectedTasks": [
+        "T-804",
+        "T-805",
+        "T-806",
+        "T-808"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Viaje libre mediante propulsión warp, sin puertas de salto obligatorias. Universo/mapa muy grande con carga dinámica de sectores/regiones: cargar lo cercano, descargar o simplificar lo lejano, sin mantener todo el universo cargado. Preparar escalas entre sistemas y galaxias. El warp se integra con combustible, energía y equipamiento; viaje libre no significa combustible ilimitado. Las puertas pueden existir como atajos, no como requisito.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-005",
+      "title": "Estación personal vacía y modular",
+      "status": "APROBADA",
+      "context": "La estación personal puede crecer mucho; hay que acotar la primera versión.",
+      "options": [
+        "Solo almacén y reparación.",
+        "Almacén, reparación, refinería y mercado.",
+        "Añadir hábitat, defensa y astillero desde el inicio."
+      ],
+      "recommendation": "Primera versión con almacén, reparación, refinería y mercado; hábitat como preparación de interiores.",
+      "impact": "Afecta a la Etapa 9.",
+      "affectedTasks": [
+        "T-901",
+        "T-902",
+        "T-903",
+        "T-904",
+        "T-905",
+        "T-906",
+        "T-907",
+        "T-908"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "La primera estación personal empieza completamente vacía: una plataforma sencilla, básicamente un cuadrado donde el jugador puede colocar y acoplar su nave. No incluye almacén, reparación, mercado ni otros servicios de serie. El jugador construye y amplía módulos progresivamente (almacenes, talleres, refinerías, mercados, producción y otros). La arquitectura debe ser modular y extensible.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-006",
+      "title": "Interiores de estaciones y naves",
+      "status": "APROBADA",
+      "context": "Los interiores son costosos y no deben adelantarse.",
+      "options": [
+        "No implementarlos.",
+        "Solo estación propia.",
+        "Estación propia y algunas naves.",
+        "Todas las estaciones y naves."
+      ],
+      "recommendation": "Solo estación propia en la Etapa 10; el resto, futuro.",
+      "impact": "Afecta a la Etapa 10; puede posponerse sin bloquear el resto.",
+      "affectedTasks": [
+        "T-1001",
+        "T-1002",
+        "T-1003",
+        "T-1004",
+        "T-1005",
+        "T-1006",
+        "T-1007"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "A largo plazo el personaje podrá caminar dentro de estaciones espaciales, estaciones construidas por el jugador e interiores de naves, abandonando los controles de pilotaje para interactuar. No implementar en las primeras etapas, pero la arquitectura debe preverlo. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan como extensión posterior.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-007",
+      "title": "Cantidad de agentes y simulación offline",
+      "status": "TECNICA_RESUELTA",
+      "context": "La economía autónoma debe ser ligera en Android.",
+      "options": [
+        "8 agentes, tick 2-5 s, offline 12 h.",
+        "16-24 agentes, más detalle.",
+        "Cientos de agentes agregados."
+      ],
+      "recommendation": "8 iniciales, 24 máximo, tick 2-5 s, offline 12 h en pasos de 60 s.",
+      "impact": "Afecta a la Etapa 7 y al rendimiento.",
+      "affectedTasks": [
+        "T-705",
+        "T-707"
+      ],
+      "decidedBy": "Arquitectura del plan maestro",
+      "decision": "Se adopta la recomendación como valor inicial ajustable por telemetría.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "D-008",
+      "title": "Formato y ubicación del guardado",
+      "status": "TECNICA_RESUELTA",
+      "context": "El guardado actual es texto en SharedPreferences y no tiene versión.",
+      "options": [
+        "Seguir con SharedPreferences.",
+        "Archivo JSON local con backup.",
+        "Base de datos local."
+      ],
+      "recommendation": "Archivo JSON local en almacenamiento privado, escritura atómica y backup; perfil pequeño puede seguir en Preferences.",
+      "impact": "Afecta a la Etapa 1 y a todas las siguientes.",
+      "affectedTasks": [
+        "T-104",
+        "T-605",
+        "T-803"
+      ],
+      "decidedBy": "Arquitectura del plan maestro",
+      "decision": "Se adopta JSON local con backup; no se usa red.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07"
+    },
+    {
+      "id": "D-009",
+      "title": "Audio, música y ambientación",
+      "status": "APROBADA",
+      "context": "El juego no tiene audio; no es requisito de la visión inicial, pero ayuda a la identidad.",
+      "options": [
+        "Sin audio.",
+        "Set mínimo (motor, láser, impactos, alarmas, acople).",
+        "Banda sonora y voces."
+      ],
+      "recommendation": "Set mínimo local en Etapa 11, con opción de silencio.",
+      "impact": "Afecta a la Etapa 11 y al tamaño del APK.",
+      "affectedTasks": [
+        "T-1104",
+        "T-1108"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Experiencia audiovisual completa: música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones; efectos para motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos. Se desarrolla en refinamiento sin bloquear las mecánicas fundamentales.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-010",
+      "title": "Naves múltiples, módulos y personalización",
+      "status": "APROBADA",
+      "context": "La visión menciona adquirir nuevas naves, pero no es necesario en las primeras etapas.",
+      "options": [
+        "Una sola nave para siempre.",
+        "Varias naves compradas y seleccionables.",
+        "Flota con gestión avanzada."
+      ],
+      "recommendation": "Arquitectura preparada para varias naves; implementación real en Etapa 8/11.",
+      "impact": "Afecta a ShipLoadout y a la estación.",
+      "affectedTasks": [
+        "T-103",
+        "T-1101",
+        "T-1109"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Varias naves con modelos, formas, características y capacidades distintas, no simples variaciones visuales. Personalización mediante colores/apariencia, piezas, componentes intercambiables, herramientas, propulsión, radares, navegación, minería y módulos especializados con funciones reales. El piloto automático puede ser un módulo instalable, no una capacidad innata de todas las naves. Preparar arquitectura de ranuras/módulos y especializaciones (minería, exploración, transporte, etc.).",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-011",
+      "title": "Galaxias reales y ficticias",
+      "status": "APROBADA",
+      "context": "La visión propone una galaxia inicial inspirada en la Vía Láctea; el nombre y el contenido son creativos.",
+      "options": [
+        "Vía Láctea real.",
+        "Galaxia ficticia inspirada.",
+        "Nombre genérico provisional."
+      ],
+      "recommendation": "Galaxia ficticia inspirada en la Vía Láctea; dejar los nombres definitivos para Etapa 8.",
+      "impact": "Afecta a datos y textos, no a la arquitectura.",
+      "affectedTasks": [
+        "T-806"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Usar galaxias reales, empezando por la Vía Láctea y añadiendo otras galaxias conocidas; también se pueden incorporar galaxias ficticias cuando convenga. No se reproduce exactitud astronómica: prioridad a un universo jugable, interesante y amplio.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-012",
+      "title": "Facciones, combate y online futuro",
+      "status": "APLAZADA",
+      "context": "La visión no exige combate, pero un universo activo puede beneficiarse de facciones y peligro.",
+      "options": [
+        "Sin facciones ni combate.",
+        "Facciones económicas sin combate.",
+        "Facciones + piratas + combate."
+      ],
+      "recommendation": "Aplazar; priorizar minería, comercio, estaciones y economía. Si se añade, empezar por facciones económicas.",
+      "impact": "Afecta a Etapa 11 y al alcance.",
+      "affectedTasks": [
+        "T-107",
+        "T-1103"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Mantener la prioridad en minería, exploración, supervivencia, economía y desarrollo de naves/estaciones. No implementar ahora IA hostil ni un sistema completo de facciones. A futuro: atacar/saquear naves, piratas, NPC hostiles y pacíficos, facciones de pilotos/jugadores, expediciones conjuntas, relaciones y cooperación. La arquitectura no debe cerrar la posibilidad de una modalidad online, pero no se implementa multijugador, servidores ni combate avanzado en esta etapa. La simulación económica actual se centra en minería, transporte y comercio.",
+      "createdAt": "2026-11-07",
+      "updatedAt": "2026-11-07T22:30:00-06:00"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "S-017",
+      "date": "2026-11-08T00:06:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Recarga de O2 y reparación de soporte",
+      "summary": "Se añadió la tarjeta OXIGENO en la tienda temporal con coste 0,5 créditos/unidad y mínimo 5. La recarga llena O2, repone la gracia y pasa de HYPOXIC a OK, y se guarda. SOPORTE aparece en REPARAR y se repara como las demás partes.",
+      "tasks": [
+        "T-206"
+      ],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls",
+        "tools/run-tests.sh --no-build 09_wing_damage"
+      ],
+      "outcome": "Completado",
+      "notes": "Este servicio se moverá a la estación en la Etapa 5. Siguiente tarea: T-207."
+    },
+    {
+      "id": "S-016",
+      "date": "2026-11-08T00:03:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "HUD y alertas de supervivencia",
+      "summary": "Se añadieron barras compactas de O2 y HP bajo el panel superior, iconos ASCII, avisos de O2 al 25/10 %, indicador de FUGA/BRECHA y telemetría de fuga/alerta. Se añadió survival_test y la prueba 10_survival con captura validada.",
+      "tasks": [
+        "T-205"
+      ],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/Visuals.java",
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/10_survival.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 10_survival",
+        "Revisión en pantalla vertical"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-206 (reabastecer O2 y reparar soporte vital)."
+    },
+    {
+      "id": "S-015",
+      "date": "2026-11-07T23:59:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Asfixia, salud y estados del piloto",
+      "summary": "Se añadió la gracia de 5 s sin O2, el daño de 1 HP/s posterior, la transición a HYPOXIC y la incapacitación a salud 0. La salud es independiente del casco y no baja con O2. Gracia y estado persisten en v2 y en el formato legacy.",
+      "tasks": [
+        "T-204"
+      ],
+      "files": [
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de asfixia",
+        "Test de independencia casco/salud",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "La política de muerte permanente se implementa en T-208."
+    },
+    {
+      "id": "S-014",
+      "date": "2026-11-07T23:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Fugas por casco y brecha",
+      "summary": "La fuga de O2 depende del casco dañado (6/min al 0 %) y una brecha crítica añade un 50 %. Los impactos fuertes con casco castigado abren brecha; la brecha se puede reparar. GameWorld emite gas y MyGame muestra un aviso mínimo FUGA/BRECHA O2.",
+      "tasks": [
+        "T-203"
+      ],
+      "files": [
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/Effects.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de fuga a 100/50/20 % de casco",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-204 (asfixia, salud y estados)."
+    },
+    {
+      "id": "S-013",
+      "date": "2026-11-07T23:53:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Consumo de O2 y filtro",
+      "summary": "Se conectó el consumo de O2 del piloto a 4/min y un filtro efectivo de 1.5/min modulado por LIFE_SUPPORT (100/50/0 % → 100/60/20 %). GameSession lo actualiza cada frame; la reserva y el tiempo estimado son consultables. Sin energía ni asfixia.",
+      "tasks": [
+        "T-202"
+      ],
+      "files": [
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de tasas a 60 s",
+        "Test de filtro 100/50/0 %",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-203 (fugas por casco y brecha)."
+    },
+    {
+      "id": "S-012",
+      "date": "2026-11-07T23:50:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "LIFE_SUPPORT y persistencia de supervivencia",
+      "summary": "Se añadió LIFE_SUPPORT como última parte reparable y LifeSupport con filtro, fuga y brecha. GameSession, SaveCodec v2 y el formato legacy los persisten; los guardados de 7 partes se completan con 100. Sin consumo todavía.",
+      "tasks": [
+        "T-201"
+      ],
+      "files": [
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Guardado/carga de supervivencia",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "El consumo, las fugas y la asfixia se conectan en T-202/T-203/T-204."
+    },
+    {
+      "id": "S-011",
+      "date": "2026-11-07T23:47:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Cierre de la Etapa 1",
+      "summary": "Se verificó la paridad de la Etapa 1: lógica, controles, piloto automático, muerte, migración v2 y reinicio real. La revisión de extensibilidad T-107 quedó documentada. S1 se marca COMPLETADO y S2 queda LISTO.",
+      "tasks": [
+        "T-106"
+      ],
+      "files": [
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/PROJECT_DASHBOARD.html",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "01_logic",
+        "03_controls",
+        "04_autopilot",
+        "05_death"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S2 (Supervivencia), primera tarea T-201."
+    },
+    {
+      "id": "S-010",
+      "date": "2026-11-07T23:46:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Extensibilidad de identidad y online futuro",
+      "summary": "PlayerProfile separa playerId y characterId; SaveCodec los persiste y SaveService acepta slots saneados. Se documentaron límites de simulación local y puntos de extensión sin implementar red ni combate.",
+      "tasks": [
+        "T-107"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerProfile.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SaveService.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/arquitectura.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "Revisión documental",
+        "01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "No se implementó red, multijugador ni combate."
+    },
+    {
+      "id": "S-009",
+      "date": "2026-11-07T23:43:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Integración de SaveService en MyGame",
+      "summary": "MyGame crea SaveService con FileStorage, carga v2/backup/migración, guarda en pausa, tienda y dispose, y limpia al morir. La sesión queda activa al cargar y el reinicio real restaura la partida en PAUSED sin duplicar estado.",
+      "tasks": [
+        "T-105"
+      ],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java"
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls",
+        "04_autopilot",
+        "05_death"
+      ],
+      "outcome": "Completado",
+      "notes": "La siguiente tarea es T-107; después T-106 cierra la Etapa 1."
+    },
+    {
+      "id": "S-008",
+      "date": "2026-11-07T23:41:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "SaveService v2 y migración",
+      "summary": "Se implementó el guardado JSON v2 con versión, perfil, piloto, nave y sector. SaveService abstrae el almacenamiento, escribe de forma atómica, conserva backup, cae al backup ante corrupción y migra run2 preservando el estado. MyGame se conectará en T-105.",
+      "tasks": [
+        "T-104"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SaveService.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/PlayerProfile.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Guardado/carga v2",
+        "Backup y corrupción",
+        "Migración run2→v2"
+      ],
+      "outcome": "Completado",
+      "notes": "La integración en MyGame corresponde a T-105. El formato run2 se conserva solo como fuente de migración."
+    },
+    {
+      "id": "S-007",
+      "date": "2026-11-07T23:37:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "ShipLoadout modular",
+      "summary": "Se creó ShipLoadout como fuente única de niveles y ranuras genéricas de módulos. Upgrades delega en él para leer y comprar niveles, manteniendo las mismas claves de persistencia, fórmulas y comportamiento. Se añadió el módulo de piloto automático como capacidad instalable, sin exigirlo todavía para volar.",
+      "tasks": [
+        "T-103"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Compra de mejoras",
+        "Comparación de valores antes/después"
+      ],
+      "outcome": "Completado",
+      "notes": "La siguiente tarea es T-104. El catálogo completo de naves y piezas queda para etapas posteriores."
+    },
+    {
+      "id": "S-006",
+      "date": "2026-11-07T23:31:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pilot y persistencia de salud/O2",
+      "summary": "Se creó Pilot como entidad independiente de Ship, con salud, O2, máximos, estado y presencia a bordo. GameSession lo agrupa, lo reinicia al empezar una partida y lo guarda junto al sector; los guardados antiguos sin línea de piloto cargan 100/100. MyGame expone los valores en telemetría, sin HUD ni consumo.",
+      "tasks": [
+        "T-102"
+      ],
+      "files": [
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Guardado/carga del piloto en SelfTest",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "No se implementó consumo de O2, asfixia, fugas ni HUD; eso corresponde a la Etapa 2. La siguiente tarea es T-103."
+    },
+    {
+      "id": "S-005",
+      "date": "2026-11-07T23:27:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "PlayerProfile y GameSession",
+      "summary": "Se introdujeron PlayerProfile y GameSession como composición de perfil, sector/nave y guardado. MyGame crea la sesión y delega en ella el arranque, la actualización y el guardado heredado. No se movió la lógica de Upgrades ni se añadió economía.",
+      "tasks": [
+        "T-101"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerProfile.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 03_controls",
+        "tools/run-tests.sh --no-build 04_autopilot"
+      ],
+      "outcome": "Completado",
+      "notes": "La clase Pilot y el ShipLoadout quedan para T-102/T-103. GameSession mantiene temporalmente la clave run2 y el guardado de GameWorld hasta SaveService v2 (T-104)."
+    },
+    {
+      "id": "S-004",
+      "date": "2026-11-07T23:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Tema oscuro del panel",
+      "summary": "Se cambió el panel de continuidad a un tema oscuro completo, manteniendo datos, filtros, detalles, recarga manual y auto-recarga. No se modificó el tracker ni el juego.",
+      "tasks": [],
+      "files": [
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Firefox headless con file://",
+        "Marionette: 14/14 comprobaciones"
+      ],
+      "outcome": "Completado",
+      "notes": "Solo cambio visual. La primera tarea sigue siendo T-101."
+    },
+    {
+      "id": "S-003",
+      "date": "2026-11-07T22:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Cierre de decisiones de diseño y reorganización",
+      "summary": "Se aplicaron las respuestas del usuario: muerte permanente con mundo persistente, retirada de la tienda de pausa, láser/misiles/rayo tractor, viaje warp libre, estación personal vacía y modular, interiores a largo plazo, audio completo, naves modulares, galaxias reales/ficticias y facciones/online aplazadas. No se implementaron mecánicas.",
+      "tasks": [],
+      "files": [
+        "docs/DECISIONS.md",
+        "docs/PENDING_DECISIONS.md",
+        "docs/MASTER_PLAN.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/PROJECT_DASHBOARD.html",
+        "AGENTS.md",
+        "docs/IMPLEMENTATION_LOG.md"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Validación de IDs y dependencias"
+      ],
+      "outcome": "Completado",
+      "notes": "La primera tarea de implementación sigue siendo T-101. Las decisiones no implementan código."
+    },
+    {
+      "id": "S-002",
+      "date": "2026-11-07T22:15:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pendientes para conversar y apertura del panel",
+      "summary": "Se creó docs/PENDING_DECISIONS.md con las diez decisiones pendientes y una plantilla de respuestas; se enlazó desde AGENTS.md y DECISIONS.md; se abrió el panel en Brave mediante file://.",
+      "tasks": [
+        "T-003",
+        "T-006"
+      ],
+      "files": [
+        "docs/PENDING_DECISIONS.md",
+        "AGENTS.md",
+        "docs/DECISIONS.md",
+        "docs/PROJECT_DASHBOARD.html"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Brave abrió el panel con file:// (proceso activo)"
+      ],
+      "outcome": "Completado",
+      "notes": "No se implementó ninguna mecánica. La primera tarea de implementación sigue siendo T-101."
+    },
+    {
+      "id": "S-001",
+      "date": "2026-11-07T22:06:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Infraestructura de continuidad",
+      "summary": "Se creó el plan maestro persistente, el tracker JSON, el log, las decisiones, el panel HTML y la herramienta de sincronización. No se modificó ninguna mecánica del juego.",
+      "tasks": [
+        "T-003",
+        "T-006"
+      ],
+      "files": [
+        "AGENTS.md",
+        "docs/MASTER_PLAN.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/DECISIONS.md",
+        "docs/PROJECT_DASHBOARD.html",
+        "tools/sync-dashboard.py"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Validación de JSON, IDs y dependencias",
+        "Firefox headless con file://",
+        "Marionette: filtros, búsqueda, detalle, recarga manual, auto-recarga (14/14)"
+      ],
+      "outcome": "Completado",
+      "notes": "La infraestructura queda preparada para que la siguiente sesión ejecute T-101."
+    },
+    {
+      "id": "S-000",
+      "date": "2026-11-07T22:06:00-06:00",
+      "agent": "OpenCode - sesión de arquitectura",
+      "title": "Auditoría y plan maestro",
+      "summary": "Se auditó el proyecto existente y se redactó el plan maestro de transformación. Se identificaron sistemas existentes, parciales y ausentes.",
+      "tasks": [
+        "T-001",
+        "T-002",
+        "T-004",
+        "T-005"
+      ],
+      "files": [
+        "docs/MASTER_PLAN.md",
+        "docs/DECISIONS.md",
+        "docs/IMPLEMENTATION_LOG.md"
+      ],
+      "tests": [
+        "SelfTest x5: 4 TODO OK, 1 fallo esporádico no reproducido",
+        "No se ejecutaron tests de dispositivo"
+      ],
+      "outcome": "Completado",
+      "notes": "La flakiness de SelfTest queda registrada como problema abierto."
+    }
+  ],
+  "issues": [
+    {
+      "id": "I-001",
+      "title": "SelfTest no determinista",
+      "status": "ABIERTO",
+      "severity": "MEDIA",
+      "description": "En 5 ejecuciones, una terminó con 1 fallo no identificado. El uso de MathUtils.random y la falta de semillas fijas pueden producir flakiness.",
+      "affectedTasks": [
+        "T-001",
+        "T-106"
+      ],
+      "createdAt": "2026-11-07"
+    },
+    {
+      "id": "I-002",
+      "title": "Sin verificación en dispositivo en la sesión de preparación",
+      "status": "CONOCIDO",
+      "severity": "BAJA",
+      "description": "No se ejecutaron los tests 02-09 ni se midió FPS/memoria. La primera tarea de implementación debe considerar esta línea base.",
+      "affectedTasks": [
+        "T-106"
+      ],
+      "createdAt": "2026-11-07"
+    },
+    {
+      "id": "I-003",
+      "title": "MyGame es un monolito de ~1900 líneas",
+      "status": "ABIERTO",
+      "severity": "MEDIA",
+      "description": "Añadir estación, mercado, mapa e interiores sin extraer UiKit/pantallas aumentará el riesgo de regresiones.",
+      "affectedTasks": [
+        "T-101",
+        "T-503",
+        "T-603",
+        "T-805"
+      ],
+      "createdAt": "2026-11-07"
+    }
+  ]
+}

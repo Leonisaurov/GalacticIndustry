@@ -15,6 +15,24 @@ public class MainActivity extends AndroidApplication {
         cfg.useAccelerometer = false; 
         cfg.useCompass = false;
         cfg.useImmersiveMode = true;
-        initialize(new MyGame(), cfg);
+        // Arranques de prueba para la automatización:
+        //  test_mode   -> nave inmortal + telemetría JSON por logcat
+        //  debug_death -> partida con explosión final inmediata
+        //  wing_test   -> nace con alas y sistemas dañados
+        //  survival_test -> O2 bajo, salud dañada y fuga para el HUD
+        boolean testMode = getIntent() != null
+                && getIntent().getBooleanExtra("test_mode", false);
+        boolean debugDeath = getIntent() != null
+                && getIntent().getBooleanExtra("debug_death", false);
+        boolean slowDeath = getIntent() != null
+                && getIntent().getBooleanExtra("slow_death", false);
+        boolean autopilotTest = getIntent() != null
+                && getIntent().getBooleanExtra("autopilot_test", false);
+        boolean wingTest = getIntent() != null
+                && getIntent().getBooleanExtra("wing_test", false);
+        boolean survivalTest = getIntent() != null
+                && getIntent().getBooleanExtra("survival_test", false);
+        initialize(new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
+                wingTest, survivalTest), cfg);
     }
 }
