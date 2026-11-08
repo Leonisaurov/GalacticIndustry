@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:00:00-06:00  
+**Última actualización:** 2026-11-08T03:08:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -35,4 +35,4 @@ Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
 - `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
 - `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
 
-Las Etapas 1, 2, 3 y 4 están completadas. La siguiente tarea de implementación es **T-507 — Verificación de estación y ciclo económico** (Etapa 5).
+Las Etapas 1, 2, 3, 4 y 5 están completadas. La siguiente tarea de implementación es **T-601 — Crear Market y PriceModel** (Etapa 6).

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:00:00-06:00  
+**Última actualización:** 2026-11-08T03:08:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-047 — Verificación y cierre de la estación
+
+- **Fecha:** 2026-11-08T03:08:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-507
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Añadido el **gate integrado de la Etapa 5** al `SelfTest`:
+  - acople y despegue;
+  - descarga y venta a precio base;
+  - coste de combustible y O2;
+  - compra de mejoras y reparación de partes;
+  - rescate contra softlock;
+  - ausencia de tienda en la pausa (comprobación estructural).
+- Documentada la matriz del gate en `docs/pruebas.md`.
+- **S5 cerrada**; **S6 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `13_station 02_navigation 03_controls 09_wing_damage`: **4/4 OK**.
+
+### Evidencias
+
+- `PASS S5: acople y despegue`
+- `PASS S5: descarga y venta a precio base`
+- `PASS S5: repostar y O2 tienen coste`
+- `PASS S5: comprar mejora en estación`
+- `PASS S5: reparar parte restaura integridad`
+- `PASS S5: el rescate evita el softlock`
+- `PASS S5: la economia no depende de la pausa`
+
+### Decisiones tomadas
+
+- El gate comprueba también la estructura (no solo la UI) para evitar que
+  vuelva una tienda económica a la pausa.
+- No se implementa mercado dinámico ni NPC; eso es S6/S7.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 6 con **T-601 — Crear Market y PriceModel**.
 
 ---
 

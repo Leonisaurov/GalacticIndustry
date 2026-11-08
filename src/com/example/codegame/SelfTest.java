@@ -2064,6 +2064,47 @@ public class SelfTest {
         check("no se pide rescate con el piloto muerto",
                 !RescueService.canRequest(rescueWorld, deadPilot));
 
+        // T-507: gate de la etapa 5.
+        GameWorld s5 = new GameWorld(new Upgrades(true));
+        s5.start();
+        s5.immortal = true;
+        s5.asteroids.clear();
+        s5.fuel.clear();
+        s5.ship.pos.set(s5.station.pos.x, s5.station.pos.y - 100f);
+        s5.ship.vel.set(0f, 0f);
+        boolean s5Docked = DockingSystem.canDock(s5) && DockingSystem.dock(s5)
+                && s5.ship.docked;
+        DockingSystem.undock(s5);
+        check("S5: acople y despegue", s5Docked && !s5.ship.docked);
+        s5.ship.cargo().addExact(Commodity.SILICATO, 100);
+        int s5Moved = s5.station.storage.depositAll(s5.ship.cargo());
+        int s5Credits = s5.station.storage.sellAll();
+        check("S5: descarga y venta a precio base",
+                s5Moved == 100 && s5Credits == 200 && s5.ship.cargo().isEmpty());
+        Upgrades s5Up = new Upgrades(true);
+        check("S5: repostar y O2 tienen coste",
+                s5Up.refillCost(40f) == 40 && s5Up.o2RefillCost(60f) == 30);
+        s5Up.addCoins(1000);
+        check("S5: comprar mejora en estación",
+                s5Up.buy(Upgrades.MOTOR) && s5Up.level(Upgrades.MOTOR) == 1
+                        && Math.abs(s5Up.thrust() - 320f) < 0.01f);
+        s5.ship.part[Ship.ENGINE] = 20f;
+        s5.ship.repair(Ship.ENGINE);
+        check("S5: reparar parte restaura integridad",
+                s5.ship.part[Ship.ENGINE] == Ship.PART_MAX);
+        s5.ship.pos.set(0f, -520f);
+        s5.ship.fuel = 0f;
+        check("S5: el rescate evita el softlock",
+                RescueService.canRequest(s5, new Pilot()));
+        boolean shopField = false;
+        try {
+            MyGame.class.getDeclaredField("btnPauseShop");
+            shopField = true;
+        } catch (NoSuchFieldException ignored) {
+            // La pausa ya no tiene tienda.
+        }
+        check("S5: la economia no depende de la pausa", !shopField);
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

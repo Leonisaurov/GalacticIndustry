@@ -191,6 +191,20 @@ Verificación de T-408; se ejecuta con `01_logic` y las pruebas de dispositivo:
 | Roca y fragmentos persisten | `PASS la roca agotada no reaparece`, `los fragmentos se restauran` |
 | Venta en estación | `13_station`: 100 Silicato → 200 créditos |
 
+## Gate de la Etapa 5 — estación y ciclo económico
+
+Verificación de T-507:
+
+| Criterio | Evidencia |
+|---|---|
+| Acople y despegue | `13_station`: `ACOPLAR -> DOCKED -> DESPEGAR -> PLAYING` |
+| Descarga y venta | `PASS S5: descarga y venta a precio base`; `13_station` 100 UM → 200 cr |
+| Combustible y O2 | `PASS S5: repostar y O2 tienen coste`; 13_station los llena |
+| Reparación y mejoras | `PASS S5: reparar parte restaura integridad`, `comprar mejora en estación` |
+| Rescate sin softlock | `PASS S5: el rescate evita el softlock`; `13_station` rescate completo |
+| Persistencia | `PASS la estación se restaura con su almacén y acople`; recarga tras reiniciar |
+| Economía fuera de pausa | `PASS S5: la economia no depende de la pausa`; `03_controls` sin tienda |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.
