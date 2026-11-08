@@ -39,6 +39,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `07_visual_play` — capturas de partida, pausa y tienda de pausa.
 - `08_visual_death` — capturas de la explosión y el diálogo.
 - `09_wing_damage` — ala perdida, humo y pestaña de reparaciones.
+- `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
 
 ```sh
 tools/run-tests.sh --list
@@ -105,6 +106,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
   izquierda al 85 %, motor al 55 %, depósito al 45 % y cañón al 70 %, además de
   200 monedas para probar la tienda de reparaciones. La nave vira sola hacia el
   ala perdida y deja humo en el muñón.
+- `survival_test`: arranca en `PLAYING` con O2 al 24 %, salud al 70 %, casco al
+  50 % y brecha abierta. Sirve para revisar el HUD de supervivencia y el aviso
+  de O2 bajo sin esperar minutos. Lo usa `10_survival`.
 
 ## Telemetría
 
@@ -116,17 +120,32 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
   casco (`hull`/`maxHull`), integridad de las partes (`parts`), combustible,
   acelerador, velocidad, asteroides, bidones, misiles, `ignoredHits`, posición,
   tamaño de pantalla, modo del piloto (`NONE`, `FUEL`, `ASTEROID`, `STOP`),
-  `immortal`, `shopReturn` y `overCoins`.
+  `immortal`, `shopReturn` y `overCoins`. Incluye supervivencia:
+  `pilotHealth`, `pilotOxygen`, `pilotStatus`, `pilotGrace`, `pilotLeak`,
+  `pilotBreach`, `o2Alert` y `pilotO2Seconds`.
 - Eventos puntuales: `death`, `shop`, `run_start`, `buy`, `refill`, `repair`.
 
 Los scripts usan `wait_current_state` y `json_get` para esperar estados y
 comprobar campos sin mirar píxeles.
+
+## Balance de supervivencia
+
+- Consumo: 4 O2/min; filtro 1.5 O2/min con `LIFE_SUPPORT` intacto.
+- Pérdida neta sin daño: 2.5 O2/min → **75 % de O2 tras 10 min**.
+- Fuga: 3 O2/min al 50 % de casco y 4.8/min al 20 %; con brecha, ×1.5.
+- O2 a 0: 5 s de gracia + 100 s de salud a 1 HP/s = **105 s de margen** con
+  salud completa.
+- Reparar `LIFE_SUPPORT` devuelve el filtro a su valor normal (100 % si el
+  filtro está sano).
+- `SelfTest` imprime `BENCH expedicion 10min O2=75.0 salud=100.0`.
 
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.
 - Estados y flujo de UI → `02_navigation`, `03_controls`, `04_autopilot` y
   `05_death`, con telemetría.
+- Supervivencia → `10_survival` (telemetría + captura) y las comprobaciones de
+  10 min, fuga, margen de O2 y reparación del filtro en `SelfTest`.
 - Aspecto visual → `06_visual_menu`, `07_visual_play` y `08_visual_death`; no
   valides comportamiento por píxeles.
 

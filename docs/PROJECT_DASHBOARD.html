@@ -610,24 +610,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:06:00-06:00",
-    "lastSessionId": "S-017",
+    "lastUpdated": "2026-11-08T00:10:00-06:00",
+    "lastSessionId": "S-018",
     "lastVerification": {
-      "date": "2026-11-08T00:06:00-06:00",
+      "date": "2026-11-08T00:10:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Recarga de O2 a 0,5 créditos/unidad con mínimo 5 y descuento real",
-        "LIFE_SUPPORT se repara como las demás partes",
-        "La recarga de O2 persiste en el guardado v2",
-        "tools/run-tests.sh --no-build 02_navigation 03_controls 09_wing_damage: 3/3 OK",
-        "Captura 12_shop_repair muestra SOPORTE y OXIGENO sin saturar",
+        "Expedición de 10 min: O2=75.0 %, salud=100 %",
+        "Casco al 50 % produce fuga; O2 0 da 105 s de margen",
+        "Reparar LIFE_SUPPORT recupera el filtro al 100 %",
+        "tools/run-tests.sh --no-build 10_survival: OK",
+        "Telemetría: pilotO2Seconds≈199 con O2≈23 % y brecha",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S2",
     "currentTaskId": null,
-    "nextTaskId": "T-207",
+    "nextTaskId": "T-208",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -1966,7 +1966,7 @@
       "description": "Verificar el ciclo completo de O2, fugas y salud con una expedición de 10 minutos y ajustar los valores.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-204",
@@ -1993,10 +1993,48 @@
         "Prueba de expedición de 10 min"
       ],
       "technicalNotes": "Cierra la etapa; no implementar estación ni interiores.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-018",
+          "date": "2026-11-08T00:09:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "EN_PROGRESO",
+          "summary": "Inicio de T-207: expedición de 10 min, comprobación de fuga al 50 % de casco, margen de O2 0 y reparación del filtro.",
+          "files": [],
+          "tests": [],
+          "outcome": "En progreso"
+        },
+        {
+          "sessionId": "S-018",
+          "date": "2026-11-08T00:10:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Balance verificado: 10 min sin daño dejan 75 % de O2; casco al 50 % genera fuga; O2 0 da 105 s de margen; reparar LIFE_SUPPORT recupera el filtro. Telemetría añade pilotO2Seconds y docs/pruebas.md documenta el balance.",
+          "files": [
+            "src/com/example/codegame/LifeSupport.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/pruebas.md",
+            "docs/arquitectura.md"
+          ],
+          "tests": [
+            "01_logic",
+            "10_survival",
+            "Prueba de expedición de 10 min"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "BENCH expedicion 10min O2=75.0 salud=100.0",
+        "PASS expedicion de 10 min deja mas del 50% de O2",
+        "PASS casco al 50% produce aviso de fuga",
+        "PASS O2 0 da al menos 60 s de margen",
+        "PASS reparar soporte vital recupera el filtro",
+        "10_survival OK; telemetría pilotO2Seconds=199 con O2=23.2 y brecha"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:10:00-06:00"
     },
     {
       "id": "T-208",
@@ -5043,6 +5081,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-018",
+      "date": "2026-11-08T00:10:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Integración y balance de supervivencia",
+      "summary": "Se verificó una expedición de 10 min (75 % de O2, salud intacta), la fuga al 50 % de casco, 105 s de margen con O2 a 0 y la recuperación del filtro al reparar LIFE_SUPPORT. La telemetría añade pilotO2Seconds y docs/pruebas.md documenta el balance.",
+      "tasks": [
+        "T-207"
+      ],
+      "files": [
+        "src/com/example/codegame/LifeSupport.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/pruebas.md",
+        "docs/arquitectura.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 10_survival",
+        "Prueba de expedición de 10 min"
+      ],
+      "outcome": "Completado",
+      "notes": "La etapa S2 sigue abierta por T-208/T-209/T-210. Siguiente: T-208."
+    },
     {
       "id": "S-017",
       "date": "2026-11-08T00:06:00-06:00",

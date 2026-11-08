@@ -54,6 +54,9 @@
 - Tienda temporal: tarjeta `OXIGENO` a 0,5 créditos/unidad con mínimo 5;
   `SOPORTE` (LIFE_SUPPORT) se repara como las demás partes. Este servicio se
   moverá a la estación física en la Etapa 5.
+- Balance verificado: 10 min sin daño dejan 75 % de O2; O2 a 0 con salud completa
+  da 105 s de margen; casco al 50 % genera 3 O2/min de fuga. La telemetría
+  expone `pilotO2Seconds`.
 - `GameWorld`: simulación. Mundo infinito por *chunks* de 800 unidades con
   semilla derivada de las coordenadas; dueño de `Ship`, arrays de
   `asteroids`/`missiles`/`fuel`, `Effects` y `Autopilot`. `serialize()`/

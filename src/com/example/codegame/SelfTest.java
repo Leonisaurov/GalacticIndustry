@@ -767,6 +767,44 @@ public class SelfTest {
                         && refillLoaded.pilot.oxygen == refillLoaded.pilot.o2Max
                         && refillLoaded.pilot.status == Pilot.Status.OK);
 
+        // T-207: integración y balance de supervivencia.
+        GameSession expedition = new GameSession(new PlayerProfile(new Upgrades(true)));
+        expedition.startRun();
+        expedition.sector.immortal = true;
+        expedition.sector.asteroids.clear();
+        expedition.sector.fuel.clear();
+        for (int i = 0; i < 600; i++) {
+            expedition.lifeSupport.update(expedition.pilot, expedition.ship(), 1f);
+        }
+        check("expedicion de 10 min deja mas del 50% de O2",
+                expedition.pilot.oxygen > 50f);
+        check("expedicion sin daño mantiene la salud",
+                expedition.pilot.health == 100f);
+        System.out.println(String.format(
+                "BENCH expedicion 10min O2=%.1f salud=%.1f",
+                expedition.pilot.oxygen, expedition.pilot.health));
+        Ship balanceShip = expedition.ship();
+        balanceShip.part[Ship.HULL] = balanceShip.maxHull * 0.5f;
+        expedition.lifeSupport.breach = false;
+        expedition.lifeSupport.updateLeak(balanceShip);
+        check("casco al 50% produce aviso de fuga",
+                expedition.lifeSupport.leak > 0.01f);
+        Pilot marginPilot = new Pilot();
+        marginPilot.oxygen = 0f;
+        marginPilot.health = 100f;
+        marginPilot.oxygenGrace = Pilot.O2_GRACE_SECONDS;
+        marginPilot.updateAsphyxia(60f);
+        check("O2 0 da al menos 60 s de margen",
+                marginPilot.health > 0f
+                        && marginPilot.status == Pilot.Status.HYPOXIC);
+        balanceShip.part[Ship.LIFE_SUPPORT] = 0f;
+        float lowFilter = expedition.lifeSupport.filterEffectiveness(balanceShip);
+        balanceShip.repair(Ship.LIFE_SUPPORT);
+        float repairedFilter = expedition.lifeSupport.filterEffectiveness(balanceShip);
+        check("reparar soporte vital recupera el filtro",
+                Math.abs(lowFilter - 0.2f) < 0.001f
+                        && Math.abs(repairedFilter - 1f) < 0.001f);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

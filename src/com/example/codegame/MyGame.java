@@ -613,7 +613,7 @@ public class MyGame implements ApplicationListener {
                         + "\"pilotHealth\":%.1f,\"pilotMaxHealth\":%.1f,"
                         + "\"pilotOxygen\":%.1f,\"pilotO2Max\":%.1f,\"pilotStatus\":\"%s\","
                         + "\"pilotGrace\":%.1f,\"pilotLeak\":%.1f,\"pilotBreach\":%s,"
-                        + "\"o2Alert\":%d}",
+                        + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -626,7 +626,9 @@ public class MyGame implements ApplicationListener {
                 session.pilot.health, session.pilot.maxHealth,
                 session.pilot.oxygen, session.pilot.o2Max, session.pilot.status.name(),
                 session.pilot.oxygenGrace, session.lifeSupport.leak,
-                session.lifeSupport.breach, session.pilot.o2AlertLevel()));
+                session.lifeSupport.breach, session.pilot.o2AlertLevel(),
+                Math.min(999999f, session.lifeSupport.estimatedSeconds(
+                        session.pilot, world.ship))));
     }
 
     private void logEvent(String json) {

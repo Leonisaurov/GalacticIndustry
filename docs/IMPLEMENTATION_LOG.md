@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:06:00-06:00  
+**Última actualización:** 2026-11-08T00:10:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,62 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-018 — Integración y balance de supervivencia
+
+- **Fecha:** 2026-11-08T00:10:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-207
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Expedición de 10 min sin daño: **75 % de O2**, salud al 100 %.
+- Casco al 50 %: fuga de 3 O2/min y aviso visible.
+- O2 a 0 con salud completa: **105 s de margen** (5 s de gracia + 100 s de
+  daño a 1 HP/s), por encima de los 60 s exigidos.
+- Reparar `LIFE_SUPPORT` devuelve el filtro al 100 % si el filtro está sano.
+- La telemetría incluye `pilotO2Seconds` para estimar la reserva.
+- `docs/pruebas.md` documenta `10_survival`, `survival_test` y el balance.
+
+La etapa S2 sigue abierta por T-208/T-209/T-210; T-207 solo cierra el balance.
+
+### Archivos modificados
+
+- `src/com/example/codegame/LifeSupport.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 10_survival`: **OK**.
+
+### Evidencias
+
+- `BENCH expedicion 10min O2=75.0 salud=100.0`
+- `PASS expedicion de 10 min deja mas del 50% de O2`
+- `PASS casco al 50% produce aviso de fuga`
+- `PASS O2 0 da al menos 60 s de margen`
+- `PASS reparar soporte vital recupera el filtro`
+- Telemetría real: `o2Alert=1`, `pilotLeak=4.5`, `pilotO2Seconds=199`.
+
+### Decisiones tomadas
+
+- No se ajustaron las tasas: 4 O2/min y 1.5 O2/min de filtro cumplen el gate.
+- La estimación de reserva se expone en telemetría; el HUD mantiene el diseño
+  compacto de T-205.
+- La etapa no se marca completada hasta resolver T-208/T-209.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-208 — Implementar muerte permanente y mundo persistente**.
 
 ---
 
