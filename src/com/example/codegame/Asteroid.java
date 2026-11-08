@@ -27,6 +27,8 @@ class Asteroid {
     int hp;
     int reserve;
     final int maxReserve;
+    /** Semilla estable de la roca; permite restaurarla sin cambiar su forma. */
+    final long seed;
     /** Unidades de cada mineral que quedan en la roca. */
     final int[] mineralUnits;
     float flash;
@@ -53,6 +55,7 @@ class Asteroid {
              int reserve, int maxReserve, long seed) {
         pos.set(x, y);
         this.size = size;
+        this.seed = seed;
         this.type = type == null ? AsteroidType.C : type;
         radius = size == SMALL ? 12f : size == MEDIUM ? 22f : 34f;
         hp = size == SMALL ? 1 : size == MEDIUM ? 2 : 4;

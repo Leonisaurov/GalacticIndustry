@@ -190,6 +190,22 @@ estáticos se reutilizan.
   tamaño total del sector.
 - La carga/descarga efectiva entre sectores y el warp llegan en T-803.
 
+## Persistencia y descarga de sectores
+
+- `SectorRuntime` captura/restaura un estado resumido por sector:
+  - IDs de chunks ya generados;
+  - asteroides activos con posición, velocidad, tipo, reserva y semilla;
+  - bidones con su vida restante.
+- **No se guardan los chunks no visitados**: al volver se regeneran desde la
+  semilla del sector. El guardado no crece con el tamaño total.
+- `GameSession.captureCurrentSector()` guarda el sector actual en
+  `UniverseState` antes de salir; `SectorRuntime.restore()` lo reconstruye sin
+  duplicar minerales y sin regenerar las rocas ya minadas.
+- El guardado v2 escribe `sectorSnapshots` dentro del sector; un guardado sin
+  ese campo sigue siendo válido y carga sin snapshots.
+- Los snapshots se validan con `SaveCodec.validate` y se restauran en
+  `UniverseState` al cargar.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

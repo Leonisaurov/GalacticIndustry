@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S8` — Expansión del universo y galaxias.
 - No hay tarea en progreso.
-- Última tarea completada: `T-802` — Convertir GameWorld en SectorRuntime finito.
-- Primera tarea disponible: `T-803` — Implementar warp y cambio de sector.
+- Última tarea completada: `T-803` — Persistir y descargar sectores.
+- Primera tarea disponible: `T-808` — Implementar streaming dinámico de sectores y regiones.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **65 %** (53 de 81 tareas de progreso).
+- La implementación del juego está al **67 %** (54 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

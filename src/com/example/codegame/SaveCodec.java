@@ -224,6 +224,11 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            w.name("sectorSnapshots").array();
+            for (SectorRuntime.Snapshot snapshot : session.universe.snapshots()) {
+                writeSnapshot(w, snapshot);
+            }
+            w.pop();
             w.pop();
             w.pop();
             w.close();
@@ -495,10 +500,108 @@ final class SaveCodec {
                     d.marketConsumption = intArray(market.get("consumption"));
                 }
             }
+            JsonValue snapList = sector.get("sectorSnapshots");
+            if (snapList != null && snapList.isArray()) {
+                for (int i = 0; i < snapList.size; i++) {
+                    JsonValue value = snapList.get(i);
+                    if (value == null) {
+                        continue;
+                    }
+                    String snapshotId = value.getString("id", null);
+                    if (snapshotId == null || snapshotId.isEmpty()) {
+                        continue;
+                    }
+                    SectorRuntime.Snapshot snapshot =
+                            new SectorRuntime.Snapshot(snapshotId);
+                    JsonValue snapChunks = value.get("chunks");
+                    if (snapChunks != null && snapChunks.isArray()) {
+                        for (int k = 0; k < snapChunks.size; k++) {
+                            snapshot.chunks.add(snapChunks.get(k).asLong());
+                        }
+                    }
+                    JsonValue snapRocks = value.get("asteroids");
+                    if (snapRocks != null && snapRocks.isArray()) {
+                        for (int k = 0; k < snapRocks.size; k++) {
+                            JsonValue rock = snapRocks.get(k);
+                            if (rock == null) {
+                                continue;
+                            }
+                            SectorRuntime.Rock data = new SectorRuntime.Rock();
+                            data.x = rock.getFloat("x", 0f);
+                            data.y = rock.getFloat("y", 0f);
+                            data.vx = rock.getFloat("vx", 0f);
+                            data.vy = rock.getFloat("vy", 0f);
+                            data.size = rock.getInt("size", Asteroid.SMALL);
+                            data.hp = rock.getInt("hp", 1);
+                            data.type = AsteroidType.byName(
+                                    rock.getString("type", AsteroidType.C.name()));
+                            data.reserve = rock.getInt("reserve", -1);
+                            data.maxReserve = rock.getInt("maxReserve", data.reserve);
+                            data.seed = rock.getLong("seed", 1L);
+                            snapshot.asteroids.add(data);
+                        }
+                    }
+                    JsonValue snapPickups = value.get("pickups");
+                    if (snapPickups != null && snapPickups.isArray()) {
+                        for (int k = 0; k < snapPickups.size; k++) {
+                            JsonValue pickup = snapPickups.get(k);
+                            if (pickup == null) {
+                                continue;
+                            }
+                            SectorRuntime.Fuel data = new SectorRuntime.Fuel();
+                            data.x = pickup.getFloat("x", 0f);
+                            data.y = pickup.getFloat("y", 0f);
+                            data.life = pickup.getFloat("life", FuelPickup.LIFE);
+                            snapshot.fuel.add(data);
+                        }
+                    }
+                    d.snapshots.add(snapshot);
+                }
+            }
             return d;
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    private static void writeSnapshot(com.badlogic.gdx.utils.JsonWriter w,
+                                      SectorRuntime.Snapshot snapshot)
+            throws IOException {
+        w.object();
+        w.set("id", snapshot.sectorId);
+        w.name("chunks").array();
+        for (int i = 0; i < snapshot.chunks.size(); i++) {
+            w.value(snapshot.chunks.get(i));
+        }
+        w.pop();
+        w.name("asteroids").array();
+        for (int i = 0; i < snapshot.asteroids.size(); i++) {
+            SectorRuntime.Rock rock = snapshot.asteroids.get(i);
+            w.object();
+            w.set("x", rock.x);
+            w.set("y", rock.y);
+            w.set("vx", rock.vx);
+            w.set("vy", rock.vy);
+            w.set("size", rock.size);
+            w.set("hp", rock.hp);
+            w.set("type", rock.type.name());
+            w.set("reserve", rock.reserve);
+            w.set("maxReserve", rock.maxReserve);
+            w.set("seed", rock.seed);
+            w.pop();
+        }
+        w.pop();
+        w.name("pickups").array();
+        for (int i = 0; i < snapshot.fuel.size(); i++) {
+            SectorRuntime.Fuel fuel = snapshot.fuel.get(i);
+            w.object();
+            w.set("x", fuel.x);
+            w.set("y", fuel.y);
+            w.set("life", fuel.life);
+            w.pop();
+        }
+        w.pop();
+        w.pop();
     }
 
     private static int[] intArray(JsonValue array) {
@@ -659,6 +762,10 @@ final class SaveCodec {
         world.fx.clear();
         world.pilot.cancel();
         world.shake = 0f;
+        session.universe.clearSnapshots();
+        for (int i = 0; i < d.snapshots.size(); i++) {
+            session.universe.putSnapshot(d.snapshots.get(i));
+        }
         session.markActive();
         return true;
     }
@@ -710,6 +817,7 @@ final class SaveCodec {
         final List<CargoData> stationStorage = new ArrayList<>();
         boolean hasAgents;
         final List<AgentData> agents = new ArrayList<>();
+        final List<SectorRuntime.Snapshot> snapshots = new ArrayList<>();
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;

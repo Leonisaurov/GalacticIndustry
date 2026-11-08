@@ -26,7 +26,8 @@ public class SelfTest {
         if (start < 0) {
             return json;
         }
-        if (start > 0 && json.charAt(start - 1) == ',') {
+        boolean leadingComma = start > 0 && json.charAt(start - 1) == ',';
+        if (leadingComma) {
             start--;
         }
         int open = json.indexOf('[', start);
@@ -44,7 +45,7 @@ public class SelfTest {
                 }
             }
         }
-        if (end < json.length() && json.charAt(end) == ',') {
+        if (!leadingComma && end < json.length() && json.charAt(end) == ',') {
             end++;
         }
         return json.substring(0, start) + json.substring(end);
@@ -2351,7 +2352,7 @@ public class SelfTest {
                         && "ROCA-7".equals(agentLoaded.sector.agents.get(0).objective)
                         && agentLoaded.sector.agents.get(0).cargo.amount(Commodity.HIELO) == 10);
         String agentText = agentStore.read(SaveService.SAVE_NAME);
-        String noAgents = removeJsonField(agentText, "agents");
+       String noAgents = removeJsonField(agentText, "agents");
         GameSession noAgentsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
         check("un guardado sin agentes crea la plantilla",
                 !agentText.equals(noAgents)
@@ -2878,6 +2879,81 @@ public class SelfTest {
                         == hugeWorld802.generatedChunks().size()
                         && hugeWorld802.generatedChunks().size()
                         <= (2 * GameWorld.RING + 1) * (2 * GameWorld.RING + 1));
+
+        // T-803: persistencia y descarga de sectores.
+        GameSession snapSession = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        snapSession.startRun();
+        GameWorld snapWorld = snapSession.sector;
+        snapWorld.ship.pos.set(3000f, 3000f);
+        snapWorld.update(0.01f, new Controls());
+        if (snapWorld.asteroids.size > 0) {
+            snapWorld.asteroids.removeIndex(0);
+        }
+        int snapReserve = 0;
+        for (int i = 0; i < snapWorld.asteroids.size; i++) {
+            snapReserve += snapWorld.asteroids.get(i).reserve;
+        }
+        int snapChunks = snapWorld.generatedChunks().size();
+        int snapRocks = snapWorld.asteroids.size;
+        SectorRuntime.Snapshot captured = snapSession.captureCurrentSector();
+        check("al salir se captura el sector",
+                captured != null
+                        && GameData.START_SECTOR_ID.equals(captured.sectorId)
+                        && captured.chunks.size() == snapChunks
+                        && captured.asteroids.size() == snapRocks
+                        && SectorRuntime.reserveUnits(captured) == snapReserve);
+        check("los chunks no visitados no se guardan enteros",
+                captured.chunks.size() < 225
+                        && captured.asteroids.size() <= snapRocks);
+        SaveService.MemoryStorage sectorStore = new SaveService.MemoryStorage();
+        SaveService sectorService = new SaveService(sectorStore);
+        check("el guardado con sectores es válido",
+                sectorService.save(snapSession));
+        String sectorText = sectorStore.read(SaveService.SAVE_NAME);
+        check("el guardado incluye el snapshot del sector",
+                SaveCodec.validate(sectorText)
+                        && sectorText.contains("\"sectorSnapshots\""));
+
+        GameSession sectorLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("el snapshot del sector se restaura",
+                sectorService.load(sectorLoaded) == SaveService.LoadStatus.V2
+                        && sectorLoaded.universe.hasSnapshot(GameData.START_SECTOR_ID)
+                        && sectorLoaded.universe.snapshot(GameData.START_SECTOR_ID)
+                        .asteroids.size() == snapRocks
+                        && SectorRuntime.reserveUnits(
+                        sectorLoaded.universe.snapshot(GameData.START_SECTOR_ID))
+                        == snapReserve);
+        SectorRuntime.Snapshot loadedSnap =
+                sectorLoaded.universe.snapshot(GameData.START_SECTOR_ID);
+        GameWorld sectorRestored = new GameWorld(new Upgrades(true),
+                sectorLoaded.currentSector);
+        sectorRestored.start();
+        SectorRuntime.restore(sectorRestored, loadedSnap);
+        check("restaurar el sector no duplica minerales",
+                sectorRestored.asteroids.size == loadedSnap.asteroids.size()
+                        && SectorRuntime.reserveUnits(
+                        SectorRuntime.capture(sectorRestored,
+                                GameData.START_SECTOR_ID)) == snapReserve
+                        && sectorRestored.generatedChunks().size()
+                        == loadedSnap.chunks.size());
+        sectorRestored.ship.pos.set(3000f, 3000f);
+        sectorRestored.update(0.01f, new Controls());
+        int restoredReserve = 0;
+        for (int i = 0; i < sectorRestored.asteroids.size; i++) {
+            restoredReserve += sectorRestored.asteroids.get(i).reserve;
+        }
+        check("los recursos minados no reaparecen al volver",
+                restoredReserve <= snapReserve
+                        && sectorRestored.generatedChunks().size()
+                        == loadedSnap.chunks.size());
+        int chunksBeforeFar = sectorRestored.generatedChunks().size();
+        sectorRestored.ship.pos.set(-5000f, -5000f);
+        sectorRestored.update(0.01f, new Controls());
+        check("los chunks no visitados se generan al volver",
+                sectorRestored.generatedChunks().size() > chunksBeforeFar
+                        && sectorRestored.asteroids.size > 0);
 
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));

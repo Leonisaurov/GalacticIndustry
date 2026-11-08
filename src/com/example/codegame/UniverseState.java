@@ -1,7 +1,9 @@
 package com.example.codegame;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Contenedor de galaxias, sistemas y sectores. La jerarquía es
@@ -11,6 +13,9 @@ import java.util.List;
 final class UniverseState {
 
     private final List<GalaxyDef> galaxies = new ArrayList<>();
+    /** Estado resumido de sectores ya visitados, por ID estable. */
+    private final Map<String, SectorRuntime.Snapshot> snapshots =
+            new LinkedHashMap<>();
 
     GalaxyDef addGalaxy(GalaxyDef galaxy) {
         if (galaxy != null && galaxy(galaxy.id) == null) {
@@ -101,6 +106,28 @@ final class UniverseState {
         SystemDef system = defaultSystem();
         return system == null || system.sectors.isEmpty()
                 ? null : system.sectors.get(0);
+    }
+
+    void putSnapshot(SectorRuntime.Snapshot snapshot) {
+        if (snapshot != null && sector(snapshot.sectorId) != null) {
+            snapshots.put(snapshot.sectorId, snapshot);
+        }
+    }
+
+    SectorRuntime.Snapshot snapshot(String sectorId) {
+        return sectorId == null ? null : snapshots.get(sectorId);
+    }
+
+    boolean hasSnapshot(String sectorId) {
+        return snapshot(sectorId) != null;
+    }
+
+    List<SectorRuntime.Snapshot> snapshots() {
+        return new ArrayList<>(snapshots.values());
+    }
+
+    void clearSnapshots() {
+        snapshots.clear();
     }
 
     /** Lista de errores de validación; vacía si los datos son coherentes. */

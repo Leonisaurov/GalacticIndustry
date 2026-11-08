@@ -65,6 +65,17 @@ class GameSession {
         return sector.ship.cargo();
     }
 
+    /**
+     * Guarda el estado resumido del sector actual en el universo. Se usa al
+     * salir hacia otro sector; los recursos minados quedan persistidos.
+     */
+    SectorRuntime.Snapshot captureCurrentSector() {
+        SectorRuntime.Snapshot snapshot = SectorRuntime.capture(sector,
+                currentSector == null ? "sol-prime" : currentSector.id);
+        universe.putSnapshot(snapshot);
+        return snapshot;
+    }
+
     boolean runActive() {
         return runActive;
     }

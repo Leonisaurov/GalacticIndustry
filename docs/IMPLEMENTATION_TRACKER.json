@@ -4,24 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T04:56:00-06:00",
-    "lastSessionId": "S-062",
+    "lastUpdated": "2026-11-08T05:06:00-06:00",
+    "lastSessionId": "S-063",
     "lastVerification": {
-      "date": "2026-11-08T04:56:00-06:00",
+      "date": "2026-11-08T05:06:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "GameWorld usa SectorDef: limites, perfil y borde dibujado",
-        "La nave se mantiene dentro del sector y se anula la velocidad hacia fuera",
-        "Los recursos minados no reaparecen; chunks visitados no se regeneran",
-        "El coste de generacion no depende del tamano total del sector",
-        "16_universe: 3/3/6, 12000x12000 y captura 31_bounds",
+        "SectorRuntime captura chunks generados y asteroides/bidones activos",
+        "El snapshot se guarda en sectorSnapshots y se restaura sin duplicar minerales",
+        "Restaurar un sector no regenera recursos minados",
+        "Los chunks no visitados se generan al volver y no se guardan enteros",
+        "16_universe, 13_station y 15_agents: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S8",
     "currentTaskId": null,
-    "nextTaskId": "T-803",
+    "nextTaskId": "T-808",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4053,7 +4053,7 @@
       "description": "Guardar el estado resumido de un sector al salir y reconstruirlo al volver.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -4079,10 +4079,41 @@
         "Guardado/carga de sector"
       ],
       "technicalNotes": "Usar semilla + estado de recursos, no guardar todos los asteroides inactivos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-063",
+          "date": "2026-11-08T05:06:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SectorRuntime captura/restaura estado resumido por sector (chunks generados, asteroides con semilla y reserva, bidones). GameSession.captureCurrentSector y UniverseState guardan snapshots; SaveCodec v2 los serializa en sectorSnapshots y los restaura sin duplicar minerales. Chunks no visitados se generan al volver.",
+          "files": [
+            "src/com/example/codegame/SectorRuntime.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/Asteroid.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Guardado/carga de sector"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS al salir se captura el sector",
+        "PASS los chunks no visitados no se guardan enteros",
+        "PASS el guardado con sectores es válido",
+        "PASS el guardado incluye el snapshot del sector",
+        "PASS el snapshot del sector se restaura",
+        "PASS restaurar el sector no duplica minerales",
+        "PASS los recursos minados no reaparecen al volver",
+        "PASS los chunks no visitados se generan al volver"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T05:06:00-06:00"
     },
     {
       "id": "T-804",
@@ -5320,7 +5351,7 @@
       "description": "Cargar las zonas cercanas al jugador y descargar o simplificar las lejanas, sin mantener todo el universo cargado. Preparar la escala para viajes entre sistemas y galaxias.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-802",
@@ -5823,6 +5854,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-063",
+      "date": "2026-11-08T05:06:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia y descarga de sectores",
+      "summary": "SectorRuntime y UniverseState guardan un estado resumido por sector: chunks generados y recursos activos con semilla. SaveCodec v2 serializa snapshots y al volver se restaura sin duplicar minerales; los chunks no visitados se regeneran.",
+      "tasks": [
+        "T-803"
+      ],
+      "files": [
+        "src/com/example/codegame/SectorRuntime.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/Asteroid.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe 13_station 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-808 (streaming dinámico de sectores)."
+    },
     {
       "id": "S-062",
       "date": "2026-11-08T04:56:00-06:00",

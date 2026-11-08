@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:56:00-06:00  
+**Última actualización:** 2026-11-08T05:06:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-063 — Persistencia y descarga de sectores
+
+- **Fecha:** 2026-11-08T05:06:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-803
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `SectorRuntime` captura/restaura el estado resumido de un sector:
+  - IDs de chunks ya generados;
+  - asteroides activos (posición, velocidad, tipo, reserva y semilla);
+  - bidones con su vida restante.
+- `GameSession.captureCurrentSector()` guarda el sector actual en
+  `UniverseState`; `SectorRuntime.restore()` lo reconstruye.
+- `SaveCodec` v2 serializa `sectorSnapshots` y los restaura al cargar.
+- **No se guardan los chunks no visitados**: se regeneran al volver.
+- Al restaurar no se duplican minerales ni reaparecen los recursos minados.
+- Los guardados sin `sectorSnapshots` siguen siendo válidos.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SectorRuntime.java` (nuevo)
+- `src/com/example/codegame/UniverseState.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/Asteroid.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `16_universe 13_station 15_agents`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS al salir se captura el sector`
+- `PASS los chunks no visitados no se guardan enteros`
+- `PASS el guardado con sectores es válido`
+- `PASS el guardado incluye el snapshot del sector`
+- `PASS el snapshot del sector se restaura`
+- `PASS restaurar el sector no duplica minerales`
+- `PASS los recursos minados no reaparecen al volver`
+- `PASS los chunks no visitados se generan al volver`
+
+### Decisiones tomadas
+
+- El snapshot guarda solo recursos activos y la lista de chunks visitados.
+- La forma de cada asteroide se conserva con su semilla.
+- La captura se hará al salir hacia otro sector (T-808/T-804).
+- No se guardan asteroides de chunks no visitados.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-808 — Implementar streaming dinámico de sectores y
+  regiones**.
 
 ---
 
