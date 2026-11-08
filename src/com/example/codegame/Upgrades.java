@@ -230,11 +230,13 @@ class Upgrades {
     }
 
     float thrust() {
-        return (260f + 60f * level(MOTOR)) * shipClass().thrustMultiplier;
+        float thrust = (260f + 60f * level(MOTOR)) * shipClass().thrustMultiplier;
+        return hasShipModule(ShipModuleDef.PROPULSION) ? thrust * 1.10f : thrust;
     }
 
     float maxSpeed() {
-        return (220f + 40f * level(MOTOR)) * shipClass().speedMultiplier;
+        float speed = (220f + 40f * level(MOTOR)) * shipClass().speedMultiplier;
+        return hasShipModule(ShipModuleDef.PROPULSION) ? speed * 1.08f : speed;
     }
 
     float maxFuel() {
@@ -267,7 +269,7 @@ class Upgrades {
 
     /** Nivel del láser minero; afecta a potencia, penetración y capacitor. */
     int laserLevel() {
-        return level(LASER);
+        return level(LASER) + (hasShipModule(ShipModuleDef.MINING) ? 1 : 0);
     }
 
     /** Capacidad del capacitor: 100 base y +25 por nivel de Láser. */
@@ -280,7 +282,8 @@ class Upgrades {
     }
 
     float tractorRange() {
-        return TractorBeam.BASE_RANGE + TractorBeam.RANGE_PER_LEVEL * level(TRACTOR);
+        return TractorBeam.BASE_RANGE + TractorBeam.RANGE_PER_LEVEL * level(TRACTOR)
+                + (hasShipModule(ShipModuleDef.TOOLS) ? 30f : 0f);
     }
 
     float tractorSpeed() {
@@ -306,6 +309,38 @@ class Upgrades {
 
     void setMusicMuted(boolean muted) {
         putInt("musicMuted", muted ? 1 : 0);
+    }
+
+    boolean hasShipModule(ShipModuleDef module) {
+        return module != null && loadout.hasModule(module.id);
+    }
+
+    /** Instala un módulo cobrando su coste; devuelve false si no cabe o no hay saldo. */
+    boolean installShipModule(int slot, ShipModuleDef module) {
+        if (module == null || hasShipModule(module)
+                || loadout.module(slot) != null
+                || !spendCoins(module.creditCost)) {
+            return false;
+        }
+        if (!loadout.installModule(slot, module.id)) {
+            putInt("coins", coins() + module.creditCost);
+            return false;
+        }
+        return true;
+    }
+
+    boolean removeShipModule(int slot) {
+        return loadout.removeModule(slot);
+    }
+
+    int shipModuleCount() {
+        int count = 0;
+        for (int i = 0; i < loadout.moduleSlots(); i++) {
+            if (loadout.module(i) != null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** Clase de nave seleccionada; persistida en preferencias. */

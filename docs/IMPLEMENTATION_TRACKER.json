@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T12:38:00-06:00",
-    "lastSessionId": "S-088",
+    "lastUpdated": "2026-11-08T12:58:00-06:00",
+    "lastSessionId": "S-089",
     "lastVerification": {
-      "date": "2026-11-08T12:38:00-06:00",
+      "date": "2026-11-08T12:58:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Dos pistas locales con mezcla suave exploracion/tension",
-        "Musica y efectos cargan desde cache local de assets comprimidos",
-        "Silencio de musica independiente del sonido general",
-        "21_music y 19_audio en verde",
+        "Catalogo de 5 modulos de nave en 4 ranuras con coste",
+        "Autopiloto requiere modulo; mineria/radar/propulsion/herramientas tienen efecto",
+        "Configuracion de modulos persiste y se refleja en HUD",
+        "04_autopilot, 11_cargo, 12_mining y 13_station en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1109",
+    "nextTaskId": "T-1107",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5586,7 +5586,7 @@
       "description": "Ejecutar la regresión completa, revisar guardado, economía y rendimiento, y cerrar la documentación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -6231,7 +6231,7 @@
       "description": "Implementar el catálogo de módulos de nave: autopiloto, minería, radar, propulsión, herramientas y otros, con ranuras y funciones reales.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -6261,10 +6261,41 @@
         "Prueba de especialización"
       ],
       "technicalNotes": "D-010 aprobada. Empezar por un catálogo pequeño con funciones claras, no por docenas de módulos numéricos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-089",
+          "date": "2026-11-08T12:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Catalogo ShipModuleDef (autopiloto, mineria, radar, propulsion, herramientas) en 4 ranuras; instalacion con coste y efectos reales. Autopiloto requiere modulo; HUD MODS n/4 y persistencia v2. Regression 04/11/12/13.",
+          "files": [
+            "src/com/example/codegame/ShipModuleDef.java",
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "11_cargo",
+            "12_mining",
+            "Prueba de especialización"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS existe un catalogo de modulos de nave",
+        "PASS los modulos se instalan y cobran",
+        "PASS PROPULSION mejora empuje y velocidad",
+        "PASS MINERIA y HERRAMIENTAS tienen efecto real",
+        "PASS se puede quitar un modulo",
+        "PASS la configuracion de modulos se guarda/restaura",
+        "04_autopilot, 11_cargo, 12_mining y 13_station OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T12:58:00-06:00"
     },
     {
       "id": "T-1108",
@@ -6605,6 +6636,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-089",
+      "date": "2026-11-08T12:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Catálogo de módulos de nave y ranuras",
+      "summary": "Cinco módulos con funciones reales en cuatro ranuras; autopiloto instalable, efectos de minería/radar/propulsión/herramientas, HUD y persistencia.",
+      "tasks": [
+        "T-1109"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipModuleDef.java",
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 04_autopilot 11_cargo 12_mining 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1107 (regresion final y cierre del proyecto)."
+    },
     {
       "id": "S-088",
       "date": "2026-11-08T12:38:00-06:00",

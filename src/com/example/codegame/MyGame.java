@@ -499,6 +499,8 @@ public class MyGame implements ApplicationListener {
             triggerDeath();
         } else if (autopilotTest) {
             session.startRun();
+            upgrades.loadout().installModule(0, ShipModuleDef.AUTOPILOT.id);
+            upgrades.loadout().installModule(1, ShipModuleDef.RADAR.id);
             runActive = true;
             state = PLAYING;
             world.asteroids.clear();
@@ -1225,7 +1227,7 @@ public class MyGame implements ApplicationListener {
                         + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
                         + "\"interiorManagement\":%s,\"shipClass\":\"%s\","
                         + "\"audioMuted\":%s,\"musicMuted\":%s,"
-                        + "\"musicMode\":\"%s\"}",
+                        + "\"musicMode\":\"%s\",\"shipModules\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1336,7 +1338,8 @@ public class MyGame implements ApplicationListener {
                 session.upgrades().shipClass().id,
                 audio != null && audio.muted(),
                 audio != null && audio.musicMuted(),
-                audio == null ? "OFF" : audio.musicMode()));
+                audio == null ? "OFF" : audio.musicMode(),
+                upgrades.shipModuleCount()));
     }
 
     void logEvent(String json) {
@@ -1724,7 +1727,11 @@ public class MyGame implements ApplicationListener {
 
     /** Elige el bidón o meteorito más cercano al toque (con margen) y lo asigna al piloto. */
     private boolean pickTarget(Vector2 p) {
-        final float slop = 30f;
+        if (!upgrades.hasShipModule(ShipModuleDef.AUTOPILOT)) {
+            return false;
+        }
+        final float slop = 30f
+                + (upgrades.hasShipModule(ShipModuleDef.RADAR) ? 70f : 0f);
         if (world.station.distanceTo(p) - world.station.def.radius < slop) {
             world.pilot.station(world.station);
             if (sliderPointer < 0) {

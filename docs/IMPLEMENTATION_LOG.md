@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T12:38:00-06:00  
+**Última actualización:** 2026-11-08T12:58:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,68 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-089 — Catálogo de módulos de nave y ranuras
+
+- **Fecha:** 2026-11-08T12:58:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1109
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `ShipModuleDef` con cinco módulos:
+  - `AUTOPILOT`, `MINING`, `RADAR`, `PROPULSION`, `TOOLS`.
+- Cuatro ranuras en `ShipLoadout`; `Upgrades.installShipModule()` cobra y evita
+  duplicados.
+- Efectos reales:
+  - autopiloto obligatorio para elegir blancos;
+  - +1 nivel de láser con minería;
+  - +70 u de margen de selección con radar;
+  - +10 % empuje / +8 % velocidad con propulsión;
+  - +30 u de tractor con herramientas.
+- HUD `MODS n/4`; la configuración persiste en el v2.
+- Regresión `04_autopilot`, `11_cargo`, `12_mining`, `13_station`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ShipModuleDef.java` (nuevo)
+- `src/com/example/codegame/ShipLoadout.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `04_autopilot 11_cargo 12_mining 13_station`: **4/4 OK**.
+
+### Evidencias
+
+- `PASS existe un catalogo de modulos de nave`
+- `PASS los modulos se instalan y cobran`
+- `PASS PROPULSION mejora empuje y velocidad`
+- `PASS MINERIA y HERRAMIENTAS tienen efecto real`
+- `PASS se puede quitar un modulo`
+- `PASS la configuracion de modulos se guarda/restaura`
+
+### Decisiones tomadas
+
+- El autopiloto ya no es una capacidad universal.
+- Los módulos son efectos funcionales, no números decorativos.
+- La clase de nave y los módulos se combinan para especializaciones.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1107 — Regresión final y cierre del proyecto**.
 
 ---
 

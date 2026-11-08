@@ -478,6 +478,21 @@ estáticos se reutilizan.
 - Los assets son locales; sin red.
 - La música se detiene al silenciarla y al liberar el servicio.
 
+## Módulos de nave (T-1109)
+
+- `ShipModuleDef` define un catálogo pequeño con funciones reales:
+  - `AUTOPILOT`: habilita elegir blancos y volar solo;
+  - `MINING`: +1 nivel efectivo de láser;
+  - `RADAR`: +70 u de margen para seleccionar blancos;
+  - `PROPULSION`: +10 % empuje y +8 % velocidad;
+  - `TOOLS`: +30 u de alcance del tractor.
+- `ShipLoadout` mantiene **4 ranuras**; `Upgrades.installShipModule()` cobra,
+  instala y evita duplicados.
+- Sin `AUTOPILOT`, tocar un blanco no activa el piloto automático.
+- La configuración se guarda en el v2 y se refleja en el HUD (`MODS n/4`).
+- Las configuraciones especializadas (exploración, minería, carga) se crean
+  combinando clase de nave + módulos.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

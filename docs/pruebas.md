@@ -53,6 +53,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `19_audio` — efectos locales y silencio conmutable desde la pausa. Balance (`BENCH expedicion`) y rendimiento (`BENCH rendimiento`, FPS ≥ 30) en `01_logic`/`16_universe`.
 - `21_music` — ambiente de exploración, mezcla suave y silencio de música independiente (captura `41_music`).
 - `20_accessibility` — pausa legible, botón de silencio y textos ajustados (captura `40_accessibility`).
+- `04_autopilot`, `11_cargo` y `12_mining` verifican la regresión con el catálogo de módulos de nave (`01_logic` cubre instalación/efectos/persistencia).
 - `17_player_station` — plataforma vacía, construcción (`33_base`), módulos/servicios (`34_modules`), acople y gestión (`35_management`), entrada al interior (`38_entry`), mejora, descarga y persistencia. Refinería/mercado y guardado se cubren en `01_logic`; el mercado global sigue en `14_market`.
 
 ```sh

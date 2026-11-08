@@ -4021,6 +4021,60 @@ public class SelfTest {
         check("el contrato caduca por plazo",
                 expired.status == Mission.Status.FAILED);
 
+        // T-1109: catalogo de modulos de nave y configuraciones.
+        check("existe un catalogo de modulos de nave",
+                ShipModuleDef.values().length >= 5
+                        && ShipModuleDef.byId("autopilot")
+                        == ShipModuleDef.AUTOPILOT
+                        && ShipModuleDef.byId("radar") == ShipModuleDef.RADAR
+                        && ShipModuleDef.AUTOPILOT.creditCost > 0);
+        Upgrades modUp = new Upgrades(true);
+        modUp.setCoins(2000);
+        float baseThrust = modUp.thrust();
+        float baseSpeed = modUp.maxSpeed();
+        int baseLaser = modUp.laserLevel();
+        float baseTractor = modUp.tractorRange();
+        check("los modulos se instalan y cobran",
+                modUp.installShipModule(0, ShipModuleDef.AUTOPILOT)
+                        && modUp.hasShipModule(ShipModuleDef.AUTOPILOT)
+                        && modUp.shipModuleCount() == 1
+                        && modUp.coins() == 2000 - ShipModuleDef.AUTOPILOT.creditCost
+                        && !modUp.installShipModule(1, ShipModuleDef.AUTOPILOT));
+        check("PROPULSION mejora empuje y velocidad",
+                modUp.installShipModule(1, ShipModuleDef.PROPULSION)
+                        && modUp.thrust() > baseThrust
+                        && modUp.maxSpeed() > baseSpeed);
+        check("MINERIA y HERRAMIENTAS tienen efecto real",
+                modUp.installShipModule(2, ShipModuleDef.MINING)
+                        && modUp.laserLevel() == baseLaser + 1
+                        && modUp.installShipModule(3, ShipModuleDef.TOOLS)
+                        && modUp.tractorRange() > baseTractor
+                        && modUp.shipModuleCount() == 4);
+        check("se puede quitar un modulo",
+                modUp.removeShipModule(3)
+                        && !modUp.hasShipModule(ShipModuleDef.TOOLS)
+                        && modUp.shipModuleCount() == 3);
+        Upgrades configUp = new Upgrades(true);
+        configUp.setCoins(2000);
+        configUp.installShipModule(0, ShipModuleDef.RADAR);
+        configUp.installShipModule(1, ShipModuleDef.PROPULSION);
+        GameSession configSession = new GameSession(
+                new PlayerProfile(configUp));
+        configSession.startRun();
+        SaveService.MemoryStorage configStore = new SaveService.MemoryStorage();
+        SaveService configSaves = new SaveService(configStore);
+        check("la configuracion de modulos se guarda",
+                configSaves.save(configSession));
+        GameSession configLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("la configuracion de modulos se restaura",
+                configSaves.load(configLoaded) == SaveService.LoadStatus.V2
+                        && configLoaded.upgrades().hasShipModule(
+                        ShipModuleDef.RADAR)
+                        && configLoaded.upgrades().hasShipModule(
+                        ShipModuleDef.PROPULSION)
+                        && configLoaded.upgrades().shipModuleCount() == 2);
+
         // T-1105: balance de una expedicion y estabilidad de recursos.
         GameSession balance = new GameSession(new PlayerProfile(new Upgrades(true)));
         balance.startRun();

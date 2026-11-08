@@ -126,6 +126,9 @@ final class PlayHud {
         ui.textLeft("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
                         + Math.round(world.ship.cargo().capacity()) + " UM",
                 pad + 8f * u, h - 100f * u, 0.60f * u, Visuals.TEXT_DIM);
+        ui.textLeft("MODS " + upgrades.shipModuleCount() + "/"
+                        + upgrades.loadout().moduleSlots(),
+                pad + 8f * u, h - 114f * u, 0.56f * u, Visuals.TEXT_OFF);
         drawEnergyText(w, h);
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         ui.textCenteredMiddle(Math.round(frac * 100f) + "%",
