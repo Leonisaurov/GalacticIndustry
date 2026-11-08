@@ -201,6 +201,19 @@ final class SaveCodec {
             }
             w.pop();
             w.pop();
+            w.name("missions").array();
+            for (Mission mission : world.station.missions.missions()) {
+                w.object();
+                w.set("id", mission.id);
+                w.set("commodity", mission.commodity.name());
+                w.set("amount", mission.amount);
+                w.set("reward", mission.reward);
+                w.set("deadline", mission.deadline);
+                w.set("remaining", mission.remaining);
+                w.set("status", mission.status.name());
+                w.pop();
+            }
+            w.pop();
             w.pop();
             w.name("agents").array();
             for (int i = 0; i < world.agents.size(); i++) {
@@ -564,6 +577,31 @@ final class SaveCodec {
                         d.agents.add(data);
                     }
                 }
+                JsonValue missions = station.get("missions");
+                if (missions != null && missions.isArray()) {
+                    d.hasMissions = true;
+                    for (int i = 0; i < missions.size; i++) {
+                        JsonValue value = missions.get(i);
+                        if (value == null) {
+                            continue;
+                        }
+                        Commodity commodity = Commodity.byDisplayName(
+                                value.getString("commodity", null));
+                        if (commodity == null) {
+                            continue;
+                        }
+                        MissionData data = new MissionData();
+                        data.id = value.getString("id", "M-" + i);
+                        data.commodity = commodity;
+                        data.amount = value.getInt("amount", 1);
+                        data.reward = value.getInt("reward", 1);
+                        data.deadline = value.getFloat("deadline", MissionService.DEADLINE);
+                        data.remaining = value.getFloat("remaining", data.deadline);
+                        data.status = Mission.Status.valueOf(
+                                value.getString("status", Mission.Status.OFFERED.name()));
+                        d.missions.add(data);
+                    }
+                }
                 JsonValue market = station.get("market");
                 if (market != null) {
                     d.hasMarket = true;
@@ -882,6 +920,17 @@ final class SaveCodec {
                 world.agents.add(agent);
             }
         }
+        if (d.hasMissions) {
+            List<Mission> missions = new ArrayList<>();
+            for (int i = 0; i < d.missions.size(); i++) {
+                MissionData data = d.missions.get(i);
+                Mission mission = new Mission(data.id, data.commodity,
+                        data.amount, data.reward, data.deadline);
+                mission.restoreState(data.status, data.remaining);
+                missions.add(mission);
+            }
+            world.station.missions.replace(missions);
+        }
         if (d.hasMarket) {
             world.station.market.setSpread(d.marketSpread);
             for (int i = 0; i < Commodity.values().length; i++) {
@@ -1025,6 +1074,8 @@ final class SaveCodec {
         String playerStationSector = GameData.START_SECTOR_ID;
         final List<StationModuleData> stationModules = new ArrayList<>();
         final List<CargoData> playerStationStorage = new ArrayList<>();
+        boolean hasMissions;
+        final List<MissionData> missions = new ArrayList<>();
         boolean hasInterior;
         String interiorId = PlayerStation.ID;
         String interiorKind = InteriorScene.Kind.PLAYER_STATION.name();
@@ -1104,6 +1155,16 @@ final class SaveCodec {
         AsteroidType type;
         int reserve;
         int maxReserve;
+    }
+
+    private static final class MissionData {
+        String id;
+        Commodity commodity;
+        int amount;
+        int reward;
+        float deadline;
+        float remaining;
+        Mission.Status status = Mission.Status.OFFERED;
     }
 
     private static final class StationModuleData {

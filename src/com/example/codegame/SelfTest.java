@@ -3960,6 +3960,67 @@ public class SelfTest {
                         && oldClassLoaded.upgrades().shipClass()
                         == ShipClassDef.MINER);
 
+        // T-1102: contratos y misiones de estación.
+        GameSession missionSession = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        missionSession.startRun();
+        missionSession.ship().cargo().setCapacity(400f);
+        MissionService missionService = missionSession.sector.station.missions;
+        check("la estacion ofrece contratos",
+                missionService.missions().size() >= 2
+                        && missionService.offeredCount() >= 2);
+        Mission firstMission = missionService.missions().get(0);
+        check("el contrato tiene objetivo, recompensa y plazo",
+                firstMission.amount > 0
+                        && firstMission.reward > 0
+                        && firstMission.deadline >= 30f
+                        && firstMission.offered());
+        check("se puede aceptar un contrato",
+                missionService.accept(firstMission.id)
+                        && firstMission.active()
+                        && missionService.activeMission() == firstMission);
+        missionService.update(5f);
+        check("el plazo del contrato avanza",
+                firstMission.remaining < firstMission.deadline);
+        int missionCoins = missionSession.upgrades().coins();
+        check("sin carga no se completa",
+                missionService.complete(firstMission.id,
+                        missionSession.ship().cargo(),
+                        missionSession.upgrades()) == 0
+                        && firstMission.active());
+        missionSession.ship().cargo().addExact(firstMission.commodity,
+                firstMission.amount);
+        int missionPaid = missionService.complete(firstMission.id,
+                missionSession.ship().cargo(), missionSession.upgrades());
+        check("entregar el contrato paga la recompensa",
+                missionPaid == firstMission.reward
+                        && firstMission.status == Mission.Status.COMPLETED
+                        && missionSession.upgrades().coins()
+                        == missionCoins + firstMission.reward
+                        && missionSession.ship().cargo().amount(
+                        firstMission.commodity) == 0);
+        Mission secondMission = missionService.missions().get(1);
+        missionService.accept(secondMission.id);
+        SaveService.MemoryStorage missionStore = new SaveService.MemoryStorage();
+        SaveService missionSaves = new SaveService(missionStore);
+        check("las misiones se guardan", missionSaves.save(missionSession));
+        GameSession missionLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("las misiones se restauran",
+                missionSaves.load(missionLoaded) == SaveService.LoadStatus.V2
+                        && missionLoaded.sector.station.missions.byId(
+                        firstMission.id).status == Mission.Status.COMPLETED
+                        && missionLoaded.sector.station.missions.byId(
+                        secondMission.id).active());
+        GameSession expiredSession = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        expiredSession.startRun();
+        Mission expired = expiredSession.sector.station.missions.missions().get(0);
+        expiredSession.sector.station.missions.accept(expired.id);
+        expiredSession.sector.station.missions.update(expired.deadline + 1f);
+        check("el contrato caduca por plazo",
+                expired.status == Mission.Status.FAILED);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

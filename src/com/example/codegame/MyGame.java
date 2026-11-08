@@ -1888,6 +1888,36 @@ public class MyGame implements ApplicationListener {
         layoutUi();
     }
 
+    /** Aceptar un contrato de la estación acoplada. */
+    boolean acceptMission(String missionId) {
+        if (state != DOCKED || world.dockedAtPlayer || world.station == null) {
+            return false;
+        }
+        if (!world.station.missions.accept(missionId)) {
+            return false;
+        }
+        saveRun();
+        logEvent("{\"event\":\"mission_accept\",\"id\":\""
+                + missionId + "\"}");
+        return true;
+    }
+
+    /** Entregar un contrato activo; devuelve la recompensa o 0. */
+    int completeMission(String missionId) {
+        if (state != DOCKED || world.dockedAtPlayer || world.station == null) {
+            return 0;
+        }
+        int paid = world.station.missions.complete(missionId,
+                world.ship.cargo(), upgrades);
+        if (paid > 0) {
+            saveRun();
+            logEvent(String.format(Locale.US,
+                    "{\"event\":\"mission_complete\",\"id\":\"%s\","
+                            + "\"reward\":%d}", missionId, paid));
+        }
+        return paid;
+    }
+
     /** Registro de una transacción de mercado. */
     void logTrade(TradeService.Trade trade) {
         if (trade != null) {

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T10:58:00-06:00  
+**Última actualización:** 2026-11-08T11:18:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,63 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-084 — Contratos y misiones de estación
+
+- **Fecha:** 2026-11-08T11:18:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1102
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Mission`/`MissionService` con ofertas deterministas por estación:
+  - mineral, cantidad, recompensa y plazo (600 s);
+  - estados `OFFERED/ACTIVE/COMPLETED/FAILED`.
+- `accept()` activa y arranca el plazo; `update()` caduca.
+- `complete()` exige la carga, la consume y paga la recompensa.
+- `MyGame.acceptMission()`/`completeMission()` requieren acople a estación.
+- El guardado v2 conserva ofertas, estado y plazo restante.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Mission.java` (nuevo)
+- `src/com/example/codegame/MissionService.java` (nuevo)
+- `src/com/example/codegame/Station.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+
+### Evidencias
+
+- `PASS la estacion ofrece contratos`
+- `PASS el contrato tiene objetivo, recompensa y plazo`
+- `PASS se puede aceptar un contrato`
+- `PASS el plazo del contrato avanza`
+- `PASS sin carga no se completa`
+- `PASS entregar el contrato paga la recompensa`
+- `PASS las misiones se guardan/restauran`
+- `PASS el contrato caduca por plazo`
+
+### Decisiones tomadas
+
+- Los contratos son de entrega en la misma estación.
+- Solo hay un contrato activo a la vez.
+- Las ofertas se generan de forma determinista desde el mercado.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1104 — Infraestructura de audio y efectos de sonido**.
 
 ---
 

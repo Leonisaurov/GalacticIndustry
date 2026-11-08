@@ -433,6 +433,19 @@ estáticos se reutilizan.
 - La personalización sigue usando los módulos intercambiables de `ShipLoadout`.
 - `GameData.SHIP_CLASSES` expone el catálogo.
 
+## Contratos de estación (T-1102)
+
+- Cada `Station` tiene un `MissionService` con ofertas deterministas basadas en
+  su mercado.
+- `Mission` define mineral, cantidad, recompensa y plazo (600 s por defecto).
+- Estados: `OFFERED`, `ACTIVE`, `COMPLETED`, `FAILED`.
+- `accept()` activa el contrato; `update(dt)` descuenta el plazo y lo marca
+  fallido al llegar a 0.
+- `complete()` exige la carga y paga la recompensa; consume el mineral.
+- `MyGame.acceptMission()`/`completeMission()` requieren estar acoplado a una
+  estación (no a la plataforma personal).
+- El guardado v2 conserva ofertas, estado y plazo restante.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

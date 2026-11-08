@@ -25,6 +25,8 @@ final class Station {
     final StationStorage storage;
     /** Mercado de la estación (stock y precios). */
     final Market market;
+    /** Contratos ofrecidos por la estación. */
+    final MissionService missions = new MissionService();
     private float rotation;
 
     Station(StationDef def, float x, float y) {
@@ -36,9 +38,11 @@ final class Station {
         this.pos.set(x, y);
         this.storage = new StationStorage(STORAGE_CAPACITY);
         this.market = market != null ? market : GameData.newMarket();
+        this.missions.ensureOffers(this.market, def == null ? "NODRIZA" : def.name);
     }
 
     void update(float dt) {
+        missions.update(dt);
         rotation += dt * 4f;
         if (rotation >= 360f) {
             rotation -= 360f;

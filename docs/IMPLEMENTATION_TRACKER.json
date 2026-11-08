@@ -4,23 +4,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T10:58:00-06:00",
-    "lastSessionId": "S-083",
+    "lastUpdated": "2026-11-08T11:18:00-06:00",
+    "lastSessionId": "S-084",
     "lastVerification": {
-      "date": "2026-11-08T10:58:00-06:00",
+      "date": "2026-11-08T11:18:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Tres clases con estadisticas y siluetas distintas",
-        "Upgrades y Ship usan la clase; modulos siguen intercambiables",
-        "La clase persiste y los guardados antiguos usan MINER",
-        "16_universe: clase minero",
+        "La estacion ofrece contratos con objetivo, recompensa y plazo",
+        "Aceptar, avanzar plazo, completar con carga y caducar",
+        "Las misiones se guardan y restauran",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1102",
+    "nextTaskId": "T-1104",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5293,7 +5292,7 @@
       "description": "Permitir encargos de transporte/minería que conecten economía y progresión.",
       "category": "implementation",
       "priority": "P2",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -5318,10 +5317,41 @@
         "Regresión"
       ],
       "technicalNotes": "No convertirlo en una lista infinita de fetch quests.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-084",
+          "date": "2026-11-08T11:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Contratos de estacion: Mission/MissionService con ofertas deterministas, objetivo, recompensa y plazo; aceptar, avanzar, completar con carga y caducar. MyGame accept/complete, persistencia v2 de misiones y pruebas.",
+          "files": [
+            "src/com/example/codegame/Mission.java",
+            "src/com/example/codegame/MissionService.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Contratos",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la estacion ofrece contratos",
+        "PASS el contrato tiene objetivo, recompensa y plazo",
+        "PASS se puede aceptar un contrato",
+        "PASS el plazo del contrato avanza",
+        "PASS sin carga no se completa",
+        "PASS entregar el contrato paga la recompensa",
+        "PASS las misiones se guardan/restauran",
+        "PASS el contrato caduca por plazo"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T11:18:00-06:00"
     },
     {
       "id": "T-1103",
@@ -5368,7 +5398,7 @@
       "description": "Añadir el sistema de audio y los efectos de motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -6467,6 +6497,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-084",
+      "date": "2026-11-08T11:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Contratos y misiones de estación",
+      "summary": "Misiones con objetivo, recompensa y plazo; aceptar, completar y caducar, con persistencia v2. Métodos de juego para aceptar/entregar.",
+      "tasks": [
+        "T-1102"
+      ],
+      "files": [
+        "src/com/example/codegame/Mission.java",
+        "src/com/example/codegame/MissionService.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1104 (audio y efectos)."
+    },
     {
       "id": "S-083",
       "date": "2026-11-08T10:58:00-06:00",
