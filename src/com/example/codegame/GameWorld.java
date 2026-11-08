@@ -262,7 +262,9 @@ class GameWorld {
             Asteroid a = asteroids.get(i);
             sb.append("a ").append(a.pos.x).append(' ').append(a.pos.y).append(' ')
                     .append(a.vel.x).append(' ').append(a.vel.y).append(' ')
-                    .append(a.size).append(' ').append(a.hp).append('\n');
+                    .append(a.size).append(' ').append(a.hp).append(' ')
+                    .append(a.type.name()).append(' ').append(a.reserve).append(' ')
+                    .append(a.maxReserve).append('\n');
         }
         for (int i = 0; i < fuel.size; i++) {
             FuelPickup f = fuel.get(i);
@@ -314,8 +316,15 @@ class GameWorld {
                         chunks.add(Long.parseLong(p[i]));
                     }
                 } else if (p[0].equals("a")) {
-                    Asteroid a = new Asteroid(Float.parseFloat(p[1]), Float.parseFloat(p[2]),
-                            Integer.parseInt(p[5]));
+                    int size = Integer.parseInt(p[5]);
+                    AsteroidType type = p.length >= 8
+                            ? AsteroidType.byName(p[7]) : AsteroidType.C;
+                    int reserve = p.length >= 9 ? Integer.parseInt(p[8]) : -1;
+                    int maxReserve = p.length >= 10 ? Integer.parseInt(p[9]) : reserve;
+                    float ax = Float.parseFloat(p[1]);
+                    float ay = Float.parseFloat(p[2]);
+                    Asteroid a = new Asteroid(ax, ay, size, type, reserve, maxReserve,
+                            Asteroid.seedFrom(ax, ay, size, type));
                     a.vel.set(Float.parseFloat(p[3]), Float.parseFloat(p[4]));
                     a.hp = Integer.parseInt(p[6]);
                     rocks.add(a);
@@ -623,7 +632,9 @@ class GameWorld {
             }
             int roll = rnd.nextInt(100);
             int size = roll < 50 ? Asteroid.SMALL : roll < 85 ? Asteroid.MEDIUM : Asteroid.LARGE;
-            asteroids.add(new Asteroid(x, y, size));
+            AsteroidType type = GameData.rollAsteroidType(rnd);
+            long seed = rnd.nextLong();
+            asteroids.add(new Asteroid(x, y, size, type, seed));
         }
         if (rnd.nextFloat() < FUEL_CHANCE) {
             float x = (cx + rnd.nextFloat()) * CHUNK;

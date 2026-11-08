@@ -131,6 +131,9 @@ final class SaveCodec {
                 w.set("vy", a.vel.y);
                 w.set("size", a.size);
                 w.set("hp", a.hp);
+                w.set("type", a.type.name());
+                w.set("reserve", a.reserve);
+                w.set("maxReserve", a.maxReserve);
                 w.pop();
             }
             w.pop();
@@ -298,6 +301,10 @@ final class SaveCodec {
                 a.vy = rock.getFloat("vy", 0f);
                 a.size = rock.getInt("size", Asteroid.SMALL);
                 a.hp = rock.getInt("hp", 1);
+                a.type = AsteroidType.byName(
+                        rock.getString("type", AsteroidType.C.name()));
+                a.reserve = rock.getInt("reserve", -1);
+                a.maxReserve = rock.getInt("maxReserve", a.reserve);
                 d.asteroids.add(a);
             }
             JsonValue pickups = sector.get("pickups");
@@ -390,7 +397,10 @@ final class SaveCodec {
         world.asteroids.clear();
         for (int i = 0; i < d.asteroids.size(); i++) {
             AsteroidData a = d.asteroids.get(i);
-            Asteroid rock = new Asteroid(a.x, a.y, clampSize(a.size));
+            int size = clampSize(a.size);
+            AsteroidType type = a.type == null ? AsteroidType.C : a.type;
+            Asteroid rock = new Asteroid(a.x, a.y, size, type, a.reserve,
+                    a.maxReserve, Asteroid.seedFrom(a.x, a.y, size, type));
             rock.vel.set(a.vx, a.vy);
             rock.hp = Math.max(1, a.hp);
             world.asteroids.add(rock);
@@ -476,6 +486,9 @@ final class SaveCodec {
         float vy;
         int size;
         int hp;
+        AsteroidType type;
+        int reserve;
+        int maxReserve;
     }
 
     private static final class PickupData {

@@ -211,6 +211,18 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   `Ship.reset()`/`syncCargo()` aplican la capacidad y el HUD muestra
   `CARGA usado/capacidad UM` bajo el combustible.
 
+## Asteroides y composición
+
+- `AsteroidType` C/S/M: dureza 2/5/8, reserva 12–18 / 28–42 / 60–90 y
+  composición mineral del plan maestro.
+- Cada `Asteroid` guarda tipo, reserva y máximo; expone dureza y fracción por
+  mineral. `takeReserve()` descuenta UM (la minería llega en T-402/T-403).
+- La generación usa un `Random` sembrado por chunk; la semilla de cada roca
+  deriva de posición, tamaño y tipo, así que el mismo mundo produce las mismas
+  rocas.
+- El tipo no lleva recompensa en monedas. La recompensa legacy de `Asteroid`
+  se elimina en T-405.
+
 ## Masa y movimiento
 
 - `MassModel.load()` usa `usado/capacidad` (0–1) y aplica topes.

@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
+import java.util.Random;
+
 /** Meteorito irregular con facetas, cráteres y brillo al recibir un impacto. */
 class Asteroid {
 
@@ -21,8 +23,12 @@ class Asteroid {
     final Vector2 vel = new Vector2();
     final int size;
     final float radius;
+    /** Recompensa legacy por destrucción; T-405 la sustituye por mineral. */
     final int reward;
+    final AsteroidType type;
     int hp;
+    int reserve;
+    final int maxReserve;
     float flash;
 
     private float rot;
@@ -35,26 +41,69 @@ class Asteroid {
     private final float[] craterRad;
 
     Asteroid(float x, float y, int size) {
+        this(x, y, size, AsteroidType.C, -1, -1,
+                seedFrom(x, y, size, AsteroidType.C));
+    }
+
+    Asteroid(float x, float y, int size, AsteroidType type, long seed) {
+        this(x, y, size, type, -1, -1, seed);
+    }
+
+    Asteroid(float x, float y, int size, AsteroidType type,
+             int reserve, int maxReserve, long seed) {
         pos.set(x, y);
         this.size = size;
+        this.type = type == null ? AsteroidType.C : type;
         radius = size == SMALL ? 12f : size == MEDIUM ? 22f : 34f;
         hp = size == SMALL ? 1 : size == MEDIUM ? 2 : 4;
         reward = size == SMALL ? 2 : size == MEDIUM ? 5 : 10;
-        vel.set(MathUtils.random(-1f, 1f), MathUtils.random(-1f, 1f))
-                .nor().scl(MathUtils.random(15f, 80f));
-        spin = MathUtils.random(-60f, 60f);
+        Random random = new Random(seed);
+        int rolledReserve = reserve >= 0 ? reserve : this.type.rollReserve(random);
+        this.maxReserve = Math.max(rolledReserve, maxReserve);
+        this.reserve = Math.min(rolledReserve, this.maxReserve);
+        vel.set(random.nextFloat() * 2f - 1f, random.nextFloat() * 2f - 1f)
+                .nor().scl(15f + random.nextFloat() * 65f);
+        spin = -60f + random.nextFloat() * 120f;
         for (int i = 0; i < SIDES; i++) {
-            offsets[i] = MathUtils.random(0.74f, 1f);
+            offsets[i] = 0.74f + random.nextFloat() * 0.26f;
         }
         craterCount = 1 + (size == LARGE ? 3 : size == MEDIUM ? 1 : 0);
         craterAng = new float[craterCount];
         craterDist = new float[craterCount];
         craterRad = new float[craterCount];
         for (int i = 0; i < craterCount; i++) {
-            craterAng[i] = MathUtils.random(360f);
-            craterDist[i] = MathUtils.random(0.12f, 0.55f);
-            craterRad[i] = MathUtils.random(0.13f, 0.26f);
+            craterAng[i] = random.nextFloat() * 360f;
+            craterDist[i] = 0.12f + random.nextFloat() * 0.43f;
+            craterRad[i] = 0.13f + random.nextFloat() * 0.13f;
         }
+    }
+
+    /** Semilla estable para que una roca sea reproducible desde su posición y tipo. */
+    static long seedFrom(float x, float y, int size, AsteroidType type) {
+        long seed = ((long) Float.floatToIntBits(x)) * 73856093L
+                ^ ((long) Float.floatToIntBits(y)) * 19349663L
+                ^ ((long) (size + 1)) * 83492791L
+                ^ ((long) ((type == null ? 0 : type.ordinal()) + 1)) * 2654435761L;
+        return seed == 0L ? 1L : seed;
+    }
+
+    float hardness() {
+        return type.hardness;
+    }
+
+    float compositionFraction(Commodity commodity) {
+        return type.fraction(commodity);
+    }
+
+    /** Extrae hasta {@code amount} UM de reserva y devuelve lo extraído. */
+    int takeReserve(int amount) {
+        int taken = Math.min(reserve, Math.max(0, amount));
+        reserve -= taken;
+        return taken;
+    }
+
+    boolean depleted() {
+        return reserve <= 0;
     }
 
     void update(float dt) {

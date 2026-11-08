@@ -611,23 +611,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:56:00-06:00",
-    "lastSessionId": "S-028",
+    "lastUpdated": "2026-11-08T01:01:00-06:00",
+    "lastSessionId": "S-029",
     "lastVerification": {
-      "date": "2026-11-08T00:56:00-06:00",
+      "date": "2026-11-08T01:01:00-06:00",
       "result": "OK",
       "checks": [
-        "tools/run-tests.sh 01_logic: TODO OK (2 ejecuciones seguidas)",
-        "11_cargo: 100/100 UM, HUD y persistencia al pausar",
-        "Viaje de ida/vuelta de 800 u viable con 48.2 de combustible",
-        "Mejora Bodega y guardado de carga verificados",
-        "Etapa S3 cerrada; siguiente S4/T-401",
+        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
+        "Tipos C/S/M con dureza, reserva y composición",
+        "Generación de asteroides determinista entre dos mundos",
+        "Tipo/reserva persisten en v2; guardados antiguos cargan con tipo C",
+        "03_controls y 04_autopilot: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-401",
+    "nextTaskId": "T-402",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -722,7 +722,7 @@
       "id": "S4",
       "order": 4,
       "name": "Minería láser y recursos",
-      "status": "LISTO",
+      "status": "EN_PROGRESO",
       "type": "implementation",
       "objective": "Sustituir la destrucción por minería láser, introducir tipos de asteroides y minerales, y eliminar las monedas directas.",
       "gate": "Minar llena la bodega y no hay monedas directas.",
@@ -2505,7 +2505,7 @@
       "description": "Añadir tipos C/S/M, dureza, reserva, composición y generación reproducible.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-301",
@@ -2531,10 +2531,42 @@
         "Test de composición"
       ],
       "technicalNotes": "Corrige el uso actual de MathUtils.random fuera de la semilla del chunk.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-029",
+          "date": "2026-11-08T01:01:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "AsteroidType C/S/M con dureza, reserva y composición; Asteroid guarda tipo/reserva y usa Random sembrado por chunk. GameWorld y SaveCodec persisten el tipo y la reserva; los guardados antiguos cargan con tipo C.",
+          "files": [
+            "src/com/example/codegame/AsteroidType.java",
+            "src/com/example/codegame/Asteroid.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de determinismo",
+            "Test de composición",
+            "03_controls",
+            "04_autopilot"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS existen tres tipos de asteroide; PASS dureza C/S/M; PASS reservas C/S/M",
+        "PASS composiciones suman 1; PASS C incluye hielo y M incluye titanio",
+        "PASS el tipo de asteroide no lleva monedas",
+        "PASS asteroide tiene tipo, dureza y composicion; PASS asteroide tiene reserva",
+        "PASS la generacion de asteroides es determinista",
+        "PASS el asteroide tipado se guarda/restaura; PASS un asteroide antiguo carga con tipo y reserva",
+        "03_controls y 04_autopilot OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T01:01:00-06:00"
     },
     {
       "id": "T-402",
@@ -2543,7 +2575,7 @@
       "description": "Crear el láser continuo con potencia, penetración, energía y recarga.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-401",
@@ -5336,6 +5368,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-029",
+      "date": "2026-11-08T01:01:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Tipos de asteroide y RNG determinista",
+      "summary": "AsteroidType C/S/M con dureza, reserva y composición; Asteroid guarda tipo/reserva y usa Random sembrado. La generación es determinista entre mundos y el tipo/reserva persisten en v2 y en el formato legacy.",
+      "tasks": [
+        "T-401"
+      ],
+      "files": [
+        "src/com/example/codegame/AsteroidType.java",
+        "src/com/example/codegame/Asteroid.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de determinismo",
+        "Test de composición",
+        "tools/run-tests.sh --no-build 03_controls 04_autopilot"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-402 (MiningLaser y EnergyCapacitor)."
+    },
     {
       "id": "S-028",
       "date": "2026-11-08T00:56:00-06:00",

@@ -1107,6 +1107,99 @@ public class SelfTest {
                         && SaveCodec.decode(fiveLevels, oldLevelsLoaded)
                         && oldLevelsLoaded.cargo().capacity() == 100f);
 
+        // T-401: tipos de asteroide, composición y RNG determinista.
+        check("existen tres tipos de asteroide", AsteroidType.values().length == 3);
+        check("dureza C/S/M",
+                AsteroidType.C.hardness == 2
+                        && AsteroidType.S.hardness == 5
+                        && AsteroidType.M.hardness == 8);
+        check("reservas C/S/M",
+                AsteroidType.C.minReserve == 12 && AsteroidType.C.maxReserve == 18
+                        && AsteroidType.S.minReserve == 28 && AsteroidType.S.maxReserve == 42
+                        && AsteroidType.M.minReserve == 60 && AsteroidType.M.maxReserve == 90);
+        float cSum = 0f;
+        float sSum = 0f;
+        float mSum = 0f;
+        for (int i = 0; i < AsteroidType.C.minerals.length; i++) {
+            cSum += AsteroidType.C.fractions[i];
+        }
+        for (int i = 0; i < AsteroidType.S.minerals.length; i++) {
+            sSum += AsteroidType.S.fractions[i];
+        }
+        for (int i = 0; i < AsteroidType.M.minerals.length; i++) {
+            mSum += AsteroidType.M.fractions[i];
+        }
+        check("composiciones suman 1",
+                Math.abs(cSum - 1f) < 0.001f
+                        && Math.abs(sSum - 1f) < 0.001f
+                        && Math.abs(mSum - 1f) < 0.001f);
+        check("C incluye hielo y M incluye titanio",
+                Math.abs(AsteroidType.C.fraction(Commodity.HIELO) - 0.45f) < 0.001f
+                        && Math.abs(AsteroidType.M.fraction(Commodity.TITANIO) - 0.30f) < 0.001f);
+        boolean typeHasReward = false;
+        try {
+            AsteroidType.class.getDeclaredField("reward");
+            typeHasReward = true;
+        } catch (NoSuchFieldException ignored) {
+            // El tipo no debe tener recompensa en monedas.
+        }
+        check("el tipo de asteroide no lleva monedas", !typeHasReward);
+        Asteroid metalRock = new Asteroid(10f, 20f, Asteroid.MEDIUM,
+                AsteroidType.M, 50, 50, 12345L);
+        check("asteroide tiene tipo, dureza y composicion",
+                metalRock.type == AsteroidType.M
+                        && metalRock.hardness() == 8f
+                        && Math.abs(metalRock.compositionFraction(Commodity.TITANIO) - 0.30f) < 0.001f);
+        check("asteroide tiene reserva",
+                metalRock.reserve == 50 && metalRock.maxReserve == 50);
+        check("la reserva se extrae",
+                metalRock.takeReserve(20) == 20
+                        && metalRock.reserve == 30
+                        && metalRock.takeReserve(100) == 30
+                        && metalRock.depleted());
+        GameWorld deterministicA = new GameWorld(new Upgrades(true));
+        deterministicA.start();
+        GameWorld deterministicB = new GameWorld(new Upgrades(true));
+        deterministicB.start();
+        boolean deterministic = deterministicA.asteroids.size == deterministicB.asteroids.size;
+        for (int i = 0; deterministic && i < deterministicA.asteroids.size; i++) {
+            Asteroid a = deterministicA.asteroids.get(i);
+            Asteroid b = deterministicB.asteroids.get(i);
+            deterministic = a.size == b.size
+                    && a.type == b.type
+                    && a.reserve == b.reserve
+                    && a.maxReserve == b.maxReserve
+                    && Math.abs(a.pos.x - b.pos.x) < 0.001f
+                    && Math.abs(a.pos.y - b.pos.y) < 0.001f
+                    && Math.abs(a.vel.x - b.vel.x) < 0.001f
+                    && Math.abs(a.vel.y - b.vel.y) < 0.001f;
+        }
+        check("la generacion de asteroides es determinista", deterministic);
+        GameSession typeSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        typeSession.startRun();
+        typeSession.sector.asteroids.clear();
+        typeSession.sector.asteroids.add(new Asteroid(50f, 60f, Asteroid.LARGE,
+                AsteroidType.M, 70, 70, 777L));
+        SaveService.MemoryStorage typeStorage = new SaveService.MemoryStorage();
+        SaveService typeService = new SaveService(typeStorage);
+        check("el asteroide tipado se guarda", typeService.save(typeSession));
+        GameSession typeLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("el asteroide tipado se restaura",
+                typeService.load(typeLoaded) == SaveService.LoadStatus.V2
+                        && typeLoaded.sector.asteroids.size == 1
+                        && typeLoaded.sector.asteroids.get(0).type == AsteroidType.M
+                        && typeLoaded.sector.asteroids.get(0).reserve == 70);
+        String oldAsteroidSave = "ship 0 0 0 0 90 100 100 0\n"
+                + "parts 100 100 100 100 100 100 100 100\n"
+                + "world 0 0 0\nchunks\n"
+                + "a 10 20 0 0 1 2\n";
+        GameWorld oldAsteroidWorld = new GameWorld(new Upgrades(true));
+        check("un asteroide antiguo carga con tipo y reserva",
+                oldAsteroidWorld.restore(oldAsteroidSave)
+                        && oldAsteroidWorld.asteroids.size == 1
+                        && oldAsteroidWorld.asteroids.get(0).type == AsteroidType.C
+                        && oldAsteroidWorld.asteroids.get(0).reserve > 0);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         // La simulación mide generación y monedas, no supervivencia: evita que

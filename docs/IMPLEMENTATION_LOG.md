@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:56:00-06:00  
+**Última actualización:** 2026-11-08T01:01:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-029 — Tipos de asteroide y RNG determinista
+
+- **Fecha:** 2026-11-08T01:01:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-401
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `AsteroidType` C/S/M con:
+  - dureza 2/5/8;
+  - reserva 12–18 / 28–42 / 60–90;
+  - composición mineral del plan maestro.
+- `Asteroid` guarda tipo, reserva y máximo; expone dureza y composición.
+- La generación usa `Random` sembrado por chunk y por roca; dos mundos
+  idénticos producen los mismos asteroides.
+- `GameWorld` y `SaveCodec` persisten tipo y reserva; los guardados antiguos
+  cargan con tipo C.
+- El tipo no incluye recompensa en monedas; la recompensa legacy del asteroide
+  se eliminará en T-405.
+
+### Archivos modificados
+
+- `src/com/example/codegame/AsteroidType.java` (nuevo)
+- `src/com/example/codegame/Asteroid.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls 04_autopilot`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS existen tres tipos de asteroide`
+- `PASS dureza C/S/M`
+- `PASS reservas C/S/M`
+- `PASS composiciones suman 1`
+- `PASS C incluye hielo y M incluye titanio`
+- `PASS el tipo de asteroide no lleva monedas`
+- `PASS asteroide tiene tipo, dureza y composicion`
+- `PASS la generacion de asteroides es determinista`
+- `PASS el asteroide tipado se guarda/restaura`
+- `PASS un asteroide antiguo carga con tipo y reserva`
+
+### Decisiones tomadas
+
+- La reserva es total; la composición se consulta por tipo.
+- La semilla de cada roca deriva de posición, tamaño y tipo.
+- El tipo no concede monedas; la extracción de mineral llega en T-402/T-403.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-402 — Implementar MiningLaser y EnergyCapacitor**.
 
 ---
 
