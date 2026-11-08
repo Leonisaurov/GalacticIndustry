@@ -492,11 +492,12 @@
           <span>Última actualización: <strong id="last-updated">—</strong></span>
           <span>Última sesión: <strong id="last-session">—</strong></span>
           <span>Fuente: <strong>IMPLEMENTATION_TRACKER.json</strong></span>
+          <span>Datos: <strong id="data-source">embebidos</strong></span>
         </div>
       </div>
       <div class="top-actions">
-        <button class="btn primary" id="reload-btn" type="button" title="Recarga la página para leer el HTML actualizado">↻ Recargar datos</button>
-        <button class="btn" id="auto-btn" type="button" aria-pressed="false" title="Recarga automática cada 10 segundos">Auto-recarga: off</button>
+        <button class="btn primary" id="reload-btn" type="button" title="Vuelve a leer IMPLEMENTATION_TRACKER.json sin recargar la página">↻ Actualizar datos</button>
+        <button class="btn" id="auto-btn" type="button" aria-pressed="false" title="Actualización automática cada 10 segundos">Auto: off</button>
       </div>
     </div>
   </div>
@@ -594,7 +595,7 @@
 
 <footer>
   <div class="wrap">
-    Panel estático y autocontenido. Funciona con <code>file://</code>, sin servidor, sin CDN y sin red.
+    Panel estático y autocontenido. Funciona con <code>file://</code> sin servidor, CDN ni red. Si se abre por HTTP, actualiza los datos desde <code>IMPLEMENTATION_TRACKER.json</code> sin recargar la página.
     Para actualizar los datos: <code>python3 tools/sync-dashboard.py</code>.
   </div>
 </footer>
@@ -610,18 +611,16 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:10:00-06:00",
-    "lastSessionId": "S-018",
+    "lastUpdated": "2026-11-08T00:17:00-06:00",
+    "lastSessionId": "S-019",
     "lastVerification": {
-      "date": "2026-11-08T00:10:00-06:00",
+      "date": "2026-11-08T00:17:00-06:00",
       "result": "OK",
       "checks": [
-        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Expedición de 10 min: O2=75.0 %, salud=100 %",
-        "Casco al 50 % produce fuga; O2 0 da 105 s de margen",
-        "Reparar LIFE_SUPPORT recupera el filtro al 100 %",
-        "tools/run-tests.sh --no-build 10_survival: OK",
-        "Telemetría: pilotO2Seconds≈199 con O2≈23 % y brecha",
+        "Panel por HTTP: fetch de IMPLEMENTATION_TRACKER.json y render sin recargar; Datos: JSON en vivo",
+        "Panel por file://: datos embebidos; Datos: embebidos (file://); sin fetch roto",
+        "Firefox headless: capturas HTTP y file:// renderizadas",
+        "node --check del script inline del panel: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
@@ -5082,6 +5081,26 @@
   ],
   "sessions": [
     {
+      "id": "S-019",
+      "date": "2026-11-08T00:17:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Panel: refresco JSON sin recarga",
+      "summary": "El panel ahora relee IMPLEMENTATION_TRACKER.json por HTTP sin recargar la página: conserva filtros, tareas abiertas y scroll. En file:// sigue usando los datos embebidos y no intenta un fetch roto. Se actualizó la regla de AGENTS sobre fetch.",
+      "tasks": [],
+      "files": [
+        "docs/PROJECT_DASHBOARD.html",
+        "AGENTS.md"
+      ],
+      "tests": [
+        "node --check del script inline",
+        "Firefox headless por HTTP: Datos: JSON en vivo",
+        "Firefox headless por file://: Datos: embebidos (file://)",
+        "python3 tools/sync-dashboard.py --check"
+      ],
+      "outcome": "Completado",
+      "notes": "Mejora de mantenimiento del panel; no cambia el estado del juego. Siguiente tarea: T-208."
+    },
+    {
       "id": "S-018",
       "date": "2026-11-08T00:10:00-06:00",
       "agent": "OpenCode / DeepSeek V4.1 Flash",
@@ -5597,26 +5616,43 @@
 
   var DATA = null;
   try {
-    var raw = document.getElementById("tracker-data").textContent;
-    DATA = JSON.parse(raw);
+    DATA = parseEmbedded();
   } catch (e) {
     document.getElementById("project-description").textContent = "No se pudo leer el bloque JSON integrado: " + e.message;
     return;
   }
 
-  var meta = DATA.meta || {};
-  var stages = DATA.stages || [];
-  var tasks = DATA.tasks || [];
-  var decisions = DATA.decisions || [];
-  var sessions = DATA.sessions || [];
-  var issues = DATA.issues || [];
+  var meta;
+  var stages;
+  var tasks;
+  var decisions;
+  var sessions;
+  var issues;
+  var taskById;
+  var stageById;
+  var decisionById;
 
-  var taskById = {};
-  var stageById = {};
-  var decisionById = {};
-  tasks.forEach(function (t) { taskById[t.id] = t; });
-  stages.forEach(function (s) { stageById[s.id] = s; });
-  decisions.forEach(function (d) { decisionById[d.id] = d; });
+  function parseEmbedded() {
+    return JSON.parse(document.getElementById("tracker-data").textContent);
+  }
+
+  function applyTrackerData(next) {
+    DATA = next || {};
+    meta = DATA.meta || {};
+    stages = DATA.stages || [];
+    tasks = DATA.tasks || [];
+    decisions = DATA.decisions || [];
+    sessions = DATA.sessions || [];
+    issues = DATA.issues || [];
+    taskById = {};
+    stageById = {};
+    decisionById = {};
+    tasks.forEach(function (t) { taskById[t.id] = t; });
+    stages.forEach(function (s) { stageById[s.id] = s; });
+    decisions.forEach(function (d) { decisionById[d.id] = d; });
+  }
+
+  applyTrackerData(DATA);
 
   function pendingDecisionIds(task) {
     return (task.decisionIds || []).filter(function (id) {
@@ -6049,6 +6085,54 @@
     setTimeout(function () { el.classList.remove("show"); }, 2200);
   }
 
+  function setDataSource(label) {
+    var el = document.getElementById("data-source");
+    if (el) el.textContent = label;
+  }
+
+  var TRACKER_URL = "IMPLEMENTATION_TRACKER.json";
+  var refreshing = false;
+
+  function refreshData(showToast) {
+    if (refreshing) return;
+    if (window.location.protocol === "file:") {
+      setDataSource("embebidos (file://)");
+      if (showToast) {
+        toast("Con file:// no se puede releer el JSON. Abre el panel por HTTP para actualizar sin recargar.");
+      }
+      return;
+    }
+    var btn = document.getElementById("reload-btn");
+    refreshing = true;
+    if (btn) btn.disabled = true;
+    saveUiState();
+    var url = TRACKER_URL + "?t=" + Date.now();
+    fetch(url, { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.text();
+      })
+      .then(function (text) {
+        var next = JSON.parse(text);
+        var scrollY = window.scrollY;
+        applyTrackerData(next);
+        populateFilters();
+        restoreFilters();
+        renderAll();
+        if (window.scrollTo) window.scrollTo(0, scrollY);
+        setDataSource("JSON en vivo");
+        if (showToast) toast("Datos actualizados sin recargar");
+      })
+      .catch(function (error) {
+        setDataSource("embebidos (sin fetch)");
+        if (showToast) toast("No se pudo leer el JSON: " + error.message);
+      })
+      .then(function () {
+        refreshing = false;
+        if (btn) btn.disabled = false;
+      });
+  }
+
   var AUTO_KEY = "gi-auto-reload";
   var autoTimer = null;
 
@@ -6065,12 +6149,9 @@
     var btn = document.getElementById("auto-btn");
     btn.classList.toggle("on", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
-    btn.textContent = on ? "Auto-recarga: 10 s" : "Auto-recarga: off";
+    btn.textContent = on ? "Auto: 10 s" : "Auto: off";
     if (on) {
-      autoTimer = setInterval(function () {
-        saveUiState();
-        window.location.reload();
-      }, 10000);
+      autoTimer = setInterval(function () { refreshData(false); }, 10000);
     }
   }
 
@@ -6100,13 +6181,12 @@
     });
 
     document.getElementById("reload-btn").addEventListener("click", function () {
-      saveUiState();
-      window.location.reload();
+      refreshData(true);
     });
 
     document.getElementById("auto-btn").addEventListener("click", function () {
       setAuto(!autoEnabled());
-      toast(autoEnabled() ? "Auto-recarga activada cada 10 s" : "Auto-recarga desactivada");
+      toast(autoEnabled() ? "Actualización automática cada 10 s" : "Actualización automática desactivada");
     });
 
     window.addEventListener("beforeunload", saveUiState);
@@ -6118,6 +6198,8 @@
   renderAll();
   initEvents();
   setAuto(autoEnabled());
+  setDataSource(window.location.protocol === "file:" ? "embebidos (file://)" : "cargando…");
+  if (window.location.protocol !== "file:") refreshData(false);
 })();
 </script>
 </body>

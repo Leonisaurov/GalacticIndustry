@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:10:00-06:00  
+**Última actualización:** 2026-11-08T00:17:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,58 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-019 — Panel: refresco JSON sin recarga
+
+- **Fecha:** 2026-11-08T00:17:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** mantenimiento del panel
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Actualizar datos` y la auto-recarga ya no hacen `window.location.reload()`.
+- Por HTTP, el panel hace `fetch` de `IMPLEMENTATION_TRACKER.json` con
+  `cache: no-store`, reemplaza los datos y re-renderiza.
+- Se conservan filtros, estado de tareas abiertas y posición de scroll.
+- Por `file://` se sigue usando el bloque JSON embebido; no se intenta un
+  `fetch` que el navegador bloquearía.
+- El indicador `Datos:` muestra `JSON en vivo` o `embebidos (file://)`.
+- Se actualizó la regla de `AGENTS.md` sobre `fetch`.
+
+### Archivos modificados
+
+- `docs/PROJECT_DASHBOARD.html`
+- `AGENTS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `node --check` del script inline: **OK**.
+- HTTP con servidor local + Firefox headless: `Datos: JSON en vivo`.
+- `file://` con Firefox headless: `Datos: embebidos (file://)`.
+- `python3 tools/sync-dashboard.py --check`: **OK**.
+
+### Evidencias
+
+- Captura HTTP: `/tmp/opencode/dashboard-http.png` con `Datos: JSON en vivo`.
+- Captura file://: `/tmp/opencode/dashboard-file.png` con
+  `Datos: embebidos (file://)`.
+- El panel siguió mostrando 16 % y la tarea T-208 sin recargar.
+
+### Decisiones tomadas
+
+- El `fetch` solo se usa cuando el panel se sirve por HTTP.
+- Si el `fetch` falla, se mantienen los datos actuales y se avisa; no se
+  recarga la página.
+- El bloque embebido sigue siendo la fuente para `file://`.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-208 — Implementar muerte permanente y mundo persistente**.
 
 ---
 

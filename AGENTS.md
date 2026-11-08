@@ -36,7 +36,7 @@ Al empezar cualquier sesión, en este orden:
 | `docs/IMPLEMENTATION_LOG.md` | Historial cronológico de sesiones |
 | `docs/DECISIONS.md` | Decisiones de producto y técnicas |
 | `docs/PENDING_DECISIONS.md` | Resumen de decisiones cerradas; ya no hay pendientes |
-| `docs/PROJECT_DASHBOARD.html` | Panel visual autocontenido para `file://` |
+| `docs/PROJECT_DASHBOARD.html` | Panel visual autocontenido; datos embebidos en `file://` y refresco JSON por HTTP |
 | `tools/sync-dashboard.py` | Validación del tracker y sincronización JSON → HTML |
 
 No edites a mano el bloque `tracker-data` del HTML salvo que sea imprescindible.
@@ -225,7 +225,7 @@ Una etapa está terminada cuando todas sus tareas de progreso están
 - No implementar varias tareas o una etapa completa en una sesión.
 - No marcar `COMPLETADO` sin pruebas.
 - No inventar estados en el panel.
-- No usar `fetch()` para leer el tracker desde `file://`.
+- No usar `fetch()` como única fuente del panel: con `file://` debe leer el JSON embebido; si se sirve por HTTP puede releer `IMPLEMENTATION_TRACKER.json` sin recargar la página y, si falla, debe mantener los datos actuales.
 - No añadir dependencias, servicios, servidores ni APIs para el panel.
 - No cambiar IDs, dependencias o estados sin registrarlo.
 - No empezar la siguiente tarea después de terminar la actual.
