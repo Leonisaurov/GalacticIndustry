@@ -244,6 +244,17 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            w.name("storage").array();
+            for (Cargo cargo : session.playerStation.stationStorage().hold.entries()) {
+                if (cargo.amount <= 0) {
+                    continue;
+                }
+                w.object();
+                w.set("commodity", cargo.commodity.name());
+                w.set("amount", cargo.amount);
+                w.pop();
+            }
+            w.pop();
             w.pop();
             w.name("sectorSnapshots").array();
             for (SectorRuntime.Snapshot snapshot : session.universe.snapshots()) {
@@ -548,6 +559,22 @@ final class SaveCodec {
                         d.stationModules.add(data);
                     }
                 }
+                JsonValue stationStorage = playerStation.get("storage");
+                if (stationStorage != null && stationStorage.isArray()) {
+                    for (int i = 0; i < stationStorage.size; i++) {
+                        JsonValue entry = stationStorage.get(i);
+                        if (entry == null) {
+                            continue;
+                        }
+                        Commodity commodity = Commodity.byDisplayName(
+                                entry.getString("commodity", null));
+                        int amount = entry.getInt("amount", 0);
+                        if (commodity != null && amount > 0) {
+                            d.playerStationStorage.add(
+                                    new CargoData(commodity, amount));
+                        }
+                    }
+                }
             }
             JsonValue snapList = sector.get("sectorSnapshots");
             if (snapList != null && snapList.isArray()) {
@@ -824,6 +851,13 @@ final class SaveCodec {
                 session.playerStation.restoreModule(module.slot, module.def,
                         module.level);
             }
+            session.playerStation.refreshStorageCapacity();
+            session.playerStation.stationStorage().hold.clear();
+            for (int i = 0; i < d.playerStationStorage.size(); i++) {
+                CargoData cargo = d.playerStationStorage.get(i);
+                session.playerStation.stationStorage().hold.restore(
+                        cargo.commodity, cargo.amount);
+            }
         }
         session.universe.clearSnapshots();
         for (int i = 0; i < d.snapshots.size(); i++) {
@@ -888,6 +922,7 @@ final class SaveCodec {
         float playerStationY;
         String playerStationSector = GameData.START_SECTOR_ID;
         final List<StationModuleData> stationModules = new ArrayList<>();
+        final List<CargoData> playerStationStorage = new ArrayList<>();
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;

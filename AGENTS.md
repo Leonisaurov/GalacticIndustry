@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S9` — Estación espacial personal.
 - No hay tarea en progreso.
-- Última tarea completada: `T-905` — Persistir la estación personal.
-- Primera tarea disponible: `T-907` — Módulos de almacenamiento y reparación.
+- Última tarea completada: `T-907` — Módulos de almacenamiento y reparación.
+- Primera tarea disponible: `T-904` — Crear StationManagementScreen modular.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **78 %** (63 de 81 tareas de progreso).
+- La implementación del juego está al **79 %** (64 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

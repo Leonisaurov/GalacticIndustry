@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T07:18:00-06:00  
+**Última actualización:** 2026-11-08T07:36:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,68 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-073 — Módulos de almacenamiento y reparación
+
+- **Fecha:** 2026-11-08T07:36:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-907
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `ALMACEN`: **200 UM por nivel**; sin módulo la capacidad es **0** y
+  `depositAll()` no mueve mineral.
+- `TALLER`: habilita `repairAll()` con coste
+  `max(5, 0,70 · daño)` por parte; cobra créditos y repara la nave.
+- `PlayerStation` incorpora un `StationStorage` propio; la capacidad se
+  recalcula al construir, ampliar o restaurar módulos.
+- Contenido del almacén y módulos se guardan en el v2 sin duplicar.
+- `module_test` verifica almacén de 200 UM y taller en dispositivo.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/StationModule.java`
+- `src/com/example/codegame/StationStorage.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- `PASS sin ALMACEN no hay capacidad ni descarga`
+- `PASS sin TALLER no se repara`
+- `PASS construir ALMACEN da capacidad`
+- `PASS ampliar ALMACEN aumenta la capacidad`
+- `PASS construir TALLER permite reparar`
+- `PASS el ALMACEN descarga la bodega`
+- `PASS el TALLER repara y cobra`
+- `PASS el almacen persiste sin duplicar`
+- `17_player_station`: almacén 200 UM y taller.
+
+### Decisiones tomadas
+
+- La capacidad se deriva del nivel de los módulos ALMACEN.
+- El taller usa el mismo coste de reparación que la nodriza.
+- El almacén solo se persiste si hay contenido o módulo.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-904 — Crear StationManagementScreen modular**.
 
 ---
 

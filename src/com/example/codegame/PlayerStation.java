@@ -24,6 +24,8 @@ final class PlayerStation {
     final Vector2 pos = new Vector2();
     /** Definición visual/servicios base: todo desactivado. */
     final StationDef def = GameData.PLAYER_PLATFORM;
+    /** Almacén propio; capacidad 0 hasta construir ALMACEN. */
+    private final StationStorage stationStorage = new StationStorage(0f);
     private final StationModule[] slots = new StationModule[SLOTS];
     private boolean built;
     private String sectorId = GameData.START_SECTOR_ID;
@@ -152,6 +154,62 @@ final class PlayerStation {
         return SLOTS - moduleCount();
     }
 
+    StationStorage stationStorage() {
+        return stationStorage;
+    }
+
+    /** 200 UM por nivel de ALMACEN; 0 si no existe. */
+    float storageCapacity() {
+        float capacity = 0f;
+        for (int i = 0; i < SLOTS; i++) {
+            if (slots[i] != null && slots[i].def == ModuleDef.STORAGE) {
+                capacity += 200f * slots[i].level();
+            }
+        }
+        return capacity;
+    }
+
+    void refreshStorageCapacity() {
+        stationStorage.hold.setCapacity(storageCapacity());
+    }
+
+    /** Descarga la bodega solo si hay módulo de almacenamiento construido. */
+    int depositAll(CargoHold cargo) {
+        refreshStorageCapacity();
+        if (storageCapacity() <= 0f) {
+            return 0;
+        }
+        return stationStorage.depositAll(cargo);
+    }
+
+    /** Coste de reparar todas las partes; 0 si no hay TALLER o no hay daño. */
+    int repairAllCost(Ship ship) {
+        if (!repair() || ship == null) {
+            return 0;
+        }
+        int total = 0;
+        for (int i = 0; i < Ship.PART_COUNT; i++) {
+            float missing = ship.partMax(i) - ship.part[i];
+            if (missing >= 1f) {
+                total += Math.max(5, Math.round(missing * 0.70f));
+            }
+        }
+        return total;
+    }
+
+    /** Repara la nave solo si el TALLER existe y hay saldo. */
+    boolean repairAll(Ship ship, Upgrades upgrades) {
+        int cost = repairAllCost(ship);
+        if (cost <= 0 || upgrades == null || !upgrades.spendCoins(cost)) {
+            return false;
+        }
+        for (int i = 0; i < Ship.PART_COUNT; i++) {
+            ship.repair(i);
+        }
+        ship.syncFuel(upgrades);
+        return true;
+    }
+
     /** Resultado de una construcción o ampliación. */
     static final class BuildResult {
         final boolean ok;
@@ -198,6 +256,7 @@ final class PlayerStation {
         }
         StationModule installed = new StationModule(module);
         slots[slot] = installed;
+        refreshStorageCapacity();
         return new BuildResult(true, "", installed);
     }
 
@@ -230,6 +289,7 @@ final class PlayerStation {
             }
         }
         module.upgrade();
+        refreshStorageCapacity();
         return new BuildResult(true, "", module);
     }
 
@@ -245,6 +305,7 @@ final class PlayerStation {
             module.upgrade();
         }
         slots[slot] = module;
+        refreshStorageCapacity();
         return true;
     }
 

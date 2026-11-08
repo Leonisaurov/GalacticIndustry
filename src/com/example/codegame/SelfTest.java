@@ -3462,6 +3462,74 @@ public class SelfTest {
                         && SaveCodec.validate(stationText)
                         && stationText.contains("\"modules\""));
 
+        // T-907: almacen y taller solo tras construir sus modulos.
+        PlayerStation bare = new PlayerStation(0f, 0f);
+        CargoHold bareCargo = new CargoHold(300f);
+        bareCargo.addExact(Commodity.HIELO, 20);
+        check("sin ALMACEN no hay capacidad ni descarga",
+                bare.storageCapacity() == 0f
+                        && bare.depositAll(bareCargo) == 0
+                        && bareCargo.amount(Commodity.HIELO) == 20);
+        Ship bareShip = new Ship();
+        bareShip.reset(new Upgrades(true), 0f, 0f);
+        bareShip.part[Ship.HULL] = 40f;
+        check("sin TALLER no se repara",
+                bare.repairAllCost(bareShip) == 0
+                        && !bare.repairAll(bareShip, new Upgrades(true))
+                        && bareShip.part[Ship.HULL] == 40f);
+        Upgrades svcUp = new Upgrades(true);
+        svcUp.setCoins(3000);
+        GameSession svcSession = new GameSession(new PlayerProfile(svcUp));
+        svcSession.startRun();
+        svcSession.ship().pos.set(-1500f, 0f);
+        svcSession.ship().cargo().setCapacity(400f);
+        svcSession.ship().cargo().addExact(Commodity.HIERRO, 80);
+        svcSession.ship().cargo().addExact(Commodity.COBRE, 50);
+        svcSession.ship().cargo().addExact(Commodity.SILICATO, 60);
+        svcSession.ship().cargo().addExact(Commodity.TITANIO, 20);
+        check("construir ALMACEN da capacidad",
+                ConstructionService.buildCore(svcSession, -1500f, 0f).ok
+                        && svcSession.playerStation.build(0, ModuleDef.STORAGE,
+                        svcUp, svcSession.ship().cargo()).ok
+                        && svcSession.playerStation.storageCapacity() == 200f);
+        check("ampliar ALMACEN aumenta la capacidad",
+                svcSession.playerStation.upgrade(0, svcUp,
+                        svcSession.ship().cargo()).ok
+                        && svcSession.playerStation.storageCapacity() == 400f);
+        check("construir TALLER permite reparar",
+                svcSession.playerStation.build(1, ModuleDef.REPAIR, svcUp,
+                        svcSession.ship().cargo()).ok
+                        && svcSession.playerStation.repair());
+        svcSession.ship().cargo().clear();
+        svcSession.ship().cargo().addExact(Commodity.HIELO, 50);
+        check("el ALMACEN descarga la bodega",
+                svcSession.playerStation.depositAll(svcSession.ship().cargo()) == 50
+                        && svcSession.playerStation.stationStorage()
+                        .amount(Commodity.HIELO) == 50
+                        && svcSession.ship().cargo().amount(Commodity.HIELO) == 0);
+        svcSession.ship().part[Ship.HULL] = 30f;
+        int svcCoins = svcUp.coins();
+        int svcRepairCost = svcSession.playerStation.repairAllCost(
+                svcSession.ship());
+        check("el TALLER repara y cobra",
+                svcRepairCost > 0
+                        && svcSession.playerStation.repairAll(svcSession.ship(), svcUp)
+                        && svcSession.ship().part[Ship.HULL] == Ship.PART_MAX
+                        && svcUp.coins() == svcCoins - svcRepairCost);
+        SaveService.MemoryStorage svcStore = new SaveService.MemoryStorage();
+        SaveService svcSaves = new SaveService(svcStore);
+        check("el almacen y los servicios se guardan", svcSaves.save(svcSession));
+        GameSession svcLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("el almacen persiste sin duplicar",
+                svcSaves.load(svcLoaded) == SaveService.LoadStatus.V2
+                        && svcLoaded.playerStation.storageCapacity() == 400f
+                        && svcLoaded.playerStation.stationStorage()
+                        .amount(Commodity.HIELO) == 50
+                        && svcLoaded.playerStation.repair()
+                        && svcLoaded.playerStation.storage()
+                        && svcLoaded.ship().cargo().amount(Commodity.HIELO) == 0);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

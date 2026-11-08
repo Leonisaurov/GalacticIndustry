@@ -1081,7 +1081,8 @@ public class MyGame implements ApplicationListener {
                         + "\"playerStationModules\":%d,\"playerStationServices\":%d,"
                         + "\"moduleDefs\":%d,\"playerStationX\":%.1f,"
                         + "\"playerStationY\":%.1f,\"canBuildBase\":%s,"
-                        + "\"baseWhileDocked\":%s}",
+                        + "\"baseWhileDocked\":%s,\"baseStorageCapacity\":%.0f,"
+                        + "\"baseStorageUnits\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1172,7 +1173,9 @@ public class MyGame implements ApplicationListener {
                 session.playerStation.pos.x,
                 session.playerStation.pos.y,
                 canBuildBase(),
-                session.playerStation.built()));
+                session.playerStation.built(),
+                session.playerStation.storageCapacity(),
+                session.playerStation.stationStorage().totalUnits()));
     }
 
     void logEvent(String json) {

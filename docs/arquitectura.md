@@ -312,6 +312,16 @@ estáticos se reutilizan.
 - `serviceMask()` se deriva de los módulos; una plataforma vacía devuelve 0.
 - Añadir un módulo nuevo es añadir un `ModuleDef`, sin tocar el núcleo.
 
+### Almacén y taller (T-907)
+
+- `ALMACEN` aporta **200 UM por nivel** de capacidad; sin módulo la capacidad es
+  **0** y `depositAll()` no mueve nada.
+- `TALLER` habilita `repairAll()`: coste `max(5, 0,70 · daño)` por parte, cobra
+  créditos y repara casco/sistemas.
+- El almacén de la estación es un `StationStorage` con `CargoHold` propio; la
+  capacidad se recalcula al construir/ampliar/restaurar módulos.
+- Contenido del almacén y módulos se guardan en el v2.
+
 ### Persistencia de la estación
 
 - El guardado v2 incluye `playerStation`:

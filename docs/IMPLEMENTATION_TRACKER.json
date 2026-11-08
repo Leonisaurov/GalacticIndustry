@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T07:18:00-06:00",
-    "lastSessionId": "S-072",
+    "lastUpdated": "2026-11-08T07:36:00-06:00",
+    "lastSessionId": "S-073",
     "lastVerification": {
-      "date": "2026-11-08T07:18:00-06:00",
+      "date": "2026-11-08T07:36:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "SaveCodec persiste posicion, sector, estado y modulos con nivel",
-        "Al cargar se restauran modulos/niveles y se deriva serviceMask",
-        "No se duplican creditos, materiales ni modulos",
-        "17_player_station: 2 modulos y mascara 3 persisten tras reiniciar",
+        "ALMACEN: 0 UM sin modulo y 200 UM/nivel construido",
+        "TALLER: reparacion solo con modulo y coste en creditos",
+        "Almacen y modulos persisten sin duplicar recursos",
+        "17_player_station: module_test con almacen 200 UM y taller",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S9",
     "currentTaskId": null,
-    "nextTaskId": "T-907",
+    "nextTaskId": "T-904",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4630,7 +4630,7 @@
       "description": "Añadir la pantalla de gestión de la plataforma vacía, construcción de módulos, almacén y servicios disponibles según lo construido.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-903",
@@ -5678,7 +5678,7 @@
       "description": "Añadir módulos construibles de almacenamiento y taller de reparación. Solo proporcionan capacidad/servicio después de construirlos.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-903"
@@ -5705,10 +5705,43 @@
         "Prueba de servicios"
       ],
       "technicalNotes": "No dar estos servicios en la plataforma vacía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-073",
+          "date": "2026-11-08T07:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "ALMACEN y TALLER funcionales: capacidad 200 UM/nivel y reparacion con coste solo al construir el modulo. StationStorage en PlayerStation, persistencia de contenido en v2 y telemetria. Tests de servicios y 17_player_station.",
+          "files": [
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "Prueba de servicios"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin ALMACEN no hay capacidad ni descarga",
+        "PASS sin TALLER no se repara",
+        "PASS construir ALMACEN da capacidad",
+        "PASS ampliar ALMACEN aumenta la capacidad",
+        "PASS construir TALLER permite reparar",
+        "PASS el ALMACEN descarga la bodega",
+        "PASS el TALLER repara y cobra",
+        "PASS el almacen persiste sin duplicar",
+        "17_player_station: almacen 200 UM y taller"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T07:36:00-06:00"
     },
     {
       "id": "T-908",
@@ -6141,6 +6174,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-073",
+      "date": "2026-11-08T07:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Módulos de almacenamiento y reparación",
+      "summary": "ALMACEN (200 UM/nivel) y TALLER (reparación con coste) solo funcionan tras construirse. Almacén persistente y sin servicios de serie.",
+      "tasks": [
+        "T-907"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-904 (pantalla de gestión modular)."
+    },
     {
       "id": "S-072",
       "date": "2026-11-08T07:18:00-06:00",

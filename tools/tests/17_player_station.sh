@@ -57,6 +57,8 @@ status=$(latest_status)
 assert_eq "módulos construidos" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
 assert_eq "servicios activos" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
 assert_eq "la base ya existe" false "$(printf '%s' "$status" | json_get canBuildBase)"
+assert_eq "capacidad de almacen" 200 "$(printf '%s' "$status" | json_get baseStorageCapacity)"
+assert_eq "almacen vacio" 0 "$(printf '%s' "$status" | json_get baseStorageUnits)"
 shot "$OUT" 34_modules
 validate_shot "$OUT/34_modules.png"
 
