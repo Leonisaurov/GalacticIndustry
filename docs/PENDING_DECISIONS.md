@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T13:20:00-06:00  
+**Última actualización:** 2026-11-08T15:00:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -24,6 +24,10 @@ Este archivo se usó para conversar las decisiones con otro agente. Las respuest
 | D-011 | Galaxias | Aprobada | Galaxias reales empezando por la Vía Láctea, más otras galaxias reales y ficticias cuando convenga. Sin exactitud astronómica; prioridad a un universo jugable. |
 | D-012 | Facciones, combate y online | Aplazada | No se implementa ahora IA hostil, combate avanzado, facciones completas, multijugador ni servidores. La arquitectura no debe cerrar la posibilidad futura de facciones, PvP, saqueo, cooperación y online. La economía actual se centra en minería, transporte y comercio. |
 | D-013 | Actualizaciones y revisiones | Aprobada | El plan maestro queda como histórico. Los cambios posteriores se registran como actualizaciones `UPD-XXX` en `docs/updates/` y en la clave `updates` del tracker. Cada actualización requiere aprobación explícita antes de implementarse. Las tareas `UPD-XXX-TNN` no alteran el progreso base. |
+| D-014 | Coordinación concurrente | Aprobada | Varias sesiones pueden trabajar a la vez sin coordinador permanente. Cada tarea se reserva con `assignedSessionId`, el tracker se actualiza con `expectUpdatedAt` y un bloqueo `flock` breve, y las sesiones nuevas viven en `docs/sessions/S-XXX.md`. Los commits no son automáticos. |
+| D-015 | Identidad visual | Aprobada | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. Sin cambios de mecánicas ni recursos nuevos. |
+| D-016 | Versiones y dashboard | Aprobada | La implementación inicial es la versión visual `0.1`; cada actualización tiene `displayVersion` estable. Una única plantilla dinámica con selector y línea de tiempo comparte selección y muestra solo la versión elegida. La numeración no cambia IDs internos. |
+| D-015 | Identidad visual | Aprobada | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. Sin cambios de mecánicas ni recursos nuevos. |
 
 ## Tareas de decisión
 

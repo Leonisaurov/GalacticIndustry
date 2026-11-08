@@ -12,7 +12,9 @@ plan maestro original. No sustituyen ni reescriben `docs/MASTER_PLAN.md`.
 | `docs/IMPLEMENTATION_TRACKER.json` | Estado canónico de etapas, tareas base, actualizaciones y tareas de actualización | Sí, al trabajar en cada tarea |
 | `docs/STATUS.md` | Resumen generado del estado; no se edita a mano | Lo regenera `tools/sync-dashboard.py` |
 | `docs/INDEX.md` | Mapa de sistemas, código, diseño, tareas y pruebas | Sí, cuando cambia un sistema o una ruta |
-| `docs/IMPLEMENTATION_LOG.md` | Historial narrativo de sesiones | Sí, al cerrar cada sesión |
+| `docs/systems/*.md` | Ficha de referencia del sistema afectado | La actualiza el agente que cambia ese sistema |
+| `docs/IMPLEMENTATION_LOG.md` | Historial narrativo hasta S-092 | No; las sesiones nuevas van a `docs/sessions/` |
+| `docs/sessions/S-XXX.md` | Registro independiente de una sesión | Sí, al cerrar cada sesión |
 | `docs/DECISIONS.md` | Decisiones de producto y técnicas | Sí, cuando se decide algo duradero |
 
 El plan base **no se reabre**. Si una actualización corrige o mejora algo ya
@@ -79,6 +81,8 @@ Una actualización tiene esta forma (resumida):
 ```json
 {
   "id": "UPD-002",
+  "displayVersion": "0.3",
+  "objective": "Objetivo principal de la actualización.",
   "name": "Nombre de la actualización",
   "status": "PROPUESTA",
   "changeType": "MEJORA",
@@ -100,6 +104,7 @@ Una actualización tiene esta forma (resumida):
     "basis": "…"
   },
   "acceptanceCriteria": ["…"],
+  "groups": [],
   "tasks": [
     {
       "id": "UPD-002-T01",
@@ -129,6 +134,67 @@ Una actualización tiene esta forma (resumida):
 Las tareas de actualización viven dentro de su actualización para no mezclar el
 progreso del plan base. El panel calcula el progreso base solo con `tasks` y el
 progreso de cada actualización con `updates[].tasks`.
+
+## Versiones de presentación
+
+El panel representa el desarrollo como versiones visuales:
+
+- `meta.initialVersion.displayVersion` identifica la implementación inicial
+  (por defecto `0.1`).
+- Cada actualización puede declarar `displayVersion` (`0.2`, `0.3`, …). Es un
+  metadato de presentación estable: no sustituye al `id` ni cambia el estado.
+- El validador exige formato `N.N` y unicidad entre la versión inicial y las
+  actualizaciones. Si falta `displayVersion`, el panel deriva una etiqueta y el
+  validador emite un aviso.
+- `objective` es el objetivo principal que muestra el modo descriptivo y la
+  cabecera de la versión. Si falta, el panel usa la descripción o la motivación.
+- `groups` es opcional. Si una actualización declara grupos, el panel los
+  muestra como grupos de trabajo con sus tareas, dependencias y pruebas. Si no
+  los declara, muestra una lista plana: **no reutiliza las etapas `S0`–`S11` del
+  plan inicial ni inventa una jerarquía**.
+
+Ejemplo de grupo:
+
+```json
+"groups": [
+  {
+    "id": "G1",
+    "name": "Grupo de trabajo",
+    "objective": "…",
+    "description": "…",
+    "status": "PENDIENTE",
+    "taskIds": ["UPD-002-T01"],
+    "dependencies": [],
+    "tests": ["…"]
+  }
+]
+```
+
+La numeración visual no se reutiliza ni se renumera. Añadir una actualización
+posterior no cambia las etiquetas históricas.
+
+## Reserva y concurrencia
+
+Varias sesiones pueden trabajar en actualizaciones distintas. Antes de empezar
+una tarea:
+
+```sh
+python3 tools/continuity.py claim UPD-002-T01 --session S-093 --agent "..."
+```
+
+La tarea queda `EN_PROGRESO` con `assignedSessionId`. No se reasigna una tarea
+activa de otra sesión sin inspeccionarla y sin autorización.
+
+Al modificar el tracker, usa un plan JSON con `expectUpdatedAt`:
+
+```sh
+python3 tools/continuity.py apply plan.json
+```
+
+La herramienta relee el tracker bajo bloqueo, aplica solo las operaciones del
+plan, valida el JSON y escribe de forma atómica. Si dos sesiones tocan la misma
+tarea, la segunda recibe conflicto y debe releer. Los detalles están en
+`docs/CONCURRENCY.md`.
 
 ## Flujo de trabajo
 
@@ -182,8 +248,13 @@ hasta que una sesión empiece una.
 ## Comandos
 
 ```sh
+python3 tools/continuity.py status
+python3 tools/continuity.py new-session --agent "..." --title "..."
+python3 tools/continuity.py claim UPD-XXX-TNN --session S-XXX --agent "..."
+python3 tools/continuity.py apply plan.json
 python3 tools/sync-dashboard.py          # valida, sincroniza el panel y genera STATUS.md
 python3 tools/sync-dashboard.py --check  # solo valida y comprueba HTML y STATUS.md
+python3 tools/tests/continuity_test.py   # pruebas de concurrencia
 ```
 
 `docs/STATUS.md` es derivado: no lo edites a mano. Si `docs/INDEX.md` no cubre un

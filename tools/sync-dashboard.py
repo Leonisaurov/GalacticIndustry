@@ -70,6 +70,8 @@ VALID_CHANGE_TYPES = {
 
 VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
 
+VERSION_RE = re.compile(r"^\d+\.\d+$")
+
 REQUIRED_UPDATE_FIELDS = [
     "id",
     "name",
@@ -141,6 +143,7 @@ REQUIRED_TASK_FIELDS = [
 # Campos opcionales de contexto. `files` se conserva por compatibilidad; los
 # nuevos campos separan lo que hay que leer de lo que se modificó al ejecutar.
 OPTIONAL_TASK_LIST_FIELDS = ("contextFiles", "contextDocs", "artifacts")
+OPTIONAL_TASK_SCALAR_FIELDS = ("assignedSessionId", "assignedAt")
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -166,6 +169,9 @@ def check_optional_task_fields(task: dict, tid: str) -> None:
         for item in value:
             if not isinstance(item, str) or not item.strip():
                 err(f"Tarea {tid}: {field} contiene un valor no textual o vacío.")
+    for field in OPTIONAL_TASK_SCALAR_FIELDS:
+        if field in task and not isinstance(task[field], str):
+            err(f"Tarea {tid}: {field} debe ser texto.")
 
 
 def load_tracker() -> dict:
@@ -307,6 +313,7 @@ def validate(tracker: dict) -> None:
     update_ids: set[str] = set()
     update_by_id: dict[str, dict] = {}
     update_task_by_id: dict[str, dict] = {}
+    display_versions: dict[str, str] = {}
 
     for upd in updates:
         uid = upd.get("id")
@@ -335,6 +342,24 @@ def validate(tracker: dict) -> None:
             err(f"Actualización {uid} sin descripción.")
         if not upd.get("motivation"):
             err(f"Actualización {uid} sin motivación.")
+
+        display_version = upd.get("displayVersion")
+        if display_version is None:
+            warn(f"Actualización {uid} sin displayVersion; el panel usará una etiqueta derivada.")
+        elif not isinstance(display_version, str) or not VERSION_RE.fullmatch(display_version):
+            err(f"Actualización {uid} con displayVersion inválida: {display_version!r}")
+        else:
+            if display_version in display_versions:
+                err(
+                    f"displayVersion duplicada: {display_version} en "
+                    f"{display_versions[display_version]} y {uid}."
+                )
+            display_versions[display_version] = uid
+
+        if "objective" in upd and not isinstance(upd.get("objective"), str):
+            err(f"Actualización {uid}: objective debe ser texto.")
+        elif not upd.get("objective"):
+            warn(f"Actualización {uid} sin objective; el panel usará la descripción o motivación.")
 
         document = upd.get("document")
         if not document:
@@ -434,6 +459,50 @@ def validate(tracker: dict) -> None:
             ]
             if pending:
                 err(f"Actualización {uid} COMPLETADA con tareas de progreso sin completar: {pending}")
+
+    # Grupos de trabajo opcionales de cada actualización. No son etapas del
+    # plan base y solo pueden agrupar tareas de su propia actualización.
+    for upd in updates:
+        uid = upd.get("id")
+        if not uid:
+            continue
+        groups = upd.get("groups")
+        if groups is None:
+            continue
+        if not isinstance(groups, list):
+            err(f"Actualización {uid}: groups debe ser una lista.")
+            continue
+        group_ids: set[str] = set()
+        for group in groups:
+            if not isinstance(group, dict):
+                err(f"Actualización {uid}: cada grupo debe ser un objeto.")
+                continue
+            gid = group.get("id")
+            if not gid:
+                err(f"Actualización {uid}: grupo sin id.")
+                continue
+            if gid in group_ids:
+                err(f"Actualización {uid}: grupo duplicado {gid}.")
+            group_ids.add(gid)
+            if not group.get("name"):
+                err(f"Actualización {uid}: grupo {gid} sin nombre.")
+            if group.get("status") is not None and group.get("status") not in VALID_STATUS:
+                err(f"Actualización {uid}: grupo {gid} con estado inválido: {group.get('status')}")
+            task_ids = group.get("taskIds", [])
+            if not isinstance(task_ids, list):
+                err(f"Actualización {uid}: grupo {gid} taskIds debe ser una lista.")
+                task_ids = []
+            for tid in task_ids:
+                if tid not in update_task_by_id:
+                    err(f"Actualización {uid}: grupo {gid} referencia tarea inexistente: {tid}")
+                elif update_task_by_id[tid].get("updateId") != uid:
+                    err(f"Actualización {uid}: grupo {gid} referencia tarea de otra actualización: {tid}")
+            for dep in group.get("dependencies", []):
+                if dep not in all_by_id:
+                    err(f"Actualización {uid}: grupo {gid} depende de tarea inexistente: {dep}")
+            for test in group.get("tests", []):
+                if not isinstance(test, str) or not test.strip():
+                    err(f"Actualización {uid}: grupo {gid} contiene una prueba vacía o no textual.")
 
     # Referencias entre actualizaciones (segunda pasada; permite referencias hacia delante).
     for upd in updates:
@@ -569,6 +638,18 @@ def validate(tracker: dict) -> None:
         for tid in session.get("tasks", []):
             if tid not in all_by_id:
                 err(f"Sesión {sid} referencia tarea inexistente: {tid}")
+        document = session.get("document")
+        if document:
+            doc_path = (ROOT / document).resolve()
+            try:
+                doc_path.relative_to(ROOT)
+            except ValueError:
+                err(f"Sesión {sid}: document apunta fuera del proyecto: {document}")
+            else:
+                if not document.startswith("docs/sessions/"):
+                    warn(f"Sesión {sid}: document no está en docs/sessions/: {document}")
+                if not doc_path.exists():
+                    warn(f"Sesión {sid}: no existe el documento {document}")
 
     # Issues
     issue_ids: set[str] = set()
@@ -590,6 +671,30 @@ def validate(tracker: dict) -> None:
         for uid in decision.get("affectedUpdates", []):
             if uid not in update_ids:
                 err(f"Decisión {did} afecta a actualización inexistente: {uid}")
+
+    # Versiones de presentación
+    initial_version = meta.get("initialVersion")
+    initial_display_version = None
+    if initial_version is not None:
+        if not isinstance(initial_version, dict):
+            err("meta.initialVersion debe ser un objeto.")
+        else:
+            initial_display_version = initial_version.get("displayVersion")
+            if initial_display_version is None:
+                warn("meta.initialVersion no define displayVersion; el panel usará 0.1.")
+            elif not isinstance(initial_display_version, str) or not VERSION_RE.fullmatch(initial_display_version):
+                err(f"meta.initialVersion.displayVersion inválido: {initial_display_version!r}")
+            for field in ("name", "description", "objective", "date"):
+                if field in initial_version and not isinstance(initial_version[field], str):
+                    err(f"meta.initialVersion.{field} debe ser texto.")
+            if initial_version.get("id") and not isinstance(initial_version.get("id"), str):
+                err("meta.initialVersion.id debe ser texto.")
+
+    if initial_display_version and initial_display_version in display_versions:
+        err(
+            "displayVersion duplicada entre la versión inicial y "
+            f"{display_versions[initial_display_version]}: {initial_display_version}"
+        )
 
     # Meta
     current_stage = meta.get("currentStageId")
@@ -636,18 +741,52 @@ def validate(tracker: dict) -> None:
         if stage.get("implementationTaskCount") != computed_impl:
             warn(f"Etapa {sid}: implementationTaskCount {stage.get('implementationTaskCount')} != {computed_impl}.")
 
-    # Estado de tarea en progreso (plan base y actualizaciones)
+    # Estado de tarea en progreso (plan base y actualizaciones).
+    # El proyecto admite varias sesiones simultáneas: se permite más de una
+    # tarea EN_PROGRESO si cada una está asignada a una sesión distinta. Si dos
+    # tareas comparten responsable, es un error de coordinación.
     in_progress = [t for t in tasks if t.get("status") == "EN_PROGRESO"]
-    if len(in_progress) > 1:
-        err(f"Hay más de una tarea EN_PROGRESO: {[t['id'] for t in in_progress]}")
-    if in_progress and current_task != in_progress[0].get("id"):
-        warn("Hay una tarea EN_PROGRESO que no coincide con meta.currentTaskId.")
+    if in_progress:
+        owners: dict[str, str] = {}
+        for task in in_progress:
+            owner = task.get("assignedSessionId")
+            if not owner:
+                warn(
+                    f"Tarea {task.get('id')} EN_PROGRESO sin assignedSessionId; "
+                    "usa tools/continuity.py claim."
+                )
+                continue
+            if owner in owners:
+                err(
+                    f"Dos tareas EN_PROGRESO comparten la sesión {owner}: "
+                    f"{owners[owner]} y {task.get('id')}."
+                )
+            owners[owner] = task.get("id")
+    if in_progress and current_task and current_task != in_progress[-1].get("id"):
+        warn("meta.currentTaskId no coincide con la última tarea EN_PROGRESO del plan base.")
 
     update_in_progress = [t for t in update_task_by_id.values() if t.get("status") == "EN_PROGRESO"]
-    if len(update_in_progress) > 1:
-        err(f"Hay más de una tarea de actualización EN_PROGRESO: {[t['id'] for t in update_in_progress]}")
+    if update_in_progress:
+        owners = {}
+        for task in update_in_progress:
+            owner = task.get("assignedSessionId")
+            if not owner:
+                warn(
+                    f"Tarea {task.get('id')} EN_PROGRESO sin assignedSessionId; "
+                    "usa tools/continuity.py claim."
+                )
+                continue
+            if owner in owners:
+                err(
+                    f"Dos tareas EN_PROGRESO comparten la sesión {owner}: "
+                    f"{owners[owner]} y {task.get('id')}."
+                )
+            owners[owner] = task.get("id")
     if update_in_progress and in_progress:
-        err("Hay tareas EN_PROGRESO simultáneas en el plan base y en una actualización.")
+        warn(
+            "Hay trabajo simultáneo en el plan base y en una actualización; "
+            "es válido si las sesiones son distintas."
+        )
 
 
 def progress(tracker: dict) -> tuple[int, int, int]:
@@ -671,6 +810,12 @@ def update_progress(tracker: dict) -> list[tuple[str, int, int, int]]:
 def _md(value: object) -> str:
     """Escapa un valor para una celda Markdown de una sola línea."""
     return str(value if value is not None else "").replace("|", "\\|").replace("\n", " ").strip()
+
+
+def _doc_href(document: object) -> str:
+    """Convierte docs/sessions/S-XXX.md en una ruta relativa a docs/."""
+    text = str(document or "")
+    return text[5:] if text.startswith("docs/") else text
 
 
 def _task_ref(task: dict | None) -> str:
@@ -750,25 +895,63 @@ def status_markdown(tracker: dict) -> str:
     else:
         update_text = "Ninguna"
 
+    def session_number(session: dict) -> int:
+        match = re.fullmatch(r"S-(\d+)", str(session.get("id", "")))
+        return int(match.group(1)) if match else -1
+
     recent_sessions = sorted(
         sessions,
-        key=lambda s: (s.get("id", ""), s.get("date", "")),
+        key=lambda s: (session_number(s), s.get("date", "")),
         reverse=True,
     )[:3]
     if recent_sessions:
         session_lines = "\n".join(
             f"- `{_md(s.get('id'))}` · {_md(s.get('date'))} · {_md(s.get('title'))}"
+            + (f" · [registro]({_md(_doc_href(s.get('document')))})" if s.get("document") else "")
             for s in recent_sessions
         )
     else:
         session_lines = "- No hay sesiones registradas."
 
+    active_sessions = [s for s in sessions if s.get("outcome") == "EN_PROGRESO"]
+    if active_sessions:
+        active_lines = "\n".join(
+            f"- `{_md(s.get('id'))}` · {_md(s.get('title'))}"
+            + (f" · {_md(s.get('agent'))}" if s.get("agent") else "")
+            for s in active_sessions
+        )
+    else:
+        active_lines = "- Ninguna."
+
+    context_lines = ""
+    if current_task:
+        context_files = current_task.get("contextFiles", [])
+        context_docs = current_task.get("contextDocs", [])
+        context_tests = current_task.get("tests", [])
+        if context_files or context_docs:
+            context_lines = "\n## Contexto de la tarea actual\n\n"
+            if context_files:
+                context_lines += "**Código:** " + ", ".join(
+                    f"`{_md(item)}`" for item in context_files
+                ) + "\n\n"
+            if context_docs:
+                context_lines += "**Documentación:** " + ", ".join(
+                    f"`{_md(item)}`" for item in context_docs
+                ) + "\n\n"
+            if context_tests:
+                context_lines += "**Pruebas:** " + ", ".join(
+                    f"`{_md(item)}`" for item in context_tests
+                ) + "\n"
+
     update_lines = ""
     if updates:
-        rows = update_progress(tracker)
+        rows = {uid: (done_u, total_u, pct_u) for uid, done_u, total_u, pct_u in update_progress(tracker)}
         update_lines = "\n".join(
-            f"- `{_md(uid)}` · {done_u}/{total_u} ({pct_u} %)"
-            for uid, done_u, total_u, pct_u in rows
+            f"- `{_md(upd.get('id'))}` · v{_md(upd.get('displayVersion') or '?')} · {_md(upd.get('name'))} · "
+            f"{_md(upd.get('status'))} · {rows.get(upd.get('id'), (0, 0, 0))[0]}/"
+            f"{rows.get(upd.get('id'), (0, 0, 0))[1]} "
+            f"({rows.get(upd.get('id'), (0, 0, 0))[2]} %)"
+            for upd in updates
         )
     else:
         update_lines = "- No hay actualizaciones registradas."
@@ -782,7 +965,7 @@ def status_markdown(tracker: dict) -> str:
 | Campo | Valor |
 |---|---|
 | Última actualización | {_md(meta.get('lastUpdated'))} |
-| Última sesión | {_md(meta.get('lastSessionId'))} |
+| Última sesión cerrada | {_md(meta.get('lastSessionId'))} |
 | Etapa actual | {stage_text} |
 | Tarea actual | {_task_ref(current_task)} |
 | Próxima tarea disponible | {_task_ref(next_task)} |
@@ -795,7 +978,12 @@ def status_markdown(tracker: dict) -> str:
 | Tareas pospuestas | {counts.get('POSPUESTO', 0)} |
 | Tareas que requieren decisión | {counts.get('REQUIERE_DECISION', 0)} |
 | Decisiones pendientes | {len(pending_decisions)} ({pending_ids}) |
+| Versión inicial | v{_md((meta.get('initialVersion') or {}).get('displayVersion', '0.1'))} — {_md((meta.get('initialVersion') or {}).get('name', 'Implementación inicial'))} |
 | Actualización actual | {update_text} |
+{context_lines}
+## Sesiones activas
+
+{active_lines}
 
 ## Actualizaciones registradas
 
@@ -807,19 +995,21 @@ def status_markdown(tracker: dict) -> str:
 
 ## Referencias
 
+- Fichas de sistemas: [docs/systems/](systems/)
 - Plan maestro: [docs/MASTER_PLAN.md](MASTER_PLAN.md)
 - Índice de sistemas: [docs/INDEX.md](INDEX.md)
 - Tracker canónico: [docs/IMPLEMENTATION_TRACKER.json](IMPLEMENTATION_TRACKER.json)
 - Decisiones: [docs/DECISIONS.md](DECISIONS.md)
-- Log de implementación: [docs/IMPLEMENTATION_LOG.md](IMPLEMENTATION_LOG.md)
+- Sesiones: [docs/sessions/](sessions/)
+- Log histórico: [docs/IMPLEMENTATION_LOG.md](IMPLEMENTATION_LOG.md)
 - Panel: [docs/dashboard/index.html](dashboard/index.html)
+- Coordinación: [docs/CONCURRENCY.md](CONCURRENCY.md)
 """
 
 
 def write_text_atomic(path: Path, text: str) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(text, encoding="utf-8")
-    tmp.replace(path)
+    """Escribe de forma atómica; delega en continuity_io."""
+    cio.atomic_write_text(path, text)
 
 
 def dashboard_block(tracker: dict) -> str:
@@ -910,24 +1100,36 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Valida y sincroniza el panel de continuidad.")
     parser.add_argument("--check", action="store_true", help="No escribe; comprueba HTML y STATUS.md.")
     parser.add_argument("--quiet", action="store_true", help="No imprime el resumen.")
+    parser.add_argument("--timeout", type=float, default=None, help="Segundos de espera por el bloqueo.")
     args = parser.parse_args()
 
-    tracker = load_tracker()
-    validate(tracker)
-    if errors:
-        print("ERRORES:", file=sys.stderr)
-        for e in errors:
-            print(f"  - {e}", file=sys.stderr)
-        if warnings:
-            print("AVISOS:", file=sys.stderr)
-            for w in warnings:
-                print(f"  - {w}", file=sys.stderr)
-        return 1
+    try:
+        # Un único bloqueo breve cubre lectura + validación + escritura. Así una
+        # sincronización antigua no puede pisar un tracker más reciente y dos
+        # sincronizaciones simultáneas producen el mismo resultado.
+        with cio.project_lock(ROOT, timeout=args.timeout):
+            tracker = load_tracker()
+            validate(tracker)
+            if errors:
+                print("ERRORES:", file=sys.stderr)
+                for e in errors:
+                    print(f"  - {e}", file=sys.stderr)
+                if warnings:
+                    print("AVISOS:", file=sys.stderr)
+                    for w in warnings:
+                        print(f"  - {w}", file=sys.stderr)
+                return 1
 
-    if not sync(tracker, args.check):
-        for e in errors:
-            print(f"  - {e}", file=sys.stderr)
-        return 1
+            if not sync(tracker, args.check):
+                for e in errors:
+                    print(f"  - {e}", file=sys.stderr)
+                return 1
+    except cio.LockTimeout as exc:
+        print(f"BLOQUEO: {exc}", file=sys.stderr)
+        return 4
+    except cio.LockUnavailable as exc:
+        print(f"PLATAFORMA: {exc}", file=sys.stderr)
+        return 5
 
     if not args.quiet:
         if warnings:

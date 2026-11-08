@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<a class="skip-link" href="#resumen">Saltar al contenido</a>
+<a class="skip-link" href="#versiones">Saltar al contenido</a>
 
 <header class="top">
   <div class="wrap">
@@ -34,6 +34,7 @@
           <span>Última sesión: <strong id="last-session">—</strong></span>
           <span>Etapa actual: <strong id="top-stage">—</strong></span>
           <span>Actualización: <strong id="top-update">—</strong></span>
+          <span>Versión vista: <strong id="top-version">—</strong></span>
           <span>Progreso base: <strong id="top-progress">—</strong></span>
           <span>Fuente: <strong>IMPLEMENTATION_TRACKER.json</strong></span>
           <span class="source-pill"><span class="dot" id="source-dot"></span><strong id="data-source">embebidos</strong></span>
@@ -42,6 +43,7 @@
       <div class="top-actions">
         <a class="btn" href="../INDEX.md" target="_blank" rel="noopener" title="Mapa de sistemas: código, diseño, decisiones, tareas y pruebas">Índice</a>
         <a class="btn" href="../STATUS.md" target="_blank" rel="noopener" title="Resumen generado del estado del proyecto">Estado</a>
+        <a class="btn" href="../CONCURRENCY.md" target="_blank" rel="noopener" title="Bloqueos, escrituras atómicas y coordinación entre sesiones">Coordinación</a>
         <button class="btn primary" id="reload-btn" type="button" title="Vuelve a leer IMPLEMENTATION_TRACKER.json sin recargar la página">↻ Actualizar</button>
         <button class="btn" id="auto-btn" type="button" aria-pressed="false" title="Actualización automática cada 10 segundos">Auto: off</button>
         <button class="btn" id="theme-btn" type="button" aria-label="Cambiar a tema claro" aria-pressed="false">☀ Claro</button>
@@ -53,13 +55,11 @@
 <nav class="sticky" aria-label="Secciones del panel">
   <div class="wrap">
     <div class="links" id="nav-links">
-      <a href="#resumen">Resumen</a>
-      <a href="#estado">Estado actual</a>
-      <a href="#etapas">Etapas</a>
-      <a href="#actualizaciones">Actualizaciones</a>
-      <a href="#tareas">Tareas</a>
-      <a href="#historial">Historial</a>
-      <a href="#decisiones">Decisiones</a>
+      <a href="#versiones">Versiones</a>
+      <a href="#version-contenido">Contenido</a>
+      <a href="#version-tareas">Tareas</a>
+      <a href="#version-historial">Historial</a>
+      <a href="#global">Global</a>
       <a href="#reglas">Reglas</a>
     </div>
     <div class="nav-right">
@@ -70,128 +70,181 @@
 
 <main class="wrap" id="contenido">
 
-  <section id="resumen">
+  <section id="versiones">
     <div class="section-head">
-      <h2>Resumen general</h2>
-      <span class="hint">El progreso de implementación solo cuenta tareas reales completadas.</span>
+      <h2>Versiones del proyecto</h2>
+      <span class="hint">Selecciona una versión para cambiar todo el contenido principal. La implementación inicial es la 0.1.</span>
     </div>
-    <div class="grid cards-auto" id="summary-cards"></div>
-    <div class="card distribution" id="status-distribution" aria-live="polite"></div>
-  </section>
-
-  <section id="estado">
-    <div class="section-head">
-      <h2>Estado actual</h2>
-      <span class="hint">Etapa, tarea y siguiente paso según el tracker.</span>
-    </div>
-    <div class="status-current">
-      <div class="card current-main" id="current-main"></div>
-      <div class="card" id="next-main"></div>
-    </div>
-    <div class="card verification" id="verification"></div>
-  </section>
-
-  <section id="etapas">
-    <div class="section-head">
-      <h2>Progreso por etapas</h2>
-      <span class="hint">Haz clic en una etapa para filtrar sus tareas.</span>
-    </div>
-    <div class="grid stage-grid" id="stage-grid"></div>
-  </section>
-
-  <section id="actualizaciones">
-    <div class="section-head">
-      <h2>Actualizaciones</h2>
-      <span class="hint">El plan original es histórico. Los cambios posteriores se registran como actualizaciones y requieren aprobación antes de implementarse.</span>
-    </div>
-    <div class="update-toolbar">
-      <div class="chips" id="update-summary" aria-live="polite"></div>
+    <div class="version-toolbar">
+      <div class="chips" id="version-summary" aria-live="polite"></div>
       <div class="update-actions">
+        <button class="btn ghost" id="version-mode-btn" type="button" aria-pressed="false" title="Alternar entre vista compacta y descriptiva">Vista descriptiva</button>
         <button class="btn primary" id="new-update-btn" type="button">+ Nueva propuesta</button>
         <button class="btn" id="review-btn" type="button">Preparar expediente de revisión</button>
       </div>
     </div>
-    <div id="updates-list"></div>
-    <p class="hint update-foot">Las actualizaciones anteriores no se eliminan. El panel recuerda qué tarjeta has abierto, pero el estado real está en <code>IMPLEMENTATION_TRACKER.json</code>.</p>
+    <div class="version-strip compact" id="version-selector" role="tablist" aria-label="Selector de versiones"></div>
+    <div class="timeline-wrap">
+      <div class="timeline-head">
+        <h3>Línea de tiempo</h3>
+        <span class="hint">De la implementación inicial a la versión más reciente. Los puntos son seleccionables.</span>
+      </div>
+      <div class="timeline-scroll">
+        <div class="timeline-track" id="version-timeline"></div>
+      </div>
+    </div>
   </section>
 
-  <section id="tareas">
+  <section id="version-contenido">
     <div class="section-head">
-      <h2>Lista de tareas</h2>
-      <span class="hint">Los detalles se despliegan por tarea. Los datos no se editan desde aquí.</span>
+      <h2>Contenido de la versión seleccionada</h2>
+      <span class="hint" id="version-content-hint">Solo se muestra la versión seleccionada.</span>
     </div>
-    <div class="toolbar">
-      <input id="search" type="search" placeholder="Buscar por ID, nombre, descripción, archivo o dependencia…" autocomplete="off">
-      <select id="status-filter" aria-label="Filtrar por estado"></select>
-      <select id="stage-filter" aria-label="Filtrar por etapa"></select>
-      <select id="priority-filter" aria-label="Filtrar por prioridad"></select>
-      <select id="sort-filter" aria-label="Ordenar tareas">
-        <option value="stage">Etapa + ID</option>
-        <option value="id">ID</option>
-        <option value="priority">Prioridad</option>
-        <option value="status">Estado</option>
-        <option value="updated">Actualización</option>
-      </select>
-      <label class="switch" title="Agrupa las tareas por etapa">
-        <input type="checkbox" id="group-toggle" checked> Agrupar
-      </label>
-      <button class="btn ghost" id="expand-btn" type="button">Expandir</button>
-      <button class="btn ghost" id="collapse-btn" type="button">Contraer</button>
-      <button class="btn ghost" id="clear-btn" type="button">Limpiar</button>
-      <span class="count" id="task-count"></span>
-    </div>
-    <div id="task-list"></div>
+    <div id="version-hero"></div>
+    <div id="version-alert"></div>
+    <div id="version-progress"></div>
+
+    <section id="version-grupos" class="version-block">
+      <div class="section-head">
+        <h2 id="version-groups-title">Etapas y grupos</h2>
+        <span class="hint" id="version-groups-hint"></span>
+      </div>
+      <div id="version-groups"></div>
+    </section>
+
+    <section id="version-tareas" class="version-block">
+      <div class="section-head">
+        <h2>Tareas de la versión</h2>
+        <span class="hint">Los filtros y la búsqueda actúan solo sobre esta versión.</span>
+      </div>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Buscar por ID, nombre, descripción, archivo o dependencia…" autocomplete="off">
+        <select id="status-filter" aria-label="Filtrar por estado"></select>
+        <select id="stage-filter" aria-label="Filtrar por etapa o grupo"></select>
+        <select id="priority-filter" aria-label="Filtrar por prioridad"></select>
+        <select id="sort-filter" aria-label="Ordenar tareas">
+          <option value="stage">Etapa/grupo + ID</option>
+          <option value="id">ID</option>
+          <option value="priority">Prioridad</option>
+          <option value="status">Estado</option>
+          <option value="updated">Actualización</option>
+        </select>
+        <label class="switch" title="Agrupa las tareas por etapa o grupo cuando existan">
+          <input type="checkbox" id="group-toggle" checked> Agrupar
+        </label>
+        <button class="btn ghost" id="expand-btn" type="button">Expandir</button>
+        <button class="btn ghost" id="collapse-btn" type="button">Contraer</button>
+        <button class="btn ghost" id="clear-btn" type="button">Limpiar</button>
+        <span class="count" id="task-count"></span>
+      </div>
+      <div id="task-list"></div>
+    </section>
+
+    <section id="version-historial" class="version-block">
+      <div class="section-head">
+        <h2>Historial de la versión</h2>
+        <span class="hint">Solo sesiones y registros relacionados con la versión seleccionada.</span>
+      </div>
+      <div id="version-history"></div>
+    </section>
+
+    <section id="version-pendientes" class="version-block">
+      <div class="section-head">
+        <h2>Pendientes de la versión</h2>
+        <span class="hint">Tareas bloqueadas, con decisión o pospuestas dentro de esta versión.</span>
+      </div>
+      <div id="version-pending"></div>
+    </section>
+
+    <div id="version-details"></div>
   </section>
 
-  <section id="historial">
-    <div class="section-head">
-      <h2>Historial de sesiones</h2>
-      <span class="hint">Sesiones registradas en el tracker, de la más reciente a la más antigua.</span>
+  <div id="global">
+    <div class="global-head">
+      <h2>Información global del proyecto</h2>
+      <span class="hint">Esta sección no cambia al seleccionar otra versión.</span>
     </div>
-    <div class="history" id="history-list"></div>
-    <div class="history-more" id="history-more"></div>
-  </section>
 
-  <section id="decisiones">
-    <div class="section-head">
-      <h2>Decisiones y problemas</h2>
-      <span class="hint">Lo pendiente de decisión no debe implementarse como si estuviera aprobado. <a href="../PENDING_DECISIONS.md" target="_blank" rel="noopener">Ver decisiones cerradas</a></span>
-    </div>
-    <div class="grid cards-2">
-      <div class="card">
-        <div class="card-head">
-          <h3>Decisiones</h3>
-          <button class="btn ghost small" id="decisions-toggle" type="button">Ocultar resueltas</button>
+    <section id="resumen">
+      <div class="section-head">
+        <h2>Resumen general</h2>
+        <span class="hint">El progreso de implementación solo cuenta tareas reales completadas.</span>
+      </div>
+      <div class="grid cards-auto" id="summary-cards"></div>
+      <div class="card distribution" id="status-distribution" aria-live="polite"></div>
+    </section>
+
+    <section id="estado">
+      <div class="section-head">
+        <h2>Estado actual</h2>
+        <span class="hint">Etapa, tarea y siguiente paso según el tracker.</span>
+      </div>
+      <div class="status-current">
+        <div class="card current-main" id="current-main"></div>
+        <div class="card" id="next-main"></div>
+      </div>
+      <div class="card verification" id="verification"></div>
+    </section>
+
+    <section id="pendientes-globales">
+      <div class="section-head">
+        <h2>Actualizaciones pendientes de aprobación</h2>
+        <span class="hint">Propuestas que no deben presentarse como trabajo en desarrollo.</span>
+      </div>
+      <div id="pending-approvals"></div>
+    </section>
+
+    <section id="decisiones">
+      <div class="section-head">
+        <h2>Decisiones y problemas</h2>
+        <span class="hint">Lo pendiente de decisión no debe implementarse como si estuviera aprobado. <a href="../PENDING_DECISIONS.md" target="_blank" rel="noopener">Ver decisiones cerradas</a></span>
+      </div>
+      <div class="grid cards-2">
+        <div class="card">
+          <div class="card-head">
+            <h3>Decisiones</h3>
+            <button class="btn ghost small" id="decisions-toggle" type="button">Ocultar resueltas</button>
+          </div>
+          <div class="decision-summary" id="decision-summary"></div>
+          <div class="decision-list" id="decision-list"></div>
         </div>
-        <div class="decision-summary" id="decision-summary"></div>
-        <div class="decision-list" id="decision-list"></div>
+        <div class="card">
+          <h3 style="margin:0 0 10px;font-size:15px">Problemas técnicos</h3>
+          <div id="issue-list"></div>
+          <h3 style="margin:18px 0 6px;font-size:15px">Tareas bloqueadas, con decisión o pospuestas</h3>
+          <p class="hint" id="blocked-hint">Tareas fuera de la versión seleccionada.</p>
+          <div id="blocked-list"></div>
+        </div>
       </div>
-      <div class="card">
-        <h3 style="margin:0 0 10px;font-size:15px">Problemas técnicos</h3>
-        <div id="issue-list"></div>
-        <h3 style="margin:18px 0 10px;font-size:15px">Tareas bloqueadas, con decisión o pospuestas</h3>
-        <div id="blocked-list"></div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="reglas">
-    <div class="section-head">
-      <h2>Reglas y definiciones</h2>
-      <span class="hint">Contrato de continuidad que sigue cada sesión del proyecto.</span>
-    </div>
-    <details class="card rules" id="rules-card">
-      <summary>Reglas, definiciones de estado y fuente de datos</summary>
-      <div class="rules-body" id="rules-body"></div>
-    </details>
-  </section>
+    <section id="historial-global">
+      <div class="section-head">
+        <h2>Actividad reciente del proyecto</h2>
+        <span class="hint">Últimas sesiones de todas las versiones.</span>
+      </div>
+      <div class="history" id="global-history-list"></div>
+    </section>
+
+    <section id="reglas">
+      <div class="section-head">
+        <h2>Reglas y definiciones</h2>
+        <span class="hint">Contrato de continuidad que sigue cada sesión del proyecto.</span>
+      </div>
+      <details class="card rules" id="rules-card">
+        <summary>Reglas, definiciones de estado y fuente de datos</summary>
+        <div class="rules-body" id="rules-body"></div>
+      </details>
+    </section>
+  </div>
 
 </main>
 
+
 <footer>
   <div class="wrap">
-    Panel estático y autocontenido. Estilos y lógica viven en <code>dashboard.css</code> y <code>dashboard.js</code>; los datos siguen embebidos para <code>file://</code>. Funciona sin servidor, CDN ni red. Si se abre por HTTP, actualiza los datos desde <code>IMPLEMENTATION_TRACKER.json</code> sin recargar la página.
-    Para actualizar los datos: <code>python3 tools/sync-dashboard.py</code>, que también regenera <a href="../STATUS.md" target="_blank" rel="noopener">STATUS.md</a>. Mapa de sistemas: <a href="../INDEX.md" target="_blank" rel="noopener">INDEX.md</a>.
+    Panel estático y autocontenido. El selector de versiones, la línea de tiempo y la plantilla dinámica se generan desde el tracker embebido para <code>file://</code>; estilos y lógica viven en <code>dashboard.css</code> y <code>dashboard.js</code>. Funciona sin servidor, CDN ni red. Si se abre por HTTP, actualiza los datos desde <code>IMPLEMENTATION_TRACKER.json</code> sin recargar la página.
+    Para actualizar los datos: <code>python3 tools/sync-dashboard.py</code>, que también regenera <a href="../STATUS.md" target="_blank" rel="noopener">STATUS.md</a>. Mapa de sistemas: <a href="../INDEX.md" target="_blank" rel="noopener">INDEX.md</a>. Coordinación: <a href="../CONCURRENCY.md" target="_blank" rel="noopener">CONCURRENCY.md</a>.
   </div>
 </footer>
 
@@ -316,19 +369,17 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T12:00:00-06:00",
-    "lastSessionId": "S-092",
+    "lastUpdated": "2026-11-08T15:55:00-06:00",
+    "lastSessionId": "S-096",
     "lastVerification": {
-      "date": "2026-11-08T12:00:00-06:00",
+      "date": "2026-11-08T15:55:00-06:00",
       "result": "OK",
       "checks": [
-        "python3 tools/sync-dashboard.py --check: OK",
-        "Validador probado con propuesta no aprobada con tarea completada: rechazada",
-        "Validador probado con ID de tarea duplicado: rechazado",
-        "Validador probado con documento de actualización inexistente: rechazado",
-        "Panel abierto con file:// y secciones previas conservadas",
-        "Descarga de propuesta y expediente en .md y .txt",
-        "No se modificó código del juego"
+        "sync-dashboard.py --check: OK",
+        "continuity_test.py: 17 pruebas OK",
+        "dashboard_versions_test.js: 63 comprobaciones OK",
+        "dashboard_versions_test.py: OK",
+        "file://: captura de panel revisada"
       ]
     },
     "currentStageId": "S11",
@@ -352,10 +403,18 @@
       "Las tareas de actualización usan IDs UPD-XXX-TNN y viven en updates[].tasks.",
       "No se reutilizan ni renumeran IDs históricos."
     ],
-    "currentUpdateId": "UPD-001",
+    "currentUpdateId": "UPD-005",
     "nextUpdateId": null,
     "updatesSchemaVersion": 1,
-    "updateProgressDefinition": "El progreso del plan base solo cuenta tracker.tasks con category=implementation y countsForProgress=true. Cada actualización calcula su propio progreso con updates[].tasks y no altera el progreso base."
+    "updateProgressDefinition": "El progreso del plan base solo cuenta tracker.tasks con category=implementation y countsForProgress=true. Cada actualización calcula su propio progreso con updates[].tasks y no altera el progreso base.",
+    "initialVersion": {
+      "id": "BASE",
+      "displayVersion": "0.1",
+      "name": "Implementación inicial",
+      "date": "2026-11-07",
+      "description": "Plan maestro original y primera versión jugable: auditoría, núcleo de vuelo, supervivencia, minería, estaciones, economía, universo, estación propia, interiores y refinamiento.",
+      "objective": "Construir el núcleo jugable y la base técnica del proyecto."
+    }
   },
   "statusDefinitions": {
     "PENDIENTE": {
@@ -7124,6 +7183,69 @@
       "decision": "Mantener docs/MASTER_PLAN.md como plan histórico y registrar los cambios posteriores como actualizaciones UPD-XXX. Las tareas de actualización viven en updates[].tasks con IDs UPD-XXX-TNN y no alteran el progreso base. Una actualización requiere aprobación explícita antes de implementarse. El panel ofrece propuesta y expediente de revisión descargables, pero la persistencia sigue en los archivos del proyecto.",
       "createdAt": "2026-11-08",
       "updatedAt": "2026-11-08T12:00:00-06:00"
+    },
+    {
+      "id": "D-014",
+      "title": "Coordinación concurrente y escrituras seguras",
+      "status": "APROBADA",
+      "context": "La infraestructura anterior permitía una sola tarea EN_PROGRESO y no tenía protección verificable para escrituras simultáneas.",
+      "options": [
+        "Un agente dedicado a mantener tracker, índice y panel.",
+        "Bloquear todo el proyecto durante la implementación.",
+        "Bloqueo breve por operación, escritura atómica y responsabilidad distribuida."
+      ],
+      "recommendation": "Bloqueo flock breve, escritura atómica y sesiones por archivo; sin coordinador permanente.",
+      "impact": "Afecta a AGENTS.md, tools/continuity.py, tools/continuity_io.py, tools/sync-dashboard.py, el tracker, INDEX.md, las fichas, STATUS.md, CONCURRENCY.md y docs/sessions/. No afecta al código del juego.",
+      "affectedTasks": [],
+      "affectedUpdates": [
+        "UPD-002"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Varias sesiones pueden trabajar a la vez sin coordinador permanente. Cada tarea se reserva con assignedSessionId; el tracker se actualiza con un plan validado y expectUpdatedAt; se usa un bloqueo flock breve con escritura atómica; las sesiones nuevas viven en docs/sessions/S-XXX.md; no se hacen commits automáticos ni se revierten cambios ajenos.",
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T11:45:00-06:00"
+    },
+    {
+      "id": "D-015",
+      "title": "Identidad visual de simulador espacial industrial",
+      "status": "APROBADA",
+      "context": "Las pantallas mezclaban azules saturados, botones arcade, etiquetas desalineadas y bloques de acción juntos; el juego evoluciona hacia minería, exploración, supervivencia y gestión de estaciones.",
+      "options": [
+        "Corregir solo solapes y mantener la paleta anterior.",
+        "Sustituir la interfaz por imágenes y un atlas nuevo.",
+        "Crear un sistema visual compartido con primitivas y tokens de color."
+      ],
+      "recommendation": "Sistema ligero en Visuals y UiKit, sin dependencias ni recursos nuevos, aplicado a todas las pantallas.",
+      "impact": "Afecta a Visuals.java, UiKit.java, OverlayRenderer.java, PlayHud.java, StationScreen.java, MarketScreen.java, MapScreen.java, StationManagementScreen.java, MyGame.java, las capturas de diseño, docs/systems/ui.md y docs/pruebas.md. No afecta a mecánicas ni datos de partida.",
+      "affectedTasks": [],
+      "affectedUpdates": [
+        "UPD-003"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "La interfaz adopta una identidad de simulador espacial industrial: grafito azulado y acero, ámbar de seguridad como acento, cian de instrumentación, texto hueso/gris/apagado, marcos de consola, botones con bisel y pestaña, e iconos geométricos reutilizables. No cambian mecánicas, balance, guardado ni telemetría.",
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T13:05:00-06:00"
+    },
+    {
+      "id": "D-016",
+      "title": "Versiones de presentación y dashboard dinámico",
+      "status": "APROBADA",
+      "context": "El panel mostraba el plan maestro como bloque principal y apilaba todas las actualizaciones. El desarrollo continúa mediante actualizaciones independientes y necesita una lectura por versiones sin duplicar HTML ni crear una página por actualización.",
+      "options": [
+        "Mantener una página continua con todas las actualizaciones apiladas.",
+        "Crear un HTML independiente por actualización.",
+        "Usar una única plantilla dinámica alimentada por el tracker, con selector y línea de tiempo."
+      ],
+      "recommendation": "Una sola página con plantilla dinámica, selector compacto/descriptivo, línea de tiempo y contenido calculado solo con la versión seleccionada.",
+      "impact": "Afecta a docs/dashboard/index.html, dashboard.css, dashboard.js, tools/sync-dashboard.py, tools/tests/, docs/dashboard/README.md, docs/updates/README.md, docs/systems/continuity.md, docs/INDEX.md y a los metadatos de presentación del tracker. No cambia IDs, estados históricos ni código del videojuego.",
+      "affectedTasks": [],
+      "affectedUpdates": [
+        "UPD-005"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "La implementación inicial es la versión visual 0.1 y cada actualización UPD-XXX recibe una etiqueta displayVersion estable (0.2, 0.3, …). La numeración es solo de presentación: los IDs internos no cambian. El panel usa una única plantilla dinámica; el selector y la línea de tiempo comparten la selección; el contenido, el progreso, las etapas, las tareas y el historial corresponden exclusivamente a la versión seleccionada. La información global del proyecto queda en una sección independiente.",
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T15:00:00-06:00"
     }
   ],
   "sessions": [
@@ -9451,6 +9573,179 @@
       ],
       "outcome": "Completado",
       "notes": "Las tareas UPD-001-T01…T06 no cuentan para el progreso del plan base. docs/STATUS.md es derivado y lo genera tools/sync-dashboard.py; docs/INDEX.md se actualizó para enlazar UPD-001 y D-013."
+    },
+    {
+      "id": "S-093",
+      "date": "2026-11-08T11:45:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Contexto por sistema y coordinación concurrente",
+      "summary": "Se creó el índice rápido y 19 fichas de sistema, se amplió STATUS.md, se añadieron tools/continuity.py y continuity_io.py con flock y escritura atómica, se formalizaron las sesiones por archivo y se probó la concurrencia con procesos reales. No se modificó el juego.",
+      "tasks": [
+        "UPD-002-T01",
+        "UPD-002-T02",
+        "UPD-002-T03",
+        "UPD-002-T04",
+        "UPD-002-T05",
+        "UPD-002-T06"
+      ],
+      "files": [
+        "AGENTS.md",
+        ".gitignore",
+        "docs/INDEX.md",
+        "docs/CONCURRENCY.md",
+        "docs/DECISIONS.md",
+        "docs/PENDING_DECISIONS.md",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/pruebas.md",
+        "docs/dashboard/README.md",
+        "docs/dashboard/dashboard.js",
+        "docs/STATUS.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/sessions/README.md",
+        "docs/sessions/S-093.md",
+        "docs/systems/*.md",
+        "docs/updates/README.md",
+        "docs/updates/UPD-002.md",
+        "tools/continuity.py",
+        "tools/continuity_io.py",
+        "tools/sync-dashboard.py",
+        "tools/tests/continuity_test.py"
+      ],
+      "tests": [
+        "python3 tools/tests/continuity_test.py (10/10 OK)",
+        "python3 tools/sync-dashboard.py --check (OK)",
+        "Tercera prueba con subagente: 45 operaciones, 29 lecturas, 2.215 líneas",
+        "Comprobación de enlaces de INDEX.md y docs/systems/ (0 roto)"
+      ],
+      "outcome": "Completado",
+      "notes": "La prueba B detectó que updatedAt no cambiaba; se corrigió para que el conflicto sea detectable. La tercera prueba reveló la necesidad de rutas mínimas de lectura.",
+      "document": "docs/sessions/S-093.md"
+    },
+    {
+      "id": "S-094",
+      "date": "2026-11-08T13:01:30-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Estabilización de UPD-002 e identidad visual industrial",
+      "summary": "Revision de estabilidad de UPD-002 con 14/14 pruebas A-M y renovacion de la identidad visual industrial (D-015) en menu, HUD, estacion, mercado, mapa, gestion e interiores.",
+      "tasks": [
+        "UPD-003-T01",
+        "UPD-003-T01"
+      ],
+      "files": [
+        "src/com/example/codegame/Visuals.java",
+        "src/com/example/codegame/UiKit.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/continuity.py",
+        "tools/tests/continuity_test.py",
+        "docs/CONCURRENCY.md",
+        "docs/DECISIONS.md",
+        "docs/INDEX.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/STATUS.md",
+        "docs/dashboard/index.html",
+        "docs/pruebas.md",
+        "docs/sessions/README.md",
+        "docs/sessions/S-094.md",
+        "docs/systems/continuity.md",
+        "docs/systems/ui.md",
+        "docs/updates/UPD-002.md",
+        "docs/updates/UPD-003.md"
+      ],
+      "tests": [
+        "python3 tools/tests/continuity_test.py (14/14)",
+        "python3 tools/sync-dashboard.py --check",
+        "java -cp build/classes:jar/* com.example.codegame.SelfTest",
+        "tools/run-tests.sh --no-build 06_visual_menu 22_ui_polish 14_market",
+        "tools/run-tests.sh --no-build 07_visual_play 08_visual_death 13_station 14_market 18_map",
+        "tools/run-tests.sh --no-build 13_station 17_player_station 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "UPD-002 corregida en dependencias de tareas de actualizacion, sesiones activas, cierre de sesion y catalogo. UPD-003 completada. Sin commits automaticos.",
+      "document": "docs/sessions/S-094.md"
+    },
+    {
+      "id": "S-095",
+      "date": "2026-11-08T13:16:57-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Tienda de módulos de nave en la estación",
+      "summary": "Pestaña MODULOS con compra/instalación/retirada de módulos de nave, persistencia y corrección del alcance de HERRAMIENTAS.",
+      "tasks": [
+        "UPD-004-T01",
+        "UPD-004-T01"
+      ],
+      "files": [
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/TractorBeam.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/updates/UPD-004.md",
+        "docs/systems/autopilot.md",
+        "docs/systems/ship.md",
+        "docs/systems/stations.md",
+        "docs/systems/mining.md",
+        "docs/INDEX.md",
+        "docs/pruebas.md",
+        "docs/sessions/S-095.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/STATUS.md",
+        "docs/dashboard/index.html",
+        "tools/tests/testlib.sh",
+        "tools/tests/23_ship_modules.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh --no-build 23_ship_modules 13_station 04_autopilot 09_wing_damage 22_ui_polish",
+        "tools/run-tests.sh --no-build 13_tractor",
+        "java -cp build/classes:jar/* com.example.codegame.SelfTest",
+        "python3 tools/sync-dashboard.py --check"
+      ],
+      "outcome": "Completado",
+      "notes": "UPD-004 completada; 23_ship_modules y regresiones de estación/autopiloto/tractor OK. Sin commits automáticos.",
+      "document": "docs/sessions/S-095.md"
+    },
+    {
+      "id": "S-096",
+      "date": "2026-11-08T13:39:26-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Dashboard por versiones, selector y línea de tiempo",
+      "summary": "Panel por versiones con selector compacto/descriptivo, línea de tiempo, plantilla dinámica, progreso aislado y pruebas de renderizado.",
+      "tasks": [
+        "UPD-005-T01"
+      ],
+      "files": [
+        "docs/dashboard/index.html",
+        "docs/dashboard/dashboard.js",
+        "docs/dashboard/dashboard.css",
+        "docs/dashboard/README.md",
+        "tools/sync-dashboard.py",
+        "tools/tests/dashboard_versions_test.js",
+        "tools/tests/dashboard_versions_test.py",
+        "tools/tests/continuity_test.py",
+        "docs/updates/README.md",
+        "docs/updates/UPD-005.md",
+        "docs/systems/continuity.md",
+        "docs/INDEX.md",
+        "docs/DECISIONS.md",
+        "docs/PENDING_DECISIONS.md",
+        "docs/sessions/S-096.md"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "python3 tools/tests/continuity_test.py",
+        "node tools/tests/dashboard_versions_test.js",
+        "python3 tools/tests/dashboard_versions_test.py",
+        "firefox --headless --screenshot file:///.../docs/dashboard/index.html"
+      ],
+      "outcome": "Completado",
+      "notes": "UPD-005 completada; no se modificó el código del videojuego ni el sistema de continuidad. Sin commit automático.",
+      "document": "docs/sessions/S-096.md"
     }
   ],
   "issues": [
@@ -9539,7 +9834,7 @@
       "changeType": "TECNICA",
       "priority": "P1",
       "createdAt": "2026-11-08T12:00:00-06:00",
-      "updatedAt": "2026-11-08T12:00:00-06:00",
+      "updatedAt": "2026-11-08T15:00:00-06:00",
       "description": "Ampliar la continuidad con actualizaciones versionadas, estados de aprobación, tareas UPD-XXX-TNN, catálogo de revisión, creación de propuestas y expedientes de revisión descargables.",
       "motivation": "El plan base está completado. Las correcciones y mejoras posteriores deben registrarse sin reabrir etapas ni alterar tareas históricas, y deben poder revisarse y aprobarse antes de implementarse.",
       "affectedSystems": [
@@ -10022,6 +10317,1274 @@
           ]
         }
       ],
+      "reviewExports": [],
+      "displayVersion": "0.2",
+      "objective": "Versionar el trabajo posterior al plan base con aprobación y trazabilidad."
+    },
+    {
+      "id": "UPD-002",
+      "name": "Contexto por sistema y coordinación concurrente",
+      "status": "COMPLETADA",
+      "changeType": "INFRAESTRUCTURA",
+      "priority": "P1",
+      "createdAt": "2026-11-08T11:20:00-06:00",
+      "updatedAt": "2026-11-08T15:00:00-06:00",
+      "description": "Optimizar la recuperación de contexto con un índice compacto y fichas por sistema, y permitir que varias sesiones trabajen a la vez con bloqueos breves, escrituras atómicas y sesiones por archivo.",
+      "motivation": "La recuperación de contexto era prometedora pero no controlada, y no existía un protocolo verificable para que dos sesiones modificaran el tracker o el panel sin pisarse.",
+      "affectedSystems": [
+        "SYS-CONTINUIDAD"
+      ],
+      "affectedFeatures": [
+        "F-CONTINUIDAD"
+      ],
+      "relatedStages": [
+        "S11"
+      ],
+      "relatedTasks": [
+        "T-003",
+        "T-006",
+        "T-007"
+      ],
+      "relatedUpdates": [
+        "UPD-001"
+      ],
+      "document": "docs/updates/UPD-002.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T11:20:00-06:00",
+        "basis": "Instrucción directa del usuario en la sesión: optimización integral de agentes, recuperación de contexto y trabajo concurrente."
+      },
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Un agente nuevo localiza un sistema sin leer INDEX.md completo.",
+        "Cada sistema tiene una ficha con estado real, código, documentación, decisiones, tareas y pruebas.",
+        "STATUS.md es generado e incluye estado operativo y contexto de la tarea actual.",
+        "El tracker distingue contexto de artefactos.",
+        "Dos procesos modifican tareas distintas y ambas persisten.",
+        "Dos procesos que modifican la misma tarea reciben conflicto explícito.",
+        "Una interrupción deja el tracker válido.",
+        "El bloqueo se libera al terminar el proceso.",
+        "Dos sincronizaciones simultáneas dejan derivados coherentes.",
+        "Los cambios ajenos preexistentes no se sobrescriben.",
+        "No se modifica ninguna mecánica del juego.",
+        "El panel sigue funcionando con file://."
+      ],
+      "tasks": [
+        {
+          "id": "UPD-002-T01",
+          "updateId": "UPD-002",
+          "title": "Índice rápido y fichas de sistemas",
+          "description": "Reorganizar docs/INDEX.md como tabla compacta de navegación y crear fichas de referencia en docs/systems/.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "docs/INDEX.md",
+            "docs/systems/accessibility.md",
+            "docs/systems/agents.md",
+            "docs/systems/audio.md",
+            "docs/systems/autopilot.md",
+            "docs/systems/continuity.md",
+            "docs/systems/contracts.md",
+            "docs/systems/damage.md",
+            "docs/systems/deferred.md",
+            "docs/systems/economy.md",
+            "docs/systems/flight.md",
+            "docs/systems/interiors.md",
+            "docs/systems/mining.md",
+            "docs/systems/persistence.md",
+            "docs/systems/player-station.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md",
+            "docs/systems/survival.md",
+            "docs/systems/ui.md",
+            "docs/systems/universe.md"
+          ],
+          "contextFiles": [],
+          "contextDocs": [
+            "docs/MASTER_PLAN.md",
+            "docs/arquitectura.md",
+            "docs/pruebas.md",
+            "docs/DECISIONS.md",
+            "docs/INDEX.md"
+          ],
+          "artifacts": [
+            "docs/INDEX.md",
+            "docs/systems/accessibility.md",
+            "docs/systems/agents.md",
+            "docs/systems/audio.md",
+            "docs/systems/autopilot.md",
+            "docs/systems/continuity.md",
+            "docs/systems/contracts.md",
+            "docs/systems/damage.md",
+            "docs/systems/deferred.md",
+            "docs/systems/economy.md",
+            "docs/systems/flight.md",
+            "docs/systems/interiors.md",
+            "docs/systems/mining.md",
+            "docs/systems/persistence.md",
+            "docs/systems/player-station.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md",
+            "docs/systems/survival.md",
+            "docs/systems/ui.md",
+            "docs/systems/universe.md"
+          ],
+          "acceptanceCriteria": [
+            "La tabla rápida incluye sistema, estado, ficha, código, documentación, decisiones, tareas y pruebas.",
+            "Cada fila apunta a una ficha existente.",
+            "Cada ficha distingue implementado, parcial, planificado y aplazado.",
+            "Las fichas enlazan a la fuente canónica y no duplican el plan maestro."
+          ],
+          "tests": [
+            "Comprobación automática de enlaces relativos de INDEX.md y docs/systems/"
+          ],
+          "technicalNotes": "Se crearon 19 fichas; survival, mining, autopilot y economy incluyen ruta mínima de lectura.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Reorganizar docs/INDEX.md como tabla compacta de navegación y crear fichas de referencia en docs/systems/.",
+              "files": [
+                "docs/INDEX.md",
+                "docs/systems/accessibility.md",
+                "docs/systems/agents.md",
+                "docs/systems/audio.md",
+                "docs/systems/autopilot.md",
+                "docs/systems/continuity.md",
+                "docs/systems/contracts.md",
+                "docs/systems/damage.md",
+                "docs/systems/deferred.md",
+                "docs/systems/economy.md",
+                "docs/systems/flight.md",
+                "docs/systems/interiors.md",
+                "docs/systems/mining.md",
+                "docs/systems/persistence.md",
+                "docs/systems/player-station.md",
+                "docs/systems/ship.md",
+                "docs/systems/stations.md",
+                "docs/systems/survival.md",
+                "docs/systems/ui.md",
+                "docs/systems/universe.md"
+              ],
+              "tests": [
+                "Comprobación automática de enlaces relativos de INDEX.md y docs/systems/"
+              ]
+            }
+          ],
+          "evidence": [
+            "20 archivos de navegación revisados: 0 enlaces relativos roto",
+            "INDEX.md reducido de 372 a ~110 líneas",
+            "Cada sistema de la tabla tiene ficha propia"
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T11:50:00-06:00"
+        },
+        {
+          "id": "UPD-002-T02",
+          "updateId": "UPD-002",
+          "title": "STATUS y sincronización automática",
+          "description": "Ampliar docs/STATUS.md generado y proteger la sincronización con bloqueo y escritura atómica.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-002-T01"
+          ],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "tools/sync-dashboard.py",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js"
+          ],
+          "contextFiles": [
+            "tools/sync-dashboard.py"
+          ],
+          "contextDocs": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/INDEX.md",
+            "docs/STATUS.md"
+          ],
+          "artifacts": [
+            "tools/sync-dashboard.py",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js"
+          ],
+          "acceptanceCriteria": [
+            "STATUS.md incluye etapa, tarea actual, próxima tarea, conteos, decisiones, sesiones activas, actualizaciones y referencias.",
+            "STATUS.md se regenera y no se edita a mano.",
+            "La sincronización usa bloqueo breve y escritura atómica.",
+            "El panel sigue funcionando con file://."
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py",
+            "python3 tools/sync-dashboard.py --check",
+            "Prueba E de continuity_test.py"
+          ],
+          "technicalNotes": "El sincronizador toma el bloqueo antes de leer el tracker y escribe HTML y STATUS con atomic_write_text.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Ampliar docs/STATUS.md generado y proteger la sincronización con bloqueo y escritura atómica.",
+              "files": [
+                "tools/sync-dashboard.py",
+                "docs/STATUS.md",
+                "docs/dashboard/index.html",
+                "docs/dashboard/dashboard.js"
+              ],
+              "tests": [
+                "python3 tools/sync-dashboard.py",
+                "python3 tools/sync-dashboard.py --check",
+                "Prueba E de continuity_test.py"
+              ]
+            }
+          ],
+          "evidence": [
+            "sync-dashboard.py --check OK",
+            "Dos sincronizaciones concurrentes dejan HTML y STATUS coherentes",
+            "STATUS.md incluye sesiones activas y contexto de la tarea"
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T11:50:00-06:00"
+        },
+        {
+          "id": "UPD-002-T03",
+          "updateId": "UPD-002",
+          "title": "Contexto por tarea y AGENTS.md",
+          "description": "Formalizar contextFiles, contextDocs y artifacts; mostrar el responsable y el contexto en el panel; actualizar AGENTS.md.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-002-T01"
+          ],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "AGENTS.md",
+            "docs/INDEX.md",
+            "docs/dashboard/dashboard.js",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "contextFiles": [
+            "AGENTS.md",
+            "docs/INDEX.md"
+          ],
+          "contextDocs": [
+            "docs/CONCURRENCY.md",
+            "docs/updates/README.md"
+          ],
+          "artifacts": [
+            "AGENTS.md",
+            "docs/INDEX.md",
+            "docs/dashboard/dashboard.js",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "acceptanceCriteria": [
+            "AGENTS.md define el protocolo de inicio, lectura selectiva y cierre.",
+            "contextFiles/contextDocs se distinguen de artifacts.",
+            "El panel muestra contextFiles, contextDocs, artifacts, assignedSessionId y assignedAt.",
+            "Las tareas nuevas y las reabiertas usan los campos de contexto."
+          ],
+          "tests": [
+            "Validación del tracker",
+            "Inspección del detalle de tarea en el panel"
+          ],
+          "technicalNotes": "Los campos son opcionales para no rellenar masivamente tareas históricas.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Formalizar contextFiles, contextDocs y artifacts; mostrar el responsable y el contexto en el panel; actualizar AGENTS.md.",
+              "files": [
+                "AGENTS.md",
+                "docs/INDEX.md",
+                "docs/dashboard/dashboard.js",
+                "docs/IMPLEMENTATION_TRACKER.json"
+              ],
+              "tests": [
+                "Validación del tracker",
+                "Inspección del detalle de tarea en el panel"
+              ]
+            }
+          ],
+          "evidence": [
+            "AGENTS.md actualizado con coordinación y lectura selectiva",
+            "El panel renderiza los campos de contexto y responsable",
+            "El tracker valida los tipos de los campos opcionales"
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T11:50:00-06:00"
+        },
+        {
+          "id": "UPD-002-T04",
+          "updateId": "UPD-002",
+          "title": "Escrituras atómicas y bloqueo reutilizable",
+          "description": "Implementar tools/continuity_io.py y tools/continuity.py para reservar tareas, aplicar planes, validar y escribir de forma atómica.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "tools/continuity_io.py",
+            "tools/continuity.py",
+            "tools/sync-dashboard.py",
+            ".gitignore"
+          ],
+          "contextFiles": [
+            "tools/continuity.py",
+            "tools/continuity_io.py",
+            "tools/sync-dashboard.py"
+          ],
+          "contextDocs": [
+            "docs/CONCURRENCY.md",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "artifacts": [
+            "tools/continuity_io.py",
+            "tools/continuity.py",
+            "tools/sync-dashboard.py",
+            ".gitignore"
+          ],
+          "acceptanceCriteria": [
+            "El bloqueo es flock, compartido y se libera al morir el proceso.",
+            "La escritura usa temporal, fsync y os.replace.",
+            "El tracker se relee y valida dentro del bloqueo.",
+            "expectUpdatedAt detecta conflictos de la misma tarea.",
+            "El bloqueo no cubre la implementación completa."
+          ],
+          "tests": [
+            "Pruebas A, B, C y D de continuity_test.py",
+            "python3 tools/continuity.py lock-status"
+          ],
+          "technicalNotes": "Se corrigió un fallo detectado por la prueba B: updatedAt debe cambiar en cada aplicación para que el conflicto sea detectable.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Implementar tools/continuity_io.py y tools/continuity.py para reservar tareas, aplicar planes, validar y escribir de forma atómica.",
+              "files": [
+                "tools/continuity_io.py",
+                "tools/continuity.py",
+                "tools/sync-dashboard.py",
+                ".gitignore"
+              ],
+              "tests": [
+                "Pruebas A, B, C y D de continuity_test.py",
+                "python3 tools/continuity.py lock-status"
+              ]
+            }
+          ],
+          "evidence": [
+            "Prueba A: dos tareas distintas se conservan",
+            "Prueba B: misma tarea produce conflicto 2",
+            "Prueba C: interrupción deja el tracker original válido",
+            "Prueba D: el bloqueo se libera al matar el proceso",
+            "S-094: bloqueo y escritura atomica revalidados (pruebas C, D, D2 y E) con 14/14.",
+            "S-094: lock-status detecta lectores compartidos (prueba N); 15/15 pruebas OK."
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T13:06:25-06:00"
+        },
+        {
+          "id": "UPD-002-T05",
+          "updateId": "UPD-002",
+          "title": "Sesiones independientes y documentación de concurrencia",
+          "description": "Registrar cada sesión en docs/sessions/S-XXX.md y documentar el protocolo descentralizado, los cambios ajenos y Git.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-002-T04"
+          ],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "docs/sessions/README.md",
+            "docs/sessions/S-093.md",
+            "docs/CONCURRENCY.md",
+            "AGENTS.md",
+            "docs/updates/README.md",
+            "docs/IMPLEMENTATION_LOG.md"
+          ],
+          "contextFiles": [],
+          "contextDocs": [
+            "AGENTS.md",
+            "docs/updates/README.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/IMPLEMENTATION_LOG.md"
+          ],
+          "artifacts": [
+            "docs/sessions/README.md",
+            "docs/sessions/S-093.md",
+            "docs/CONCURRENCY.md",
+            "AGENTS.md",
+            "docs/updates/README.md",
+            "docs/IMPLEMENTATION_LOG.md"
+          ],
+          "acceptanceCriteria": [
+            "Cada sesión nueva tiene archivo propio con ID único.",
+            "El tracker guarda document en la sesión.",
+            "El log histórico anterior a S-093 no se reescribe.",
+            "El protocolo prohíbe reset/clean/checkout/stash ajeno y commits automáticos."
+          ],
+          "tests": [
+            "Prueba H de continuity_test.py",
+            "Validación del tracker"
+          ],
+          "technicalNotes": "El log histórico se cierra con una nota; las sesiones nuevas no compiten por un archivo grande.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Registrar cada sesión en docs/sessions/S-XXX.md y documentar el protocolo descentralizado, los cambios ajenos y Git.",
+              "files": [
+                "docs/sessions/README.md",
+                "docs/sessions/S-093.md",
+                "docs/CONCURRENCY.md",
+                "AGENTS.md",
+                "docs/updates/README.md",
+                "docs/IMPLEMENTATION_LOG.md"
+              ],
+              "tests": [
+                "Prueba H de continuity_test.py",
+                "Validación del tracker"
+              ]
+            }
+          ],
+          "evidence": [
+            "new-session asigna IDs únicos bajo concurrencia",
+            "S-093 tiene archivo propio y document en el tracker",
+            "CONCURRENCY.md documenta límites y recuperación",
+            "S-094: new-session registra la sesion activa y closeSession la cierra (pruebas K y L)."
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T13:03:08-06:00"
+        },
+        {
+          "id": "UPD-002-T06",
+          "updateId": "UPD-002",
+          "title": "Pruebas de concurrencia y tercera prueba de recuperación",
+          "description": "Ejecutar las pruebas A-F, medir la tercera recuperación y documentar métricas y límites.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-002-T01",
+            "UPD-002-T02",
+            "UPD-002-T03",
+            "UPD-002-T04",
+            "UPD-002-T05"
+          ],
+          "relatedTaskIds": [],
+          "decisionIds": [
+            "D-014"
+          ],
+          "files": [
+            "tools/tests/continuity_test.py",
+            "docs/sessions/S-093.md",
+            "docs/systems/survival.md",
+            "docs/updates/UPD-002.md",
+            "docs/pruebas.md"
+          ],
+          "contextFiles": [
+            "tools/tests/continuity_test.py",
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/LifeSupport.java"
+          ],
+          "contextDocs": [
+            "docs/systems/survival.md",
+            "docs/CONCURRENCY.md",
+            "docs/pruebas.md"
+          ],
+          "artifacts": [
+            "tools/tests/continuity_test.py",
+            "docs/sessions/S-093.md",
+            "docs/systems/survival.md",
+            "docs/updates/UPD-002.md",
+            "docs/pruebas.md"
+          ],
+          "acceptanceCriteria": [
+            "Se ejecutan las pruebas A-F y pasan.",
+            "Se mide la tercera recuperación con un agente de contexto limpio.",
+            "Se distinguen métricas de lecturas, búsquedas, archivos y líneas.",
+            "Se documentan las diferencias metodológicas con las pruebas anteriores."
+          ],
+          "tests": [
+            "python3 tools/tests/continuity_test.py (10/10 OK)",
+            "Tercera prueba con subagente de contexto limpio"
+          ],
+          "technicalNotes": "La tercera prueba usó 45 operaciones, 29 lecturas y 2.215 líneas; reveló la necesidad de una ruta mínima por métodos.",
+          "executionLog": [
+            {
+              "sessionId": "S-093",
+              "date": "2026-11-08T11:45:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Ejecutar las pruebas A-F, medir la tercera recuperación y documentar métricas y límites.",
+              "files": [
+                "tools/tests/continuity_test.py",
+                "docs/sessions/S-093.md",
+                "docs/systems/survival.md",
+                "docs/updates/UPD-002.md",
+                "docs/pruebas.md"
+              ],
+              "tests": [
+                "python3 tools/tests/continuity_test.py",
+                "Tercera prueba con subagente de contexto limpio"
+              ]
+            }
+          ],
+          "evidence": [
+            "10 pruebas de concurrencia OK (A-I)",
+            "Prueba B detectó y corrigió updatedAt",
+            "Prueba I: replace exige el número exacto de coincidencias",
+            "Tercera prueba: 45 operaciones, 29 lecturas, 18 archivos, 2.215 líneas",
+            "Se añadieron rutas mínimas a survival, mining, autopilot y economy",
+            "S-094: suite ampliada a 14 pruebas A-M; sync-dashboard --check OK."
+          ],
+          "createdAt": "2026-11-08T11:20:00-06:00",
+          "updatedAt": "2026-11-08T13:03:08-06:00"
+        }
+      ],
+      "observations": [
+        "No hay un agente coordinador permanente: cada sesión documenta y sincroniza su trabajo.",
+        "El bloqueo cubre solo lectura-modificación-escritura, no la implementación.",
+        "Las pruebas de concurrencia usan procesos del mismo equipo, no agentes reales en máquinas distintas.",
+        "No se corrigieron comentarios obsoletos de Java ni se tocaron mecánicas; se documentaron en las fichas."
+      ],
+      "implementationLog": [
+        {
+          "sessionId": "S-093",
+          "date": "2026-11-08T11:45:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Índice y fichas, STATUS ampliado, herramientas de continuidad, sesiones por archivo y pruebas de concurrencia completados.",
+          "files": [
+            "AGENTS.md",
+            ".gitignore",
+            "docs/INDEX.md",
+            "docs/CONCURRENCY.md",
+            "docs/DECISIONS.md",
+            "docs/PENDING_DECISIONS.md",
+            "docs/IMPLEMENTATION_LOG.md",
+            "docs/pruebas.md",
+            "docs/sessions/README.md",
+            "docs/sessions/S-093.md",
+            "docs/systems/*.md",
+            "docs/updates/README.md",
+            "docs/updates/UPD-002.md",
+            "tools/continuity.py",
+            "tools/continuity_io.py",
+            "tools/sync-dashboard.py",
+            "tools/tests/continuity_test.py"
+          ],
+          "tests": [
+            "python3 tools/tests/continuity_test.py",
+            "python3 tools/sync-dashboard.py --check",
+            "Tercera prueba con subagente"
+          ]
+        }
+      ],
+      "reviewExports": [],
+      "displayVersion": "0.3",
+      "objective": "Reducir el contexto necesario y permitir trabajo concurrente seguro."
+    },
+    {
+      "id": "UPD-003",
+      "name": "Identidad visual de simulador espacial industrial",
+      "status": "COMPLETADA",
+      "changeType": "DISENO",
+      "priority": "P1",
+      "createdAt": "2026-11-08T13:05:00-06:00",
+      "updatedAt": "2026-11-08T15:00:00-06:00",
+      "description": "Unificar menús, HUD, estación, mercado, mapa, gestión e interiores con una identidad de consola espacial industrial, sin cambiar mecánicas.",
+      "motivation": "Las pantallas funcionaban, pero mezclaban lenguajes visuales, etiquetas desalineadas y bloques de acción demasiado juntos. El juego evoluciona hacia minería, exploración, supervivencia y gestión de estaciones.",
+      "affectedSystems": [
+        "SYS-EXPERIENCIA"
+      ],
+      "affectedFeatures": [
+        "F-AUDIO-ACCESIBILIDAD"
+      ],
+      "relatedStages": [
+        "S11"
+      ],
+      "relatedTasks": [
+        "T-007",
+        "T-504",
+        "T-1110"
+      ],
+      "relatedUpdates": [
+        "UPD-002"
+      ],
+      "document": "docs/updates/UPD-003.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T13:05:00-06:00",
+        "basis": "Instrucción directa del usuario en la sesión: renovación de la identidad visual y de las interfaces sin alterar mecánicas."
+      },
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Todas las pantallas comparten paleta, tipografía, paneles y botones.",
+        "Las etiquetas de los botones quedan centradas dentro de su botón.",
+        "Los bloques de acciones no se solapan ni quedan pegados al borde.",
+        "El HUD presenta jerarquía: créditos, estado, casco, combustible y supervivencia en zonas distintas.",
+        "La estación, el mercado, el mapa y la gestión usan cabecera, lista y pie coherentes.",
+        "Los iconos son geométricos, consistentes y reutilizables.",
+        "No cambian mecánicas, balance, guardado ni telemetría.",
+        "Los tests de dispositivo y las capturas siguen pasando."
+      ],
+      "tasks": [
+        {
+          "id": "UPD-003-T01",
+          "updateId": "UPD-003",
+          "title": "Sistema visual industrial y renovación de pantallas",
+          "description": "Crear la paleta y los componentes de consola en Visuals/UiKit y aplicarlos al menú, HUD, estación, mercado, mapa, gestión e interiores, corrigiendo alineación y separación.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [
+            "T-007",
+            "T-504",
+            "T-1110"
+          ],
+          "decisionIds": [
+            "D-015"
+          ],
+          "files": [
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/MyGame.java"
+          ],
+          "contextFiles": [],
+          "contextDocs": [
+            "docs/systems/ui.md",
+            "docs/DECISIONS.md"
+          ],
+          "artifacts": [
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/continuity.py",
+            "tools/tests/continuity_test.py",
+            "docs/CONCURRENCY.md",
+            "docs/DECISIONS.md",
+            "docs/INDEX.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "docs/pruebas.md",
+            "docs/sessions/README.md",
+            "docs/sessions/S-094.md",
+            "docs/systems/continuity.md",
+            "docs/systems/ui.md",
+            "docs/updates/UPD-002.md",
+            "docs/updates/UPD-003.md"
+          ],
+          "acceptanceCriteria": [
+            "Una sola paleta y lenguaje de paneles en todas las pantallas.",
+            "Etiquetas centradas y bloques de acción separados.",
+            "Iconografía geométrica reutilizable.",
+            "Ninguna mecánica ni coordenada de juego modificada.",
+            "Tests de UI y capturas correctos."
+          ],
+          "tests": [
+            "tools/run-tests.sh --no-build 06_visual_menu 22_ui_polish 14_market",
+            "tools/run-tests.sh --no-build 07_visual_play 08_visual_death 13_station 14_market 18_map",
+            "tools/run-tests.sh --no-build 13_station 17_player_station 18_interiors",
+            "python3 tools/sync-dashboard.py --check"
+          ],
+          "technicalNotes": "Se conservan las mecánicas y el guardado. Se corrigió el origen de rotación de ShapeRenderer.rect en el icono de engranaje y se centraron las etiquetas de cantidad del mercado.",
+          "executionLog": [
+            {
+              "sessionId": "S-094",
+              "date": "2026-11-08T13:01:31-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "EN_PROGRESO",
+              "summary": "Revisión de UPD-002 y renovación visual de todas las pantallas."
+            },
+            {
+              "sessionId": "S-094",
+              "date": "2026-11-08T13:20:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Sistema visual industrial aplicado al menu, HUD, estacion, mercado, mapa, gestion e interiores; correccion de etiquetas y del icono de engranaje; verificacion en dispositivo.",
+              "files": [
+                "src/com/example/codegame/Visuals.java",
+                "src/com/example/codegame/UiKit.java",
+                "src/com/example/codegame/OverlayRenderer.java",
+                "src/com/example/codegame/PlayHud.java",
+                "src/com/example/codegame/StationScreen.java",
+                "src/com/example/codegame/MarketScreen.java",
+                "src/com/example/codegame/MapScreen.java",
+                "src/com/example/codegame/StationManagementScreen.java",
+                "src/com/example/codegame/MyGame.java",
+                "tools/continuity.py",
+                "tools/tests/continuity_test.py",
+                "docs/CONCURRENCY.md",
+                "docs/DECISIONS.md",
+                "docs/INDEX.md",
+                "docs/IMPLEMENTATION_TRACKER.json",
+                "docs/STATUS.md",
+                "docs/dashboard/index.html",
+                "docs/pruebas.md",
+                "docs/sessions/README.md",
+                "docs/sessions/S-094.md",
+                "docs/systems/continuity.md",
+                "docs/systems/ui.md",
+                "docs/updates/UPD-002.md",
+                "docs/updates/UPD-003.md"
+              ]
+            }
+          ],
+          "evidence": [
+            "S-094: 14/14 pruebas de continuidad (A-M) OK",
+            "S-094: sync-dashboard.py --check OK",
+            "S-094: capturas de menu, partida, pausa, muerte, estacion, mercado, mapa, gestion e interior revisadas",
+            "S-094: 06_visual_menu, 22_ui_polish, 14_market, 07_visual_play, 08_visual_death, 13_station, 18_map, 17_player_station y 18_interiors OK",
+            "S-094: corregido el origen de rotacion de ShapeRenderer.rect en el icono de engranaje",
+            "S-094: etiquetas de cantidad del mercado centradas con textCenteredMiddle",
+            "S-094: suite de continuidad ampliada a 15 pruebas (A-N), incluida lock-status con lector compartido."
+          ],
+          "createdAt": "2026-11-08T13:05:00-06:00",
+          "updatedAt": "2026-11-08T13:06:25-06:00",
+          "assignedSessionId": "S-094",
+          "assignedAt": "2026-11-08T13:01:31-06:00"
+        }
+      ],
+      "observations": [
+        "La fuente ASCII limita la jerarquía tipográfica; se compensa con escala, color y espaciado.",
+        "No se añadieron imágenes ni dependencias nuevas.",
+        "La geometría de los tests de dispositivo se mantiene; los cambios son de presentación."
+      ],
+      "implementationLog": [
+        {
+          "sessionId": "S-094",
+          "date": "2026-11-08T13:20:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Sistema visual industrial aplicado al menu, HUD, estacion, mercado, mapa, gestion e interiores; correccion de etiquetas y del icono de engranaje; verificacion en dispositivo.",
+          "files": [
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/continuity.py",
+            "tools/tests/continuity_test.py",
+            "docs/CONCURRENCY.md",
+            "docs/DECISIONS.md",
+            "docs/INDEX.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "docs/pruebas.md",
+            "docs/sessions/README.md",
+            "docs/sessions/S-094.md",
+            "docs/systems/continuity.md",
+            "docs/systems/ui.md",
+            "docs/updates/UPD-002.md",
+            "docs/updates/UPD-003.md"
+          ]
+        }
+      ],
+      "reviewExports": [],
+      "displayVersion": "0.4",
+      "objective": "Unificar la identidad visual de simulador espacial industrial."
+    },
+    {
+      "id": "UPD-004",
+      "name": "Compra e instalación de módulos de nave",
+      "status": "COMPLETADA",
+      "changeType": "CARACTERISTICA",
+      "priority": "P1",
+      "createdAt": "2026-11-08T13:45:00-06:00",
+      "updatedAt": "2026-11-08T15:00:00-06:00",
+      "description": "Añadir una pestaña MODULOS a la estación para comprar, instalar y retirar los módulos de nave que ya existen en el loadout.",
+      "motivation": "El piloto automático exige AUTOPILOT y los módulos tienen coste y ranuras, pero ninguna pantalla los vende; en partida normal son inobtenibles.",
+      "affectedSystems": [
+        "SYS-PILOTO-NAVE",
+        "SYS-ESTACIONES"
+      ],
+      "affectedFeatures": [
+        "F-NAVES-CONTENIDO",
+        "F-ACOPLAMIENTO"
+      ],
+      "relatedStages": [
+        "S11"
+      ],
+      "relatedTasks": [
+        "T-007",
+        "T-503",
+        "T-1109"
+      ],
+      "relatedUpdates": [
+        "UPD-003"
+      ],
+      "document": "docs/updates/UPD-004.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T13:45:00-06:00",
+        "basis": "Instrucción directa del usuario: registrar el plan en el dashboard y trabajar en él."
+      },
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "La estación muestra cuatro pestañas: SERVICIOS, MEJORAS, MODULOS y MERCADO.",
+        "La pestaña MODULOS lista AUTOPILOTO, RADAR, MINERIA, PROPULSION y HERRAMIENTAS con su coste.",
+        "Instalar un módulo descuenta sus créditos y ocupa la primera ranura libre.",
+        "Retirar un módulo libera la ranura y no devuelve créditos.",
+        "Sin créditos o sin ranura libre, la fila indica el motivo y no instala.",
+        "El módulo instalado se conserva al guardar, salir y volver a cargar.",
+        "El piloto automático puede comprarse y usarse en una partida normal.",
+        "Las pestañas SERVICIOS, MEJORAS y MERCADO siguen funcionando.",
+        "No cambian precios, efectos, balance ni otras mecánicas."
+      ],
+      "tasks": [
+        {
+          "id": "UPD-004-T01",
+          "updateId": "UPD-004",
+          "title": "Tienda de módulos y pestaña MODULOS",
+          "description": "Añadir la pestaña MODULOS a la estación, con lista de los cinco módulos, coste, primera ranura libre, instalación, retirada, persistencia y pruebas.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [
+            "T-007",
+            "T-503",
+            "T-1109"
+          ],
+          "decisionIds": [
+            "D-010"
+          ],
+          "files": [
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Upgrades.java",
+            "docs/systems/autopilot.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md",
+            "docs/pruebas.md",
+            "tools/tests/testlib.sh",
+            "tools/tests/23_ship_modules.sh"
+          ],
+          "contextFiles": [],
+          "contextDocs": [
+            "docs/systems/autopilot.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md"
+          ],
+          "artifacts": [
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/TractorBeam.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/updates/UPD-004.md",
+            "docs/systems/autopilot.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md",
+            "docs/systems/mining.md",
+            "docs/INDEX.md",
+            "docs/pruebas.md",
+            "docs/sessions/S-095.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "tools/tests/testlib.sh",
+            "tools/tests/23_ship_modules.sh"
+          ],
+          "acceptanceCriteria": [
+            "Cuarta pestaña MODULOS con los cinco módulos y su coste.",
+            "Instalar descuenta créditos y ocupa la primera ranura libre.",
+            "Retirar libera la ranura sin reembolso.",
+            "Sin créditos o sin ranura se muestra el motivo.",
+            "El estado persiste y el piloto automático queda obtenible.",
+            "Las pestañas existentes siguen funcionando."
+          ],
+          "tests": [
+            "tools/run-tests.sh --no-build 23_ship_modules 13_station 14_market 22_ui_polish",
+            "tools/run-tests.sh --no-build 01_logic 04_autopilot",
+            "python3 tools/sync-dashboard.py --check",
+            "tools/run-tests.sh --no-build 23_ship_modules 13_station 04_autopilot 09_wing_damage 22_ui_polish",
+            "tools/run-tests.sh --no-build 13_tractor",
+            "java -cp build/classes:jar/* com.example.codegame.SelfTest",
+            "python3 tools/sync-dashboard.py --check"
+          ],
+          "technicalNotes": "Se reutiliza Upgrades.installShipModule y las cuatro ranuras de ShipLoadout. Tras instalar/retirar se resincronizan láser y tractor y se guarda la partida.",
+          "executionLog": [
+            {
+              "sessionId": "S-095",
+              "date": "2026-11-08T13:16:57-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "EN_PROGRESO",
+              "summary": "Pestaña MODULOS con compra, instalación y retirada de módulos de nave."
+            },
+            {
+              "sessionId": "S-095",
+              "date": "2026-11-08T14:10:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Pestaña MODULOS en la estación con compra, instalación, retirada y persistencia; efecto de HERRAMIENTAS corregido y prueba 23 añadida.",
+              "files": [
+                "src/com/example/codegame/StationScreen.java",
+                "src/com/example/codegame/MyGame.java",
+                "src/com/example/codegame/Upgrades.java",
+                "src/com/example/codegame/Ship.java",
+                "src/com/example/codegame/TractorBeam.java",
+                "src/com/example/codegame/SelfTest.java",
+                "docs/updates/UPD-004.md",
+                "docs/systems/autopilot.md",
+                "docs/systems/ship.md",
+                "docs/systems/stations.md",
+                "docs/systems/mining.md",
+                "docs/INDEX.md",
+                "docs/pruebas.md",
+                "docs/sessions/S-095.md",
+                "docs/IMPLEMENTATION_TRACKER.json",
+                "docs/STATUS.md",
+                "docs/dashboard/index.html",
+                "tools/tests/testlib.sh",
+                "tools/tests/23_ship_modules.sh"
+              ]
+            }
+          ],
+          "evidence": [
+            "S-095: 23_ship_modules OK: AUTOPILOTO 150 CR, sin saldo no instala RADAR, persiste tras reiniciar, retirada sin reembolso y RADAR 140 CR.",
+            "S-095: 13_station, 04_autopilot, 09_wing_damage y 22_ui_polish OK con cuatro pestañas.",
+            "S-095: SelfTest TODO OK, incluida la comprobación del alcance efectivo de HERRAMIENTAS.",
+            "S-095: sync-dashboard.py --check OK.",
+            "S-095: captura de MODULOS antes/después de instalar revisada."
+          ],
+          "createdAt": "2026-11-08T13:45:00-06:00",
+          "updatedAt": "2026-11-08T13:31:56-06:00",
+          "assignedSessionId": "S-095",
+          "assignedAt": "2026-11-08T13:16:57-06:00"
+        }
+      ],
+      "observations": [
+        "Hay 4 ranuras y 5 módulos: el jugador debe elegir.",
+        "La retirada no reembolsa créditos.",
+        "La geometría de pestañas de los tests cambia de 3 a 4."
+      ],
+      "implementationLog": [
+        {
+          "sessionId": "S-095",
+          "date": "2026-11-08T14:10:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pestaña MODULOS en la estación con compra, instalación, retirada y persistencia; efecto de HERRAMIENTAS corregido y prueba 23 añadida.",
+          "files": [
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/TractorBeam.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/updates/UPD-004.md",
+            "docs/systems/autopilot.md",
+            "docs/systems/ship.md",
+            "docs/systems/stations.md",
+            "docs/systems/mining.md",
+            "docs/INDEX.md",
+            "docs/pruebas.md",
+            "docs/sessions/S-095.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/STATUS.md",
+            "docs/dashboard/index.html",
+            "tools/tests/testlib.sh",
+            "tools/tests/23_ship_modules.sh"
+          ]
+        }
+      ],
+      "reviewExports": [],
+      "displayVersion": "0.5",
+      "objective": "Hacer obtenibles y gestionables los módulos de nave desde la estación."
+    },
+    {
+      "id": "UPD-005",
+      "displayVersion": "0.6",
+      "objective": "Convertir el panel en un seguimiento por versiones con selector, línea de tiempo y una única plantilla dinámica.",
+      "name": "Dashboard por versiones, selector y línea de tiempo",
+      "status": "COMPLETADA",
+      "changeType": "INFRAESTRUCTURA",
+      "priority": "P1",
+      "createdAt": "2026-11-08T15:00:00-06:00",
+      "updatedAt": "2026-11-08T15:55:00-06:00",
+      "description": "Reorganizar el panel de continuidad en versiones seleccionables: la implementación inicial como 0.1, cada actualización con una etiqueta visual estable, selector compacto/descriptivo, línea de tiempo y contenido dinámico de la versión seleccionada.",
+      "motivation": "El panel actual presenta el plan maestro como bloque principal y apila todas las actualizaciones. A medida que se añaden versiones, la página se vuelve larga y no permite responder rápido qué versión está seleccionada, qué objetivo tiene, cuánto progreso lleva y qué queda pendiente.",
+      "affectedSystems": [
+        "SYS-CONTINUIDAD"
+      ],
+      "affectedFeatures": [
+        "F-CONTINUIDAD"
+      ],
+      "relatedStages": [
+        "S0"
+      ],
+      "relatedTasks": [
+        "T-003",
+        "T-006",
+        "T-007"
+      ],
+      "relatedUpdates": [
+        "UPD-001",
+        "UPD-002"
+      ],
+      "dependencies": [],
+      "document": "docs/updates/UPD-005.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T15:00:00-06:00",
+        "basis": "Instrucción directa del usuario: rediseñar el dashboard con selector de versiones, línea de tiempo y contenido dinámico sin páginas independientes."
+      },
+      "acceptanceCriteria": [
+        "La implementación inicial aparece como versión 0.1.",
+        "UPD-001 aparece como 0.2, UPD-002 como 0.3, UPD-003 como 0.4, UPD-004 como 0.5 y UPD-005 como 0.6.",
+        "El selector y la línea de tiempo comparten la selección.",
+        "El modo compacto es el predeterminado y el descriptivo muestra la información adicional.",
+        "Seleccionar una versión cambia cabecera, progreso, grupos, tareas, historial y pendientes.",
+        "El progreso usa solo las tareas de la versión seleccionada.",
+        "Las etapas S0–S11 solo aparecen en la versión 0.1.",
+        "Las actualizaciones sin grupos no muestran etapas inventadas.",
+        "Los pendientes globales son independientes de la versión seleccionada.",
+        "La búsqueda y los filtros siguen funcionando.",
+        "El panel funciona con file:// y no crea páginas HTML por actualización."
+      ],
+      "tasks": [
+        {
+          "id": "UPD-005-T01",
+          "updateId": "UPD-005",
+          "title": "Rediseño del panel por versiones",
+          "description": "Añadir metadatos de versión, selector compacto/descriptivo, línea de tiempo, plantilla dinámica, progreso por versión, grupos y tareas filtradas, historial por versión, pendientes globales y pruebas de renderizado.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [
+            "T-003",
+            "T-006",
+            "T-007"
+          ],
+          "decisionIds": [
+            "D-016"
+          ],
+          "files": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/README.md",
+            "tools/sync-dashboard.py",
+            "tools/tests/dashboard_versions_test.js",
+            "tools/tests/dashboard_versions_test.py",
+            "docs/updates/README.md",
+            "docs/updates/UPD-005.md",
+            "docs/systems/continuity.md",
+            "docs/INDEX.md",
+            "docs/DECISIONS.md",
+            "docs/PENDING_DECISIONS.md"
+          ],
+          "acceptanceCriteria": [
+            "Existe un selector horizontal con todas las versiones, de la más reciente a la más antigua.",
+            "Existe una línea de tiempo de 0.1 a la versión más reciente.",
+            "La selección del selector y de la línea de tiempo es la misma.",
+            "El contenido principal muestra solo la versión seleccionada.",
+            "El progreso, las tareas y el historial se calculan solo con los datos de la versión seleccionada.",
+            "Las etapas originales no se reutilizan en actualizaciones.",
+            "Las actualizaciones sin grupos muestran una lista plana.",
+            "El modo compacto es el predeterminado y el descriptivo es opcional.",
+            "Los pendientes globales están separados de los de la versión.",
+            "El panel sigue funcionando con file://."
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "python3 tools/tests/continuity_test.py",
+            "node tools/tests/dashboard_versions_test.js",
+            "python3 tools/tests/dashboard_versions_test.py",
+            "Apertura del panel con file://"
+          ],
+          "technicalNotes": "Una sola página y una sola plantilla. Los IDs internos no cambian; displayVersion es solo presentación.",
+          "executionLog": [
+            {
+              "sessionId": "S-096",
+              "date": "2026-11-08T15:30:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Selector compacto/descriptivo, línea de tiempo, plantilla dinámica, progreso por versión, grupos/etapas, historial y pendientes globales implementados y probados.",
+              "files": [
+                "docs/dashboard/index.html",
+                "docs/dashboard/dashboard.js",
+                "docs/dashboard/dashboard.css",
+                "docs/dashboard/README.md",
+                "tools/sync-dashboard.py",
+                "tools/tests/dashboard_versions_test.js",
+                "tools/tests/dashboard_versions_test.py",
+                "tools/tests/continuity_test.py",
+                "docs/updates/README.md",
+                "docs/updates/UPD-005.md",
+                "docs/systems/continuity.md",
+                "docs/INDEX.md",
+                "docs/DECISIONS.md",
+                "docs/PENDING_DECISIONS.md",
+                "docs/sessions/S-096.md"
+              ],
+              "tests": [
+                "python3 tools/sync-dashboard.py --check",
+                "python3 tools/tests/continuity_test.py",
+                "node tools/tests/dashboard_versions_test.js",
+                "python3 tools/tests/dashboard_versions_test.py",
+                "firefox --headless --screenshot file:///.../docs/dashboard/index.html"
+              ]
+            }
+          ],
+          "evidence": [
+            "El selector muestra v0.1 (BASE) a v0.6 (UPD-005) y la línea de tiempo va de 0.1 a 0.6.",
+            "Al abrir, meta.currentUpdateId (UPD-005) queda seleccionado; sin actualización actual se elige la más reciente y con varias activas la más reciente activa.",
+            "UPD-001 no muestra S0/S11; BASE sí muestra las etapas S0–S11.",
+            "La lista de UPD-005 solo contiene UPD-005-T01; el progreso es 1/1.",
+            "El resumen global no cambia al seleccionar otra versión.",
+            "Una propuesta pendiente muestra aviso y aparece en la sección global.",
+            "No existe ningún docs/dashboard/UPD-*.html.",
+            "Filtros, búsqueda, hashes antiguos, modo persistido y una actualización nueva funcionan con la misma plantilla.",
+            "Estados completada, en progreso, propuesta, pendiente de aprobación y bloqueada verificados.",
+            "dashboard_versions_test.js: 63 comprobaciones OK; continuity_test.py: 17 pruebas OK."
+          ],
+          "createdAt": "2026-11-08T15:00:00-06:00",
+          "updatedAt": "2026-11-08T15:55:00-06:00",
+          "contextFiles": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/dashboard.css",
+            "tools/sync-dashboard.py",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "contextDocs": [
+            "docs/dashboard/README.md",
+            "docs/updates/README.md",
+            "docs/systems/continuity.md",
+            "docs/CONCURRENCY.md"
+          ],
+          "artifacts": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/README.md",
+            "tools/sync-dashboard.py",
+            "tools/tests/dashboard_versions_test.js",
+            "tools/tests/dashboard_versions_test.py",
+            "tools/tests/continuity_test.py",
+            "docs/updates/README.md",
+            "docs/updates/UPD-005.md",
+            "docs/systems/continuity.md",
+            "docs/INDEX.md",
+            "docs/DECISIONS.md",
+            "docs/PENDING_DECISIONS.md"
+          ],
+          "assignedSessionId": "S-096",
+          "assignedAt": "2026-11-08T13:40:09-06:00"
+        }
+      ],
+      "observations": [
+        "La numeración 0.x es solo visual; UPD-005 sigue siendo UPD-005.",
+        "La versión inicial no recibe un tratamiento visual privilegiado.",
+        "No se crea un documento por actualización para alimentar el panel."
+      ],
+      "implementationLog": [
+        {
+          "sessionId": "S-096",
+          "date": "2026-11-08T15:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Panel por versiones con selector compacto/descriptivo, línea de tiempo, plantilla dinámica, progreso aislado y pruebas de renderizado.",
+          "files": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/README.md",
+            "tools/sync-dashboard.py",
+            "tools/tests/dashboard_versions_test.js",
+            "tools/tests/dashboard_versions_test.py",
+            "tools/tests/continuity_test.py",
+            "docs/updates/README.md",
+            "docs/updates/UPD-005.md",
+            "docs/systems/continuity.md",
+            "docs/INDEX.md",
+            "docs/DECISIONS.md",
+            "docs/PENDING_DECISIONS.md"
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "python3 tools/tests/continuity_test.py",
+            "node tools/tests/dashboard_versions_test.js",
+            "python3 tools/tests/dashboard_versions_test.py",
+            "firefox --headless --screenshot file:///.../docs/dashboard/index.html"
+          ]
+        }
+      ],
       "reviewExports": []
     }
   ],
@@ -10045,7 +11608,8 @@
           "T-007"
         ],
         "updateIds": [
-          "UPD-001"
+          "UPD-001",
+          "UPD-005"
         ]
       },
       {
@@ -10066,7 +11630,9 @@
           "T-1101",
           "T-1109"
         ],
-        "updateIds": []
+        "updateIds": [
+          "UPD-004"
+        ]
       },
       {
         "id": "SYS-SUPERVIVENCIA",
@@ -10153,7 +11719,9 @@
           "T-908",
           "T-1102"
         ],
-        "updateIds": []
+        "updateIds": [
+          "UPD-004"
+        ]
       },
       {
         "id": "SYS-ECONOMIA",
@@ -10246,7 +11814,9 @@
           "T-1108",
           "T-1110"
         ],
-        "updateIds": []
+        "updateIds": [
+          "UPD-003"
+        ]
       }
     ],
     "features": [
@@ -10268,6 +11838,9 @@
         ],
         "systemIds": [
           "SYS-CONTINUIDAD"
+        ],
+        "updateIds": [
+          "UPD-005"
         ]
       },
       {
@@ -10393,6 +11966,9 @@
         ],
         "systemIds": [
           "SYS-ESTACIONES"
+        ],
+        "updateIds": [
+          "UPD-004"
         ]
       },
       {
@@ -10509,6 +12085,9 @@
         ],
         "systemIds": [
           "SYS-PILOTO-NAVE"
+        ],
+        "updateIds": [
+          "UPD-004"
         ]
       },
       {
@@ -10540,6 +12119,9 @@
         ],
         "systemIds": [
           "SYS-EXPERIENCIA"
+        ],
+        "updateIds": [
+          "UPD-003"
         ]
       },
       {

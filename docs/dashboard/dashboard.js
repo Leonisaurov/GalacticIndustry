@@ -111,12 +111,16 @@
     sort: "stage",
     groupByStage: true,
     historyAll: false,
+    versionHistoryAll: false,
+    versionId: null,
+    versionMode: "compact",
     hideResolved: false,
     open: {},
-    updateOpen: {},
     review: { stages: {}, tasks: {}, updateTasks: {}, features: {}, systems: {}, updates: {} },
     reviewQuery: ""
   };
+
+  var VERSION_MODE_KEY = "gi-version-mode";
 
   function parseEmbedded() {
     return JSON.parse(document.getElementById("tracker-data").textContent);
@@ -152,6 +156,357 @@
   }
 
   applyTrackerData(DATA);
+
+  /* ---------------------------------------------------------------------
+     Modelo de versiones de presentación
+     --------------------------------------------------------------------- */
+
+  function versionParts(value) {
+    var parts = String(value || "").split(".");
+    var major = parseInt(parts[0], 10);
+    var minor = parseInt(parts[1], 10);
+    return [isNaN(major) ? -1 : major, isNaN(minor) ? -1 : minor];
+  }
+
+  function versionCompare(a, b) {
+    var pa = versionParts(a.displayVersion);
+    var pb = versionParts(b.displayVersion);
+    if (pa[0] !== pb[0]) return pa[0] - pb[0];
+    if (pa[1] !== pb[1]) return pa[1] - pb[1];
+    return natCompare(a.id, b.id);
+  }
+
+  function loadVersionMode() {
+    try {
+      return localStorage.getItem(VERSION_MODE_KEY) === "descriptive" ? "descriptive" : "compact";
+    } catch (e) {
+      return "compact";
+    }
+  }
+
+  function saveVersionMode(mode) {
+    try {
+      localStorage.setItem(VERSION_MODE_KEY, mode === "descriptive" ? "descriptive" : "compact");
+    } catch (e) { /* localStorage puede estar restringido en file:// */ }
+  }
+
+  function baseVersionStatus() {
+    var impl = tasks.filter(function (t) {
+      return t.category === "implementation" && t.countsForProgress === true;
+    });
+    if (impl.some(function (t) { return t.status === "EN_PROGRESO"; })) return "EN_PROGRESO";
+    if (impl.some(function (t) { return t.status === "BLOQUEADO"; })) return "BLOQUEADO";
+    if (impl.length && impl.every(function (t) { return t.status === "COMPLETADO"; })) return "COMPLETADO";
+    if (impl.some(function (t) { return t.status === "LISTO"; })) return "LISTO";
+    if (impl.some(function (t) { return t.status === "REQUIERE_DECISION"; })) return "REQUIERE_DECISION";
+    if (impl.some(function (t) { return t.status === "PENDIENTE"; })) return "PENDIENTE";
+    return stages.length && stages.every(function (s) { return s.status === "COMPLETADO"; })
+      ? "COMPLETADO" : "PENDIENTE";
+  }
+
+  function initialVersion() {
+    var iv = meta.initialVersion || {};
+    return {
+      id: iv.id || "BASE",
+      kind: "base",
+      internalId: "BASE",
+      displayVersion: iv.displayVersion || "0.1",
+      name: iv.name || "Implementación inicial",
+      description: iv.description || "Plan maestro original y primera versión jugable del proyecto.",
+      objective: iv.objective || "",
+      date: iv.date || null,
+      status: baseVersionStatus(),
+      update: null
+    };
+  }
+
+  function fallbackDisplayVersion(u) {
+    var sorted = updates.slice().sort(function (a, b) {
+      return String(a.createdAt || "").localeCompare(String(b.createdAt || "")) || natCompare(a.id, b.id);
+    });
+    var index = 0;
+    for (var i = 0; i < sorted.length; i += 1) {
+      if (sorted[i].id === u.id) { index = i; break; }
+    }
+    return (0.2 + index * 0.1).toFixed(1);
+  }
+
+  function updateVersion(u) {
+    return {
+      id: u.id,
+      kind: "update",
+      internalId: u.id,
+      displayVersion: u.displayVersion || fallbackDisplayVersion(u),
+      name: u.name || u.id,
+      description: u.description || MISSING,
+      objective: u.objective || u.motivation || u.description || MISSING,
+      date: u.createdAt || null,
+      status: u.status,
+      update: u
+    };
+  }
+
+  function versionList() {
+    var list = [initialVersion()];
+    updates.forEach(function (u) { list.push(updateVersion(u)); });
+    return list.sort(versionCompare);
+  }
+
+  function versionById(id) {
+    if (!id) return null;
+    if (id === "BASE" || id === "PLAN-BASE" || id === "update-plan-base") return initialVersion();
+    var list = versionList();
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i].id === id || list[i].internalId === id) return list[i];
+    }
+    return null;
+  }
+
+  function defaultVersionId() {
+    if (meta.currentUpdateId && updateById[meta.currentUpdateId]) {
+      return meta.currentUpdateId;
+    }
+    var development = updates.filter(function (u) {
+      return u.status === "EN_PROGRESO" || u.status === "APROBADA" || u.status === "BLOQUEADA";
+    });
+    if (development.length) {
+      development.sort(function (a, b) {
+        return versionCompare(updateVersion(a), updateVersion(b));
+      });
+      return development[development.length - 1].id;
+    }
+    var list = versionList();
+    return list.length ? list[list.length - 1].id : "BASE";
+  }
+
+  function ensureVersionSelection() {
+    var current = state.versionId ? versionById(state.versionId) : null;
+    if (!current) state.versionId = defaultVersionId();
+    return versionById(state.versionId) || initialVersion();
+  }
+
+  function selectedVersion() {
+    return ensureVersionSelection();
+  }
+
+  function versionTaskList(v) {
+    if (!v) return [];
+    if (v.kind === "base") return tasks;
+    return (v.update && v.update.tasks) || [];
+  }
+
+  function versionProgress(v) {
+    var list = versionTaskList(v);
+    var impl = list.filter(function (t) {
+      return t.category === "implementation" && t.countsForProgress === true;
+    });
+    var done = impl.filter(function (t) { return t.status === "COMPLETADO"; });
+    var counts = {};
+    list.forEach(function (t) { counts[t.status] = (counts[t.status] || 0) + 1; });
+    var closed = v.kind === "update" && (v.status === "RECHAZADA" || v.status === "ARCHIVADA");
+    return {
+      list: list,
+      impl: impl,
+      done: done.length,
+      total: impl.length,
+      pct: impl.length ? Math.round(done.length * 100 / impl.length) : null,
+      counts: counts,
+      closed: closed,
+      hasImpl: impl.length > 0
+    };
+  }
+
+  function versionStatusInfo(v) {
+    return v.kind === "base" ? statusInfo(v.status) : updateStatusInfo(v.status);
+  }
+
+  function versionStatusBadge(v) {
+    return v.kind === "base" ? statusBadge(v.status) : updateStatusBadge(v.status);
+  }
+
+  function versionStatusSlug(v) {
+    var map = {
+      PENDIENTE: "pendiente",
+      LISTO: "listo",
+      EN_PROGRESO: "progreso",
+      COMPLETADO: "completado",
+      BLOQUEADO: "bloqueado",
+      POSPUESTO: "pospuesto",
+      REQUIERE_DECISION: "decision",
+      PROPUESTA: "pendiente",
+      EN_REVISION: "listo",
+      PENDIENTE_APROBACION: "decision",
+      APROBADA: "completado",
+      BLOQUEADA: "bloqueado",
+      COMPLETADA: "completado",
+      RECHAZADA: "bloqueado",
+      ARCHIVADA: "pospuesto"
+    };
+    return map[v.status] || "pendiente";
+  }
+
+  function allProjectTasks() {
+    return tasks.concat(updateTasks());
+  }
+
+  function taskVersionId(task) {
+    return task.updateId || "BASE";
+  }
+
+  function groupProgressFromTasks(list, fallbackStatus) {
+    var impl = list.filter(function (t) {
+      return t.category === "implementation" && t.countsForProgress === true;
+    });
+    var done = impl.filter(function (t) { return t.status === "COMPLETADO"; });
+    var status = fallbackStatus || "PENDIENTE";
+    if (impl.length) {
+      if (done.length === impl.length) status = "COMPLETADO";
+      else if (impl.some(function (t) { return t.status === "EN_PROGRESO"; })) status = "EN_PROGRESO";
+      else if (impl.some(function (t) { return t.status === "REQUIERE_DECISION"; })) status = "REQUIERE_DECISION";
+      else if (impl.some(function (t) { return t.status === "BLOQUEADO"; })) status = "BLOQUEADO";
+      else if (impl.some(function (t) { return t.status === "LISTO"; })) status = "LISTO";
+      else status = "PENDIENTE";
+    }
+    return {
+      done: done.length,
+      total: impl.length,
+      pct: impl.length ? Math.round(done.length * 100 / impl.length) : (status === "COMPLETADO" ? 100 : 0),
+      status: status
+    };
+  }
+
+  function groupProgressText(group) {
+    var gp = (group && group.progress) || {};
+    if (group && group.type === "preparation") {
+      return (gp.prepDone || 0) + "/" + (gp.prepTotal || 0) + " tareas de preparación · " + (gp.pct || 0) + "%";
+    }
+    var total = gp.implTotal !== undefined ? gp.implTotal : gp.total;
+    if (!total) return statusInfo(gp.status).label;
+    return (gp.done || 0) + "/" + total + " tareas de implementación · " + (gp.pct || 0) + "%";
+  }
+
+  function versionGroupList(v) {
+    if (v.kind === "base") {
+      return stages.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); }).map(function (stage) {
+        var stageTasks = tasks.filter(function (t) { return t.stageId === stage.id; });
+        var sp = stageProgress(stage);
+        var tests = [];
+        stageTasks.forEach(function (t) { tests = tests.concat(t.tests || []); });
+        return {
+          id: stage.id,
+          name: stage.name,
+          type: stage.type,
+          objective: stage.objective,
+          description: stage.gate || "",
+          gate: stage.gate || "",
+          status: sp.status,
+          progress: sp,
+          taskIds: stageTasks.map(function (t) { return t.id; }),
+          dependencies: stage.dependencies || [],
+          tests: uniq(tests)
+        };
+      });
+    }
+    var groups = (v.update && v.update.groups) || [];
+    return groups.map(function (group) {
+      var groupTasks = (group.taskIds || []).map(function (id) { return taskById[id]; }).filter(Boolean);
+      var gp = groupProgressFromTasks(groupTasks, group.status);
+      return {
+        id: group.id || "G",
+        name: group.name || group.id || "Grupo",
+        type: "implementation",
+        objective: group.objective || "",
+        description: group.description || "",
+        gate: group.gate || "",
+        status: gp.status,
+        progress: gp,
+        taskIds: group.taskIds || [],
+        dependencies: group.dependencies || [],
+        tests: group.tests || []
+      };
+    });
+  }
+
+  function versionGroupForTask(v, taskId) {
+    var groups = versionGroupList(v);
+    if (v.kind === "base") {
+      var task = taskById[taskId];
+      if (!task || !task.stageId) return null;
+      for (var b = 0; b < groups.length; b += 1) {
+        if (groups[b].id === task.stageId) return groups[b];
+      }
+      return null;
+    }
+    for (var i = 0; i < groups.length; i += 1) {
+      if (groups[i].taskIds.indexOf(taskId) !== -1) return groups[i];
+    }
+    return null;
+  }
+
+  function taskContextLabel(task, v) {
+    if (task.stageId && stageById[task.stageId]) {
+      return task.stageId + " · " + stageById[task.stageId].name;
+    }
+    var group = v ? versionGroupForTask(v, task.id) : null;
+    if (group) return group.id + " · " + group.name;
+    return v ? "Actualización " + v.internalId : "Sin grupo";
+  }
+
+  function versionSessionIds(v) {
+    var ids = {};
+    versionTaskList(v).forEach(function (t) {
+      ids[t.id] = true;
+      (t.executionLog || []).forEach(function (l) {
+        if (l.sessionId) ids[l.sessionId] = true;
+      });
+    });
+    if (v.kind === "update") {
+      ((v.update && v.update.implementationLog) || []).forEach(function (l) {
+        if (l.sessionId) ids[l.sessionId] = true;
+      });
+    }
+    return ids;
+  }
+
+  function versionSessions(v) {
+    var ids = versionSessionIds(v);
+    return sessions.filter(function (s) {
+      if (ids[s.id]) return true;
+      return (s.tasks || []).some(function (id) { return ids[id] === true; });
+    });
+  }
+
+  function sessionVersionLabels(s) {
+    var seen = {};
+    var out = [];
+    (s.tasks || []).forEach(function (id) {
+      var t = taskById[id];
+      if (!t) return;
+      var vid = taskVersionId(t);
+      if (seen[vid]) return;
+      var v = versionById(vid);
+      if (!v) return;
+      seen[vid] = true;
+      out.push(v);
+    });
+    return out.sort(versionCompare);
+  }
+
+  function nextDisplayVersion() {
+    var major = 0;
+    var minor = 0;
+    var found = false;
+    versionList().forEach(function (v) {
+      var p = versionParts(v.displayVersion);
+      if (p[0] < 0 || p[1] < 0) return;
+      if (!found || p[0] > major || (p[0] === major && p[1] > minor)) {
+        major = p[0];
+        minor = p[1];
+        found = true;
+      }
+    });
+    return found ? major + "." + (minor + 1) : "0.1";
+  }
 
   function pendingDecisionIds(task) {
     return (task.decisionIds || []).filter(function (id) {
@@ -313,12 +668,6 @@
     return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
   }
 
-  function stageOrderMap() {
-    var map = {};
-    stages.forEach(function (s) { map[s.id] = s.order || 0; });
-    return map;
-  }
-
   function taskProgress() {
     var impl = tasks.filter(function (t) {
       return t.category === "implementation" && t.countsForProgress === true;
@@ -382,16 +731,18 @@
     var stageDone = stages.filter(function (s) { return stageProgress(s).status === "COMPLETADO"; }).length;
     var pending = (c.PENDIENTE || 0) + (c.LISTO || 0);
     var openDecisions = decisions.filter(function (d) { return d.status === "PENDIENTE"; }).length;
+    var versions = versionList().length;
 
     var cards = [
-      { label: "Progreso de implementación", value: p.pct + "%", sub: p.done + " de " + p.total + " tareas reales", cls: "accent", pct: p.pct },
+      { label: "Progreso del plan inicial", value: p.pct + "%", sub: p.done + " de " + p.total + " tareas reales", cls: "accent", pct: p.pct },
       { label: "Preparación", value: prep.pct + "%", sub: prep.done + " de " + prep.total + " tareas", cls: "good", pct: prep.pct },
-      { label: "Etapas completadas", value: stageDone + " / " + stages.length, sub: "del plan maestro", cls: stageDone === stages.length ? "good" : "", pct: stages.length ? Math.round(stageDone * 100 / stages.length) : 0 },
+      { label: "Etapas completadas", value: stageDone + " / " + stages.length, sub: "del plan inicial", cls: stageDone === stages.length ? "good" : "", pct: stages.length ? Math.round(stageDone * 100 / stages.length) : 0 },
+      { label: "Versiones registradas", value: String(versions), sub: "0.1 + " + updates.length + " actualizaciones", cls: "accent", pct: 0, noBar: true },
       { label: "Actualizaciones", value: approvedUpdateCount() + " / " + updates.length, sub: updates.length ? "aprobadas o completadas" : "ninguna registrada", cls: updates.length ? "accent" : "", pct: updates.length ? Math.round(approvedUpdateCount() * 100 / updates.length) : 0 },
       { label: "Pendientes de aprobación", value: String(pendingApprovalCount()), sub: "propuestas sin autorizar", cls: pendingApprovalCount() ? "decision" : "good", pct: updates.length ? Math.round(pendingApprovalCount() * 100 / updates.length) : 0 },
-      { label: "Tareas completadas", value: String(c.COMPLETADO || 0), sub: "de " + tasks.length + " registradas", cls: "good", pct: tasks.length ? Math.round((c.COMPLETADO || 0) * 100 / tasks.length) : 0 },
+      { label: "Tareas completadas", value: String(c.COMPLETADO || 0), sub: "de " + tasks.length + " del plan inicial", cls: "good", pct: tasks.length ? Math.round((c.COMPLETADO || 0) * 100 / tasks.length) : 0 },
       { label: "En progreso", value: String(c.EN_PROGRESO || 0), sub: c.EN_PROGRESO ? "recuperar antes de otra tarea" : "ninguna tarea activa", cls: c.EN_PROGRESO ? "warn" : "", pct: tasks.length ? Math.round((c.EN_PROGRESO || 0) * 100 / tasks.length) : 0 },
-      { label: "Pendientes", value: String(pending), sub: "pendientes + listas", cls: "warn", pct: tasks.length ? Math.round(pending * 100 / tasks.length) : 0 },
+      { label: "Pendientes", value: String(pending), sub: "pendientes + listas del plan inicial", cls: "warn", pct: tasks.length ? Math.round(pending * 100 / tasks.length) : 0 },
       { label: "Bloqueadas", value: String(c.BLOQUEADO || 0), sub: "requieren intervención", cls: (c.BLOQUEADO || 0) > 0 ? "bad" : "good", pct: tasks.length ? Math.round((c.BLOQUEADO || 0) * 100 / tasks.length) : 0 },
       { label: "Decisiones abiertas", value: String(openDecisions), sub: "de " + decisions.length + " registradas", cls: openDecisions > 0 ? "decision" : "good", pct: decisions.length ? Math.round(openDecisions * 100 / decisions.length) : 0 }
     ];
@@ -401,44 +752,54 @@
         '<div class="label">' + esc(card.label) + "</div>" +
         '<div class="value">' + esc(card.value) + "</div>" +
         '<div class="sub">' + esc(card.sub) + "</div>" +
-        '<div class="progress"><span style="width:' + Math.max(0, Math.min(100, card.pct)) + '%"></span></div>' +
+        (card.noBar ? "" : '<div class="progress"><span style="width:' + Math.max(0, Math.min(100, card.pct)) + '%"></span></div>') +
         "</div>";
     }).join("");
   }
 
-  function renderDistribution() {
-    var el = document.getElementById("status-distribution");
-    var c = countsByStatus();
-    var total = tasks.length;
-    if (!el) return;
-    if (!total) {
-      el.innerHTML = '<div class="empty">No hay tareas registradas.</div>';
-      return;
-    }
+  function distributionMarkup(list, title, hint, interactive) {
+    var c = {};
+    (list || []).forEach(function (t) { c[t.status] = (c[t.status] || 0) + 1; });
+    var total = (list || []).length;
+    if (!total) return '<div class="empty">No hay tareas registradas.</div>';
 
     var segments = STATUS_ORDER.filter(function (k) { return (c[k] || 0) > 0; }).map(function (k) {
       var n = c[k] || 0;
       var pct = n * 100 / total;
       var slug = STATUS_SLUG[k] || "pendiente";
-      return '<button type="button" class="dist-seg" data-status-filter="' + esc(k) + '"' +
+      var tag = interactive ? "button" : "span";
+      var attrs = interactive
+        ? ' type="button" class="dist-seg" data-status-filter="' + esc(k) + '"'
+        : ' class="dist-seg" aria-hidden="true"';
+      return "<" + tag + attrs +
         ' title="' + esc(STATUS[k].label + ": " + n + " tareas") + '"' +
         ' style="width:' + pct + "%;background:var(--st-" + slug + "-line);color:var(--st-" + slug + '-ink)">' +
-        (pct >= 7 ? esc(n) : "") + "</button>";
+        (pct >= 7 ? esc(n) : "") + "</" + tag + ">";
     }).join("");
 
     var legend = STATUS_ORDER.map(function (k) {
       var n = c[k] || 0;
       var slug = STATUS_SLUG[k] || "pendiente";
-      return '<button type="button" class="legend-btn" data-status-filter="' + esc(k) + '">' +
+      var tag = interactive ? "button" : "span";
+      var attrs = interactive
+        ? ' type="button" class="legend-btn" data-status-filter="' + esc(k) + '"'
+        : ' class="legend-btn"';
+      return "<" + tag + attrs + ">" +
         '<span class="legend-dot" style="background:var(--st-' + slug + '-line)"></span>' +
-        esc(STATUS[k].label) + " <strong>" + n + "</strong></button>";
+        esc(STATUS[k].label) + " <strong>" + n + "</strong></" + tag + ">";
     }).join("");
 
-    el.innerHTML =
-      '<div class="dist-head"><h3>Distribución por estado</h3>' +
-      '<span class="hint">' + total + " tareas · haz clic en un segmento para filtrar</span></div>" +
+    return '<div class="dist-head"><h3>' + esc(title) + "</h3>" +
+      '<span class="hint">' + esc(hint || (total + " tareas")) + "</span></div>" +
       '<div class="dist-bar" role="img" aria-label="Distribución de tareas por estado">' + segments + "</div>" +
       '<div class="dist-legend">' + legend + "</div>";
+  }
+
+  function renderDistribution() {
+    var el = document.getElementById("status-distribution");
+    if (!el) return;
+    el.classList.add("static");
+    el.innerHTML = distributionMarkup(tasks, "Distribución global por estado", tasks.length + " tareas del plan inicial", false);
   }
 
   function renderCurrent() {
@@ -446,25 +807,36 @@
     var currentTask = meta.currentTaskId ? taskById[meta.currentTaskId] : null;
     var detected = false;
     if (!currentTask) {
-      var inProgress = tasks.filter(function (t) { return t.status === "EN_PROGRESO"; });
+      var inProgress = allProjectTasks().filter(function (t) { return t.status === "EN_PROGRESO"; });
       if (inProgress.length) { currentTask = inProgress[0]; detected = true; }
     }
     var nextTask = meta.nextTaskId ? taskById[meta.nextTaskId] : null;
     var currentEl = document.getElementById("current-main");
     var nextEl = document.getElementById("next-main");
 
-    var stageHtml = currentStage
-      ? '<div class="stage-line"><span class="stage-id">' + esc(currentStage.id) + " · " + esc(currentStage.name) + "</span>" +
-        statusBadge(currentStage.status) + "</div>"
-      : '<div class="stage-id">Sin etapa actual</div>';
-
+    var currentTaskVersion = currentTask && currentTask.updateId ? versionById(currentTask.updateId) : null;
+    var stageHtml;
     var progressHtml = "";
-    if (currentStage) {
-      var sp = stageProgress(currentStage);
-      progressHtml = '<div class="progress" title="' + sp.pct + '% de la etapa"><span style="width:' + sp.pct + '%"></span></div>' +
-        '<div class="stage-foot"><span>' + (currentStage.type === "preparation"
-          ? sp.prepDone + "/" + sp.prepTotal + " tareas de preparación"
-          : sp.done + "/" + sp.implTotal + " tareas de implementación") + "</span><span>" + sp.pct + "%</span></div>";
+    if (currentTaskVersion) {
+      var vp = versionProgress(currentTaskVersion);
+      stageHtml = '<div class="stage-line"><span class="stage-id">v' + esc(currentTaskVersion.displayVersion) + " · " + esc(currentTaskVersion.internalId) + "</span>" +
+        versionStatusBadge(currentTaskVersion) + "</div>";
+      if (vp.pct !== null) {
+        progressHtml = '<div class="progress" title="' + vp.pct + '% de la versión"><span style="width:' + vp.pct + '%"></span></div>' +
+          '<div class="stage-foot"><span>' + vp.done + "/" + vp.total + " tareas de implementación</span><span>" + vp.pct + "%</span></div>";
+      }
+    } else {
+      stageHtml = currentStage
+        ? '<div class="stage-line"><span class="stage-id">' + esc(currentStage.id) + " · " + esc(currentStage.name) + "</span>" +
+          statusBadge(currentStage.status) + "</div>"
+        : '<div class="stage-id">Sin etapa actual</div>';
+      if (currentStage) {
+        var sp = stageProgress(currentStage);
+        progressHtml = '<div class="progress" title="' + sp.pct + '% de la etapa"><span style="width:' + sp.pct + '%"></span></div>' +
+          '<div class="stage-foot"><span>' + (currentStage.type === "preparation"
+            ? sp.prepDone + "/" + sp.prepTotal + " tareas de preparación"
+            : sp.done + "/" + sp.implTotal + " tareas de implementación") + "</span><span>" + sp.pct + "%</span></div>";
+      }
     }
 
     var taskHtml = currentTask
@@ -472,14 +844,23 @@
         "<h3>" + esc(currentTask.title) + "</h3>" +
         "<p>" + esc(currentTask.description) + "</p>" +
         '<div class="chips">' + statusBadge(currentTask.status) + priorityChip(currentTask.priority) +
-        '<span class="chip mono">' + esc(currentTask.stageId) + "</span></div>" +
-        (detected ? '<p style="color:var(--amber);font-size:12.5px">Detectada en el tracker como EN_PROGRESO aunque meta.currentTaskId no apunta a ella. Recupérala antes de empezar otra.</p>' : "") +
+        '<span class="chip">' + esc(taskContextLabel(currentTask, versionById(taskVersionId(currentTask)))) + "</span>" +
+        (currentTask.updateId ? '<span class="chip mono">' + esc(currentTask.updateId) + "</span>" : "") + "</div>" +
+        (detected
+          ? '<p style="color:var(--amber);font-size:12.5px">' +
+            (currentTask.updateId
+              ? "Detectada como EN_PROGRESO en la actualización " + esc(currentTask.updateId) + "."
+              : "Detectada en el tracker como EN_PROGRESO aunque meta.currentTaskId no apunta a ella. Recupérala antes de empezar otra.") +
+            "</p>"
+          : "") +
         '<div style="margin-top:10px"><button type="button" class="btn ghost small" data-focus-task="' + esc(currentTask.id) + '">Abrir en la lista</button></div>'
       : '<h3>Ninguna tarea en progreso</h3><p>La siguiente tarea disponible está lista para ejecutarse. Una sesión debe empezar por ella y detenerse al terminarla.</p>';
 
     currentEl.innerHTML = stageHtml + taskHtml + progressHtml +
-      (currentStage ? '<div class="next-box"><h4>Objetivo de la etapa</h4><p>' + esc(currentStage.objective) + "</p></div>" : "") +
-      (currentStage && currentStage.gate ? '<div class="next-box"><h4>Gate de la etapa</h4><p>' + esc(currentStage.gate) + "</p></div>" : "") +
+      (currentTaskVersion
+        ? '<div class="next-box"><h4>Objetivo de la versión</h4><p>' + esc(currentTaskVersion.objective || "No documentado en el tracker.") + "</p></div>"
+        : (currentStage ? '<div class="next-box"><h4>Objetivo de la etapa</h4><p>' + esc(currentStage.objective) + "</p></div>" : "")) +
+      (!currentTaskVersion && currentStage && currentStage.gate ? '<div class="next-box"><h4>Gate de la etapa</h4><p>' + esc(currentStage.gate) + "</p></div>" : "") +
       (function () {
         var cu = currentUpdate();
         if (!cu) return "";
@@ -512,7 +893,7 @@
       '<h3 style="margin:4px 0 6px">' + esc(nextTask.title) + "</h3>" +
       '<p style="color:var(--muted);margin:0 0 10px">' + esc(nextTask.description) + "</p>" +
       '<div class="chips" style="margin-bottom:10px">' + statusBadge(nextTask.status) + priorityChip(nextTask.priority) +
-      '<span class="chip mono">' + esc(nextTask.stageId) + "</span>" +
+      '<span class="chip">' + esc(taskContextLabel(nextTask, initialVersion())) + "</span>" +
       '<span class="chip">' + (nextTask.acceptanceCriteria || []).length + " criterios</span>" +
       '<span class="chip">' + (nextTask.tests || []).length + " pruebas</span></div>" +
       '<div style="margin-bottom:10px"><button type="button" class="btn ghost small" data-focus-task="' + esc(nextTask.id) + '">Abrir en la lista</button></div>' +
@@ -544,102 +925,343 @@
       " · Última sesión: <strong style=\"color:var(--ink)\">" + esc(meta.lastSessionId || "—") + "</strong></p>";
   }
 
-  function renderStages() {
-    var el = document.getElementById("stage-grid");
-    el.innerHTML = stages.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); }).map(function (stage) {
-      var sp = stageProgress(stage);
-      var isCurrent = stage.id === meta.currentStageId;
-      return '<div class="card stage-card' + (isCurrent ? " current" : "") + '" data-stage-jump="' + esc(stage.id) + '" role="button" tabindex="0" aria-label="Filtrar tareas de ' + esc(stage.id + " " + stage.name) + '">' +
-        '<div class="stage-top"><span class="stage-id">' + esc(stage.id) + "</span>" +
-        '<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
-        (isCurrent ? '<span class="badge s-LISTO stage-current-tag">Actual</span>' : "") +
-        statusBadge(sp.status) + "</span></div>" +
-        "<h3>" + esc(stage.name) + "</h3>" +
-        '<div class="obj">' + esc(stage.objective) + "</div>" +
-        '<div class="progress"><span style="width:' + sp.pct + '%"></span></div>' +
-        '<div class="stage-foot"><span>' +
-          (stage.type === "preparation"
-            ? sp.prepDone + "/" + sp.prepTotal + " tareas de preparación"
-            : sp.done + "/" + sp.implTotal + " tareas de implementación") +
-          '</span><span>' + sp.pct + "%</span></div>" +
-        (stage.gate ? '<div class="stage-gate" title="' + esc(stage.gate) + '">Gate: ' + esc(stage.gate) + "</div>" : "") +
-        "</div>";
-    }).join("");
-  }
-
-  function updateTaskHtml(u, t) {
-    var open = state.open[t.id] ? " open" : "";
-    var deps = t.dependencies || [];
-    var depChips = deps.map(function (id) {
-      var d = taskById[id];
-      var ok = d && d.status === "COMPLETADO";
-      return '<span class="chip ' + (ok ? "ok" : "no") + '"><span class="mono">' + esc(id) + "</span>" +
-        (d ? " · " + esc(d.title) : " · no existe") + "</span>";
-    }).join("");
-    if (!depChips) depChips = '<span class="chip ok">Sin dependencias</span>';
-
-    var related = (t.relatedTaskIds || []).map(function (id) {
-      var d = taskById[id];
-      return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir tarea histórica ' + esc(id) + '">' + esc(id) + "</button>" +
-        (d ? '<span class="chip">' + esc(d.title) + "</span>" : "");
-    }).join("");
-    if (!related) related = '<span class="chip">Ninguna</span>';
-
-    var decisionChips = (t.decisionIds || []).map(function (id) {
-      var d = decisionById[id];
-      return '<span class="chip">' + esc(id) + (d ? " · " + esc(DECISION_LABEL[d.status] || d.status) : " · no existe") + "</span>";
-    }).join("");
-    if (!decisionChips) decisionChips = '<span class="chip">Ninguna</span>';
-
-    var acceptance = (t.acceptanceCriteria || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
-    var tests = (t.tests || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
-    var files = (t.files || []).map(function (x) { return '<span class="chip mono">' + esc(x) + "</span>"; }).join("");
-    var contextFiles = (t.contextFiles || []).map(function (x) { return '<span class="chip mono">' + esc(x) + "</span>"; }).join("");
-    var contextDocs = (t.contextDocs || []).map(function (x) { return '<span class="chip">' + esc(x) + "</span>"; }).join("");
-    var artifacts = (t.artifacts || []).map(function (x) { return '<span class="chip mono">' + esc(x) + "</span>"; }).join("");
-    var contextChips = (contextFiles || contextDocs)
-      ? (contextFiles ? "<div><strong>Código:</strong> " + contextFiles + "</div>" : "") +
-        (contextDocs ? "<div><strong>Docs:</strong> " + contextDocs + "</div>" : "")
-      : "";
-    var evidence = (t.evidence || []).map(function (x) { return '<span class="chip">' + esc(x) + "</span>"; }).join("");
-    var logs = (t.executionLog || []).map(function (l) {
-      var st = l.status && STATUS[l.status] ? statusBadge(l.status) + " " : "";
-      return '<li class="log-item"><span class="mono">' + esc(l.sessionId || "—") + "</span> · " +
-        esc(fmtDate(l.date)) + " · " + esc(l.agent || "") + " · " + st + esc(l.summary || "") + "</li>";
-    }).join("");
-
-    return '<details class="update-task"' + open + ' id="update-task-' + esc(t.id) + '" data-update-task="' + esc(t.id) + '">' +
+  function versionGroupHtml(v, group) {
+    var gp = group.progress || groupProgressFromTasks([], group.status);
+    var taskChips = (group.taskIds || []).map(function (id) {
+      var t = taskById[id];
+      if (!t) return '<span class="chip no">' + esc(id) + " · no existe</span>";
+      return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir ' + esc(id) + '">' + esc(id) + "</button>" +
+        '<span class="chip">' + esc(t.title) + " · " + esc(statusInfo(t.status).label) + "</span>";
+    }).join("") || '<span class="chip">Sin tareas asociadas</span>';
+    var deps = (group.dependencies || []).map(function (id) {
+      var t = taskById[id];
+      return '<span class="chip">' + esc(id) + (t ? " · " + esc(t.title) : " · no existe") + "</span>";
+    }).join("") || '<span class="chip ok">Sin dependencias</span>';
+    var tests = (group.tests || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+    var open = state.open["group-" + group.id] ? " open" : "";
+    return '<details class="version-group"' + open + ' id="version-group-' + esc(group.id) + '" data-version-group="' + esc(group.id) + '">' +
       "<summary>" +
-        '<span class="task-id">' + esc(t.id) + "</span>" +
-        '<span class="task-title"><strong>' + esc(t.title) + "</strong><small>" +
-          esc(t.category === "preparation" ? "preparación" : "implementación") +
-          " · " + ((t.acceptanceCriteria || []).length) + " criterios · " + ((t.tests || []).length) + " pruebas</small></span>" +
-        '<span class="task-right">' + statusBadge(t.status) + priorityChip(t.priority) + "</span>" +
+        '<span class="group-id">' + esc(group.id) + "</span>" +
+        '<span class="group-main"><strong>' + esc(group.name) + "</strong><small>" +
+          esc(groupProgressText(group)) +
+        "</small></span>" +
+        '<span class="group-right">' + statusBadge(group.status) + "</span>" +
       "</summary>" +
-      '<div class="task-body">' +
-        '<p class="desc">' + esc(t.description) + "</p>" +
+      '<div class="group-body">' +
+        (group.objective ? '<p class="desc">' + esc(group.objective) + "</p>" : "") +
         '<div class="meta-grid">' +
-          '<div class="meta-block"><h4>Dependencias</h4><div class="chips">' + depChips + "</div></div>" +
-          '<div class="meta-block"><h4>Tareas históricas relacionadas</h4><div class="chips">' + related + "</div></div>" +
-          '<div class="meta-block"><h4>Decisiones</h4><div class="chips">' + decisionChips + "</div></div>" +
-          '<div class="meta-block"><h4>Criterios de aceptación</h4><ul>' + (acceptance || "<li>Sin criterios registrados.</li>") + "</ul></div>" +
-          '<div class="meta-block"><h4>Pruebas</h4><ul>' + (tests || "<li>Sin pruebas registradas.</li>") + "</ul></div>" +
-          '<div class="meta-block"><h4>Archivos / sistemas</h4><div class="chips">' + (files || '<span class="chip">Sin archivos registrados</span>') + "</div></div>" +
-          (contextChips ? '<div class="meta-block" style="grid-column:1/-1"><h4>Contexto previo</h4><div class="chips">' + contextChips + "</div></div>" : "") +
-          (artifacts ? '<div class="meta-block" style="grid-column:1/-1"><h4>Artefactos de implementación</h4><div class="chips">' + artifacts + "</div></div>" : "") +
-          '<div class="meta-block" style="grid-column:1/-1"><h4>Observaciones técnicas</h4><p style="margin:0;color:var(--muted);font-size:13px">' + esc(t.technicalNotes || "—") + "</p></div>" +
-          '<div class="meta-block" style="grid-column:1/-1"><h4>Evidencias</h4><div class="chips">' + (evidence || '<span class="chip">Sin evidencias todavía</span>') + "</div></div>" +
-          '<div class="meta-block" style="grid-column:1/-1"><h4>Registro de ejecución</h4><ul class="log-list">' + (logs || "<li>Sin ejecuciones registradas.</li>") + "</ul></div>" +
+          '<div class="meta-block"><h4>Descripción / gate</h4><p style="margin:0;color:var(--muted);font-size:13px">' + esc(group.description || group.gate || "—") + "</p></div>" +
+          '<div class="meta-block"><h4>Estado y progreso</h4><p style="margin:0;color:var(--muted);font-size:13px">' +
+            esc(statusInfo(group.status).label) + " · " + (gp ? gp.pct : 0) + "%" +
+          "</p></div>" +
+          '<div class="meta-block"><h4>Dependencias</h4><div class="chips">' + deps + "</div></div>" +
+          '<div class="meta-block"><h4>Pruebas relevantes</h4><ul>' + (tests || "<li>Sin pruebas registradas.</li>") + "</ul></div>" +
         "</div>" +
+        '<div class="meta-block" style="margin-top:12px"><h4>Tareas asociadas</h4><div class="chips">' + taskChips + "</div></div>" +
       "</div>" +
     "</details>";
   }
 
-  function updateCardHtml(u) {
-    var current = isCurrentUpdate(u);
-    var defaultOpen = current && state.updateOpen[u.id] !== false;
-    var open = state.updateOpen[u.id] === true || defaultOpen;
-    var p = updateProgress(u);
+  function renderVersionGroups(v) {
+    var el = document.getElementById("version-groups");
+    var titleEl = document.getElementById("version-groups-title");
+    var hintEl = document.getElementById("version-groups-hint");
+    if (!el) return;
+    var groups = versionGroupList(v);
+    if (titleEl) titleEl.textContent = v.kind === "base" ? "Etapas del plan inicial" : (groups.length ? "Grupos de trabajo de la versión" : "Grupos de trabajo");
+    if (hintEl) {
+      hintEl.textContent = v.kind === "base"
+        ? "Etapas S0–S11 del plan histórico. Solo se muestran en la versión 0.1."
+        : (groups.length ? "Grupos declarados en el tracker para esta actualización." : "Esta versión no declara etapas ni grupos propios.");
+    }
+    if (!groups.length) {
+      el.innerHTML = '<div class="empty">Esta versión no declara etapas ni grupos propios. Sus tareas se muestran en la sección Tareas, sin jerarquía inventada.</div>';
+      return;
+    }
+    el.innerHTML = groups.map(function (group) { return versionGroupHtml(v, group); }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("details.version-group"), function (d) {
+      d.addEventListener("toggle", function () {
+        if (d.open) state.open["group-" + d.getAttribute("data-version-group")] = true;
+        else delete state.open["group-" + d.getAttribute("data-version-group")];
+        saveUiState();
+      });
+    });
+  }
+
+  function compactVersionHtml(v, selected) {
+    var sel = selected && selected.id === v.id;
+    var label = versionStatusInfo(v).label;
+    return '<button type="button" class="version-chip' + (sel ? " selected" : "") + '" data-select-version="' + esc(v.id) + '"' +
+      ' aria-pressed="' + (sel ? "true" : "false") + '" title="' + esc("v" + v.displayVersion + " · " + v.internalId + " · " + v.name + " · " + label) + '">' +
+      '<span class="version-number">v' + esc(v.displayVersion) + "</span>" +
+      '<span class="version-id">' + esc(v.internalId) + "</span>" +
+      '<span class="version-state"><span class="version-dot" style="background:var(--st-' + esc(versionStatusSlug(v)) + '-line)"></span>' + esc(label) + "</span>" +
+    "</button>";
+  }
+
+  function descriptiveVersionHtml(v, selected) {
+    var sel = selected && selected.id === v.id;
+    var p = versionProgress(v);
+    var progress = p.pct === null
+      ? '<span class="hint">Sin tareas de implementación registradas.</span>'
+      : '<span class="progress"><span style="width:' + p.pct + '%"></span></span><span class="version-pct">' + p.pct + "% · " + p.done + "/" + p.total + "</span>";
+    return '<button type="button" class="version-card' + (sel ? " selected" : "") + '" data-select-version="' + esc(v.id) + '"' +
+      ' aria-pressed="' + (sel ? "true" : "false") + '">' +
+      '<span class="version-card-top"><span class="version-number">v' + esc(v.displayVersion) + "</span>" +
+        '<span class="version-id">' + esc(v.internalId) + "</span>" + versionStatusBadge(v) + "</span>" +
+      '<strong class="version-name">' + esc(v.name) + "</strong>" +
+      '<span class="version-desc">' + esc(v.description || MISSING) + "</span>" +
+      '<span class="version-objective"><b>Objetivo:</b> ' + esc(v.objective || MISSING) + "</span>" +
+      '<span class="version-progress-line">' + progress + "</span>" +
+    "</button>";
+  }
+
+  function renderVersionSelector() {
+    var el = document.getElementById("version-selector");
+    var summary = document.getElementById("version-summary");
+    if (!el) return;
+    var selected = selectedVersion();
+    var list = versionList().slice().reverse();
+    var compact = state.versionMode !== "descriptive";
+    el.className = "version-strip " + (compact ? "compact" : "descriptive");
+    el.innerHTML = list.map(function (v) {
+      return compact ? compactVersionHtml(v, selected) : descriptiveVersionHtml(v, selected);
+    }).join("");
+    if (summary) {
+      var current = currentUpdate();
+      var chips = [
+        '<span class="chip"><strong style="color:var(--ink)">' + versionList().length + "</strong> versiones</span>",
+        '<span class="chip">Seleccionada <strong style="color:var(--ink)">v' + esc(selected.displayVersion) + "</strong></span>",
+        '<span class="chip">Actual <strong style="color:var(--ink)">' + (current ? esc(current.id) : "—") + "</strong></span>",
+        '<span class="chip">Pendientes de aprobación <strong style="color:var(--ink)">' + pendingApprovalCount() + "</strong></span>"
+      ];
+      summary.innerHTML = chips.join("");
+    }
+    var modeBtn = document.getElementById("version-mode-btn");
+    if (modeBtn) {
+      modeBtn.textContent = compact ? "Vista descriptiva" : "Vista compacta";
+      modeBtn.setAttribute("aria-pressed", compact ? "false" : "true");
+      modeBtn.setAttribute("title", compact ? "Expandir la información de las versiones" : "Volver al modo compacto");
+    }
+  }
+
+  function renderTimeline() {
+    var el = document.getElementById("version-timeline");
+    if (!el) return;
+    var selected = selectedVersion();
+    el.innerHTML = versionList().map(function (v) {
+      var sel = selected.id === v.id;
+      return '<button type="button" class="timeline-point' + (sel ? " selected" : "") + '" data-select-version="' + esc(v.id) + '"' +
+        ' aria-pressed="' + (sel ? "true" : "false") + '" title="' + esc("v" + v.displayVersion + " · " + v.internalId + " · " + v.name) + '">' +
+        '<span class="timeline-dot" style="background:var(--st-' + esc(versionStatusSlug(v)) + '-line)"></span>' +
+        '<span class="timeline-version">v' + esc(v.displayVersion) + "</span>" +
+        '<span class="timeline-id">' + esc(v.internalId) + "</span>" +
+        '<span class="timeline-name">' + esc(v.name) + "</span>" +
+        versionStatusBadge(v) +
+      "</button>";
+    }).join("");
+  }
+
+  function renderVersionHero(v) {
+    var el = document.getElementById("version-hero");
+    if (!el) return;
+    var p = versionProgress(v);
+    var current = meta.currentUpdateId === v.id;
+    var approval = v.kind === "update" ? (v.update.approval || {}) : null;
+    var progress = p.pct === null
+      ? '<span class="hint">Sin tareas de implementación registradas.</span>'
+      : "<strong>" + p.pct + "%</strong><span>" + p.done + " / " + p.total + " tareas de implementación</span>" +
+        '<span class="progress"><span style="width:' + p.pct + '%"></span></span>';
+    var docHref = v.kind === "update" && v.update.document ? "../" + v.update.document.replace(/^docs\//, "") : "";
+    el.innerHTML = '<div class="card version-hero">' +
+      '<div class="version-hero-top">' +
+        '<div class="version-title">' +
+          '<span class="version-kicker">Versión ' + esc(v.displayVersion) + "</span>" +
+          "<h2>" + esc(v.name) + "</h2>" +
+          '<div class="version-meta">' +
+            '<span class="mono">' + esc(v.internalId) + "</span>" +
+            "<span>" + esc(v.date ? fmtDateShort(v.date) : "—") + "</span>" +
+            versionStatusBadge(v) +
+            (current ? '<span class="badge s-LISTO">Actual</span>' : "") +
+          "</div>" +
+        "</div>" +
+        '<div class="version-hero-progress">' + progress + "</div>" +
+      "</div>" +
+      '<p class="version-desc">' + esc(v.description || MISSING) + "</p>" +
+      '<div class="version-objectives"><h3>Objetivo principal</h3><p>' + esc(v.objective || MISSING) + "</p></div>" +
+      (v.kind === "update" && v.update.motivation
+        ? '<div class="version-objectives"><h3>Motivación</h3><p>' + esc(v.update.motivation) + "</p></div>"
+        : "") +
+      (approval
+        ? '<div class="version-approval"><h3>Aprobación</h3><p>' +
+            (approval.status === "APROBADA"
+              ? "Aprobada por " + esc(approval.approvedBy || "—") + " · " + esc(fmtDate(approval.approvedAt)) +
+                (approval.basis ? " · " + esc(approval.basis) : "")
+              : "Aprobación pendiente. No se implementa hasta que el usuario la autorice.") +
+          "</p>" + (docHref ? '<p>Documento: <a href="' + esc(docHref) + '" target="_blank" rel="noopener">' + esc(v.update.document) + "</a></p>" : "") +
+          "</div>"
+        : '<div class="version-approval"><h3>Plan histórico</h3><p>Plan maestro original. Se conserva como referencia y no se reabre; los cambios posteriores viven en actualizaciones.</p></div>') +
+    "</div>";
+  }
+
+  function renderVersionProgress(v) {
+    var el = document.getElementById("version-progress");
+    if (!el) return;
+    var p = versionProgress(v);
+    var c = p.counts;
+    var closed = p.closed;
+    var cards = [
+      { label: "Progreso de implementación", value: p.pct === null ? "—" : p.pct + "%", sub: p.hasImpl ? p.done + " de " + p.total + " tareas de implementación" : "sin tareas de implementación registradas", cls: "accent", pct: p.pct },
+      { label: "Completadas", value: String(c.COMPLETADO || 0), sub: "de " + p.list.length + " tareas de la versión", cls: "good", pct: p.list.length ? Math.round((c.COMPLETADO || 0) * 100 / p.list.length) : 0 },
+      { label: "En progreso", value: String(c.EN_PROGRESO || 0), sub: "tareas activas", cls: (c.EN_PROGRESO || 0) > 0 ? "warn" : "", pct: p.list.length ? Math.round((c.EN_PROGRESO || 0) * 100 / p.list.length) : 0 },
+      { label: "Listas", value: String(c.LISTO || 0), sub: "listas para empezar", cls: "accent", pct: p.list.length ? Math.round((c.LISTO || 0) * 100 / p.list.length) : 0 },
+      { label: "Pendientes", value: closed ? "—" : String(c.PENDIENTE || 0), sub: closed ? "versión cerrada sin trabajo pendiente" : "tareas PENDIENTE", cls: closed ? "" : "warn", pct: closed || !p.list.length ? 0 : Math.round((c.PENDIENTE || 0) * 100 / p.list.length) },
+      { label: "Bloqueadas", value: String(c.BLOQUEADO || 0), sub: "requieren intervención", cls: (c.BLOQUEADO || 0) > 0 ? "bad" : "good", pct: p.list.length ? Math.round((c.BLOQUEADO || 0) * 100 / p.list.length) : 0 }
+    ];
+    var secondary = [
+      '<span class="chip">Requieren decisión <strong style="color:var(--ink)">' + (c.REQUIERE_DECISION || 0) + "</strong></span>",
+      '<span class="chip">Pospuestas <strong style="color:var(--ink)">' + (c.POSPUESTO || 0) + "</strong></span>",
+      '<span class="chip">Total de tareas <strong style="color:var(--ink)">' + p.list.length + "</strong></span>",
+      closed ? '<span class="chip">Versión cerrada: no cuenta como pendiente</span>' : ""
+    ].join("");
+    el.innerHTML = '<div class="grid cards-auto version-stats">' + cards.map(function (card) {
+      return '<div class="card stat ' + card.cls + '">' +
+        '<div class="label">' + esc(card.label) + "</div>" +
+        '<div class="value">' + esc(card.value) + "</div>" +
+        '<div class="sub">' + esc(card.sub) + "</div>" +
+        (card.pct === null ? "" : '<div class="progress"><span style="width:' + Math.max(0, Math.min(100, card.pct)) + '%"></span></div>') +
+        "</div>";
+    }).join("") + "</div>" +
+    '<div class="chips version-secondary">' + secondary + "</div>" +
+    '<div class="card distribution" id="version-distribution">' +
+      distributionMarkup(p.list, "Distribución de la versión", "solo tareas de la versión seleccionada", true) +
+    "</div>";
+  }
+
+  function renderVersionAlert(v) {
+    var el = document.getElementById("version-alert");
+    if (!el) return;
+    var text = "";
+    if (v.kind === "update") {
+      if (v.status === "PROPUESTA" || v.status === "EN_REVISION" || v.status === "PENDIENTE_APROBACION") {
+        text = "Esta versión es una propuesta y no trabajo en desarrollo. No se implementa hasta que el usuario la apruebe.";
+      } else if (v.status === "BLOQUEADA") {
+        text = "Esta versión está bloqueada. Consulta sus pendientes y dependencias antes de continuar.";
+      } else if (v.status === "RECHAZADA" || v.status === "ARCHIVADA") {
+        text = "Esta versión está cerrada (" + versionStatusInfo(v).label + "). Se conserva como antecedente y no contabiliza tareas pendientes.";
+      }
+    }
+    el.innerHTML = text ? '<div class="update-note alert">' + esc(text) + "</div>" : "";
+  }
+
+  function sessionCardHtml(s, opts) {
+    opts = opts || {};
+    var isCurrent = s.id === meta.lastSessionId;
+    var files = (s.files || []).map(function (f) { return "<li class=\"mono\">" + esc(f) + "</li>"; }).join("");
+    var tests = (s.tests || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
+    var versions = opts.showVersions
+      ? sessionVersionLabels(s).map(function (v) {
+          return '<button type="button" class="chip mono" data-select-version="' + esc(v.id) + '" title="Abrir versión ' + esc(v.displayVersion) + '">v' + esc(v.displayVersion) + " · " + esc(v.internalId) + "</button>";
+        }).join("")
+      : "";
+    return '<div class="session' + (isCurrent ? " current" : "") + '">' +
+      '<div class="session-top"><h3>' + esc(s.id) + " · " + esc(s.title || "Sesión") + "</h3>" +
+      '<span class="date">' + esc(fmtDate(s.date)) + "</span></div>" +
+      '<div class="chips" style="margin:7px 0">' + outcomeBadge(s.outcome) +
+      (isCurrent ? '<span class="badge s-COMPLETADO">Última sesión</span>' : "") +
+      versions +
+      (s.document ? '<a class="chip" href="../' + esc(String(s.document).replace(/^docs\//, "")) + '" target="_blank" rel="noopener">Registro</a>' : "") +
+      (s.tasks || []).map(function (id) {
+        return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir ' + esc(id) + '">' + esc(id) + "</button>";
+      }).join("") + "</div>" +
+      "<p>" + esc(s.summary || "") + "</p>" +
+      '<div class="files">Agente: ' + esc(s.agent || "—") + " · Resultado: " + esc(s.outcome || "—") + "</div>" +
+      ((files || tests || s.notes)
+        ? '<details><summary>Archivos, pruebas y notas</summary>' +
+          (files ? "<h4 style=\"margin:8px 0 0;font-size:12px;color:var(--muted)\">Archivos</h4><ul>" + files + "</ul>" : "") +
+          (tests ? "<h4 style=\"margin:8px 0 0;font-size:12px;color:var(--muted)\">Pruebas</h4><ul>" + tests + "</ul>" : "") +
+          (s.notes ? '<p style="color:var(--muted)">' + esc(s.notes) + "</p>" : "") +
+          "</details>"
+        : "") +
+    "</div>";
+  }
+
+  function renderVersionHistory(v) {
+    var el = document.getElementById("version-history");
+    if (!el) return;
+    var list = versionSessions(v).slice().sort(function (a, b) {
+      return String(b.date || "").localeCompare(String(a.date || ""));
+    });
+    var implLog = v.kind === "update" ? ((v.update && v.update.implementationLog) || []) : [];
+    var logHtml = implLog.length
+      ? '<div class="card version-log"><h3>Registro de implementación de la actualización</h3><ul class="log-list">' +
+        implLog.map(function (l) {
+          var st = l.status && STATUS[l.status] ? statusBadge(l.status) + " " : "";
+          return '<li class="log-item"><span class="mono">' + esc(l.sessionId || "—") + "</span> · " +
+            esc(fmtDate(l.date)) + " · " + esc(l.agent || "") + " · " + st + esc(l.summary || "") +
+            ((l.files || []).length ? '<div class="chips" style="margin-top:4px">' + l.files.map(function (f) { return '<span class="chip mono">' + esc(f) + "</span>"; }).join("") + "</div>" : "") +
+            "</li>";
+        }).join("") + "</ul></div>"
+      : "";
+    if (!list.length) {
+      el.innerHTML = logHtml + '<div class="empty">No hay sesiones registradas directamente para esta versión.</div>';
+      return;
+    }
+    var limit = 8;
+    var shown = state.versionHistoryAll ? list : list.slice(0, limit);
+    el.innerHTML = logHtml +
+      '<div class="history">' + shown.map(function (s) { return sessionCardHtml(s, { showVersions: false }); }).join("") + "</div>" +
+      (list.length > limit
+        ? '<div class="history-more"><button type="button" class="btn ghost" data-version-history-toggle>' +
+          (state.versionHistoryAll ? "Mostrar solo las últimas " + limit : "Mostrar todas (" + list.length + ")") +
+          "</button></div>"
+        : "");
+  }
+
+  function renderVersionPending(v) {
+    var el = document.getElementById("version-pending");
+    if (!el) return;
+    var list = versionTaskList(v);
+    var pending = list.filter(function (t) {
+      return t.status === "BLOQUEADO" || t.status === "REQUIERE_DECISION" || t.status === "POSPUESTO" || pendingDecisionIds(t).length > 0;
+    });
+    var pendingDecisions = relatedDecisions(list).filter(function (d) { return d.status === "PENDIENTE"; });
+    var rows = pending.map(function (t) {
+      var extra = pendingDecisionIds(t).length ? " · Decisión: " + pendingDecisionIds(t).join(", ") : "";
+      return '<div class="blocked-row">' +
+        '<div class="title"><strong>' + esc(t.id) + " · " + esc(t.title) + "</strong><small>" + esc(t.technicalNotes || "Sin observaciones") + esc(extra) + "</small></div>" +
+        '<div class="row-right">' + statusBadge(t.status) +
+        '<button type="button" class="btn ghost small" data-focus-task="' + esc(t.id) + '">Abrir</button></div>' +
+        "</div>";
+    }).join("");
+    var decisions = pendingDecisions.map(function (d) {
+      return '<div class="blocked-row"><div class="title"><strong>' + esc(d.id) + " · " + esc(d.title) + "</strong><small>" + esc(d.recommendation || "") + "</small></div>" +
+        '<div class="row-right">' + decisionBadge(d.status) + "</div></div>";
+    }).join("");
+    el.innerHTML = (rows || decisions)
+      ? rows + decisions
+      : '<div class="empty">No hay pendientes propios de esta versión.</div>';
+  }
+
+  function renderVersionDetails(v) {
+    var el = document.getElementById("version-details");
+    if (!el) return;
+    if (v.kind === "base") {
+      el.innerHTML = '<details class="card version-details">' +
+        "<summary>Ficha del plan inicial</summary>" +
+        '<div class="version-details-body">' +
+          '<p class="hint">Plan histórico. No se reabre; las correcciones y mejoras posteriores se registran como actualizaciones.</p>' +
+          '<div class="meta-grid">' +
+            '<div class="meta-block"><h4>Etapas</h4><p style="margin:0;color:var(--muted);font-size:13px">' + stages.length + " etapas (S0–S11)</p></div>" +
+            '<div class="meta-block"><h4>Tareas</h4><p style="margin:0;color:var(--muted);font-size:13px">' + tasks.length + " tareas registradas</p></div>" +
+            '<div class="meta-block" style="grid-column:1/-1"><h4>Definición de progreso</h4><p style="margin:0;color:var(--muted);font-size:13px">' + esc(meta.progressDefinition || MISSING) + "</p></div>" +
+          "</div>" +
+        "</div>" +
+      "</details>";
+      return;
+    }
+    var u = v.update;
+    var approval = u.approval || {};
     var systems = (u.affectedSystems || []).map(function (id) {
       var s = systemById[id];
       return '<span class="chip">' + esc(id) + (s ? " · " + esc(s.name) : " · no existe") + "</span>";
@@ -650,175 +1272,112 @@
     }).join("") || '<span class="chip">Sin funcionalidades registradas</span>';
     var stagesRef = (u.relatedStages || []).map(function (id) {
       var s = stageById[id];
-      return '<button type="button" class="chip mono" data-stage-jump="' + esc(id) + '" title="Filtrar tareas de ' + esc(id) + '">' + esc(id) + "</button>" +
-        (s ? '<span class="chip">' + esc(s.name) + "</span>" : "");
+      return '<span class="chip">' + esc(id) + (s ? " · " + esc(s.name) : " · no existe") + "</span>";
     }).join("") || '<span class="chip">Ninguna</span>';
     var tasksRef = (u.relatedTasks || []).map(function (id) {
       return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir tarea histórica ' + esc(id) + '">' + esc(id) + "</button>";
     }).join("") || '<span class="chip">Ninguna</span>';
     var updatesRef = (u.relatedUpdates || []).map(function (id) {
-      return '<button type="button" class="chip mono" data-focus-update="' + esc(id) + '">' + esc(id) + "</button>";
+      return '<button type="button" class="chip mono" data-select-version="' + esc(id) + '" title="Abrir ' + esc(id) + '">' + esc(id) + "</button>";
     }).join("") || '<span class="chip">Ninguna</span>';
     var deps = (u.dependencies || []).map(function (id) {
       var d = updateById[id];
       return '<span class="chip ' + (d && (d.status === "COMPLETADA" || d.status === "APROBADA") ? "ok" : "no") + '">' + esc(id) +
         (d ? " · " + esc(d.name) + " · " + esc(updateStatusInfo(d.status).label) : " · no existe") + "</span>";
     }).join("") || '<span class="chip ok">Sin dependencias</span>';
-    var approval = u.approval || {};
-    var approvalText = approval.status === "APROBADA"
-      ? "Aprobada por " + esc(approval.approvedBy || "—") + " · " + esc(fmtDate(approval.approvedAt)) + (approval.basis ? " · " + esc(approval.basis) : "")
-      : "Aprobación pendiente. No se debe implementar hasta que el usuario la autorice.";
     var acceptance = (u.acceptanceCriteria || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
     var observations = (u.observations || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
-    var implLog = (u.implementationLog || []).map(function (l) {
-      var st = l.status && STATUS[l.status] ? statusBadge(l.status) + " " : "";
-      return '<li class="log-item"><span class="mono">' + esc(l.sessionId || "—") + "</span> · " +
-        esc(fmtDate(l.date)) + " · " + esc(l.agent || "") + " · " + st + esc(l.summary || "") + "</li>";
-    }).join("");
-    var taskList = (u.tasks || []).map(function (t) { return updateTaskHtml(u, t); }).join("") ||
-      '<div class="empty">Esta actualización todavía no tiene tareas planificadas.</div>';
-    var docHref = u.document ? "../" + u.document.replace(/^docs\//, "") : "";
     var exports = (u.reviewExports || []).map(function (x) {
       return '<span class="chip">' + esc(x.name || x.id || "Expediente") + " · " + esc(fmtDateShort(x.date)) + "</span>";
     }).join("") || '<span class="chip">Ninguno persistido. La exportación se descarga desde el navegador.</span>';
-
-    return '<details class="update-card' + (current ? " current" : "") + '"' + (open ? " open" : "") +
-      ' id="update-' + esc(u.id) + '" data-update="' + esc(u.id) + '">' +
-      "<summary>" +
-        '<span class="update-summary-main">' +
-          '<span class="update-id">' + esc(u.id) + "</span>" +
-          "<h3>" + esc(u.name) + "</h3>" +
-          "<small>" + esc(updateTypeLabel(u.changeType)) + " · " + esc(fmtDateShort(u.createdAt)) +
-            " · " + (u.tasks || []).length + " tareas · " + p.done + "/" + p.total + " completadas</small>" +
-        "</span>" +
-        '<span class="update-summary-right">' +
-          (current ? '<span class="badge s-LISTO">Actual</span>' : "") +
-          updateStatusBadge(u.status) + priorityChip(u.priority) +
-        "</span>" +
-      "</summary>" +
-      '<div class="update-body">' +
-        '<p class="desc">' + esc(u.description || MISSING) + "</p>" +
+    var docHref = u.document ? "../" + u.document.replace(/^docs\//, "") : "";
+    el.innerHTML = '<details class="card version-details">' +
+      "<summary>Ficha completa de la actualización</summary>" +
+      '<div class="version-details-body">' +
         '<div class="meta-grid">' +
-          '<div class="meta-block"><h4>Motivación</h4><p style="margin:0;color:var(--muted);font-size:13px">' + esc(u.motivation || MISSING) + "</p></div>" +
-          '<div class="meta-block"><h4>Aprobación</h4><p style="margin:0;color:var(--muted);font-size:13px">' + approvalText + "</p></div>" +
-          '<div class="meta-block" style="grid-column:1/-1"><h4>Sistemas afectados</h4><div class="chips">' + systems + "</div></div>" +
-          '<div class="meta-block" style="grid-column:1/-1"><h4>Funcionalidades relacionadas</h4><div class="chips">' + features + "</div></div>" +
-          '<div class="meta-block"><h4>Etapas relacionadas</h4><div class="chips">' + stagesRef + "</div></div>" +
+          '<div class="meta-block"><h4>Aprobación</h4><p style="margin:0;color:var(--muted);font-size:13px">' +
+            (approval.status === "APROBADA"
+              ? "Aprobada por " + esc(approval.approvedBy || "—") + " · " + esc(fmtDate(approval.approvedAt)) + (approval.basis ? " · " + esc(approval.basis) : "")
+              : "Aprobación pendiente. No se implementa hasta que el usuario la autorice.") + "</p></div>" +
+          '<div class="meta-block"><h4>Tipo, prioridad y fechas</h4><p style="margin:0;color:var(--muted);font-size:13px">' +
+            esc(updateTypeLabel(u.changeType)) + " · " + esc(PRIORITY_LABEL[u.priority] || u.priority || "—") +
+            " · Creada " + esc(fmtDate(u.createdAt)) + " · Actualizada " + esc(fmtDate(u.updatedAt)) + "</p></div>" +
+          '<div class="meta-block"><h4>Sistemas afectados</h4><div class="chips">' + systems + "</div></div>" +
+          '<div class="meta-block"><h4>Funcionalidades relacionadas</h4><div class="chips">' + features + "</div></div>" +
+          '<div class="meta-block"><h4>Etapas históricas relacionadas</h4><div class="chips">' + stagesRef + "</div></div>" +
           '<div class="meta-block"><h4>Tareas históricas relacionadas</h4><div class="chips">' + tasksRef + "</div></div>" +
           '<div class="meta-block"><h4>Actualizaciones relacionadas</h4><div class="chips">' + updatesRef + "</div></div>" +
           '<div class="meta-block"><h4>Dependencias</h4><div class="chips">' + deps + "</div></div>" +
+          '<div class="meta-block" style="grid-column:1/-1"><h4>Documento</h4><p style="margin:0;color:var(--muted);font-size:13px">' +
+            (docHref ? '<a href="' + esc(docHref) + '" target="_blank" rel="noopener">' + esc(u.document) + "</a>" : MISSING) + "</p></div>" +
         "</div>" +
-        '<div class="update-progress-line">' +
-          '<div class="progress" title="' + p.pct + '% de la actualización"><span style="width:' + p.pct + '%"></span></div>' +
-          "<span>" + p.pct + "%</span>" +
-        "</div>" +
-        (isApprovedUpdate(u) ? "" : '<div class="update-note alert">Propuesta sin aprobación: no se implementa. La aprobación debe registrarla el usuario y quedar en <code>approval</code>.</div>') +
-        '<div class="update-note">' + (docHref ? 'Documento: <a href="' + esc(docHref) + '" target="_blank" rel="noopener">' + esc(u.document) + "</a>" : "Documento: " + MISSING) +
-          " · Creada: " + esc(fmtDate(u.createdAt)) + " · Actualizada: " + esc(fmtDate(u.updatedAt)) + "</div>" +
         '<div class="meta-grid" style="margin-top:12px">' +
           '<div class="meta-block"><h4>Criterios de aceptación</h4><ul>' + (acceptance || "<li>Sin criterios registrados.</li>") + "</ul></div>" +
           '<div class="meta-block"><h4>Observaciones</h4><ul>' + (observations || "<li>Sin observaciones.</li>") + "</ul></div>" +
         "</div>" +
-        '<div class="meta-block" style="margin-top:12px"><h4>Tareas de la actualización</h4>' + taskList + "</div>" +
-        '<div class="meta-block" style="margin-top:12px"><h4>Registro de implementación</h4><ul class="log-list">' + (implLog || "<li>Sin implementación registrada.</li>") + "</ul></div>" +
         '<div class="meta-block" style="margin-top:12px"><h4>Expedientes de revisión</h4><div class="chips">' + exports + "</div></div>" +
       "</div>" +
     "</details>";
   }
 
-  function planCardHtml() {
-    var p = taskProgress();
-    var stageDone = stages.filter(function (s) { return stageProgress(s).status === "COMPLETADO"; }).length;
-    var open = state.updateOpen["PLAN-BASE"] === true;
-    var stageRows = stages.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); }).map(function (s) {
-      var sp = stageProgress(s);
+  function renderVersionContent() {
+    var v = selectedVersion();
+    var hint = document.getElementById("version-content-hint");
+    if (hint) hint.textContent = "Solo se muestra la versión seleccionada · v" + v.displayVersion + " · " + v.internalId;
+    renderVersionHero(v);
+    renderVersionAlert(v);
+    renderVersionProgress(v);
+    renderVersionGroups(v);
+    populateFilters();
+    restoreFilters();
+    renderTasks();
+    renderVersionHistory(v);
+    renderVersionPending(v);
+    renderVersionDetails(v);
+  }
+
+  function renderPendingApprovals() {
+    var el = document.getElementById("pending-approvals");
+    if (!el) return;
+    var list = updates.filter(function (u) {
+      return u.status === "PROPUESTA" || u.status === "EN_REVISION" || u.status === "PENDIENTE_APROBACION";
+    });
+    if (!list.length) {
+      el.innerHTML = '<div class="empty">No hay actualizaciones pendientes de aprobación.</div>';
+      return;
+    }
+    el.innerHTML = list.map(function (u) {
+      var p = updateProgress(u);
       return '<div class="blocked-row">' +
-        '<div class="title"><strong><span class="mono">' + esc(s.id) + "</span> · " + esc(s.name) + "</strong><small>" +
-        (s.type === "preparation" ? sp.prepDone + "/" + sp.prepTotal + " de preparación" : sp.done + "/" + sp.implTotal + " de implementación") +
-        "</small></div>" +
-        '<div class="row-right">' + statusBadge(sp.status) +
-        '<button type="button" class="btn ghost small" data-stage-jump="' + esc(s.id) + '">Abrir</button></div>' +
+        '<div class="title"><strong>v' + esc(u.displayVersion || fallbackDisplayVersion(u)) + " · " + esc(u.id) + " · " + esc(u.name) + "</strong><small>" +
+          esc(updateStatusInfo(u.status).label) + " · " + esc(updateTypeLabel(u.changeType)) + " · " + p.done + "/" + p.total + " tareas de implementación</small></div>" +
+        '<div class="row-right">' + updateStatusBadge(u.status) +
+        '<button type="button" class="btn ghost small" data-select-version="' + esc(u.id) + '">Abrir versión</button></div>' +
         "</div>";
     }).join("");
-
-    return '<details class="update-card plan-base"' + (open ? " open" : "") + ' id="update-plan-base" data-update="PLAN-BASE">' +
-      "<summary>" +
-        '<span class="update-summary-main">' +
-          '<span class="update-id">PLAN ORIGINAL</span>' +
-          "<h3>Plan maestro S0–S11</h3>" +
-          "<small>" + stages.length + " etapas · " + tasks.length + " tareas registradas · " + p.done + "/" + p.total + " de implementación completadas</small>" +
-        "</span>" +
-        '<span class="update-summary-right">' +
-          '<span class="badge s-COMPLETADO">Histórico</span>' +
-          statusBadge(stageDone === stages.length ? "COMPLETADO" : "EN_PROGRESO") +
-        "</span>" +
-      "</summary>" +
-      '<div class="update-body">' +
-        '<p class="desc">Planificación inicial del videojuego. Se conserva como referencia histórica con sus IDs, resultados y decisiones. Las correcciones y mejoras posteriores se registran como actualizaciones; este plan no se reabre.</p>' +
-        '<div class="update-note">Progreso base: ' + p.done + "/" + p.total + " (" + p.pct + "%) · Etapas completadas: " + stageDone + "/" + stages.length + "</div>" +
-        '<div class="meta-block" style="margin-top:12px"><h4>Etapas</h4>' + stageRows + "</div>" +
-      "</div>" +
-    "</details>";
   }
 
-  function renderUpdates() {
-    var listEl = document.getElementById("updates-list");
-    var summaryEl = document.getElementById("update-summary");
-    if (!listEl || !summaryEl) return;
-
-    var cu = currentUpdate();
-    var cuId = cu ? cu.id : null;
-    if (lastCurrentUpdateId && cuId && lastCurrentUpdateId !== cuId) {
-      delete state.updateOpen[lastCurrentUpdateId];
-    }
-    lastCurrentUpdateId = cuId;
-
-    var counts = updateStatusCounts();
-    var chips = [
-      '<span class="chip"><strong style="color:var(--ink)">' + updates.length + "</strong> actualizaciones</span>",
-      '<span class="chip">Completadas <strong style="color:var(--ink)">' + (counts.COMPLETADA || 0) + "</strong></span>",
-      '<span class="chip">En progreso <strong style="color:var(--ink)">' + (counts.EN_PROGRESO || 0) + "</strong></span>",
-      '<span class="chip">Pendientes de aprobación <strong style="color:var(--ink)">' + pendingApprovalCount() + "</strong></span>"
-    ];
-    var cuChip = currentUpdate();
-    if (cuChip) {
-      chips.push('<span class="chip">Actual <strong style="color:var(--ink)">' + esc(cuChip.id) + "</strong></span>");
-    }
-    summaryEl.innerHTML = chips.join("");
-
-    var sorted = updates.slice().sort(function (a, b) {
-      var da = String(a.createdAt || "");
-      var db = String(b.createdAt || "");
-      if (da !== db) return da.localeCompare(db);
-      return natCompare(a.id, b.id);
-    });
-    listEl.innerHTML = planCardHtml() + sorted.map(updateCardHtml).join("");
-
-    Array.prototype.forEach.call(listEl.querySelectorAll("details.update-card"), function (d) {
-      var summary = d.querySelector("summary");
-      if (!summary) return;
-      summary.addEventListener("click", function () {
-        setTimeout(function () {
-          var key = d.getAttribute("data-update");
-          if (d.open) state.updateOpen[key] = true;
-          else state.updateOpen[key] = false;
-          saveUiState();
-        }, 0);
-      });
-    });
-    Array.prototype.forEach.call(listEl.querySelectorAll("details.update-task"), function (d) {
-      var summary = d.querySelector("summary");
-      if (!summary) return;
-      summary.addEventListener("click", function () {
-        setTimeout(function () {
-          if (d.open) state.open[d.getAttribute("data-update-task")] = true;
-          else delete state.open[d.getAttribute("data-update-task")];
-          saveUiState();
-        }, 0);
-      });
-    });
+  function renderGlobalHistory() {
+    var el = document.getElementById("global-history-list");
+    if (!el) return;
+    var sorted = sessions.slice().sort(function (a, b) {
+      return String(b.date || "").localeCompare(String(a.date || ""));
+    }).slice(0, 6);
+    el.innerHTML = sorted.length
+      ? sorted.map(function (s) { return sessionCardHtml(s, { showVersions: true }); }).join("")
+      : '<div class="empty">No hay sesiones registradas.</div>';
   }
 
+  function renderGlobalSections() {
+    renderSummary();
+    renderDistribution();
+    renderCurrent();
+    renderVerification();
+    renderPendingApprovals();
+    renderDecisions();
+    renderGlobalHistory();
+    renderRules();
+  }
 
   function setSelectValue(el, value, fallback) {
     if (!el) return;
@@ -827,24 +1386,37 @@
   }
 
   function populateFilters() {
-    var c = countsByStatus();
+    var v = selectedVersion();
+    var list = versionTaskList(v);
+    var c = {};
+    list.forEach(function (t) { c[t.status] = (c[t.status] || 0) + 1; });
     var statusSel = document.getElementById("status-filter");
-    statusSel.innerHTML = '<option value="ALL">Todos los estados (' + tasks.length + ")</option>" +
+    statusSel.innerHTML = '<option value="ALL">Todos los estados (' + list.length + ")</option>" +
       STATUS_ORDER.map(function (k) {
         return '<option value="' + k + '">' + esc(STATUS[k].label) + " (" + (c[k] || 0) + ")</option>";
       }).join("");
 
     var stageSel = document.getElementById("stage-filter");
-    var stageCounts = {};
-    tasks.forEach(function (t) { stageCounts[t.stageId] = (stageCounts[t.stageId] || 0) + 1; });
-    stageSel.innerHTML = '<option value="ALL">Todas las etapas (' + tasks.length + ")</option>" +
-      stages.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); }).map(function (s) {
-        return '<option value="' + esc(s.id) + '">' + esc(s.id) + " · " + esc(s.name) + " (" + (stageCounts[s.id] || 0) + ")</option>";
-      }).join("");
+    var groups = versionGroupList(v);
+    var groupCounts = {};
+    list.forEach(function (t) {
+      var group = versionGroupForTask(v, t.id);
+      if (group) groupCounts[group.id] = (groupCounts[group.id] || 0) + 1;
+    });
+    if (groups.length) {
+      stageSel.disabled = false;
+      stageSel.innerHTML = '<option value="ALL">' + (v.kind === "base" ? "Todas las etapas" : "Todos los grupos") + " (" + list.length + ")</option>" +
+        groups.map(function (group) {
+          return '<option value="' + esc(group.id) + '">' + esc(group.id) + " · " + esc(group.name) + " (" + (groupCounts[group.id] || 0) + ")</option>";
+        }).join("");
+    } else {
+      stageSel.disabled = true;
+      stageSel.innerHTML = '<option value="ALL">Sin etapas o grupos propios</option>';
+    }
 
     var prioSel = document.getElementById("priority-filter");
     var priorityCounts = {};
-    tasks.forEach(function (t) { if (t.priority) priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1; });
+    list.forEach(function (t) { if (t.priority) priorityCounts[t.priority] = (priorityCounts[t.priority] || 0) + 1; });
     var priorities = Object.keys(priorityCounts).sort(function (a, b) {
       return (PRIORITY_ORDER[a] === undefined ? 99 : PRIORITY_ORDER[a]) - (PRIORITY_ORDER[b] === undefined ? 99 : PRIORITY_ORDER[b]);
     });
@@ -855,27 +1427,44 @@
   }
 
   function restoreFilters() {
+    var v = selectedVersion();
+    var groups = versionGroupList(v);
+    if (!groups.length) {
+      state.stage = "ALL";
+    } else if (state.stage !== "ALL" && !groups.some(function (g) { return g.id === state.stage; })) {
+      state.stage = "ALL";
+    }
     document.getElementById("search").value = state.search || "";
     setSelectValue(document.getElementById("status-filter"), state.status || "ALL", "ALL");
-    setSelectValue(document.getElementById("stage-filter"), state.stage || "ALL", "ALL");
+    var stageSel = document.getElementById("stage-filter");
+    if (stageSel) {
+      stageSel.disabled = !groups.length;
+      setSelectValue(stageSel, state.stage || "ALL", "ALL");
+    }
     setSelectValue(document.getElementById("priority-filter"), state.priority || "ALL", "ALL");
     setSelectValue(document.getElementById("sort-filter"), state.sort || "stage", "stage");
     var group = document.getElementById("group-toggle");
-    if (group) group.checked = state.groupByStage !== false;
+    if (group) {
+      group.disabled = !groups.length;
+      group.checked = groups.length > 0 && state.groupByStage !== false;
+    }
   }
 
   function filterTasks() {
+    var v = selectedVersion();
     var q = (state.search || "").trim().toLowerCase();
     var tokens = q ? q.split(/\s+/).filter(Boolean) : [];
-    return tasks.filter(function (t) {
+    return versionTaskList(v).filter(function (t) {
       if (state.status !== "ALL" && t.status !== state.status) return false;
-      if (state.stage !== "ALL" && t.stageId !== state.stage) return false;
+      if (state.stage !== "ALL") {
+        var group = versionGroupForTask(v, t.id);
+        if (!group || group.id !== state.stage) return false;
+      }
       if (state.priority !== "ALL" && t.priority !== state.priority) return false;
       if (!tokens.length) return true;
-      var stage = stageById[t.stageId] || {};
       var hay = [
-        t.id, t.title, t.description, t.stageId, stage.name, t.status, t.priority,
-        t.category, t.createdAt, t.updatedAt,
+        t.id, t.title, t.description, t.stageId, t.updateId, taskContextLabel(t, v),
+        t.status, t.priority, t.category, t.createdAt, t.updatedAt,
         (t.files || []).join(" "),
         (t.contextFiles || []).join(" "),
         (t.contextDocs || []).join(" "),
@@ -897,7 +1486,10 @@
   }
 
   function sortTasks(list) {
-    var stageOrder = stageOrderMap();
+    var v = selectedVersion();
+    var groups = versionGroupList(v);
+    var groupOrder = {};
+    groups.forEach(function (g, i) { groupOrder[g.id] = i; });
     list.sort(function (a, b) {
       if (state.sort === "id") return natCompare(a.id, b.id);
       if (state.sort === "priority") {
@@ -918,15 +1510,18 @@
         if (ua !== ub) return ub.localeCompare(ua);
         return natCompare(a.id, b.id);
       }
-      var oa = stageOrder[a.stageId] === undefined ? 99 : stageOrder[a.stageId];
-      var ob = stageOrder[b.stageId] === undefined ? 99 : stageOrder[b.stageId];
+      var ga = versionGroupForTask(v, a.id);
+      var gb = versionGroupForTask(v, b.id);
+      var oa = ga && groupOrder[ga.id] !== undefined ? groupOrder[ga.id] : 99;
+      var ob = gb && groupOrder[gb.id] !== undefined ? groupOrder[gb.id] : 99;
       return oa !== ob ? oa - ob : natCompare(a.id, b.id);
     });
     return list;
   }
 
-  function taskHtml(t) {
-    var stage = stageById[t.stageId] || { name: t.stageId };
+  function taskHtml(t, v) {
+    v = v || selectedVersion();
+    var context = taskContextLabel(t, v);
     var open = state.open[t.id] ? " open" : "";
     var deps = t.dependencies || [];
     var depsDone = deps.filter(function (id) {
@@ -936,7 +1531,7 @@
     var depsText = deps.length ? depsDone + "/" + deps.length + " deps" : "sin deps";
     var evidenceCount = (t.evidence || []).length;
     var pending = pendingDecisionIds(t);
-    var isNext = meta.nextTaskId === t.id;
+    var isNext = v.kind === "base" && meta.nextTaskId === t.id;
 
     var depChips = deps.map(function (id) {
       var d = taskById[id];
@@ -945,6 +1540,12 @@
         (d ? " · " + esc(d.title) : " · no existe") + "</span>";
     }).join("");
     if (!depChips) depChips = '<span class="chip ok">Sin dependencias</span>';
+
+    var related = (t.relatedTaskIds || []).map(function (id) {
+      var d = taskById[id];
+      return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir tarea histórica ' + esc(id) + '">' + esc(id) + "</button>" +
+        (d ? '<span class="chip">' + esc(d.title) + "</span>" : "");
+    }).join("") || '<span class="chip">Ninguna</span>';
 
     var decisionChips = (t.decisionIds || []).map(function (id) {
       var d = decisionById[id];
@@ -958,6 +1559,11 @@
     var contextFiles = (t.contextFiles || []).map(function (x) { return '<span class="chip mono">' + esc(x) + "</span>"; }).join("");
     var contextDocs = (t.contextDocs || []).map(function (x) { return '<span class="chip">' + esc(x) + "</span>"; }).join("");
     var artifacts = (t.artifacts || []).map(function (x) { return '<span class="chip mono">' + esc(x) + "</span>"; }).join("");
+    var assignment = (t.assignedSessionId || t.assignedAt)
+      ? '<div class="meta-block" style="grid-column:1/-1"><h4>Responsable de la tarea</h4><div class="chips">' +
+        (t.assignedSessionId ? '<span class="chip mono">' + esc(t.assignedSessionId) + "</span>" : '<span class="chip">Sin sesión registrada</span>') +
+        (t.assignedAt ? '<span class="chip">' + esc(fmtDate(t.assignedAt)) + "</span>" : "") + "</div></div>"
+      : "";
     var contextChips = (contextFiles || contextDocs)
       ? (contextFiles ? "<div><strong>Código:</strong> " + contextFiles + "</div>" : "") +
         (contextDocs ? "<div><strong>Docs:</strong> " + contextDocs + "</div>" : "")
@@ -973,7 +1579,7 @@
       "<summary>" +
         '<span class="task-id">' + esc(t.id) + "</span>" +
         '<span class="task-title"><strong>' + esc(t.title) + "</strong><small>" +
-          esc(t.stageId) + " · " + esc(stage.name) + " · " + esc(depsText) +
+          esc(context) + " · " + esc(depsText) +
           (evidenceCount ? " · " + evidenceCount + " evidencia" + (evidenceCount === 1 ? "" : "s") : "") +
         "</small></span>" +
         '<span class="task-right">' +
@@ -988,12 +1594,14 @@
         '<p class="desc">' + esc(t.description) + "</p>" +
         '<div class="meta-grid">' +
           '<div class="meta-block"><h4>Dependencias</h4><div class="chips">' + depChips + "</div></div>" +
+          '<div class="meta-block"><h4>Tareas históricas relacionadas</h4><div class="chips">' + related + "</div></div>" +
           '<div class="meta-block"><h4>Decisiones</h4><div class="chips">' + decisionChips + "</div></div>" +
           '<div class="meta-block"><h4>Criterios de aceptación</h4><ul>' + (acceptance || "<li>Sin criterios registrados.</li>") + "</ul></div>" +
           '<div class="meta-block"><h4>Pruebas necesarias</h4><ul>' + (tests || "<li>Sin pruebas registradas.</li>") + "</ul></div>" +
           '<div class="meta-block" style="grid-column:1/-1"><h4>Archivos / sistemas</h4><div class="chips">' + (files || '<span class="chip">Sin archivos registrados</span>') + "</div></div>" +
           (contextChips ? '<div class="meta-block" style="grid-column:1/-1"><h4>Contexto previo</h4><div class="chips">' + contextChips + "</div></div>" : "") +
           (artifacts ? '<div class="meta-block" style="grid-column:1/-1"><h4>Artefactos de implementación</h4><div class="chips">' + artifacts + "</div></div>" : "") +
+          assignment +
           '<div class="meta-block" style="grid-column:1/-1"><h4>Observaciones técnicas</h4><p style="margin:0;color:var(--muted);font-size:13px">' + esc(t.technicalNotes || "—") + "</p></div>" +
           '<div class="meta-block" style="grid-column:1/-1"><h4>Evidencias</h4><div class="chips">' + (evidence || '<span class="chip">Sin evidencias todavía</span>') + "</div></div>" +
           '<div class="meta-block" style="grid-column:1/-1"><h4>Registro de ejecución</h4><ul class="log-list">' + (logs || "<li>Sin ejecuciones registradas.</li>") + "</ul></div>" +
@@ -1005,49 +1613,64 @@
   }
 
   function renderTasks() {
+    var v = selectedVersion();
     var list = sortTasks(filterTasks());
     var el = document.getElementById("task-list");
-    document.getElementById("task-count").textContent = list.length + " de " + tasks.length + " tareas";
+    var total = versionTaskList(v).length;
+    document.getElementById("task-count").textContent = list.length + " de " + total + " tareas de v" + v.displayVersion;
     if (!list.length) {
       el.innerHTML = '<div class="empty">No hay tareas que coincidan con los filtros.<br>' +
         '<button type="button" class="btn ghost" data-clear-filters>Limpiar filtros</button></div>';
       return;
     }
 
-    if (state.groupByStage === false) {
-      el.innerHTML = list.map(taskHtml).join("");
+    var groups = versionGroupList(v);
+    var canGroup = groups.length > 0;
+    var groupToggle = document.getElementById("group-toggle");
+    if (groupToggle) {
+      groupToggle.disabled = !canGroup;
+      groupToggle.checked = canGroup && state.groupByStage !== false;
+    }
+
+    if (!canGroup || state.groupByStage === false) {
+      el.innerHTML = list.map(function (t) { return taskHtml(t, v); }).join("");
     } else {
-      var stageOrder = stageOrderMap();
-      var groups = [];
-      var byStage = {};
+      var byGroup = {};
+      var order = [];
       list.forEach(function (t) {
-        if (!byStage[t.stageId]) {
-          byStage[t.stageId] = [];
-          groups.push(t.stageId);
+        var group = versionGroupForTask(v, t.id);
+        var gid = group ? group.id : "__none";
+        if (!byGroup[gid]) {
+          byGroup[gid] = [];
+          order.push(gid);
         }
-        byStage[t.stageId].push(t);
+        byGroup[gid].push(t);
       });
-      groups.sort(function (a, b) {
-        var oa = stageOrder[a] === undefined ? 99 : stageOrder[a];
-        var ob = stageOrder[b] === undefined ? 99 : stageOrder[b];
+      var groupOrder = {};
+      groups.forEach(function (g, i) { groupOrder[g.id] = i; });
+      order.sort(function (a, b) {
+        var oa = groupOrder[a] === undefined ? 99 : groupOrder[a];
+        var ob = groupOrder[b] === undefined ? 99 : groupOrder[b];
         return oa !== ob ? oa - ob : natCompare(a, b);
       });
 
-      el.innerHTML = groups.map(function (sid) {
-        var stage = stageById[sid] || { id: sid, name: sid };
-        var sp = stageProgress(stage);
-        var items = byStage[sid];
-        var isCurrent = sid === meta.currentStageId;
-        var countsLabel = stage.type === "preparation"
-          ? sp.prepDone + "/" + sp.prepTotal + " prep"
-          : sp.done + "/" + sp.implTotal;
+      el.innerHTML = order.map(function (gid) {
+        var group = null;
+        for (var i = 0; i < groups.length; i += 1) {
+          if (groups[i].id === gid) { group = groups[i]; break; }
+        }
+        var items = byGroup[gid];
+        var gp = group ? group.progress : groupProgressFromTasks(items, "PENDIENTE");
+        var isCurrent = v.kind === "base" && gid === meta.currentStageId;
+        var jump = group ? ' data-stage-jump="' + esc(gid) + '" role="button" tabindex="0" aria-label="Filtrar solo ' + esc(gid) + '"' : "";
         return '<div class="stage-group">' +
-          '<div class="stage-group-head" data-stage-jump="' + esc(sid) + '" role="button" tabindex="0" aria-label="Filtrar solo la etapa ' + esc(sid) + '">' +
-            '<h3>' + esc(sid) + " · " + esc(stage.name) + (isCurrent ? ' <span class="badge s-LISTO">Actual</span>' : "") + "</h3>" +
-            '<div class="group-right"><span class="group-meta">' + items.length + " visibles · " + countsLabel + " · " + sp.pct + "%</span>" +
-            statusBadge(sp.status) + "</div>" +
+          '<div class="stage-group-head"' + jump + ">" +
+            "<h3>" + esc(group ? group.id + " · " + group.name : "Sin grupo") + (isCurrent ? ' <span class="badge s-LISTO">Actual</span>' : "") + "</h3>" +
+            '<div class="group-right"><span class="group-meta">' + items.length + " visibles · " +
+              esc(groupProgressText(group || { progress: gp, type: "implementation" })) +
+            "</span>" + statusBadge(gp.status) + "</div>" +
           "</div>" +
-          items.map(taskHtml).join("") +
+          items.map(function (t) { return taskHtml(t, v); }).join("") +
           "</div>";
       }).join("");
     }
@@ -1059,51 +1682,6 @@
         saveUiState();
       });
     });
-  }
-
-  function renderHistory() {
-    var el = document.getElementById("history-list");
-    var moreEl = document.getElementById("history-more");
-    var sorted = sessions.slice().sort(function (a, b) {
-      return String(b.date || "").localeCompare(String(a.date || ""));
-    });
-    if (!sorted.length) {
-      el.innerHTML = '<div class="empty">No hay sesiones registradas.</div>';
-      moreEl.innerHTML = "";
-      return;
-    }
-    var limit = 8;
-    var shown = state.historyAll ? sorted : sorted.slice(0, limit);
-    el.innerHTML = shown.map(function (s) {
-      var isCurrent = s.id === meta.lastSessionId;
-      var files = (s.files || []).map(function (f) { return "<li class=\"mono\">" + esc(f) + "</li>"; }).join("");
-      var tests = (s.tests || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("");
-      return '<div class="session' + (isCurrent ? " current" : "") + '">' +
-        '<div class="session-top"><h3>' + esc(s.id) + " · " + esc(s.title || "Sesión") + "</h3>" +
-        '<span class="date">' + esc(fmtDate(s.date)) + "</span></div>" +
-        '<div class="chips" style="margin:7px 0">' + outcomeBadge(s.outcome) +
-        (isCurrent ? '<span class="badge s-COMPLETADO">Última sesión</span>' : "") +
-        (s.tasks || []).map(function (id) {
-          return '<button type="button" class="chip mono" data-focus-task="' + esc(id) + '" title="Abrir ' + esc(id) + '">' + esc(id) + "</button>";
-        }).join("") + "</div>" +
-        "<p>" + esc(s.summary || "") + "</p>" +
-        '<div class="files">Agente: ' + esc(s.agent || "—") + " · Resultado: " + esc(s.outcome || "—") + "</div>" +
-        ((files || tests || s.notes)
-          ? '<details><summary>Archivos, pruebas y notas</summary>' +
-            (files ? "<h4 style=\"margin:8px 0 0;font-size:12px;color:var(--muted)\">Archivos</h4><ul>" + files + "</ul>" : "") +
-            (tests ? "<h4 style=\"margin:8px 0 0;font-size:12px;color:var(--muted)\">Pruebas</h4><ul>" + tests + "</ul>" : "") +
-            (s.notes ? '<p style="color:var(--muted)">' + esc(s.notes) + "</p>" : "") +
-            "</details>"
-          : "") +
-        "</div>";
-    }).join("");
-
-    if (sorted.length > limit) {
-      moreEl.innerHTML = '<button type="button" class="btn ghost" data-history-toggle>' +
-        (state.historyAll ? "Mostrar solo las últimas " + limit : "Mostrar todas (" + sorted.length + ")") + "</button>";
-    } else {
-      moreEl.innerHTML = "";
-    }
   }
 
   function renderDecisions() {
@@ -1177,17 +1755,28 @@
       }).join("");
     }
 
-    var blocked = tasks.filter(function (t) {
+    var selected = selectedVersion();
+    var selectedIds = {};
+    versionTaskList(selected).forEach(function (t) { selectedIds[t.id] = true; });
+    var blocked = allProjectTasks().filter(function (t) {
+      if (selectedIds[t.id]) return false;
       return t.status === "BLOQUEADO" || t.status === "REQUIERE_DECISION" || t.status === "POSPUESTO" || pendingDecisionIds(t).length > 0;
     });
     var blockedEl = document.getElementById("blocked-list");
+    var blockedHint = document.getElementById("blocked-hint");
+    if (blockedHint) {
+      blockedHint.textContent = "Tareas bloqueadas, con decisión o pospuestas fuera de la versión seleccionada. Las de la versión actual aparecen arriba.";
+    }
     if (!blocked.length) {
-      blockedEl.innerHTML = '<div class="empty">No hay tareas bloqueadas, con decisión pendiente ni pospuestas.</div>';
+      blockedEl.innerHTML = '<div class="empty">No hay tareas bloqueadas, con decisión pendiente ni pospuestas fuera de la versión seleccionada.</div>';
     } else {
       blockedEl.innerHTML = blocked.map(function (t) {
         var extra = pendingDecisionIds(t).length ? " · Decisión: " + pendingDecisionIds(t).join(", ") : "";
+        var v = versionById(taskVersionId(t));
         return '<div class="blocked-row">' +
-          '<div class="title"><strong>' + esc(t.id) + " · " + esc(t.title) + "</strong><small>" + esc(t.technicalNotes || "Sin observaciones") + esc(extra) + "</small></div>" +
+          '<div class="title"><strong>' + esc(t.id) + " · " + esc(t.title) + "</strong><small>" +
+            (v ? "v" + esc(v.displayVersion) + " · " + esc(v.internalId) + " · " : "") +
+            esc(t.technicalNotes || "Sin observaciones") + esc(extra) + "</small></div>" +
           '<div class="row-right">' + statusBadge(t.status) +
           '<button type="button" class="btn ghost small" data-focus-task="' + esc(t.id) + '">Abrir</button></div>' +
           "</div>";
@@ -1222,6 +1811,8 @@
   }
 
   function renderAll() {
+    ensureVersionSelection();
+    var v = selectedVersion();
     document.getElementById("project-name").textContent = meta.displayName || meta.project || "GalacticIndustry";
     document.getElementById("project-description").textContent = meta.description || "";
     document.getElementById("last-updated").textContent = fmtDate(meta.lastUpdated);
@@ -1230,22 +1821,54 @@
     document.getElementById("top-stage").textContent = currentStage ? currentStage.id + " · " + currentStage.name : "—";
     var cu = currentUpdate();
     var cuEl = document.getElementById("top-update");
-    if (cuEl) cuEl.textContent = cu ? cu.id + " · " + updateStatusInfo(cu.status).label : (updates.length ? updates.length + " registradas" : "—");
+    if (cuEl) cuEl.textContent = cu ? "v" + (cu.displayVersion || fallbackDisplayVersion(cu)) + " · " + cu.id + " · " + updateStatusInfo(cu.status).label : (updates.length ? updates.length + " registradas" : "—");
+    var topVersion = document.getElementById("top-version");
+    if (topVersion) topVersion.textContent = "v" + v.displayVersion + " · " + v.internalId;
     var p = taskProgress();
     document.getElementById("top-progress").textContent = p.pct + "% (" + p.done + "/" + p.total + ")";
-    document.title = "Panel de continuidad — " + (meta.displayName || "GalacticIndustry") + " · " + p.pct + "%";
+    document.title = "Panel — " + (meta.displayName || "GalacticIndustry") + " · v" + v.displayVersion + " " + v.internalId;
 
-    renderSummary();
-    renderDistribution();
-    renderCurrent();
-    renderVerification();
-    renderStages();
-    renderUpdates();
-    renderTasks();
-    renderHistory();
-    renderDecisions();
-    renderRules();
+    renderVersionSelector();
+    renderTimeline();
+    renderVersionContent();
+    renderGlobalSections();
     document.getElementById("view-time").textContent = fmtDate(new Date().toISOString());
+  }
+
+  function pushHash(hash) {
+    if (window.location.hash === hash) return;
+    try {
+      history.pushState(null, "", hash);
+    } catch (e) {
+      window.location.hash = hash.replace(/^#/, "");
+    }
+  }
+
+  function selectVersion(id, opts) {
+    opts = opts || {};
+    var v = versionById(id);
+    if (!v) return;
+    state.versionId = v.id;
+    state.open = {};
+    state.search = "";
+    state.status = "ALL";
+    state.stage = "ALL";
+    state.priority = "ALL";
+    state.versionHistoryAll = false;
+    ensureVersionSelection();
+    renderVersionSelector();
+    renderTimeline();
+    renderVersionContent();
+    renderGlobalSections();
+    var topVersion = document.getElementById("top-version");
+    if (topVersion) topVersion.textContent = "v" + v.displayVersion + " · " + v.internalId;
+    document.title = "Panel — " + (meta.displayName || "GalacticIndustry") + " · v" + v.displayVersion + " " + v.internalId;
+    if (opts.updateHash !== false) pushHash("#version-" + v.id);
+    if (opts.scroll !== false) {
+      setTimeout(function () { scrollToElement(document.getElementById("version-contenido"), "start"); }, 20);
+    }
+    saveUiState();
+    if (!opts.silent) toast("Versión v" + v.displayVersion + " · " + v.internalId + " seleccionada");
   }
 
   function toast(msg) {
@@ -1279,15 +1902,16 @@
   }
 
   function scrollToTasks() {
-    scrollToElement(document.getElementById("tareas"), "start");
+    scrollToElement(document.getElementById("version-tareas"), "start");
   }
 
   function focusTask(id, opts) {
     opts = opts || {};
-    if (!taskById[id]) return;
-    if (id.indexOf("UPD-") === 0) {
-      focusUpdateTask(id, opts);
-      return;
+    var t = taskById[id];
+    if (!t) return;
+    var vid = taskVersionId(t);
+    if (selectedVersion().id !== vid) {
+      selectVersion(vid, { updateHash: false, scroll: false, silent: true });
     }
     state.search = "";
     state.status = "ALL";
@@ -1297,13 +1921,7 @@
     state.open[id] = true;
     restoreFilters();
     renderTasks();
-    if (opts.updateHash !== false && window.location.hash !== "#task-" + id) {
-      try {
-        history.pushState(null, "", "#task-" + id);
-      } catch (e) {
-        window.location.hash = "task-" + id;
-      }
-    }
+    if (opts.updateHash !== false) pushHash("#task-" + id);
     setTimeout(function () {
       var el = document.getElementById("task-" + id);
       if (!el) return;
@@ -1320,67 +1938,41 @@
 
   function focusUpdate(id, opts) {
     opts = opts || {};
-    var u = updateById[id];
-    if (!u) return;
-    state.updateOpen[id] = true;
-    renderUpdates();
-    if (opts.updateHash !== false && window.location.hash !== "#update-" + id) {
-      try { history.pushState(null, "", "#update-" + id); } catch (e) { window.location.hash = "update-" + id; }
-    }
-    setTimeout(function () {
-      var el = document.getElementById("update-" + id);
-      if (!el) return;
-      el.open = true;
-      el.classList.remove("flash");
-      void el.offsetWidth;
-      el.classList.add("flash");
-      setTimeout(function () { el.classList.remove("flash"); }, 1400);
-      scrollToElement(el, "start");
-    }, 30);
-    saveUiState();
-    if (!opts.silent) toast("Actualización " + id + " abierta");
-  }
-
-  function focusUpdateTask(id, opts) {
-    opts = opts || {};
-    var found = null;
-    updates.forEach(function (u) {
-      if (!found && (u.tasks || []).some(function (t) { return t.id === id; })) found = u;
-    });
-    if (!found) return;
-    state.updateOpen[found.id] = true;
-    state.open[id] = true;
-    renderUpdates();
-    if (opts.updateHash !== false && window.location.hash !== "#update-task-" + id) {
-      try { history.pushState(null, "", "#update-task-" + id); } catch (e) { window.location.hash = "update-task-" + id; }
-    }
-    setTimeout(function () {
-      var el = document.getElementById("update-task-" + id);
-      if (!el) return;
-      el.open = true;
-      scrollToElement(el, "center");
-    }, 30);
-    saveUiState();
-    if (!opts.silent) toast("Tarea " + id + " abierta");
+    if (!versionById(id)) return;
+    selectVersion(id, { updateHash: opts.updateHash !== false, scroll: opts.scroll !== false, silent: opts.silent });
   }
 
   function handleHash() {
-    var m = /^#task-(.+)$/.exec(window.location.hash || "");
+    var hash = window.location.hash || "";
+    var m = /^#version-(.+)$/.exec(hash);
+    if (m) {
+      var vid = decodeURIComponent(m[1]);
+      if (versionById(vid)) selectVersion(vid, { updateHash: false, silent: true });
+      return;
+    }
+    m = /^#update-plan-base$/.exec(hash);
+    if (m) {
+      selectVersion("BASE", { updateHash: false, silent: true });
+      return;
+    }
+    m = /^#update-(.+)$/.exec(hash);
+    if (m) {
+      var uid = decodeURIComponent(m[1]);
+      if (versionById(uid)) {
+        selectVersion(uid, { updateHash: false, silent: true });
+        return;
+      }
+    }
+    m = /^#update-task-(.+)$/.exec(hash);
+    if (m) {
+      var utid = decodeURIComponent(m[1]);
+      if (taskById[utid]) focusTask(utid, { updateHash: false, silent: true });
+      return;
+    }
+    m = /^#task-(.+)$/.exec(hash);
     if (m) {
       var id = decodeURIComponent(m[1]);
       if (taskById[id]) focusTask(id, { updateHash: false, silent: true });
-      return;
-    }
-    m = /^#update-task-(.+)$/.exec(window.location.hash || "");
-    if (m) {
-      var utid = decodeURIComponent(m[1]);
-      if (taskById[utid]) focusUpdateTask(utid, { updateHash: false, silent: true });
-      return;
-    }
-    m = /^#update-(.+)$/.exec(window.location.hash || "");
-    if (m) {
-      var uid = decodeURIComponent(m[1]);
-      if (updateById[uid]) focusUpdate(uid, { updateHash: false, silent: true });
     }
   }
 
@@ -1394,6 +1986,7 @@
   }
 
   function loadUiState() {
+    state.versionMode = loadVersionMode();
     try {
       var raw = sessionStorage.getItem("gi-panel-state");
       if (raw) {
@@ -1406,9 +1999,11 @@
           state.sort = parsed.sort || "stage";
           state.groupByStage = parsed.groupByStage !== false;
           state.historyAll = parsed.historyAll === true;
+          state.versionHistoryAll = parsed.versionHistoryAll === true;
           state.hideResolved = parsed.hideResolved === true;
           state.open = parsed.open || {};
-          state.updateOpen = parsed.updateOpen || {};
+          // La versión seleccionada se deriva del tracker y del hash, no del
+          // estado guardado: al abrir de nuevo debe mandar meta.currentUpdateId.
         }
       }
       var scroll = sessionStorage.getItem("gi-panel-scroll");
@@ -1423,7 +2018,6 @@
      --------------------------------------------------------------------- */
 
   var REPEAT = function (ch, n) { return new Array(n + 1).join(ch); };
-  var lastCurrentUpdateId = null;
 
   function docHeading(fmt, level, text) {
     if (fmt === "txt") {
@@ -1775,6 +2369,7 @@
       docHeading(fmt, 3, "1. Identificación"),
       docList(fmt, [
         "ID: " + u.id,
+        "Versión de presentación: " + (u.displayVersion || fallbackDisplayVersion(u)),
         "Estado de la actualización: " + updateStatusInfo(u.status).label,
         "Tipo de cambio: " + updateTypeLabel(u.changeType),
         "Prioridad: " + (PRIORITY_LABEL[u.priority] || u.priority || "—"),
@@ -1784,7 +2379,7 @@
         "Aprobación: " + (approval.status || "—") + (approval.approvedBy ? " por " + approval.approvedBy : "") + (approval.approvedAt ? " el " + approval.approvedAt : "")
       ]),
       docHeading(fmt, 3, "2. Funcionamiento previsto"),
-      (u.description || MISSING) + "\n\nMotivación: " + (u.motivation || MISSING),
+      "Objetivo: " + (u.objective || MISSING) + "\n\n" + (u.description || MISSING) + "\n\nMotivación: " + (u.motivation || MISSING),
       docHeading(fmt, 3, "3. Estado de implementación"),
       updateStatusInfo(u.status).label + ". Tareas: " + ts.length + ". " +
         (u.implementationLog || []).length + " entradas en el registro de implementación.",
@@ -1891,11 +2486,12 @@
     }
 
     var updateItems = updates.map(function (u) {
-      return { id: u.id, title: u.name, meta: updateStatusInfo(u.status).label + " · " + (u.tasks || []).length + " tareas", search: [u.id, u.name, u.description, u.motivation].join(" ") };
+      return { id: u.id, title: u.name, meta: "v" + (u.displayVersion || fallbackDisplayVersion(u)) + " · " + updateStatusInfo(u.status).label + " · " + (u.tasks || []).length + " tareas", search: [u.id, u.name, u.description, u.motivation, u.displayVersion].join(" ") };
     });
     var updateTaskItems = updateTasks().map(function (t) {
       var f = updateTaskById(t.id);
-      return { id: t.id, title: t.title, meta: (f ? f.update.id : "—") + " · " + statusInfo(t.status).label, search: [t.id, t.title, t.description].join(" ") };
+      var uv = f ? updateVersion(f.update) : null;
+      return { id: t.id, title: t.title, meta: (uv ? "v" + uv.displayVersion + " · " + uv.internalId : "—") + " · " + statusInfo(t.status).label, search: [t.id, t.title, t.description].join(" ") };
     });
     var stageItems = stages.map(function (s) {
       return { id: s.id, title: s.name, meta: "Etapa · " + stageProgress(s).pct + "%", search: [s.id, s.name, s.objective].join(" ") };
@@ -1943,8 +2539,10 @@
     var features = Array.prototype.slice.call(document.querySelectorAll("#prop-features input:checked")).map(function (i) { return i.value; });
     return {
       id: nextUpdateId(),
+      displayVersion: nextDisplayVersion(),
       name: (document.getElementById("prop-name").value || "").trim(),
       description: (document.getElementById("prop-description").value || "").trim(),
+      objective: (document.getElementById("prop-description").value || "").trim(),
       motivation: (document.getElementById("prop-motivation").value || "").trim(),
       changeType: document.getElementById("prop-type").value,
       priority: document.getElementById("prop-priority").value,
@@ -1958,7 +2556,9 @@
   function proposalJson(p) {
     return JSON.stringify({
       id: p.id,
+      displayVersion: p.displayVersion || nextDisplayVersion(),
       name: p.name,
+      objective: p.objective || p.description,
       status: "PROPUESTA",
       changeType: p.changeType,
       priority: p.priority,
@@ -1982,6 +2582,7 @@
       },
       acceptanceCriteria: [],
       tasks: [],
+      groups: [],
       observations: p.observations ? [p.observations] : [],
       implementationLog: [],
       reviewExports: []
@@ -2002,6 +2603,7 @@
     lines.push(docHeading(fmt, 2, "Identificación"));
     lines.push(docList(fmt, [
       "ID: " + p.id,
+      "Versión de presentación propuesta: " + (p.displayVersion || nextDisplayVersion()),
       "Estado: PROPUESTA (no aprobada, no implementable todavía)",
       "Tipo de cambio: " + updateTypeLabel(p.changeType),
       "Prioridad: " + (PRIORITY_LABEL[p.priority] || p.priority),
@@ -2010,6 +2612,8 @@
     ]));
     lines.push(docHeading(fmt, 2, "Descripción"));
     lines.push(p.description || MISSING);
+    lines.push(docHeading(fmt, 2, "Objetivo principal"));
+    lines.push(p.objective || p.description || MISSING);
     lines.push(docHeading(fmt, 2, "Motivo y justificación"));
     lines.push(p.motivation || "Pendiente de completar por el agente o el usuario.");
     lines.push(docHeading(fmt, 2, "Sistemas afectados"));
@@ -2131,10 +2735,11 @@
     var idEl = document.getElementById("proposal-id");
     var metaEl = document.getElementById("proposal-meta");
     var id = nextUpdateId();
-    if (idEl) idEl.textContent = "ID propuesto: " + id;
+    var displayVersion = nextDisplayVersion();
+    if (idEl) idEl.textContent = "ID propuesto: " + id + " · versión " + displayVersion;
     if (metaEl) {
       metaEl.innerHTML = '<p class="hint">Al descargar, guarda el archivo como <code>docs/updates/' + esc(id) +
-        '.md</code>, registra la actualización en <code>updates</code> y ejecuta <code>python3 tools/sync-dashboard.py</code>. ' +
+        '.md</code>, registra la actualización en <code>updates</code> con <code>displayVersion: "' + esc(displayVersion) + '"</code> y ejecuta <code>python3 tools/sync-dashboard.py</code>. ' +
         "El navegador no puede escribir en el proyecto desde <code>file://</code>.</p>";
     }
   }
@@ -2196,9 +2801,9 @@
       .then(function (text) {
         var next = JSON.parse(text);
         var scrollY = window.scrollY;
+        var keepVersion = state.versionId;
         applyTrackerData(next);
-        populateFilters();
-        restoreFilters();
+        state.versionId = keepVersion && versionById(keepVersion) ? keepVersion : null;
         renderAll();
         if (window.scrollTo) window.scrollTo(0, scrollY);
         setDataSource("JSON en vivo", "ok");
@@ -2275,7 +2880,10 @@
     var active = links[0] || null;
     links.forEach(function (a) {
       var target = document.querySelector(a.getAttribute("href"));
-      if (target && target.offsetTop <= y) active = a;
+      if (!target) return;
+      var rect = target.getBoundingClientRect ? target.getBoundingClientRect() : null;
+      var top = rect ? rect.top + (window.scrollY || window.pageYOffset || 0) : target.offsetTop;
+      if (top <= y) active = a;
     });
     links.forEach(function (a) {
       var on = a === active;
@@ -2342,6 +2950,15 @@
       state.hideResolved = !state.hideResolved;
       renderDecisions();
       saveUiState();
+    });
+
+    var modeBtn = document.getElementById("version-mode-btn");
+    if (modeBtn) modeBtn.addEventListener("click", function () {
+      state.versionMode = state.versionMode === "descriptive" ? "compact" : "descriptive";
+      saveVersionMode(state.versionMode);
+      renderVersionSelector();
+      saveUiState();
+      toast(state.versionMode === "descriptive" ? "Vista descriptiva activada" : "Vista compacta activada");
     });
 
     var newUpdateBtn = document.getElementById("new-update-btn");
@@ -2413,6 +3030,12 @@
         closeModal(el.getAttribute("data-close-modal"));
         return;
       }
+      el = closest(ev.target, "[data-select-version]");
+      if (el) {
+        ev.preventDefault();
+        selectVersion(el.getAttribute("data-select-version"), { updateHash: true, scroll: true });
+        return;
+      }
       el = closest(ev.target, "[data-focus-update]");
       if (el) {
         ev.preventDefault();
@@ -2458,10 +3081,17 @@
         toast("Filtro: " + statusInfo(state.status).label);
         return;
       }
+      el = closest(ev.target, "[data-version-history-toggle]");
+      if (el) {
+        state.versionHistoryAll = !state.versionHistoryAll;
+        renderVersionHistory(selectedVersion());
+        saveUiState();
+        return;
+      }
       el = closest(ev.target, "[data-history-toggle]");
       if (el) {
         state.historyAll = !state.historyAll;
-        renderHistory();
+        renderGlobalHistory();
         saveUiState();
         return;
       }

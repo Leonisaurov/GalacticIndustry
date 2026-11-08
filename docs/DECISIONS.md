@@ -1,6 +1,6 @@
 # REGISTRO DE DECISIONES — GalacticIndustry
 
-**Última actualización:** 2026-11-07T22:30:00-06:00  
+**Última actualización:** 2026-11-08T15:00:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar con otro agente:** `docs/PENDING_DECISIONS.md`
@@ -33,6 +33,10 @@ Este archivo explica el **contexto** y la **respuesta** de cada decisión. El es
 | D-010 | Naves múltiples, módulos y personalización | **APROBADA** | Varias naves con modelos, formas, características y capacidades distintas, no simples variaciones visuales. Personalización mediante colores/aparie... |
 | D-011 | Galaxias reales y ficticias | **APROBADA** | Usar galaxias reales, empezando por la Vía Láctea y añadiendo otras galaxias conocidas; también se pueden incorporar galaxias ficticias cuando conv... |
 | D-012 | Facciones, combate y online futuro | **APLAZADA** | Mantener la prioridad en minería, exploración, supervivencia, economía y desarrollo de naves/estaciones. No implementar ahora IA hostil ni un siste... |
+| D-013 | Actualizaciones y revisiones | **APROBADA** | El plan maestro queda como histórico. Los cambios posteriores se registran como actualizaciones `UPD-XXX` en `docs/updates/` y en la clave `updates` del tracker. Cada actualización requiere aprobación explícita antes de implementarse. Las tareas `UPD-XXX-TNN` no alteran el progreso base. |
+| D-014 | Coordinación concurrente y escrituras seguras | **APROBADA** | Varias sesiones pueden trabajar a la vez sin coordinador permanente. Cada una reserva su tarea (`assignedSessionId`), actualiza el tracker con un plan validado y `expectUpdatedAt`, y usa un bloqueo `flock` breve con escritura atómica. Las sesiones nuevas viven en `docs/sessions/S-XXX.md`. Los commits no son automáticos. |
+| D-015 | Identidad visual de simulador espacial industrial | **APROBADA** | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. Sin cambios de mecánicas ni recursos nuevos. |
+| D-016 | Versiones de presentación y dashboard dinámico | **APROBADA** | La implementación inicial es la versión visual `0.1`; cada actualización `UPD-XXX` tiene una etiqueta `displayVersion` estable. Una única plantilla dinámica con selector y línea de tiempo comparte la selección; el contenido, el progreso, las etapas, las tareas y el historial corresponden solo a la versión seleccionada. La numeración no cambia IDs internos. |
 
 ---
 
@@ -504,6 +508,174 @@ verdad y documentar el flujo en `AGENTS.md` y `docs/updates/`.
 Afecta al tracker, al validador, al panel y a la documentación de continuidad. No
 afecta al código del juego ni al comportamiento jugable. No se modifican IDs ni
 estados históricos.
+
+---
+
+## D-014 — Coordinación concurrente y escrituras seguras
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-08T11:20:00-06:00  
+**Tareas afectadas:** ninguna del plan base  
+**Actualizaciones afectadas:** UPD-002
+
+### Respuesta
+
+Varias sesiones pueden trabajar a la vez en tareas distintas sin un agente
+coordinador permanente. Cada sesión:
+
+- reserva su tarea con `tools/continuity.py claim` y queda registrada en
+  `assignedSessionId`;
+- actualiza el tracker con un plan JSON validado, usando `expectUpdatedAt` para
+  detectar conflictos;
+- usa un bloqueo `flock` breve sobre `docs/.continuity.lock`, liberado por el
+  kernel al terminar el proceso;
+- escribe el tracker y los derivados de forma atómica (temporal + `fsync` +
+  `os.replace`);
+- documenta su sesión en `docs/sessions/S-XXX.md`;
+- sincroniza el panel con `tools/sync-dashboard.py`;
+- no hace commits automáticos ni revierte cambios ajenos.
+
+El bloqueo no cubre la implementación completa, solo la lectura-modificación-
+escritura de archivos compartidos. Los cambios de tareas distintas se conservan;
+los de la misma tarea producen un conflicto explícito.
+
+### Contexto
+
+La infraestructura anterior permitía una sola tarea `EN_PROGRESO` y no tenía
+protección verificable para escrituras simultáneas. El usuario pidió que varios
+agentes pudieran trabajar en paralelo sin perder cambios ni depender de un
+coordinador.
+
+### Opciones consideradas
+
+- Un agente dedicado a mantener el tracker, el índice y el panel.
+- Bloquear todo el proyecto durante la implementación.
+- Bloqueo breve por operación, escritura atómica y responsabilidad distribuida.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+La tercera opción: herramientas ligeras en `tools/`, sin servidores ni bases de
+datos, con sesiones por archivo y validación antes de escribir.
+
+### Impacto
+
+Afecta a `AGENTS.md`, `tools/continuity.py`, `tools/continuity_io.py`,
+`tools/sync-dashboard.py`, el tracker, `docs/INDEX.md`, las fichas de sistema,
+`docs/STATUS.md`, `docs/CONCURRENCY.md` y `docs/sessions/`. No afecta al código
+del juego ni al balance.
+
+---
+
+## D-015 — Identidad visual de simulador espacial industrial
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-08T12:40:00-06:00  
+**Tareas afectadas:** ninguna del plan base  
+**Actualizaciones afectadas:** UPD-003
+
+### Respuesta
+
+La interfaz adopta una identidad de **simulador espacial industrial**, no de
+arcade:
+
+- superficies de grafito azulado y acero, con profundidad mediante biseles,
+  sombras y marcos de consola;
+- ámbar de seguridad como acento principal y cian de instrumentación para datos
+  técnicos;
+- texto hueso, gris y apagado para una jerarquía de tres niveles;
+- botones rectangulares con bisel, sombra y pestaña de acento, sin brillos neón;
+- iconos geométricos reutilizables (mineral, carga, combustible, O2, casco,
+  energía, estación, warp, alerta, engranaje);
+- cabecera, lista y pie consistentes en menú, HUD, estación, mercado, mapa,
+  gestión e interiores.
+
+Las mecánicas, el balance, el guardado y la telemetría no cambian. Los recursos
+existentes se conservan; la identidad se construye con primitivas de dibujo y la
+fuente ASCII actual.
+
+### Contexto
+
+Las pantallas funcionaban, pero mezclaban azules saturados, botones redondeados
+tipo arcade, etiquetas desalineadas y bloques de acción demasiado juntos. El
+juego evoluciona hacia minería, exploración, supervivencia, comercio y gestión de
+estaciones, y necesitaba una presentación coherente con ese oficio.
+
+### Opciones consideradas
+
+- Corregir solo los solapes y mantener la paleta anterior.
+- Sustituir la interfaz por imágenes y un atlas nuevo.
+- Crear un sistema visual compartido con primitivas y tokens de color.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+La tercera opción: un sistema ligero en `Visuals` y `UiKit`, sin dependencias ni
+recursos nuevos, aplicado a todas las pantallas.
+
+### Impacto
+
+Afecta a `Visuals.java`, `UiKit.java`, `OverlayRenderer.java`, `PlayHud.java`,
+`StationScreen.java`, `MarketScreen.java`, `MapScreen.java`,
+`StationManagementScreen.java`, `MyGame.java`, las capturas de diseño, la ficha
+`docs/systems/ui.md` y la documentación de pruebas. No afecta a mecánicas ni
+datos de partida.
+
+---
+
+
+## D-016 — Versiones de presentación y dashboard dinámico
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-08T15:00:00-06:00  
+**Tareas afectadas:** ninguna del plan base  
+**Actualizaciones afectadas:** UPD-005
+
+### Respuesta
+
+El panel de continuidad representa el desarrollo como versiones visuales. La
+implementación inicial es la versión `0.1`; cada actualización `UPD-XXX` recibe
+una etiqueta `displayVersion` estable (`0.2`, `0.3`, …). La numeración es solo
+de presentación: los IDs internos de actualizaciones, tareas y sesiones no
+cambian.
+
+El panel mantiene una sola página `docs/dashboard/index.html` y una única
+plantilla dinámica. Un selector horizontal y una línea de tiempo comparten la
+selección. Solo se renderiza el contenido de la versión seleccionada: cabecera,
+progreso, etapas o grupos, tareas, historial y pendientes. Las etapas `S0`–`S11`
+pertenecen únicamente a la versión `0.1`; las actualizaciones sin `groups`
+muestran una lista plana. La información global del proyecto vive en una sección
+independiente.
+
+### Contexto
+
+El panel anterior presentaba el plan maestro como bloque principal y apilaba
+todas las actualizaciones. La página crecía con cada versión y no permitía
+responder rápido qué versión estaba seleccionada, qué objetivo tenía, cuánto
+progreso llevaba y qué quedaba pendiente. El tracker ya contenía los datos
+necesarios.
+
+### Opciones consideradas
+
+- Mantener una página continua con todas las actualizaciones apiladas.
+- Crear un HTML independiente por actualización.
+- Usar una única plantilla dinámica alimentada por el tracker, con selector y
+  línea de tiempo.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+La tercera opción: una sola página, una sola plantilla y metadatos mínimos de
+presentación. Sin frameworks, servidores ni páginas por actualización.
+
+### Impacto
+
+Afecta a `docs/dashboard/index.html`, `dashboard.css`, `dashboard.js`,
+`tools/sync-dashboard.py`, `tools/tests/`, `docs/dashboard/README.md`,
+`docs/updates/README.md`, `docs/systems/continuity.md`, `docs/INDEX.md` y a los
+metadatos de presentación del tracker (`displayVersion`, `objective`,
+`meta.initialVersion`, `groups` opcional). No cambia IDs, estados históricos ni
+código del videojuego.
 
 ---
 

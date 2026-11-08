@@ -7,24 +7,80 @@ Panel visual autocontenido de GalacticIndustry. Se abre con doble clic en
 
 | Archivo | Responsabilidad |
 |---|---|
-| `index.html` | Estructura del panel y bloque `tracker-data` con los datos embebidos para `file://` |
-| `dashboard.css` | Tema oscuro/claro, tarjetas, tablas, badges y responsive |
-| `dashboard.js` | Render, filtros, agrupación, orden, enlaces directos, actualizaciones, propuestas, expedientes, temas y refresco por HTTP |
+| `index.html` | Estructura del panel, plantilla única de versión y bloque `tracker-data` con los datos embebidos para `file://` |
+| `dashboard.css` | Tema oscuro/claro, selector, línea de tiempo, tarjetas, tablas, badges y responsive |
+| `dashboard.js` | Modelo de versiones, selector compacto/descriptivo, línea de tiempo, contenido dinámico, filtros, propuestas, expedientes, temas y refresco por HTTP |
 
 `docs/PROJECT_DASHBOARD.html` se conserva como redirección de compatibilidad
 para enlaces antiguos.
 
-## Documentación relacionada
+## Organización por versiones
 
-- [`../INDEX.md`](../INDEX.md) — mapa de sistemas, código, diseño, decisiones,
-  tareas y pruebas.
-- [`../STATUS.md`](../STATUS.md) — resumen compacto generado desde el tracker.
-- [`../IMPLEMENTATION_TRACKER.json`](../IMPLEMENTATION_TRACKER.json) — fuente
-  canónica del estado.
+La implementación inicial es la versión visual **0.1**. Cada actualización
+`UPD-XXX` tiene una etiqueta `displayVersion` estable:
 
-El panel enlaza a `INDEX.md` y `STATUS.md` desde la cabecera y el pie. En el
-detalle de cada tarea muestra `contextFiles`, `contextDocs` y `artifacts`
-cuando existen; `files` se conserva por compatibilidad.
+| Versión | Identificador | Contenido |
+|---|---|---|
+| 0.1 | `BASE` | Plan maestro original (`stages` + `tasks`) |
+| 0.2 | `UPD-001` | Sistema de actualizaciones y revisiones |
+| 0.3 | `UPD-002` | Contexto por sistema y coordinación concurrente |
+| 0.4 | `UPD-003` | Identidad visual industrial |
+| 0.5 | `UPD-004` | Compra e instalación de módulos de nave |
+| 0.6 | `UPD-005` | Dashboard por versiones, selector y línea de tiempo |
+
+La numeración es solo de presentación. Los identificadores internos (`BASE`,
+`UPD-XXX`, `T-XXX`, `S-XXX`) no cambian. `displayVersion` se guarda en el
+tracker para que las etiquetas históricas no cambien al añadir actualizaciones.
+
+## Selector y línea de tiempo
+
+- **Selector**: lista horizontal de la versión más reciente a la más antigua.
+  El elemento seleccionado se destaca. Comparte estado con la línea de tiempo.
+- **Modo compacto** (predeterminado): número de versión, identificador y estado.
+- **Modo descriptivo**: además muestra nombre, descripción, objetivo y progreso.
+  La preferencia se guarda en `localStorage` (`gi-version-mode`); no es fuente
+  de verdad.
+- **Línea de tiempo**: de `0.1` a la versión más reciente, con puntos
+  seleccionables y desplazamiento horizontal. No representa versiones futuras.
+
+Al abrir el panel se selecciona `meta.currentUpdateId`. Si no existe, se elige la
+actualización activa más reciente; si no hay activas, la versión más reciente
+registrada. Una propuesta pendiente se muestra con su estado y un aviso, nunca
+como trabajo en desarrollo.
+
+## Plantilla dinámica
+
+Debajo del selector y la línea de tiempo hay una sola plantilla. Solo se
+renderiza la versión seleccionada:
+
+1. Identificación: nombre, versión, identificador, estado, fecha, descripción y
+   objetivo.
+2. Progreso: porcentaje de implementación y conteos de completadas, en progreso,
+   listas, pendientes y bloqueadas.
+3. Etapas o grupos: las etapas `S0`–`S11` solo para la versión `0.1`; grupos
+   propios si la actualización declara `groups`; lista plana si solo tiene
+   tareas.
+4. Tareas: búsqueda y filtros por estado, etapa/grupo, prioridad y orden. Cada
+   tarea se expande con dependencias, contexto, artefactos, pruebas, evidencias
+   y registro.
+5. Historial: solo sesiones y registros relacionados con la versión.
+6. Pendientes: tareas bloqueadas, con decisión o pospuestas de la versión.
+7. Ficha completa: aprobación, sistemas, funcionalidades, referencias, criterios
+   y observaciones de la actualización.
+
+La información global (resumen, estado actual, propuestas pendientes de
+aprobación, decisiones, problemas, tareas bloqueadas de otras versiones,
+actividad reciente y reglas) vive después del contenido de la versión y no
+cambia al seleccionar otra.
+
+### Regla de progreso
+
+El porcentaje usa solo tareas `category=implementation` con
+`countsForProgress=true` de la versión seleccionada. Si no hay tareas de
+implementación, se muestra `—`, no un porcentaje ficticio. Las versiones
+`RECHAZADA` o `ARCHIVADA` no contabilizan tareas pendientes. Las tareas
+`POSPUESTO` y `REQUIERE_DECISION` se muestran aparte y no se suman a
+`PENDIENTE`.
 
 ## Datos
 
@@ -41,23 +97,21 @@ python3 tools/sync-dashboard.py --check  # valida HTML y STATUS.md
 No edites ese bloque a mano. Si el panel se sirve por HTTP, el botón
 **Actualizar** relee `../IMPLEMENTATION_TRACKER.json` sin recargar la página.
 
+La sincronización usa `tools/continuity_io.py`: toma un bloqueo `flock` breve,
+relee el tracker, valida y escribe `STATUS.md` y el HTML de forma atómica. Dos
+sesiones pueden sincronizar a la vez; el resultado refleja el tracker más
+reciente. Si el proceso muere entre las dos escrituras, los derivados pueden
+quedar desfasados hasta la siguiente sincronización. Ver
+[`../CONCURRENCY.md`](../CONCURRENCY.md).
+
 ## Actualizaciones y revisiones
 
-La sección **Actualizaciones** muestra:
-
-- el plan original como tarjeta histórica contraída;
-- las actualizaciones complementarias en orden cronológico;
-- la actualización actual (`meta.currentUpdateId`) expandida;
-- las anteriores contraídas, expandibles manualmente.
-
-La tarjeta de cada actualización muestra estado, tipo, prioridad, progreso,
-sistemas y funcionalidades afectadas, referencias históricas, aprobación,
-criterios, tareas `UPD-XXX-TNN`, observaciones y registro de implementación.
-
-Dos acciones abren ventanas modales, no formularios permanentes:
+El selector conserva las acciones **Nueva propuesta** y **Preparar expediente de
+revisión**:
 
 - **Nueva propuesta**: redacta una propuesta, la guarda como borrador local y
-  permite descargar `.md`, `.txt` y copiar un bloque JSON para el tracker.
+  permite descargar `.md`, `.txt` y copiar un bloque JSON para el tracker. El
+  bloque incluye `displayVersion` y `objective`.
 - **Preparar expediente de revisión**: selecciona etapas, tareas, tareas de
   actualización, sistemas, funcionalidades y actualizaciones; descarga un
   expediente `.md` o `.txt` con la sección final `OBSERVACIONES DEL USUARIO`.
@@ -68,3 +122,18 @@ de `localStorage` son temporales y no son la fuente canónica. La persistencia
 real es el tracker y los archivos de `docs/updates/`, actualizados por un agente.
 
 Flujo completo: [`docs/updates/README.md`](../updates/README.md).
+
+## Pruebas
+
+```sh
+python3 tools/sync-dashboard.py --check
+python3 tools/tests/continuity_test.py
+node tools/tests/dashboard_versions_test.js
+python3 tools/tests/dashboard_versions_test.py
+```
+
+La prueba de renderizado ejecuta `dashboard.js` en un DOM mínimo de Node y
+comprueba selector, línea de tiempo, modos, contenido por versión, progreso
+aislado, ausencia de etapas inventadas, pendientes globales y estados de
+propuesta. No sustituye una revisión visual en navegador, pero detecta
+regresiones de datos y de plantilla sin red.
