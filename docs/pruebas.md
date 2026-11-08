@@ -164,6 +164,21 @@ comprobar campos sin mirar píxeles.
   filtro está sano).
 - `SelfTest` imprime `BENCH expedicion 10min O2=75.0 salud=100.0`.
 
+## Gate de la Etapa 4 — minería y recursos
+
+Verificación de T-408; se ejecuta con `01_logic` y las pruebas de dispositivo:
+
+| Criterio | Evidencia |
+|---|---|
+| C, S y M con tiempos distintos | `PASS S4: C, S y M tienen tiempos distintos` / `los tiempos caben en el plan` |
+| La energía limita y recarga | `PASS el capacitor se agota`, `recarga tras 1 s`, `sin energia no se mina` |
+| La bodega llena detiene la extracción | `PASS la bodega llena detiene la extraccion` |
+| Los misiles fragmentan y dispersan | `PASS el misil dispersa fragmentos`, `parte del material se pierde` |
+| El tractor recupera fragmentos | `13_tractor`: 3 fragmentos y 12 UM en bodega |
+| Sin monedas directas | `PASS destruir/minar no da monedas`, `S4: minar no da monedas` |
+| Roca y fragmentos persisten | `PASS la roca agotada no reaparece`, `los fragmentos se restauran` |
+| Fundición temporal | `19_melt`: 100 Silicato → 200 créditos |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

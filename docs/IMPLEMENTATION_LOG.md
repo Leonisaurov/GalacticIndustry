@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:12:00-06:00  
+**Última actualización:** 2026-11-08T02:14:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-039 — Verificación y cierre de minería y recursos
+
+- **Fecha:** 2026-11-08T02:14:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-408
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Añadido un bloque de **verificación integrada S4** al `SelfTest`:
+  - tiempos C/S/M distintos y dentro del plan;
+  - minado completo de una roca M (50 UM) hasta agotarla;
+  - sin monedas, capacidad respetada y valor de fundición.
+- Ejecutadas las pruebas de la etapa: lógica, minería, tractor, autopiloto,
+  carga y fundición.
+- Documentado el **gate de la Etapa 4** en `docs/pruebas.md`.
+- **S4 cerrada**; **S5 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 12_mining 13_tractor 04_autopilot 11_cargo 19_melt`: **5/5 OK**.
+
+### Evidencias
+
+- `PASS S4: C, S y M tienen tiempos distintos`
+- `PASS S4: los tiempos caben en el plan`
+- `PASS S4: minar M agota la roca y llena la bodega`
+- `PASS S4: el tiempo de minado M es razonable`
+- `PASS S4: minar no da monedas`
+- `PASS S4: la fundicion temporal valora el mineral`
+- `PASS S4: el mineral extraido respeta la capacidad`
+
+### Decisiones tomadas
+
+- La verificación integrada vive en `SelfTest` y el gate se documenta en
+  `docs/pruebas.md`.
+- No se implementa mercado ni estación en esta etapa.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 5 con **T-501 — Crear Station y la nave nodriza del sector
+  inicial**.
 
 ---
 

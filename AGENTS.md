@@ -147,12 +147,12 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S4` — Minería láser y recursos.
+- Etapa actual: `S5` — Nave nodriza y acoplamiento.
 - No hay tarea en progreso.
-- Última tarea completada: `T-410` — Implementar rayo tractor y captura de fragmentos.
-- Primera tarea disponible: `T-408` — Verificación de minería y recursos.
+- Última tarea completada: `T-408` — Verificación de minería y recursos.
+- Primera tarea disponible: `T-501` — Crear Station y la nave nodriza del sector inicial.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **37 %** (30 de 81 tareas de progreso).
+- La implementación del juego está al **38 %** (31 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `ShopRenderer`, `OverlayRenderer` y `SpaceBackground` (T-007).
 

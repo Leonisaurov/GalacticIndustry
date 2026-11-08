@@ -683,7 +683,7 @@ La granularidad ejecutable está en `IMPLEMENTATION_TRACKER.json`. Esta tabla es
 | S1 | Separación piloto/nave | GameSession, Pilot, ShipLoadout modular, save v2, revisión online | S0 | T-101..T-107 | **Completada**: paridad, migración y extensibilidad |
 | S2 | Supervivencia | O2, filtro, fugas, salud, muerte permanente y nave legado | S1 | T-201..T-210 | **Completada**: expedición con O2/fuga y mundo persistente |
 | S3 | Carga y masa | Bodega, minerales, masa, combustible | S1 | T-301..T-306 | **Completada**: viaje viable con carga |
-| S4 | Minería y recuperación | Láser, misiles, fragmentos, rayo tractor | S2, S3 | T-401..T-410 | Minar, fragmentar y recuperar |
+| S4 | Minería y recuperación | Láser, misiles, fragmentos, rayo tractor | S2, S3 | T-401..T-410 | **Completada**: minar, fragmentar y recuperar |
 | S5 | Nave nodriza | Estación física, acople, servicios | S4 | T-501..T-507 | Ciclo completo en estación |
 | S6 | Mercado | Stock, precios, compraventa | S5 | T-601..T-606 | Precios reaccionan |
 | S7 | NPC | Agentes, economía autónoma | S6 | T-701..T-707 | Precios cambian sin jugador |

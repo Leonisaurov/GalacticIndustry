@@ -1846,6 +1846,54 @@ public class SelfTest {
         pc.pilot.cancel();
         check("cancelar piloto", !pc.pilot.active());
 
+        // T-408: verificación integrada de la etapa 4.
+        Ship gateShip = new Ship();
+        gateShip.reset(new Upgrades(true), 0f, 0f);
+        MiningLaser gateLaser = new MiningLaser();
+        Asteroid gateC = new Asteroid(100f, 0f, Asteroid.MEDIUM, AsteroidType.C, 30, 30, 901L);
+        Asteroid gateS = new Asteroid(120f, 0f, Asteroid.MEDIUM, AsteroidType.S, 30, 30, 902L);
+        Asteroid gateM = new Asteroid(140f, 0f, Asteroid.MEDIUM, AsteroidType.M, 30, 30, 903L);
+        float timeC = 30f / gateLaser.rate(gateShip, gateC);
+        float timeS = 30f / gateLaser.rate(gateShip, gateS);
+        float timeM = 30f / gateLaser.rate(gateShip, gateM);
+        check("S4: C, S y M tienen tiempos distintos",
+                timeC < timeS && timeS < timeM);
+        check("S4: los tiempos caben en el plan",
+                timeC >= 2f && timeC <= 5f
+                        && timeS >= 6f && timeS <= 10f
+                        && timeM >= 9f && timeM <= 30f);
+        GameWorld gate = new GameWorld(new Upgrades(true));
+        gate.start();
+        gate.immortal = true;
+        gate.asteroids.clear();
+        gate.fuel.clear();
+        Asteroid gateRock = new Asteroid(120f, 0f, Asteroid.MEDIUM,
+                AsteroidType.M, 50, 50, 904L);
+        gateRock.vel.set(0f, 0f);
+        gate.asteroids.add(gateRock);
+        gate.ship.laser.aim(gateRock);
+        int gateSteps = 0;
+        while (gate.ship.laser.active && gateSteps < 60 * 40) {
+            gate.update(dt, new Controls());
+            gateSteps++;
+        }
+        float gateSeconds = gateSteps / 60f;
+        check("S4: minar M agota la roca y llena la bodega",
+                gateRock.depleted()
+                        && !gate.asteroids.contains(gateRock, true)
+                        && gate.ship.cargo().totalUnits() == 50);
+        check("S4: el tiempo de minado M es razonable",
+                gateSeconds >= 12f && gateSeconds <= 25f);
+        check("S4: minar no da monedas", gate.coinsEarned == 0);
+        int gateCredits = 0;
+        for (int i = 0; i < gate.ship.cargo().entries().size(); i++) {
+            gateCredits += Upgrades.meltValue(gate.ship.cargo().entries().get(i));
+        }
+        check("S4: la fundicion temporal valora el mineral", gateCredits > 0);
+        check("S4: el mineral extraido respeta la capacidad",
+                gate.ship.cargo().usedMass() > 0f
+                        && !gate.ship.cargo().overCapacity());
+
         // Medición de eficiencia del piloto (no son pruebas de corrección, solo cifras para comparar).
         benchFuel("cerca", 300f, 0f, 0f, 0f);
         benchFuel("lateral", 600f, 90f, 0f, 0f);
