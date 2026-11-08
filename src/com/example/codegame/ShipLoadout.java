@@ -34,7 +34,11 @@ class ShipLoadout {
     static final int MAX_LEVEL = 5;
 
     static final int MODULE_SLOTS = 4;
-    /** Modulo previsto para el piloto automatico; aun no se exige para volar. */
+    /**
+     * Modulo de piloto automatico. MyGame.pickTarget exige tenerlo instalado
+     * para seleccionar estacion, asteroides o bidones; volar manualmente no lo
+     * requiere.
+     */
     static final String AUTOPILOT_MODULE = "autopilot";
 
     private final Store store;
