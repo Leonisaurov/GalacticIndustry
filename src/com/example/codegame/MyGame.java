@@ -89,6 +89,8 @@ public class MyGame implements ApplicationListener {
     private final boolean recoveryTest;
     /** Arranca con la bodega llena para revisar masa/HUD. */
     private final boolean cargoTest;
+    /** Arranca con una roca cercana y el piloto en modo MINE. */
+    private final boolean miningTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -208,6 +210,17 @@ public class MyGame implements ApplicationListener {
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, false);
+    }
+
+    /**
+     * @param miningTest arranca con una roca cercana y el piloto en modo MINE.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -217,9 +230,10 @@ public class MyGame implements ApplicationListener {
         this.pilotDeathTest = pilotDeathTest;
         this.recoveryTest = recoveryTest;
         this.cargoTest = cargoTest;
+        this.miningTest = miningTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
-                || cargoTest;
+                || cargoTest || miningTest;
     }
 
     @Override
@@ -323,6 +337,17 @@ public class MyGame implements ApplicationListener {
             world.asteroids.clear();
             world.fuel.clear();
             world.ship.cargo().addExact(Commodity.SILICATO, 100);
+        } else if (miningTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            Asteroid target = new Asteroid(200f, 0f, Asteroid.MEDIUM,
+                    AsteroidType.C, 15, 15, 555L);
+            target.vel.set(0f, 0f);
+            world.asteroids.add(target);
+            world.pilot.mine(target);
         }
     }
 
@@ -714,6 +739,7 @@ public class MyGame implements ApplicationListener {
         switch (mode) {
             case Autopilot.FUEL: return "FUEL";
             case Autopilot.ASTEROID: return "ASTEROID";
+            case Autopilot.MINE: return "MINE";
             case Autopilot.STOP: return "STOP";
             default: return "NONE";
         }
@@ -940,6 +966,7 @@ public class MyGame implements ApplicationListener {
         boolean sliderHeld = sliderPointer >= 0 && thrustLevel > 0.01f;
         if (joyAiming || keyTurn || keyThrust || keyFire || sliderHeld) {
             world.pilot.cancel();
+            world.ship.laser.stop();
         }
         // La cámara debe estar ya en la nave para convertir los toques a coordenadas del mundo.
         worldCam.position.set(world.ship.pos.x, world.ship.pos.y, 0f);
@@ -1056,6 +1083,7 @@ public class MyGame implements ApplicationListener {
         }
         if (free) {
             world.pilot.cancel();
+            world.ship.laser.stop();
         }
         return free;
     }
@@ -1096,7 +1124,7 @@ public class MyGame implements ApplicationListener {
             return false;
         }
         if (rock != null && (cell == null || rockD <= cellD)) {
-            world.pilot.target(rock);
+            world.pilot.mine(rock);
         } else {
             world.pilot.target(cell);
         }

@@ -380,6 +380,9 @@ class GameWorld {
 
         if (pilot.active()) {
             pilot.steer(c, this, dt);
+            if (pilot.mode() != Autopilot.MINE) {
+                ship.laser.stop();
+            }
         }
         ship.update(dt, up, c);
         if (ship.laser.active) {

@@ -33,9 +33,11 @@ final class MiningLaser {
     }
 
     void aim(Asteroid asteroid) {
+        if (target != asteroid) {
+            partial = 0f;
+        }
         target = asteroid;
         active = target != null && !target.depleted();
-        partial = 0f;
     }
 
     void stop() {

@@ -114,7 +114,7 @@ para que las esquinas no dupliquen el alfa. Evita crear `Color` dentro de
 
 ## Piloto automático
 
-Modos: `NONE`, `FUEL`, `ASTEROID` y `STOP`.
+Modos: `NONE`, `FUEL`, `ASTEROID`, `MINE` y `STOP`.
 
 - `FUEL`/`ASTEROID`: calcula la velocidad deseada con distancia de frenado y se
   deja llevar por la inercia (`COAST_BAND`); solo empuja cuando la velocidad que
@@ -136,6 +136,9 @@ Modos: `NONE`, `FUEL`, `ASTEROID` y `STOP`.
 - `startRun()` y `GameWorld.start()`/`restore()` cancelan el piloto para no
   arrastrar objetivos de una partida anterior.
 - Mientras frena se dibuja un anillo cálido alrededor de la nave.
+- `MINE` aproxima a la roca, aparca a 180 u y mantiene el láser si hay
+  energía, parte operativa y espacio en bodega. No dispara misiles; termina al
+  agotar la roca o llenar la bodega.
 
 `SelfTest` comprueba la frenada tras destruir un meteorito a velocidad alta y
 tras recoger un bidón.

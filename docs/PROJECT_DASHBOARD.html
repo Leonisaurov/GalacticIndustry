@@ -611,24 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:15:00-06:00",
-    "lastSessionId": "S-031",
+    "lastUpdated": "2026-11-08T01:21:00-06:00",
+    "lastSessionId": "S-032",
     "lastVerification": {
-      "date": "2026-11-08T01:15:00-06:00",
+      "date": "2026-11-08T01:21:00-06:00",
       "result": "OK",
       "checks": [
-        "tools/run-tests.sh 01_logic: SelfTest TODO OK (2 ejecuciones)",
-        "La extracción llena la bodega con masa y composición correctas",
-        "La bodega llena detiene el láser",
-        "La roca agotada desaparece, se guarda y no reaparece",
-        "Minar no da monedas",
-        "03_controls y 04_autopilot: OK",
+        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
+        "Autopilot.MINE aproxima, mantiene el láser y llena la bodega",
+        "MINE no dispara misiles y termina al agotar la roca",
+        "MINE se detiene con la bodega llena",
+        "12_mining: 15 UM, masa 14+, sin misiles ni monedas",
+        "04_autopilot sigue en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-404",
+    "nextTaskId": "T-405",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2712,7 +2712,7 @@
       "description": "Permitir que el piloto automático se aproxime a una roca y mantenga la minería sin disparar.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-403"
@@ -2736,10 +2736,40 @@
         "01_logic"
       ],
       "technicalNotes": "Reutilizar la lógica de aproximación y evitación existente.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-032",
+          "date": "2026-11-08T01:21:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Autopilot.MINE aproxima a la roca, aparca a 180 u, mantiene el láser con energía y bodega, no dispara misiles y termina al agotar la roca o llenar la bodega. Tocar una roca selecciona MINE; mining_test y 12_mining cubren el flujo.",
+          "files": [
+            "src/com/example/codegame/Autopilot.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/12_mining.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "04_autopilot",
+            "12_mining",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el piloto entra en modo MINE",
+        "PASS MINE mantiene una distancia segura",
+        "PASS MINE llena la bodega; PASS no dispara misiles",
+        "PASS MINE termina al agotar la roca; PASS se detiene con bodega llena",
+        "12_mining: 15 UM, masa 14+, sin misiles ni monedas",
+        "04_autopilot y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T01:21:00-06:00"
     },
     {
       "id": "T-405",
@@ -2748,7 +2778,7 @@
       "description": "Eliminar la recompensa en monedas de los asteroides y añadir una conversión temporal de mineral a créditos.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-403",
@@ -5430,6 +5460,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-032",
+      "date": "2026-11-08T01:21:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Autopilot.MINE y selección de roca",
+      "summary": "MINE aproxima, aparca a 180 u, mantiene el láser si hay energía/bodega, no dispara misiles y termina al agotar la roca o llenar la bodega. Tocar una roca selecciona MINE; mining_test y 12_mining cubren el flujo.",
+      "tasks": [
+        "T-404"
+      ],
+      "files": [
+        "src/com/example/codegame/Autopilot.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/12_mining.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 04_autopilot",
+        "tools/run-tests.sh --no-build 12_mining",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-405 (sustituir monedas por mineral y fundición temporal)."
+    },
     {
       "id": "S-031",
       "date": "2026-11-08T01:15:00-06:00",

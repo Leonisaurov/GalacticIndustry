@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:15:00-06:00  
+**Última actualización:** 2026-11-08T01:21:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-032 — Autopilot.MINE y selección de roca
+
+- **Fecha:** 2026-11-08T01:21:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-404
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Autopilot.MINE` reutiliza la aproximación y evitación existentes.
+- Aparca a 180 u, dentro del alcance del láser.
+- Mantiene el láser si hay energía, láser operativo y espacio en bodega.
+- No dispara misiles en modo MINE.
+- Se detiene al agotar la roca o llenar la bodega.
+- Tocar una roca selecciona MINE; el disparo manual sigue disponible.
+- Añadido `mining_test` y `12_mining`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Autopilot.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/12_mining.sh` (nuevo)
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 12_mining`: **OK**.
+- `tools/run-tests.sh --no-build 04_autopilot 03_controls`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS el piloto entra en modo MINE`
+- `PASS MINE mantiene una distancia segura`
+- `PASS MINE llena la bodega`
+- `PASS MINE no dispara misiles`
+- `PASS MINE termina al agotar la roca`
+- `PASS MINE se detiene con la bodega llena`
+- `12_mining`: 15 UM, masa 14+, sin misiles ni monedas.
+- Captura `22_mining.png`: `CARGA 15/100 UM` y sin roca.
+
+### Decisiones tomadas
+
+- MINE aparca a 180 u para quedar dentro del alcance de 260 u.
+- Si la bodega está llena, el piloto pasa a STOP.
+- Si falta energía, espera a la recarga sin cancelar el modo.
+- El disparo manual y el modo ASTEROID siguen disponibles.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-405 — Sustituir monedas directas por mineral y fundición temporal**.
 
 ---
 

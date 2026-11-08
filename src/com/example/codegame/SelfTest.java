@@ -1340,6 +1340,49 @@ public class SelfTest {
                         && minedLoaded.cargo().totalUnits() == 15
                         && Math.abs(minedLoaded.cargo().usedMass() - 14.5f) < 0.01f);
 
+        // T-404: piloto automático MINE.
+        GameWorld mineAuto = new GameWorld(new Upgrades(true));
+        mineAuto.start();
+        mineAuto.immortal = true;
+        mineAuto.asteroids.clear();
+        mineAuto.fuel.clear();
+        Asteroid autoTarget = new Asteroid(200f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 301L);
+        autoTarget.vel.set(0f, 0f);
+        mineAuto.asteroids.add(autoTarget);
+        mineAuto.pilot.mine(autoTarget);
+        check("el piloto entra en modo MINE",
+                mineAuto.pilot.mode() == Autopilot.MINE);
+        float minMineDist = Float.MAX_VALUE;
+        for (int i = 0; i < 60 * 10; i++) {
+            mineAuto.update(dt, new Controls());
+            minMineDist = Math.min(minMineDist,
+                    mineAuto.ship.pos.dst(autoTarget.pos));
+        }
+        check("MINE mantiene una distancia segura", minMineDist < 260f && minMineDist > 100f);
+        check("MINE llena la bodega", mineAuto.ship.cargo().totalUnits() == 15);
+        check("MINE no dispara misiles", mineAuto.missiles.size == 0);
+        check("MINE termina al agotar la roca",
+                mineAuto.pilot.mode() != Autopilot.MINE
+                        && !mineAuto.ship.laser.active);
+        GameWorld mineFull = new GameWorld(new Upgrades(true));
+        mineFull.start();
+        mineFull.immortal = true;
+        mineFull.asteroids.clear();
+        mineFull.fuel.clear();
+        Asteroid fullAutoRock = new Asteroid(200f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 302L);
+        fullAutoRock.vel.set(0f, 0f);
+        mineFull.asteroids.add(fullAutoRock);
+        mineFull.ship.cargo().addExact(Commodity.SILICATO, 100);
+        mineFull.pilot.mine(fullAutoRock);
+        for (int i = 0; i < 120; i++) {
+            mineFull.update(dt, new Controls());
+        }
+        check("MINE se detiene con la bodega llena",
+                mineFull.pilot.mode() != Autopilot.MINE
+                        && fullAutoRock.reserve == 15);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         // La simulación mide generación y monedas, no supervivencia: evita que

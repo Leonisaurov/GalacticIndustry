@@ -38,7 +38,10 @@ public class MainActivity extends AndroidApplication {
                 && getIntent().getBooleanExtra("recovery_test", false);
         boolean cargoTest = getIntent() != null
                 && getIntent().getBooleanExtra("cargo_test", false);
+        boolean miningTest = getIntent() != null
+                && getIntent().getBooleanExtra("mining_test", false);
         initialize(new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
-                wingTest, survivalTest, pilotDeathTest, recoveryTest, cargoTest), cfg);
+                wingTest, survivalTest, pilotDeathTest, recoveryTest, cargoTest,
+                miningTest), cfg);
     }
 }

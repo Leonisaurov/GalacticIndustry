@@ -41,6 +41,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `09_wing_damage` — ala perdida, humo y pestaña de reparaciones.
 - `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
 - `11_cargo` — bodega, masa, HUD de carga y persistencia al pausar.
+- `12_mining` — piloto MINE, extracción a bodega y roca agotada.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh
@@ -119,6 +120,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
   Sin el flag no existe y el juego normal sigue con muerte permanente.
 - `cargo_test`: arranca con la bodega llena de Silicato (100/100 UM) para
   revisar masa y HUD. Lo usa `11_cargo`.
+- `mining_test`: arranca con una roca C cercana y el piloto en `MINE`. Debe
+  minar 15 UM, llenar la bodega y terminar sin disparar misiles. Lo usa
+  `12_mining`.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

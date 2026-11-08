@@ -20,6 +20,11 @@ class Autopilot {
     static final int ASTEROID = 2;
     /** Fase de frenada tras perder el objetivo (destruido, recogido o desaparecido). */
     static final int STOP = 3;
+    /** Minería automática: aproximarse a una roca y mantener el láser. */
+    static final int MINE = 4;
+
+    /** Distancia de aparcamiento para minar; queda dentro del alcance del láser. */
+    static final float MINE_DIST = 180f;
 
     /** Distancia a la que se para frente a un meteorito para dispararle (el misil llega a unas 600 u). */
     static final float FIRE_DIST = 220f;
@@ -83,6 +88,13 @@ class Autopilot {
         rock = a;
     }
 
+    /** Selecciona una roca para minería automática. */
+    void mine(Asteroid a) {
+        cancel();
+        kind = MINE;
+        rock = a;
+    }
+
     void target(FuelPickup f) {
         cancel();
         kind = FUEL;
@@ -103,6 +115,7 @@ class Autopilot {
             return;
         }
         if (!stillThere(w)) {
+            w.ship.laser.stop();
             beginStop();
             steerStop(c, w, dt);
             return;
@@ -113,10 +126,12 @@ class Autopilot {
 
         Vector2 goal;
         float stop;
-        if (kind == ASTEROID) {
+        if (kind == ASTEROID || kind == MINE) {
             goal = rock.pos;
             targetVel.set(rock.vel);
-            stop = Math.max(FIRE_DIST, rock.radius + Ship.RADIUS + SAFE_CLEARANCE);
+            stop = kind == MINE
+                    ? MINE_DIST
+                    : Math.max(FIRE_DIST, rock.radius + Ship.RADIUS + SAFE_CLEARANCE);
         } else {
             goal = cell.pos;
             targetVel.set(0f, 0f);
@@ -129,7 +144,7 @@ class Autopilot {
         // Velocidad de aproximación según la distancia de frenado con la aceleración real.
         // Se frena con la mitad de la aceleración: la nave tarda en girar hacia la dirección de frenado.
         // Solo frente a meteoritos: un bidón no hace daño, así que no hace falta frenar con margen.
-        float brake = kind == ASTEROID ? accel * BRAKE_MARGIN : accel;
+        float brake = (kind == ASTEROID || kind == MINE) ? accel * BRAKE_MARGIN : accel;
         float slow = dist - stop;
         float approach = slow > 0f
                 ? Math.min(vmax, (float) Math.sqrt(2f * brake * slow))
@@ -142,7 +157,7 @@ class Autopilot {
         }
         desired.set(d).scl(approach).add(targetVel);
 
-        if (kind == ASTEROID) {
+        if (kind == ASTEROID || kind == MINE) {
             for (int i = 0; i < w.asteroids.size; i++) {
                 Asteroid a = w.asteroids.get(i);
                 if (a != rock) {
@@ -191,6 +206,22 @@ class Autopilot {
                 if (along > 0f && lateral < rock.radius * FIRE_HIT_FRACTION) {
                     c.fire = true;
                 }
+            }
+        }
+
+        if (kind == MINE) {
+            boolean room = ship.cargo().freeMass() > 0.01f;
+            if (!room) {
+                ship.laser.stop();
+                beginStop();
+                steerStop(c, w, dt);
+                return;
+            }
+            if (dist <= MiningLaser.MAX_RANGE && ship.capacitor.hasEnergy()
+                    && ship.part[Ship.MINING_LASER] > 0f && !rock.depleted()) {
+                ship.laser.aim(rock);
+            } else {
+                ship.laser.stop();
             }
         }
     }
@@ -314,6 +345,9 @@ class Autopilot {
         if (kind == ASTEROID) {
             return w.asteroids.contains(rock, true);
         }
+        if (kind == MINE) {
+            return w.asteroids.contains(rock, true) && !rock.depleted();
+        }
         if (kind == FUEL) {
             return w.fuel.contains(cell, true);
         }
@@ -335,10 +369,12 @@ class Autopilot {
             }
             return;
         }
-        Vector2 p = kind == ASTEROID ? rock.pos : cell.pos;
-        float r = kind == ASTEROID ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos : cell.pos;
+        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
         float pulse = 1f + 0.06f * MathUtils.sin(time * 5f);
-        if (kind == ASTEROID) {
+        if (kind == MINE) {
+            shapes.setColor(1f, 0.78f, 0.28f, 0.90f);
+        } else if (kind == ASTEROID) {
             shapes.setColor(0.45f, 0.85f, 1f, 0.85f);
         } else {
             shapes.setColor(0.40f, 1f, 0.62f, 0.85f);
@@ -373,10 +409,11 @@ class Autopilot {
             }
             return;
         }
-        Vector2 p = kind == ASTEROID ? rock.pos : cell.pos;
-        float r = kind == ASTEROID ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos : cell.pos;
+        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
         float pulse = 0.6f + 0.4f * MathUtils.sin(time * 5f);
-        Color c = kind == ASTEROID ? Visuals.ACCENT : Visuals.GOOD;
+        Color c = kind == MINE ? Visuals.GOLD
+                : kind == ASTEROID ? Visuals.ACCENT : Visuals.GOOD;
         art.glow(batch, p.x, p.y, r * 3.2f, c, 0.10f * pulse);
         for (int i = 0; i < 12; i++) {
             float a = i * 30f + time * 45f;
