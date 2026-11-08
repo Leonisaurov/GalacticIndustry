@@ -245,6 +245,17 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - Las rocas agotadas se eliminan del mundo sin explosión ni monedas.
 - Reserva, carga y chunks persisten; una roca agotada no reaparece al cargar.
 
+## Fragmentos por misiles
+
+- Al destruir una roca, `FRAGMENT_SHARE` (0.60) de su reserva se reparte en
+  fragmentos físicos y `FRAGMENT_LOSS` (0.25) se pierde; el resto queda en
+  escombros que heredan el mineral restante.
+- Cada mineral se parte en uno o dos fragmentos con posición y velocidad
+  propias; no entran en la bodega hasta que la nave los toca.
+- Si la bodega está llena, el fragmento permanece en el espacio. Su vida es de
+  90 s y desaparecen si se alejan demasiado.
+- La persistencia de fragmentos y el rayo tractor llegan en T-409/T-410.
+
 ## Economía temporal: fundición
 
 - Destruir o minar no concede monedas; el valor está en el mineral de la bodega.

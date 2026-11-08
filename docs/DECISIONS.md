@@ -137,6 +137,15 @@ Mantenerlos como herramienta secundaria: rompen rocas y recuperan ~35 % del mine
 
 Afecta a la Etapa 4 y al autopiloto.
 
+### Implementación actual (T-406)
+
+- Los misiles destruyen o fragmentan la roca y dispersan parte de su mineral.
+- La dispersión usa `FRAGMENT_SHARE = 0.60` y `FRAGMENT_LOSS = 0.25` como
+  valores iniciales de balance; el resto queda en escombros.
+- Los fragmentos no entran en la bodega solos: se recogen al acercarse. El rayo
+  tractor llega en T-410 y la persistencia de fragmentos en T-409.
+- No se entregan monedas.
+
 ---
 
 ## D-004 — Viaje warp libre y streaming del universo

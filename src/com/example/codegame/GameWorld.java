@@ -26,6 +26,13 @@ class GameWorld {
     static final float FUEL_CHANCE = 0.75f;
     /** Distancia para poder recuperar la nave legado. */
     static final float LEGACY_RECOVERY_RADIUS = 100f;
+    /**
+     * Fracción de la reserva que los misiles dispersan como fragmentos. El
+     * resto se reparte entre pérdida y escombros; es un valor de balance.
+     */
+    static final float FRAGMENT_SHARE = 0.60f;
+    /** Fracción de material que se pierde al romper la roca (ajustable). */
+    static final float FRAGMENT_LOSS = 0.25f;
 
     final Upgrades up;
     final Ship ship = new Ship();
@@ -40,6 +47,8 @@ class GameWorld {
     final Array<Asteroid> asteroids = new Array<>();
     final Array<Missile> missiles = new Array<>();
     final Array<FuelPickup> fuel = new Array<>();
+    /** Mineral disperso por los misiles, recuperable al acercarse. */
+    final Array<OreFragment> fragments = new Array<>();
     final Effects fx = new Effects();
     /** Piloto automático activado por un toque sobre un bidón o un meteorito. */
     final Autopilot pilot = new Autopilot();
@@ -93,6 +102,7 @@ class GameWorld {
         asteroids.clear();
         missiles.clear();
         fuel.clear();
+        fragments.clear();
         fx.clear();
         generated.clear();
         coinsEarned = 0;
@@ -172,6 +182,7 @@ class GameWorld {
         pilot.cancel();
         ship.reset(up, x, y);
         missiles.clear();
+        fragments.clear();
         fx.clear();
         coinsEarned = 0;
         score = 0;
@@ -410,8 +421,10 @@ class GameWorld {
         updateMissiles(dt);
         updateAsteroids(dt);
         updateFuel(dt);
+        updateFragments(dt);
         collideShipAsteroids();
         collideShipFuel();
+        collideShipFragments();
         collideMissilesAsteroids();
         fx.update(dt);
         updateChunks();
@@ -456,6 +469,30 @@ class GameWorld {
         for (int i = fuel.size - 1; i >= 0; i--) {
             if (!fuel.get(i).update(dt)) {
                 fuel.removeIndex(i);
+            }
+        }
+    }
+
+    private void updateFragments(float dt) {
+        for (int i = fragments.size - 1; i >= 0; i--) {
+            OreFragment f = fragments.get(i);
+            if (!f.update(dt) || f.pos.dst(ship.pos) > DESPAWN_DIST) {
+                fragments.removeIndex(i);
+            }
+        }
+    }
+
+    /** Recoge los fragmentos que la nave toca; si la bodega está llena, siguen en el espacio. */
+    private void collideShipFragments() {
+        for (int i = fragments.size - 1; i >= 0; i--) {
+            OreFragment f = fragments.get(i);
+            if (f.pos.dst(ship.pos) > OreFragment.RADIUS + Ship.RADIUS + OreFragment.CAPTURE_PAD) {
+                continue;
+            }
+            if (f.collect(ship.cargo)) {
+                fx.burst(f.pos.x, f.pos.y, OreFragment.colorFor(f.commodity), 8, 120f);
+                fx.burst(f.pos.x, f.pos.y, SPARK_WHITE, 3, 80f);
+                fragments.removeIndex(i);
             }
         }
     }
@@ -600,7 +637,8 @@ class GameWorld {
 
     private void destroyAsteroid(int index) {
         Asteroid a = asteroids.get(index);
-        // T-405: destruir no da monedas; el mineral llega por minería/fragmentos.
+        int remaining = Math.max(0, a.reserve);
+        // T-405/T-406: destruir no da monedas; parte del mineral queda disperso.
         score += Math.max(10, a.maxReserve * 2);
         shake = Math.max(shake, a.size == Asteroid.LARGE ? 12f : a.size == Asteroid.MEDIUM ? 7f : 4f);
         fx.burst(a.pos.x, a.pos.y, SPARK_WARM, 20, 280f);
@@ -608,16 +646,59 @@ class GameWorld {
         fx.burst(a.pos.x, a.pos.y, SPARK_WHITE, 6, 150f);
         fx.shock(a.pos.x, a.pos.y, SHOCK_GOLD, a.radius * 5.5f);
         asteroids.removeIndex(index);
-        if (a.size == Asteroid.LARGE) {
-            splitAsteroid(a, Asteroid.MEDIUM);
-        } else if (a.size == Asteroid.MEDIUM) {
-            splitAsteroid(a, Asteroid.SMALL);
+        if (remaining <= 0) {
+            return;
+        }
+        int fragmentUnits = Math.round(remaining * FRAGMENT_SHARE);
+        int debrisUnits = remaining - fragmentUnits - Math.round(remaining * FRAGMENT_LOSS);
+        if (fragmentUnits > 0) {
+            spawnFragments(a, fragmentUnits);
+        }
+        if (a.size != Asteroid.SMALL && debrisUnits >= 2) {
+            splitAsteroid(a, a.size == Asteroid.LARGE ? Asteroid.MEDIUM : Asteroid.SMALL,
+                    debrisUnits);
         }
     }
 
-    private void splitAsteroid(Asteroid parent, int size) {
+    /**
+     * Reparte {@code units} UM de la reserva restante en fragmentos físicos.
+     * Cada mineral se parte en uno o dos trozos para que la dispersión se vea.
+     */
+    private void spawnFragments(Asteroid parent, int units) {
+        Cargo[] batch = parent.compositionBatch(units);
+        for (Cargo cargo : batch) {
+            if (cargo.amount <= 0) {
+                continue;
+            }
+            int left = cargo.amount;
+            int pieces = left >= 2 ? 2 : 1;
+            for (int i = 0; i < pieces; i++) {
+                int share = i == pieces - 1 ? left : Math.max(1, left / (pieces - i));
+                left -= share;
+                float angle = MathUtils.random(360f);
+                float speed = MathUtils.random(30f, 95f);
+                float dist = MathUtils.random(6f, parent.radius * 0.7f);
+                float x = parent.pos.x + MathUtils.cosDeg(angle) * dist;
+                float y = parent.pos.y + MathUtils.sinDeg(angle) * dist;
+                fragments.add(new OreFragment(x, y, cargo.commodity, share,
+                        parent.vel.x * 0.35f + MathUtils.cosDeg(angle) * speed,
+                        parent.vel.y * 0.35f + MathUtils.sinDeg(angle) * speed));
+            }
+        }
+    }
+
+    private void splitAsteroid(Asteroid parent, int size, int units) {
+        int each = units / 2;
         for (int i = 0; i < 2; i++) {
-            Asteroid child = new Asteroid(parent.pos.x, parent.pos.y, size);
+            int share = i == 0 ? each : units - each;
+            if (share <= 0) {
+                continue;
+            }
+            float offset = (i == 0 ? -1f : 1f) * parent.radius * 0.35f;
+            float x = parent.pos.x + offset;
+            float y = parent.pos.y + offset * 0.6f;
+            Asteroid child = new Asteroid(x, y, size, parent.type, share, share,
+                    Asteroid.seedFrom(x, y, size, parent.type));
             child.vel.add(parent.vel).scl(1.2f);
             asteroids.add(child);
         }
@@ -673,6 +754,9 @@ class GameWorld {
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).draw(shapes);
         }
+        for (int i = 0; i < fragments.size; i++) {
+            fragments.get(i).draw(shapes);
+        }
         for (int i = 0; i < asteroids.size; i++) {
             asteroids.get(i).draw(shapes);
         }
@@ -700,6 +784,9 @@ class GameWorld {
     void drawGlow(SpriteBatch batch, Visuals art) {
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).drawGlow(batch, art);
+        }
+        for (int i = 0; i < fragments.size; i++) {
+            fragments.get(i).drawGlow(batch, art);
         }
         for (int i = 0; i < asteroids.size; i++) {
             asteroids.get(i).drawGlow(batch, art);

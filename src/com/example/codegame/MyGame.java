@@ -588,6 +588,15 @@ public class MyGame implements ApplicationListener {
         return upgrades.refillCost(missing);
     }
 
+    /** UM totales de mineral dispersas como fragmentos. */
+    private int fragmentUnits() {
+        int total = 0;
+        for (int i = 0; i < world.fragments.size; i++) {
+            total += world.fragments.get(i).amount;
+        }
+        return total;
+    }
+
     private String fuelRefillLabel() {
         int cost = fuelRefillCost();
         return cost <= 0 ? "DEPOSITO OK" : "RELLENAR " + cost;
@@ -808,7 +817,8 @@ public class MyGame implements ApplicationListener {
                         + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f,"
                         + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f,"
                         + "\"legacyNear\":%s,\"legacyDistance\":%.1f,"
-                        + "\"cargoMass\":%.1f,\"cargoCapacity\":%.1f,\"cargoUnits\":%d}",
+                        + "\"cargoMass\":%.1f,\"cargoCapacity\":%.1f,\"cargoUnits\":%d,"
+                        + "\"fragments\":%d,\"fragmentUnits\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -830,7 +840,9 @@ public class MyGame implements ApplicationListener {
                 world.legacyDistance(world.ship.pos),
                 world.ship.cargo().usedMass(),
                 world.ship.cargo().capacity(),
-                world.ship.cargo().totalUnits()));
+                world.ship.cargo().totalUnits(),
+                world.fragments.size,
+                fragmentUnits()));
     }
 
     private void logEvent(String json) {

@@ -611,23 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:28:00-06:00",
-    "lastSessionId": "S-033",
+    "lastUpdated": "2026-11-08T01:36:00-06:00",
+    "lastSessionId": "S-034",
     "lastVerification": {
-      "date": "2026-11-08T01:28:00-06:00",
+      "date": "2026-11-08T01:36:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Destruir/minar no da monedas",
-        "El mineral va a la bodega y la simulación destruye asteroides",
-        "FUNDIR convierte 100 Silicato en 200 créditos y vacía la bodega",
-        "12_mining y 03_controls: OK",
+        "Los misiles dispersan mineral en fragmentos recuperables",
+        "No hay entrega directa a bodega ni monedas",
+        "La pérdida de material es configurable (FRAGMENT_SHARE/FRAGMENT_LOSS)",
+        "Los escombros heredan mineral y no lo duplican",
+        "12_mining, 04_autopilot y 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-406",
+    "nextTaskId": "T-407",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2846,7 +2847,7 @@
       "description": "Conservar los misiles como herramienta de destrucción/fragmentación rápida. Al impactar, el asteroide se rompe y el mineral queda disperso en fragmentos recuperables, con posible pérdida.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-403",
@@ -2875,10 +2876,40 @@
         "04_autopilot"
       ],
       "technicalNotes": "No fijar porcentajes definitivos de pérdida. El rayo tractor se implementa en T-410.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-034",
+          "date": "2026-11-08T01:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "OreFragment: los misiles dispersan parte de la reserva en fragmentos con mineral, posición y velocidad; la nave los recoge al tocarlos y nunca entran directos en la bodega. FRAGMENT_SHARE/FRAGMENT_LOSS quedan como valores de balance. Los escombros heredan el mineral restante sin duplicarlo.",
+          "files": [
+            "src/com/example/codegame/OreFragment.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "12_mining",
+            "04_autopilot",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el misil dispersa fragmentos",
+        "PASS el mineral no entra directo en la bodega; PASS romper roca no da monedas",
+        "PASS parte del material se pierde",
+        "PASS la nave recoge fragmentos",
+        "PASS una roca grande se parte en escombros",
+        "PASS los fragmentos y escombros no duplican mineral",
+        "12_mining, 04_autopilot y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T01:36:00-06:00"
     },
     {
       "id": "T-407",
@@ -5490,6 +5521,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-034",
+      "date": "2026-11-08T01:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Misiles con fragmentos de mineral",
+      "summary": "Los misiles dispersan parte de la reserva en OreFragments recuperables; no hay entrega directa a bodega ni monedas. La pérdida se controla con FRAGMENT_SHARE/FRAGMENT_LOSS y los escombros heredan el mineral restante sin duplicarlo.",
+      "tasks": [
+        "T-406"
+      ],
+      "files": [
+        "src/com/example/codegame/OreFragment.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "docs/DECISIONS.md",
+        "docs/arquitectura.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 12_mining",
+        "tools/run-tests.sh --no-build 04_autopilot",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-407 (mejoras de láser, HUD de energía y efectos)."
+    },
     {
       "id": "S-033",
       "date": "2026-11-08T01:28:00-06:00",

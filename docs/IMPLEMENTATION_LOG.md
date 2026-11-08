@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:28:00-06:00  
+**Última actualización:** 2026-11-08T01:36:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,67 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-034 — Misiles con fragmentos de mineral
+
+- **Fecha:** 2026-11-08T01:36:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-406
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Nuevo `OreFragment`: mineral + cantidad + posición/velocidad, con 90 s de vida.
+- Al destruir una roca con un misil:
+  - 60 % (`FRAGMENT_SHARE`) de su reserva se dispersa en fragmentos;
+  - 25 % (`FRAGMENT_LOSS`) se pierde;
+  - el resto queda en escombros que heredan el mineral restante.
+- El mineral **no** entra directamente en la bodega ni da monedas.
+- La nave recoge los fragmentos al tocarlos; si la bodega está llena, siguen
+  en el espacio.
+- Los fragmentos se dibujan con color por mineral y un brillo propio.
+- Corregido un bug de fragmentos fantasma de 1 UM al repartir minerales con
+  cantidad cero.
+- Telemetría: `fragments` y `fragmentUnits` en el estado.
+
+### Archivos modificados
+
+- `src/com/example/codegame/OreFragment.java` (nuevo)
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/DECISIONS.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 12_mining 04_autopilot 03_controls`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS el misil dispersa fragmentos`
+- `PASS el mineral no entra directo en la bodega`
+- `PASS romper roca no da monedas`
+- `PASS parte del material se pierde`
+- `PASS la nave recoge fragmentos`
+- `PASS una roca grande se parte en escombros`
+- `PASS los fragmentos y escombros no duplican mineral`
+
+### Decisiones tomadas
+
+- `FRAGMENT_SHARE = 0.60` y `FRAGMENT_LOSS = 0.25` son valores iniciales de
+  balance, no definitivos.
+- La recogida es por contacto; el rayo tractor llega en T-410.
+- La persistencia de fragmentos se deja para T-409.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-407 — Añadir mejoras de láser, HUD de energía y efectos visuales**.
 
 ---
 

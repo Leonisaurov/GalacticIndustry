@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S4` — Minería láser y recursos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-404` — Añadir Autopilot.MINE y selección de objetivo.
-- Primera tarea disponible: `T-405` — Sustituir monedas directas por mineral y fundición temporal.
+- Última tarea completada: `T-406` — Misiles: fragmentación y dispersión de mineral.
+- Primera tarea disponible: `T-407` — Añadir mejoras de láser, HUD de energía y efectos visuales.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **31 %** (25 de 81 tareas de progreso).
+- La implementación del juego está al **33 %** (27 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

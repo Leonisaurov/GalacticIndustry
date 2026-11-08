@@ -1391,6 +1391,65 @@ public class SelfTest {
         check("fundir oro a precio base",
                 Upgrades.meltValue(meltOro) == 150);
 
+        // T-406: fragmentación por misiles, dispersión y recuperación.
+        GameWorld fragWorld = new GameWorld(new Upgrades(true));
+        fragWorld.start();
+        fragWorld.immortal = true;
+        fragWorld.asteroids.clear();
+        fragWorld.fuel.clear();
+        Asteroid fragRock = new Asteroid(300f, 0f, Asteroid.SMALL,
+                AsteroidType.C, 12, 12, 401L);
+        fragRock.vel.set(0f, 0f);
+        fragWorld.asteroids.add(fragRock);
+        int coinsBeforeFrag = fragWorld.coinsEarned;
+        fragWorld.missiles.add(new Missile(fragRock.pos.x - 10f, fragRock.pos.y,
+                new com.badlogic.gdx.math.Vector2(1f, 0f),
+                new com.badlogic.gdx.math.Vector2(), 99));
+        fragWorld.update(dt, new Controls());
+        int fragSum = 0;
+        for (int i = 0; i < fragWorld.fragments.size; i++) {
+            fragSum += fragWorld.fragments.get(i).amount;
+        }
+        check("el misil dispersa fragmentos", fragWorld.fragments.size > 0);
+        check("el mineral no entra directo en la bodega",
+                fragWorld.ship.cargo().totalUnits() == 0);
+        check("romper roca no da monedas", fragWorld.coinsEarned == coinsBeforeFrag);
+        check("parte del material se pierde",
+                fragSum == Math.round(12f * GameWorld.FRAGMENT_SHARE)
+                        && fragSum < 12);
+        OreFragment firstFragment = fragWorld.fragments.get(0);
+        fragWorld.ship.pos.set(firstFragment.pos);
+        fragWorld.update(dt, new Controls());
+        check("la nave recoge fragmentos",
+                fragWorld.ship.cargo().totalUnits() > 0
+                        && fragWorld.fragments.size < 2);
+        GameWorld fragLarge = new GameWorld(new Upgrades(true));
+        fragLarge.start();
+        fragLarge.immortal = true;
+        fragLarge.asteroids.clear();
+        fragLarge.fuel.clear();
+        Asteroid largeRock = new Asteroid(300f, 0f, Asteroid.LARGE,
+                AsteroidType.M, 70, 70, 402L);
+        largeRock.vel.set(0f, 0f);
+        fragLarge.asteroids.add(largeRock);
+        fragLarge.missiles.add(new Missile(largeRock.pos.x - 10f, largeRock.pos.y,
+                new com.badlogic.gdx.math.Vector2(1f, 0f),
+                new com.badlogic.gdx.math.Vector2(), 99));
+        fragLarge.update(dt, new Controls());
+        int debrisReserve = 0;
+        for (int i = 0; i < fragLarge.asteroids.size; i++) {
+            debrisReserve += fragLarge.asteroids.get(i).reserve;
+        }
+        int largeFragUnits = 0;
+        for (int i = 0; i < fragLarge.fragments.size; i++) {
+            largeFragUnits += fragLarge.fragments.get(i).amount;
+        }
+        check("una roca grande se parte en escombros",
+                fragLarge.asteroids.size == 2 && debrisReserve == 10);
+        check("los fragmentos y escombros no duplican mineral",
+                largeFragUnits == Math.round(70f * GameWorld.FRAGMENT_SHARE)
+                        && debrisReserve + largeFragUnits < 70);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         // La simulación mide generación y monedas, no supervivencia: evita que
