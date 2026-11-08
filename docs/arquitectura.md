@@ -245,6 +245,14 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - Las rocas agotadas se eliminan del mundo sin explosión ni monedas.
 - Reserva, carga y chunks persisten; una roca agotada no reaparece al cargar.
 
+## Economía temporal: fundición
+
+- Destruir o minar no concede monedas; el valor está en el mineral de la bodega.
+- La pestaña `FUNDIR` de la tienda convierte cada entrada completa a precio base
+  (`Upgrades.meltValue()`), vacía la bodega y suma créditos.
+- Es un puente para mantener el juego jugable hasta la estación de S5, donde el
+  mercado sustituirá a esta fundición.
+
 ## Masa y movimiento
 
 - `MassModel.load()` usa `usado/capacidad` (0–1) y aplica topes.

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:21:00-06:00  
+**Última actualización:** 2026-11-08T01:28:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-033 — Mineral en vez de monedas y fundición
+
+- **Fecha:** 2026-11-08T01:28:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-405
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Los asteroides ya no dan monedas al destruirlos.
+- Minar sigue depositando mineral en la bodega.
+- Nueva pestaña `FUNDIR` en la tienda temporal:
+  - muestra cada mineral, cantidad, precio y créditos;
+  - convierte la entrada completa a precio base;
+  - vacía la bodega y suma los créditos al saldo.
+- `Upgrades.meltValue()` centraliza la conversión.
+- La simulación de SelfTest mide puntos/destrucción, no monedas.
+- El puente de fundición es temporal hasta la estación de S5.
+
+### Archivos modificados
+
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/Asteroid.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/19_melt.sh` (nuevo)
+- `tools/tests/testlib.sh`
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 12_mining 03_controls 19_melt`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS destruir meteorito no da monedas`
+- `PASS minar no da monedas`
+- `PASS fundir hielo a precio base`
+- `PASS fundir oro a precio base`
+- `PASS la simulacion destruye asteroides`
+- `19_melt`: 100 Silicato → 200 créditos y bodega vacía.
+- `09_wing_damage` sigue abriendo la pestaña REPARAR con las 3 pestañas.
+
+### Decisiones tomadas
+
+- La fundición usa precio base y redondeo entero.
+- Se funde la entrada completa; no hay selector de cantidad todavía.
+- La pestaña desaparecerá cuando la estación asuma la economía en S5.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-406 — Misiles: fragmentación y dispersión de mineral**.
 
 ---
 

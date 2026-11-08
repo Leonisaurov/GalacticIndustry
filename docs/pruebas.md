@@ -43,6 +43,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `11_cargo` — bodega, masa, HUD de carga y persistencia al pausar.
 - `12_mining` — piloto MINE, extracción a bodega y roca agotada.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
+- `19_melt` — fundición temporal: 100 Silicato → 200 créditos y bodega vacía.
 
 ```sh
 tools/run-tests.sh --list

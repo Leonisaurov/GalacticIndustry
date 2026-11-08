@@ -123,12 +123,15 @@ public class MyGame implements ApplicationListener {
     private final Array<Button> buyButtons = new Array<>();
     /** Botones de reparacion de cada parte (solo con una partida activa). */
     private final Array<Button> repairButtons = new Array<>();
+    /** Entradas y botones de fundición temporal. */
+    private final Array<Button> meltButtons = new Array<>();
+    private final Array<Cargo> meltEntries = new Array<>();
     /** Recarga de gasolina en la tienda (solo durante la partida). */
     private Button btnRefill;
     /** Recarga de O2 en la tienda temporal (solo durante la partida). */
     private Button btnO2;
-    /** Pestañas de la tienda: 0 mejoras, 1 reparaciones. */
-    private Button btnTabUpgrades, btnTabRepairs;
+    /** Pestañas de la tienda: 0 mejoras, 1 reparaciones, 2 fundir. */
+    private Button btnTabUpgrades, btnTabRepairs, btnTabMelt;
     private int shopTab = 0;
 
     // Geometría de la tienda (se recalcula en layoutUi).
@@ -496,9 +499,17 @@ public class MyGame implements ApplicationListener {
         float tabY = h - 96f * u;
         float tabX = pad * 1.5f;
         float tabGap = 8f * u;
-        float tabW = (w - 3f * pad - tabGap) * 0.5f;
+        float tabW = runActive
+                ? (w - 3f * pad - 2f * tabGap) / 3f
+                : Math.max(80f * u, w - 2f * tabX);
         btnTabUpgrades = new Button("MEJORAS", tabX, tabY, tabW, tabH);
-        btnTabRepairs = new Button("REPARAR", tabX + tabW + tabGap, tabY, tabW, tabH);
+        if (runActive) {
+            btnTabRepairs = new Button("REPARAR", tabX + tabW + tabGap, tabY, tabW, tabH);
+            btnTabMelt = new Button("FUNDIR", tabX + 2f * (tabW + tabGap), tabY, tabW, tabH);
+        } else {
+            btnTabRepairs = null;
+            btnTabMelt = null;
+        }
 
         // Filas de la tienda: mejoras o reparaciones + recarga.
         shopRows = shopRowCount();
@@ -517,13 +528,15 @@ public class MyGame implements ApplicationListener {
 
         buyButtons.clear();
         repairButtons.clear();
+        meltButtons.clear();
+        meltEntries.clear();
         btnRefill = null;
         btnO2 = null;
         if (shopTab == 0) {
             for (int i = 0; i < Upgrades.COUNT; i++) {
                 buyButtons.add(shopButton(buyLabel(i), i, cardX, cardW, bbw, bbh));
             }
-        } else {
+        } else if (shopTab == 1) {
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 repairButtons.add(shopButton(repairLabel(i), i, cardX, cardW, bbw, bbh));
             }
@@ -531,6 +544,14 @@ public class MyGame implements ApplicationListener {
                     Ship.PART_COUNT, cardX, cardW, bbw, bbh);
             btnO2 = shopButton(o2RefillLabel(),
                     Ship.PART_COUNT + 1, cardX, cardW, bbw, bbh);
+        } else {
+            for (Cargo entry : world.ship.cargo().entries()) {
+                meltEntries.add(entry);
+            }
+            for (int i = 0; i < meltEntries.size; i++) {
+                meltButtons.add(shopButton("FUNDIR " + Upgrades.meltValue(meltEntries.get(i)),
+                        i, cardX, cardW, bbw, bbh));
+            }
         }
     }
 
@@ -542,7 +563,13 @@ public class MyGame implements ApplicationListener {
     }
 
     private int shopRowCount() {
-        return runActive && shopTab == 1 ? Ship.PART_COUNT + 2 : Upgrades.COUNT;
+        if (runActive && shopTab == 1) {
+            return Ship.PART_COUNT + 2;
+        }
+        if (runActive && shopTab == 2) {
+            return Math.max(1, world.ship.cargo().entries().size());
+        }
+        return Upgrades.COUNT;
     }
 
     private float topPanelH() {
@@ -1173,6 +1200,13 @@ public class MyGame implements ApplicationListener {
             }
             return;
         }
+        if (runActive && tapped(btnTabMelt)) {
+            if (shopTab != 2) {
+                shopTab = 2;
+                layoutUi();
+            }
+            return;
+        }
         if (shopTab == 1) {
             if (btnRefill != null && tapped(btnRefill) && canRefill()) {
                 int cost = fuelRefillCost();
@@ -1211,6 +1245,26 @@ public class MyGame implements ApplicationListener {
                                 "{\"event\":\"repair\",\"part\":%d,\"cost\":%d,\"coins\":%d}",
                                 i, cost, upgrades.coins()));
                     }
+                }
+                layoutUi();
+                return;
+            }
+            return;
+        }
+        if (shopTab == 2) {
+            for (int i = 0; i < meltButtons.size; i++) {
+                if (!tapped(meltButtons.get(i))) {
+                    continue;
+                }
+                Cargo entry = meltEntries.get(i);
+                int value = Upgrades.meltValue(entry);
+                if (world.ship.cargo().removeExact(entry.commodity, entry.amount)) {
+                    upgrades.addCoins(value);
+                    saveRun();
+                    logEvent(String.format(Locale.US,
+                            "{\"event\":\"melt\",\"commodity\":\"%s\",\"amount\":%d,"
+                                    + "\"credits\":%d,\"coins\":%d}",
+                            entry.commodity.name(), entry.amount, value, upgrades.coins()));
                 }
                 layoutUi();
                 return;
@@ -1564,17 +1618,23 @@ public class MyGame implements ApplicationListener {
                     shopTab == 0 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
             drawButton(btnTabRepairs,
                     shopTab == 1 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
+            drawButton(btnTabMelt,
+                    shopTab == 2 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
         }
         if (shopTab == 0) {
             for (int i = 0; i < Upgrades.COUNT; i++) {
                 drawShopCard(i);
             }
-        } else {
+        } else if (shopTab == 1) {
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 drawRepairCard(i);
             }
             drawRefillCard();
             drawO2Card();
+        } else {
+            for (int i = 0; i < meltEntries.size; i++) {
+                drawMeltCard(i);
+            }
         }
         float chipCx = w - pad * 1.5f - 75f * u;
         float chipCy = h - 34f * u;
@@ -1588,17 +1648,24 @@ public class MyGame implements ApplicationListener {
         if (runActive) {
             drawButtonText(btnTabUpgrades, true);
             drawButtonText(btnTabRepairs, true);
+            drawButtonText(btnTabMelt, true);
         }
         if (shopTab == 0) {
             for (int i = 0; i < Upgrades.COUNT; i++) {
                 drawShopCardText(i);
             }
-        } else {
+        } else if (shopTab == 1) {
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 drawRepairCardText(i);
             }
             drawRefillCardText();
             drawO2CardText();
+        } else if (meltEntries.size == 0) {
+            textCentered("BODEGA VACIA", w * 0.5f, h * 0.5f, 1.1f * u, Visuals.TEXT_DIM);
+        } else {
+            for (int i = 0; i < meltEntries.size; i++) {
+                drawMeltCardText(i);
+            }
         }
         drawButtonText(btnBack, true);
         batch.end();
@@ -1705,6 +1772,29 @@ public class MyGame implements ApplicationListener {
         textLeftFit("Rellena la reserva de O2", x + 18f * u,
                 rowDescY(top), 0.72f * u, maxW, Visuals.TEXT_DIM);
         drawButtonText(btnO2, canRefillO2());
+    }
+
+    private void drawMeltCard(int i) {
+        float x = cardX();
+        float w = cardW(hudView.getWorldWidth());
+        float top = shopRowTop(i);
+        float y = top - shopRowH;
+        panel(x, y, w, shopRowH, 16f * u, REFILL_FILL_C, REFILL_EDGE_C);
+        drawButton(meltButtons.get(i), Visuals.BTN_PRIMARY, true);
+    }
+
+    private void drawMeltCardText(int i) {
+        Cargo entry = meltEntries.get(i);
+        float x = cardX();
+        float top = shopRowTop(i);
+        float maxW = meltButtons.get(i).bounds.x - (x + 18f * u) - 10f * u;
+        int value = Upgrades.meltValue(entry);
+        textLeftFit(entry.commodity.displayName + "  " + entry.amount + " UM",
+                x + 18f * u, rowTitleY(top), 1.02f * u, maxW, Visuals.TEXT);
+        textLeftFit(entry.amount + " x " + entry.commodity.basePrice
+                        + " cr = " + value + " cr",
+                x + 18f * u, rowDescY(top), 0.72f * u, maxW, Visuals.TEXT_DIM);
+        drawButtonText(meltButtons.get(i), true);
     }
 
     /** Texto corto del efecto de cada parte cuando esta danada. */

@@ -97,9 +97,9 @@ public class SelfTest {
             turned += Math.abs(Ship.wrapDeg(b.ship.heading - lastHeading));
             lastHeading = b.ship.heading;
             steps++;
-            done = b.coinsEarned > 0 || !b.pilot.active();
+            done = !b.asteroids.contains(rock, true) || !b.pilot.active();
         }
-        boolean destroyed = b.coinsEarned > 0;
+        boolean destroyed = !b.asteroids.contains(rock, true);
         check("bench meteorito " + name + " destruido", destroyed);
         check("bench meteorito " + name + " sin golpes", b.ship.part[Ship.HULL] == hull0);
         System.out.println(String.format("BENCH roca   %-14s t=%.1fs combustible=%.1f giros=%.0fdeg motor=%.1fs casco=%.0f disparos=%d aciertos=%d",
@@ -201,7 +201,7 @@ public class SelfTest {
         check("disparar crea misil", w.missiles.size == m0 + 1);
         check("disparar gasta combustible", w.ship.fuel < w.ship.maxFuel);
 
-        // Un misil impacta un meteorito pequeño: se destruye y da monedas.
+        // Un misil impacta un meteorito pequeño: se destruye sin dar monedas.
         w.asteroids.clear();
         w.missiles.clear();
         w.coinsEarned = 0;
@@ -212,7 +212,7 @@ public class SelfTest {
                 new com.badlogic.gdx.math.Vector2(), up.damage()));
         w.update(dt, false, false, false, false);
         check("misil destruye meteorito", w.asteroids.size == 0 || !w.asteroids.contains(target, true));
-        check("destruir meteorito da monedas", w.coinsEarned == target.reward);
+        check("destruir meteorito no da monedas", w.coinsEarned == 0);
 
         // Un meteorito grande al destruirse se parte en dos medianos.
         w.asteroids.clear();
@@ -1383,6 +1383,14 @@ public class SelfTest {
                 mineFull.pilot.mode() != Autopilot.MINE
                         && fullAutoRock.reserve == 15);
 
+        // T-405: fundición temporal a precio base y sin monedas directas.
+        Cargo meltHielo = new Cargo(Commodity.HIELO, 10);
+        Cargo meltOro = new Cargo(Commodity.ORO, 5);
+        check("fundir hielo a precio base",
+                Upgrades.meltValue(meltHielo) == 15);
+        check("fundir oro a precio base",
+                Upgrades.meltValue(meltOro) == 150);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         // La simulación mide generación y monedas, no supervivencia: evita que
@@ -1390,7 +1398,7 @@ public class SelfTest {
         w.immortal = true;
         int maxAsteroids = 0;
         int steps = 0;
-        int totalEarned = 0;
+        int totalScore = 0;
         while (!w.isOver() && steps < 120 * 60) {
             Asteroid nearest = null;
             float best = Float.MAX_VALUE;
@@ -1413,10 +1421,10 @@ public class SelfTest {
             }
             boolean thrust = best > 300f;
             boolean fire = w.ship.canFire() && nearest != null && best < 500f;
-            int before = w.coinsEarned;
+            int before = w.score;
             w.update(dt, left, right, thrust, fire);
-            if (w.coinsEarned > before) {
-                totalEarned += w.coinsEarned - before;
+            if (w.score > before) {
+                totalScore += w.score - before;
             }
             maxAsteroids = Math.max(maxAsteroids, w.asteroids.size);
             steps++;
@@ -1425,7 +1433,7 @@ public class SelfTest {
         System.out.println("Partida simulada: " + (steps / 60) + "s, oleada " + w.wave
                 + ", puntos " + w.score + ", monedas " + w.coinsEarned
                 + ", max meteoritos " + maxAsteroids + ", casco " + w.ship.part[Ship.HULL]);
-        check("la simulacion gana monedas destruyendo meteoritos", totalEarned > 0);
+        check("la simulacion destruye asteroides", totalScore > 0);
         check("la simulacion termina sin excepciones", true);
 
         // Guardado: serialize -> restore debe reproducir el mismo estado.
@@ -1500,7 +1508,7 @@ public class SelfTest {
         boolean destroyed = false;
         for (int i = 0; i < 60 * 40 && !destroyed; i++) {
             pa.update(dt, new Controls());
-            destroyed = !pa.asteroids.contains(rock, true) && pa.coinsEarned > 0;
+            destroyed = !pa.asteroids.contains(rock, true);
         }
         check("piloto destruye el meteorito", destroyed);
         check("piloto no recibe golpes del meteorito", pa.ship.part[Ship.HULL] == pilotHull0);

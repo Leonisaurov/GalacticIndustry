@@ -600,8 +600,8 @@ class GameWorld {
 
     private void destroyAsteroid(int index) {
         Asteroid a = asteroids.get(index);
-        coinsEarned += a.reward;
-        score += a.reward * 10;
+        // T-405: destruir no da monedas; el mineral llega por minería/fragmentos.
+        score += Math.max(10, a.maxReserve * 2);
         shake = Math.max(shake, a.size == Asteroid.LARGE ? 12f : a.size == Asteroid.MEDIUM ? 7f : 4f);
         fx.burst(a.pos.x, a.pos.y, SPARK_WARM, 20, 280f);
         fx.burst(a.pos.x, a.pos.y, EXPLOSION_ORANGE, 10, 190f);

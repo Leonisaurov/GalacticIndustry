@@ -29,6 +29,10 @@ BACK_X=0
 BACK_Y=0
 TAB_REPAIR_X=0
 TAB_REPAIR_Y=0
+TAB_MELT_X=0
+TAB_MELT_Y=0
+SHOP_FIRST_BTN_X=0
+SHOP_FIRST_BTN_Y=0
 RECOVER_X=0
 RECOVER_Y=0
 
@@ -68,10 +72,19 @@ device_geometry() {
     OVER_MENU_Y=$((H - (H * 41 / 100 - (BW + GAP) / 2)))
     BACK_X=$((W / 2))
     BACK_Y=$((H - (PAD + BW / 2)))
-    # Pestaña REPARAR de la tienda: centro horizontal del panel derecho y
-    # centro de la fila de pestañas (a 77 unidades de densidad del borde superior).
-    TAB_REPAIR_X=$((W * 3 / 4 - 10 * U))
+    # Pestañas de la tienda con partida: MEJORAS / REPARAR / FUNDIR.
+    TAB_REPAIR_X=$((W / 2))
     TAB_REPAIR_Y=$((77 * U))
+    TAB_MELT_X=$((W - 24 * U - (W - 64 * U) / 6))
+    TAB_MELT_Y=$((77 * U))
+    # Botón derecho de la primera fila de la tienda (con una sola fila).
+    local shop_card_w=$((W - 44 * U))
+    local shop_bbw=$((shop_card_w * 2 / 5))
+    [ "$shop_bbw" -gt $((158 * U)) ] && shop_bbw=$((158 * U))
+    local shop_row_h=$((H - 210 * U))
+    [ "$shop_row_h" -gt $((112 * U)) ] && shop_row_h=$((112 * U))
+    SHOP_FIRST_BTN_X=$((W - 32 * U - shop_bbw / 2))
+    SHOP_FIRST_BTN_Y=$((112 * U + shop_row_h / 2))
     # Botón RECUPERAR NAVE: centro de la pantalla, a 30 % de altura + 23 u.
     RECOVER_X=$((W / 2))
     RECOVER_Y=$((H - (H * 30 / 100 + 23 * U)))

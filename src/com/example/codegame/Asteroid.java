@@ -23,8 +23,6 @@ class Asteroid {
     final Vector2 vel = new Vector2();
     final int size;
     final float radius;
-    /** Recompensa legacy por destrucción; T-405 la sustituye por mineral. */
-    final int reward;
     final AsteroidType type;
     int hp;
     int reserve;
@@ -58,7 +56,6 @@ class Asteroid {
         this.type = type == null ? AsteroidType.C : type;
         radius = size == SMALL ? 12f : size == MEDIUM ? 22f : 34f;
         hp = size == SMALL ? 1 : size == MEDIUM ? 2 : 4;
-        reward = size == SMALL ? 2 : size == MEDIUM ? 5 : 10;
         Random random = new Random(seed);
         int rolledReserve = reserve >= 0 ? reserve : this.type.rollReserve(random);
         this.maxReserve = Math.max(rolledReserve, maxReserve);

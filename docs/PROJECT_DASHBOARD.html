@@ -611,24 +611,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:21:00-06:00",
-    "lastSessionId": "S-032",
+    "lastUpdated": "2026-11-08T01:28:00-06:00",
+    "lastSessionId": "S-033",
     "lastVerification": {
-      "date": "2026-11-08T01:21:00-06:00",
+      "date": "2026-11-08T01:28:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Autopilot.MINE aproxima, mantiene el láser y llena la bodega",
-        "MINE no dispara misiles y termina al agotar la roca",
-        "MINE se detiene con la bodega llena",
-        "12_mining: 15 UM, masa 14+, sin misiles ni monedas",
-        "04_autopilot sigue en verde",
+        "Destruir/minar no da monedas",
+        "El mineral va a la bodega y la simulación destruye asteroides",
+        "FUNDIR convierte 100 Silicato en 200 créditos y vacía la bodega",
+        "12_mining y 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-405",
+    "nextTaskId": "T-406",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2778,7 +2777,7 @@
       "description": "Eliminar la recompensa en monedas de los asteroides y añadir una conversión temporal de mineral a créditos.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-403",
@@ -2804,10 +2803,41 @@
         "03_controls"
       ],
       "technicalNotes": "Mantener el juego jugable entre Etapa 4 y Etapa 5.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-033",
+          "date": "2026-11-08T01:28:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Se eliminó la recompensa en monedas de los asteroides y se añadió FUNDIR: cada entrada de bodega se convierte a precio base en créditos. La bodega se vacía y el puente queda documentado hasta la estación de S5.",
+          "files": [
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/Asteroid.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/19_melt.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "12_mining",
+            "03_controls",
+            "19_melt"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS destruir meteorito no da monedas",
+        "PASS minar no da monedas",
+        "PASS fundir hielo a precio base; PASS fundir oro a precio base",
+        "PASS la simulacion destruye asteroides",
+        "19_melt: 100 Silicato -> 200 créditos y bodega vacía",
+        "12_mining y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T01:28:00-06:00"
     },
     {
       "id": "T-406",
@@ -2816,7 +2846,7 @@
       "description": "Conservar los misiles como herramienta de destrucción/fragmentación rápida. Al impactar, el asteroide se rompe y el mineral queda disperso en fragmentos recuperables, con posible pérdida.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-403",
@@ -2857,7 +2887,7 @@
       "description": "Completar la experiencia de minería con mejoras, energía visible, haz, impacto y partículas de mineral.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-402",
@@ -5460,6 +5490,33 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-033",
+      "date": "2026-11-08T01:28:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Mineral en vez de monedas y fundición",
+      "summary": "Se eliminaron las monedas directas de asteroides y se añadió la pestaña FUNDIR, que convierte cada entrada de bodega a precio base. La simulación mide puntos/destrucción, no monedas; 19_melt cubre 100 Silicato → 200 créditos.",
+      "tasks": [
+        "T-405"
+      ],
+      "files": [
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/Asteroid.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/19_melt.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 12_mining",
+        "tools/run-tests.sh --no-build 03_controls",
+        "tools/run-tests.sh --no-build 19_melt"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-406 (misiles, fragmentación y dispersión de mineral)."
+    },
     {
       "id": "S-032",
       "date": "2026-11-08T01:21:00-06:00",
