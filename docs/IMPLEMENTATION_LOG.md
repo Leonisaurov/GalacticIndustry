@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:36:00-06:00  
+**Última actualización:** 2026-11-08T03:42:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-053 — Verificación y cierre del mercado
+
+- **Fecha:** 2026-11-08T03:42:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-606
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El **gate S6** añade al `SelfTest`:
+  - precios que reaccionan al stock;
+  - ausencia de arbitraje en compra/venta repetida;
+  - expedición completa rentable (combustible + venta de mineral);
+  - persistencia del mercado.
+- `14_market` añade una ida/vuelta de compraventa para comprobar que no hay
+  beneficio y que el stock/créditos/carga siguen coherentes.
+- Documentada la matriz del gate en `docs/pruebas.md`.
+- **S6 cerrada**; **S7 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/14_market.sh`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `14_market 13_station 02_navigation`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS S6: comprar y vender no da arbitraje`
+- `PASS S6: una expedición completa da beneficio`
+- `PASS S6: los precios reaccionan al stock`
+- `PASS S6: el mercado persiste`
+- `14_market`: la ida/vuelta no genera beneficio.
+- Captura `29_market` legible.
+
+### Decisiones tomadas
+
+- El anti-arbitraje se apoya en el spread; no se añaden tasas extra.
+- La rentabilidad de la expedición se mide con combustible + venta.
+- No hay NPC ni mercado dinámico de agentes todavía; es S7.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 7 con **T-701 — Crear PilotAgent y AgentRoster**.
 
 ---
 

@@ -685,7 +685,7 @@ La granularidad ejecutable está en `IMPLEMENTATION_TRACKER.json`. Esta tabla es
 | S3 | Carga y masa | Bodega, minerales, masa, combustible | S1 | T-301..T-306 | **Completada**: viaje viable con carga |
 | S4 | Minería y recuperación | Láser, misiles, fragmentos, rayo tractor | S2, S3 | T-401..T-410 | **Completada**: minar, fragmentar y recuperar |
 | S5 | Nave nodriza | Estación física, acople, servicios | S4 | T-501..T-507 | **Completada**: ciclo completo en estación |
-| S6 | Mercado | Stock, precios, compraventa | S5 | T-601..T-606 | Precios reaccionan |
+| S6 | Mercado | Stock, precios, compraventa | S5 | T-601..T-606 | **Completada**: precios reaccionan |
 | S7 | NPC | Agentes, economía autónoma | S6 | T-701..T-707 | Precios cambian sin jugador |
 | S8 | Universo | Warp libre, streaming, galaxias reales/ficticias | S5–S7 | T-801..T-808 | Viaje libre y streaming |
 | S9 | Estación propia | Plataforma vacía, módulos construibles | S6, S8 | T-901..T-908 | Construir y ampliar |

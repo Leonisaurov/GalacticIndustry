@@ -208,6 +208,18 @@ Verificación de T-507:
 | Persistencia | `PASS la estación se restaura con su almacén y acople`; recarga tras reiniciar |
 | Economía fuera de pausa | `PASS S5: la economia no depende de la pausa`; `03_controls` sin tienda |
 
+## Gate de la Etapa 6 — mercado y anti-exploit
+
+Verificación de T-606:
+
+| Criterio | Evidencia |
+|---|---|
+| Los precios reaccionan al stock | `PASS S6: los precios reaccionan al stock`; `14_market` |
+| No hay arbitraje trivial | `PASS S6: comprar y vender no da arbitraje`; chequeo de ida/vuelta en `14_market` |
+| El mercado persiste | `PASS S6: el mercado persiste`; recarga de `14_market` |
+| Una expedición completa da beneficio | `PASS S6: una expedición completa da beneficio` |
+| La UI es legible | Captura `29_market`: precios, stock y cantidades en vertical |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

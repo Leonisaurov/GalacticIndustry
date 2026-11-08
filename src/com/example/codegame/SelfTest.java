@@ -2235,6 +2235,44 @@ public class SelfTest {
                 EconomySim.TICK_SECONDS >= 5f
                         && simWorld.station.market.stock(Commodity.HIELO) != simBefore);
 
+        // T-606: gate de mercado y anti-exploit.
+        GameWorld arbWorld = new GameWorld(new Upgrades(true));
+        arbWorld.start();
+        arbWorld.immortal = true;
+        arbWorld.asteroids.clear();
+        arbWorld.fuel.clear();
+        Upgrades arbUp = new Upgrades(true);
+        arbUp.setCoins(1000);
+        int arbCoins = arbUp.coins();
+        for (int i = 0; i < 10; i++) {
+            TradeService.buy(arbWorld, arbUp, Commodity.HIERRO, 1, null);
+            TradeService.sell(arbWorld, arbUp, Commodity.HIERRO, 1, null);
+        }
+        check("S6: comprar y vender no da arbitraje",
+                arbUp.coins() < arbCoins
+                        && arbWorld.station.market.buyPrice(Commodity.HIERRO)
+                        > arbWorld.station.market.sellPrice(Commodity.HIERRO));
+        GameWorld tripWorld = new GameWorld(new Upgrades(true));
+        tripWorld.start();
+        tripWorld.immortal = true;
+        tripWorld.asteroids.clear();
+        tripWorld.fuel.clear();
+        Upgrades tripUp = new Upgrades(true);
+        tripUp.setCoins(500);
+        int tripStart = tripUp.coins();
+        tripUp.spendCoins(tripUp.refillCost(100f));
+        tripWorld.ship.cargo().addExact(Commodity.SILICATO, 100);
+        TradeService.Result tripSale = TradeService.sell(tripWorld, tripUp,
+                Commodity.SILICATO, 100, null);
+        check("S6: una expedición completa da beneficio",
+                tripSale.ok && tripUp.coins() > tripStart);
+        check("S6: los precios reaccionan al stock",
+                Math.abs(ecoMarket.stock(Commodity.HIELO) - hieloBefore) > 0
+                        && ecoMarket.buyPrice(Commodity.HIELO) > hieloPriceBefore);
+        check("S6: el mercado persiste",
+                marketLoaded.sector.station.market.stock(Commodity.HIELO) == 77
+                        && marketLoaded.sector.station.market.target(Commodity.HIELO) == 250);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

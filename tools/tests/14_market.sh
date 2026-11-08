@@ -59,12 +59,32 @@ status=$(latest_status)
 assert_eq "compra de 1" 1 "$(printf '%s' "$status" | json_get cargoUnits)"
 assert_eq "stock baja al comprar" 169 "$(printf '%s' "$status" | json_get marketIronStock)"
 assert_lt "créditos bajan al comprar" "$coins_before" "$(printf '%s' "$status" | json_get coins)"
+coins_after_buy=$(printf '%s' "$status" | json_get coins)
+
+# Anti-arbitraje: comprar y vender la misma unidad pierde créditos.
+tap "$MC_QTY_PLUS1_X" "$MC_QTY_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "venta de la unidad" 0 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "stock vuelve al vender" 170 "$(printf '%s' "$status" | json_get marketIronStock)"
+coins_after_sell=$(printf '%s' "$status" | json_get coins)
+assert_ge "comprar y vender no da beneficio" "$coins_after_sell" "$coins_before"
+
+# Recomprar para comprobar persistencia.
+tap "$MC_QTY_PLUS1_X" "$MC_QTY_Y" 0.2
+tap "$MC_BUY_X" "$MC_ACTION_Y" 0.2
+tap "$MC_BUY_X" "$MC_ACTION_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+coins_after=$(printf '%s' "$status" | json_get coins)
+assert_lt "recompra cuesta créditos" "$coins_after_sell" "$coins_after"
 
 tap "$MC_BACK_X" "$MC_BACK_Y" 0.3
 wait_current_state DOCKED 5 || fail "VOLVER no regresó a la estación"
 
 # T-605: el mercado persiste tras reiniciar.
-coins_after=$(latest_status | python3 -c 'import json,sys; print(json.load(sys.stdin)["coins"])')
 launch_app "--ez test_mode true"
 wait_current_state PAUSED 10 || fail "la partida con mercado no cargó"
 tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.3
@@ -76,4 +96,4 @@ assert_eq "carga persistida" 1 "$(printf '%s' "$status" | json_get cargoUnits)"
 assert_eq "créditos persistidos" "$coins_after" "$(printf '%s' "$status" | json_get coins)"
 
 check_no_crash
-echo "OK 14_market: precios, compraventa, confirmación y persistencia"
+echo "OK 14_market: precios, compraventa, confirmación, anti-arbitraje y persistencia"

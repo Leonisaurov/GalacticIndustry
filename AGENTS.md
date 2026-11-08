@@ -150,12 +150,12 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S6` — Economía comercial básica.
+- Etapa actual: `S7` — Pilotos autónomos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-605` — Persistir mercados y almacenes.
-- Primera tarea disponible: `T-606` — Verificación de mercado y anti-exploit.
+- Última tarea completada: `T-606` — Verificación de mercado y anti-exploit.
+- Primera tarea disponible: `T-701` — Crear PilotAgent y AgentRoster.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **53 %** (43 de 81 tareas de progreso).
+- La implementación del juego está al **54 %** (44 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

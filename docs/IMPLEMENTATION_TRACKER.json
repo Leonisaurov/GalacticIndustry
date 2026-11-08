@@ -4,24 +4,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:36:00-06:00",
-    "lastSessionId": "S-052",
+    "lastUpdated": "2026-11-08T03:42:00-06:00",
+    "lastSessionId": "S-053",
     "lastVerification": {
-      "date": "2026-11-08T03:36:00-06:00",
+      "date": "2026-11-08T03:42:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "El guardado v2 incluye stock, objetivo, producción, consumo y spread del mercado",
-        "Mercado y almacén se restauran sin duplicar",
-        "Guardados sin mercado cargan con valores por defecto",
-        "14_market: stock 169 y carga 1 persisten tras reiniciar",
-        "13_station sigue en verde",
+        "Gate S6: precios reaccionan, sin arbitraje, persistencia y expedición rentable",
+        "14_market: compraventa, anti-arbitraje y recarga",
+        "13_station y 02_navigation: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
-    "currentStageId": "S6",
+    "currentStageId": "S7",
     "currentTaskId": null,
-    "nextTaskId": "T-606",
+    "nextTaskId": "T-701",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -138,7 +136,7 @@
       "id": "S6",
       "order": 6,
       "name": "Economía comercial básica",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Introducir mercado, stock, precios, spread y compraventa de minerales.",
       "gate": "Los precios reaccionan al stock y no hay arbitraje trivial.",
@@ -149,7 +147,7 @@
       "id": "S7",
       "order": 7,
       "name": "Pilotos autónomos",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "type": "implementation",
       "objective": "Simular una cantidad limitada de pilotos que minen, transporten y comercien, afectando a los mercados.",
       "gate": "Los precios cambian sin intervención del jugador y la simulación es determinista y ligera.",
@@ -3381,7 +3379,7 @@
       "description": "Cerrar la etapa con pruebas de precios, stock, spread, capacidad, persistencia y rentabilidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-603",
@@ -3406,10 +3404,38 @@
         "14_market"
       ],
       "technicalNotes": "No implementar NPC todavía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-053",
+          "date": "2026-11-08T03:42:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S6: precios reaccionan al stock, sin arbitraje en ida/vuelta, mercado persistente y expedición rentable. Añadido bloque al SelfTest, anti-arbitraje a 14_market y matriz en docs/pruebas.md. S6 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/14_market.sh",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "13_station",
+            "02_navigation"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S6: comprar y vender no da arbitraje",
+        "PASS S6: una expedición completa da beneficio",
+        "PASS S6: los precios reaccionan al stock",
+        "PASS S6: el mercado persiste",
+        "14_market: ida/vuelta de compraventa sin beneficio",
+        "Captura 29_market legible"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:42:00-06:00"
     },
     {
       "id": "T-701",
@@ -3418,7 +3444,7 @@
       "description": "Introducir agentes con nave resumida, carga, combustible, estado y objetivo.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-606"
@@ -5521,6 +5547,28 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-053",
+      "date": "2026-11-08T03:42:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre del mercado",
+      "summary": "Gate S6 completado: precios reactivos, anti-arbitraje, persistencia y expedición rentable. S6 cerrada y S7 lista.",
+      "tasks": [
+        "T-606"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/14_market.sh",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station 02_navigation"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S7, primera tarea T-701."
+    },
     {
       "id": "S-052",
       "date": "2026-11-08T03:36:00-06:00",
