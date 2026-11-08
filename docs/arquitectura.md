@@ -203,8 +203,10 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - `Cargo` es una entrada inmutable (mineral + cantidad) y calcula masa/valor.
 - `CargoHold` mide la capacidad en UM (100 iniciales), suma la masa real,
   rechaza el exceso y expone añadir/quitar/consultar y entradas ordenadas.
-- `GameData` crea la bodega inicial. La conexión con la nave y el guardado
-  llega en T-302; la minería, en S4.
+- `GameData` crea la bodega inicial. `Ship` incorpora y expone su `CargoHold`;
+  `GameSession.cargo()` delega en la nave. El guardado v2 conserva las entradas
+  con masa y las partidas antiguas sin campo `cargo` cargan vacías.
+  La minería llega en S4; la masa en movimiento, en T-303.
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

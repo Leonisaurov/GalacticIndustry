@@ -92,6 +92,14 @@ final class SaveCodec {
                 w.value(ship.part[i]);
             }
             w.pop();
+            w.name("cargo").array();
+            for (Cargo cargo : ship.cargo().entries()) {
+                w.object();
+                w.set("commodity", cargo.commodity.name());
+                w.set("amount", cargo.amount);
+                w.pop();
+            }
+            w.pop();
             w.pop();
 
             w.name("sector").object();
@@ -232,6 +240,21 @@ final class SaveCodec {
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 d.parts[i] = i < parts.size ? parts.get(i).asFloat() : Ship.PART_MAX;
             }
+            JsonValue cargo = ship.get("cargo");
+            if (cargo != null && cargo.isArray()) {
+                for (int i = 0; i < cargo.size; i++) {
+                    JsonValue entry = cargo.get(i);
+                    if (entry == null) {
+                        continue;
+                    }
+                    Commodity commodity = Commodity.byDisplayName(
+                            entry.getString("commodity", null));
+                    int amount = entry.getInt("amount", 0);
+                    if (commodity != null && amount > 0) {
+                        d.cargo.add(new CargoData(commodity, amount));
+                    }
+                }
+            }
 
             d.coinsEarned = sector.getInt("coinsEarned", 0);
             d.score = sector.getInt("score", 0);
@@ -340,6 +363,11 @@ final class SaveCodec {
         ship.syncFuel(up);
         ship.fuel = clamp(d.fuel, 0f, ship.maxFuel);
         ship.invulnerable = Math.max(0f, d.invulnerable);
+        ship.cargo().clear();
+        for (int i = 0; i < d.cargo.size(); i++) {
+            CargoData cargo = d.cargo.get(i);
+            ship.cargo().restore(cargo.commodity, cargo.amount);
+        }
         session.pilot.copyFrom(pilot);
         session.lifeSupport.copyFrom(life);
 
@@ -424,7 +452,18 @@ final class SaveCodec {
         final float[] legacyParts = new float[Ship.PART_COUNT];
         long[] chunks;
         final List<AsteroidData> asteroids = new ArrayList<>();
+        final List<CargoData> cargo = new ArrayList<>();
         final List<PickupData> pickups = new ArrayList<>();
+    }
+
+    private static final class CargoData {
+        final Commodity commodity;
+        final int amount;
+
+        CargoData(Commodity commodity, int amount) {
+            this.commodity = commodity;
+            this.amount = amount;
+        }
     }
 
     private static final class AsteroidData {

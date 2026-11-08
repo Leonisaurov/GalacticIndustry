@@ -33,6 +33,8 @@ class Ship {
             "CASCO", "MOTOR", "DEPOSITO", "CANON", "TIMON", "ALA IZQ", "ALA DER", "SOPORTE"
     };
 
+    /** Bodega de la nave; la capacidad se ajustará con la mejora de bodega. */
+    final CargoHold cargo = GameData.newCargoHold();
     final Vector2 pos = new Vector2();
     final Vector2 vel = new Vector2();
     final Vector2 dir = new Vector2(0f, 1f);
@@ -63,11 +65,17 @@ class Ship {
         }
         maxFuel = up.maxFuel();
         fuel = maxFuel;
+        cargo.setCapacity(GameData.BASE_CARGO_CAPACITY);
+        cargo.clear();
         cooldown = 0f;
         invulnerable = 0f;
         lastDamaged = -1;
         damageFlash = 0f;
         wrecked = false;
+    }
+
+    CargoHold cargo() {
+        return cargo;
     }
 
     /** Gira, acelera según el nivel del acelerador y mueve la nave. */

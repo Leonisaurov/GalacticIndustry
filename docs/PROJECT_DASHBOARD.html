@@ -611,22 +611,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:36:00-06:00",
-    "lastSessionId": "S-023",
+    "lastUpdated": "2026-11-08T00:39:00-06:00",
+    "lastSessionId": "S-024",
     "lastVerification": {
-      "date": "2026-11-08T00:36:00-06:00",
+      "date": "2026-11-08T00:39:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Seis minerales con masa y precio base",
-        "CargoHold: capacidad 100 UM, suma de masa, añadir/quitar y rechazo de exceso",
-        "GameData y Cargo verificados",
+        "Ship/GameSession exponen CargoHold",
+        "La bodega se guarda y restaura en v2 con masa correcta",
+        "Una partida sin campo cargo carga con bodega vacía",
+        "tools/run-tests.sh --no-build 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-302",
+    "nextTaskId": "T-303",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2179,7 +2180,7 @@
       "description": "Hacer que la nave tenga una bodega persistente y que el guardado v2 la conserve.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-301",
@@ -2203,10 +2204,38 @@
         "Guardado/carga de carga"
       ],
       "technicalNotes": "Migrar cualquier campo futuro de carga con valores por defecto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-024",
+          "date": "2026-11-08T00:39:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Ship incorpora CargoHold y GameSession lo expone. SaveCodec guarda/restaura las entradas con masa y acepta partidas sin campo cargo (bodega vacía). La pausa conserva el inventario vía saveRun.",
+          "files": [
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/CargoHold.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Guardado/carga de carga",
+            "03_controls (smoke)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la nave expone su bodega",
+        "PASS la bodega de la nave acepta carga",
+        "PASS la bodega se guarda",
+        "PASS la bodega se restaura",
+        "PASS una partida sin bodega carga vacia",
+        "03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:39:00-06:00"
     },
     {
       "id": "T-303",
@@ -2215,7 +2244,7 @@
       "description": "Hacer que la carga afecte a aceleración, velocidad, giro y consumo de combustible con topes.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-302"
@@ -2287,7 +2316,7 @@
       "description": "Introducir la mejora de capacidad y mostrar masa/capacidad en la interfaz.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-302"
@@ -5191,6 +5220,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-024",
+      "date": "2026-11-08T00:39:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Bodega persistente en Ship/GameSession",
+      "summary": "Ship incorpora CargoHold y GameSession lo expone. SaveCodec v2 guarda/restaura las entradas y las partidas antiguas sin cargo cargan con bodega vacía. La pausa conserva el inventario.",
+      "tasks": [
+        "T-302"
+      ],
+      "files": [
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/CargoHold.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Guardado/carga de carga",
+        "tools/run-tests.sh --no-build 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-303 (masa en movimiento y consumo)."
+    },
     {
       "id": "S-023",
       "date": "2026-11-08T00:36:00-06:00",

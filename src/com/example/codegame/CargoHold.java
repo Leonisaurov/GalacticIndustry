@@ -133,6 +133,18 @@ class CargoHold {
         return true;
     }
 
+    /**
+     * Restaura una cantidad desde un guardado sin aplicar la capacidad actual.
+     * Sirve para conservar el inventario si la capacidad cambia entre versiones.
+     */
+    void restore(Commodity commodity, int amount) {
+        if (commodity == null || amount <= 0) {
+            items.remove(commodity);
+        } else {
+            items.put(commodity, amount);
+        }
+    }
+
     /** Copia ordenada de las entradas para UI, guardado o mercado. */
     List<Cargo> entries() {
         List<Cargo> result = new ArrayList<>();

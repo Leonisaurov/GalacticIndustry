@@ -54,6 +54,11 @@ class GameSession {
         return sector.ship;
     }
 
+    /** Bodega de la nave activa. */
+    CargoHold cargo() {
+        return sector.ship.cargo();
+    }
+
     boolean runActive() {
         return runActive;
     }

@@ -911,6 +911,30 @@ public class SelfTest {
         cargo.clear();
         check("clear vacia la bodega", cargo.isEmpty() && cargo.usedMass() == 0f);
 
+        // T-302: bodega en la nave y persistencia.
+        GameSession cargoSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        cargoSession.startRun();
+        check("la nave expone su bodega",
+                cargoSession.cargo() == cargoSession.ship().cargo()
+                        && cargoSession.cargo().isEmpty());
+        check("la bodega de la nave acepta carga",
+                cargoSession.cargo().addExact(Commodity.HIELO, 10)
+                        && cargoSession.cargo().addExact(Commodity.ORO, 5));
+        SaveService.MemoryStorage cargoStorage = new SaveService.MemoryStorage();
+        SaveService cargoService = new SaveService(cargoStorage);
+        check("la bodega se guarda", cargoService.save(cargoSession));
+        GameSession cargoLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("la bodega se restaura",
+                cargoService.load(cargoLoaded) == SaveService.LoadStatus.V2
+                        && cargoLoaded.cargo().amount(Commodity.HIELO) == 10
+                        && cargoLoaded.cargo().amount(Commodity.ORO) == 5
+                        && Math.abs(cargoLoaded.cargo().usedMass()
+                        - (10f * 0.80f + 5f * 2.50f)) < 0.001f);
+        String noCargoSave = cargoSession.sector.serialize();
+        GameSession legacyCargo = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("una partida sin bodega carga vacia",
+                legacyCargo.restoreLegacy(noCargoSave) && legacyCargo.cargo().isEmpty());
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

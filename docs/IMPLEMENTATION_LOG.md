@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:36:00-06:00  
+**Última actualización:** 2026-11-08T00:39:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,61 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-024 — Bodega persistente en Ship/GameSession
+
+- **Fecha:** 2026-11-08T00:39:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-302
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Ship` incorpora un `CargoHold` y lo expone con `cargo()`.
+- `GameSession.cargo()` delega en la nave activa.
+- `Ship.reset()` deja la bodega vacía y con capacidad base.
+- `SaveCodec` v2 guarda las entradas de carga con mineral y cantidad, y las
+  restaura sin aplicar la capacidad actual (para no perder inventario si
+  cambia entre versiones).
+- Los guardados antiguos sin campo `cargo` cargan con bodega vacía.
+- Guardar al pausar conserva el inventario.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/CargoHold.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 03_controls`: **OK**.
+
+### Evidencias
+
+- `PASS la nave expone su bodega`
+- `PASS la bodega de la nave acepta carga`
+- `PASS la bodega se guarda`
+- `PASS la bodega se restaura`
+- `PASS una partida sin bodega carga vacia`
+- Masa restaurada: 10 Hielo + 5 Oro = 20.5 UM.
+
+### Decisiones tomadas
+
+- La bodega pertenece a `Ship`; `GameSession` solo la expone.
+- `CargoHold.restore` permite conservar carga aunque la capacidad guardada
+  sea distinta a la actual.
+- La capacidad por defecto sigue siendo 100 UM hasta la mejora de T-305.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-303 — Aplicar la masa al movimiento y al consumo**.
 
 ---
 
