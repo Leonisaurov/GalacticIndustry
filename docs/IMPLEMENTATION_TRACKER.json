@@ -4,24 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T08:56:00-06:00",
-    "lastSessionId": "S-077",
+    "lastUpdated": "2026-11-08T09:16:00-06:00",
+    "lastSessionId": "S-078",
     "lastVerification": {
-      "date": "2026-11-08T08:56:00-06:00",
+      "date": "2026-11-08T09:16:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "InteriorScene con salas, puertas e interactuables validos",
-        "Cada modulo se mapea a una habitacion",
-        "El interior de nave usa el mismo marco",
-        "Metadatos del interior persistidos y reconstruidos",
-        "18_interiors: 3 habitaciones, 2 puertas y 3 interactuables",
+        "Avatar se mueve sin gravedad ni combate",
+        "Las paredes bloquean y deslizan; solo se cruza por puertas",
+        "Se alcanza la salida y se puede volver a la nave",
+        "El avatar tambien camina en una nave",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S10",
     "currentTaskId": null,
-    "nextTaskId": "T-1002",
+    "nextTaskId": "T-1003",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4898,7 +4897,7 @@
       "description": "Añadir el personaje a pie con joystick, colisiones y límites de sala.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -4923,10 +4922,40 @@
         "Revisión de controles"
       ],
       "technicalNotes": "La velocidad debe ser cómoda; evitar caminar largos pasillos vacíos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-078",
+          "date": "2026-11-08T09:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Avatar e InteriorInput con movimiento a pie, colision por salas/puertas, deslizamiento en paredes, nearest()/atExit() y soporte de naves. MyGame expone moveInterior para T-1003/T-1005. Pruebas logicas de movimiento y salida.",
+          "files": [
+            "src/com/example/codegame/Avatar.java",
+            "src/com/example/codegame/InteriorInput.java",
+            "src/com/example/codegame/InteriorScene.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "18_interiors",
+            "Revisión de controles",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el avatar nace en el nucleo",
+        "PASS sin entrada el avatar no se mueve",
+        "PASS las paredes bloquean fuera de la puerta",
+        "PASS la puerta conecta con la habitacion del modulo",
+        "PASS el avatar puede interactuar por proximidad",
+        "PASS se puede volver a la nave desde la salida",
+        "PASS el avatar queda dentro de los limites de la sala",
+        "PASS el avatar tambien camina en una nave"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:16:00-06:00"
     },
     {
       "id": "T-1003",
@@ -4935,7 +4964,7 @@
       "description": "Dibujar el interior cenital con ShapeRenderer y cámara estable.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -6296,6 +6325,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-078",
+      "date": "2026-11-08T09:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Avatar, movimiento y colisión",
+      "summary": "Avatar sin gravedad/combate con colisión por salas y puertas, deslizamiento, salida a la nave y soporte de naves.",
+      "tasks": [
+        "T-1002"
+      ],
+      "files": [
+        "src/com/example/codegame/Avatar.java",
+        "src/com/example/codegame/InteriorInput.java",
+        "src/com/example/codegame/InteriorScene.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1003 (InteriorRenderer y camara)."
+    },
     {
       "id": "S-077",
       "date": "2026-11-08T08:56:00-06:00",

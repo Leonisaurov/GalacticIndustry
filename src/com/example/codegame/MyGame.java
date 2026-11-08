@@ -54,6 +54,10 @@ public class MyGame implements ApplicationListener {
     private MarketScreen marketScreen;
     private MapScreen mapScreen;
     private StationManagementScreen managementScreen;
+    /** Interior activo y avatar; la entrada/render llegan en T-1003/T-1005. */
+    private InteriorScene interiorScene;
+    private Avatar interiorAvatar;
+    private final InteriorInput interiorInput = new InteriorInput();
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -1711,6 +1715,30 @@ public class MyGame implements ApplicationListener {
         state = DOCKED;
         stationScreen.enter();
         layoutUi();
+    }
+
+    /** Prepara el interior y coloca el avatar (usado por T-1005). */
+    void bindInterior(InteriorScene scene) {
+        interiorScene = scene;
+        interiorAvatar = new Avatar(scene);
+        interiorInput.reset();
+    }
+
+    Avatar interiorAvatar() {
+        return interiorAvatar;
+    }
+
+    InteriorScene interiorScene() {
+        return interiorScene;
+    }
+
+    /** Movimiento del avatar reutilizable por la UI de interiores. */
+    void moveInterior(float x, float y, float dt) {
+        if (interiorAvatar == null) {
+            return;
+        }
+        interiorInput.set(x, y);
+        interiorAvatar.update(dt, interiorInput, interiorScene);
     }
 
     /** Abrir el mapa desde la partida. */

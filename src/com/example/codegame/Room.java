@@ -30,6 +30,13 @@ final class Room {
                 && py >= y - height * 0.5f && py <= y + height * 0.5f;
     }
 
+    boolean contains(float px, float py, float margin) {
+        return px >= x - width * 0.5f + margin
+                && px <= x + width * 0.5f - margin
+                && py >= y - height * 0.5f + margin
+                && py <= y + height * 0.5f - margin;
+    }
+
     float centerX() {
         return x;
     }

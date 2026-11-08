@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T08:56:00-06:00  
+**Última actualización:** 2026-11-08T09:16:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-078 — Avatar, movimiento y colisión
+
+- **Fecha:** 2026-11-08T09:16:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1002
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Avatar` a pie: radio 12 u, 170 u/s, **sin gravedad ni combate**.
+- `InteriorInput` con vector de movimiento e intención de salir.
+- Colisión:
+  - paredes de la sala bloquean y permiten deslizar;
+  - solo se cambia de sala por una `Door` a menos de 72 u;
+  - no se atraviesan paredes fuera de puertas.
+- `nearest()` y `atExit()` preparan interacción y vuelta a la nave.
+- `MyGame` guarda interior/avatar y expone `moveInterior()` para T-1003/T-1005.
+- El mismo avatar funciona en el interior de una nave.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Avatar.java` (nuevo)
+- `src/com/example/codegame/InteriorInput.java` (nuevo)
+- `src/com/example/codegame/InteriorScene.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 18_interiors`: **OK**.
+
+### Evidencias
+
+- `PASS el avatar nace en el nucleo`
+- `PASS sin entrada el avatar no se mueve`
+- `PASS las paredes bloquean fuera de la puerta`
+- `PASS la puerta conecta con la habitacion del modulo`
+- `PASS el avatar puede interactuar por proximidad`
+- `PASS se puede volver a la nave desde la salida`
+- `PASS el avatar queda dentro de los limites de la sala`
+- `PASS el avatar tambien camina en una nave`
+
+### Decisiones tomadas
+
+- El cambio de sala usa puertas; no hay túneles implícitos.
+- Las paredes deslizan en lugar de detener en seco.
+- El avatar no tiene combate ni gravedad.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1003 — Crear InteriorRenderer y cámara**.
 
 ---
 

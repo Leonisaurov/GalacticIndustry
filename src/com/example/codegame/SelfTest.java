@@ -3751,6 +3751,50 @@ public class SelfTest {
                         == 3
                         && dStationInteriorRooms(stationLoaded) == 3);
 
+        // T-1002: avatar, movimiento y colision.
+        InteriorScene walkScene = interiorStation.buildInterior();
+        Avatar avatar = new Avatar(walkScene);
+        InteriorInput walkInput = new InteriorInput();
+        check("el avatar nace en el nucleo",
+                "hub".equals(avatar.roomId)
+                        && Math.abs(walkScene.room("hub").x) < 0.01f);
+        avatar.update(0.1f, walkInput, walkScene);
+        check("sin entrada el avatar no se mueve",
+                Math.abs(avatar.x) < 0.01f && Math.abs(avatar.y) < 0.01f);
+        walkInput.set(0f, 1f);
+        avatar.update(0.1f, walkInput, walkScene);
+        check("las paredes bloquean fuera de la puerta",
+                "hub".equals(avatar.roomId) && avatar.y < 110f);
+        avatar.update(1.0f, walkInput, walkScene);
+        check("la puerta conecta con la habitacion del modulo",
+                "module-0".equals(avatar.roomId)
+                        && avatar.room(walkScene).module == ModuleDef.STORAGE);
+        avatar.update(0.3f, walkInput, walkScene);
+        check("el avatar puede interactuar por proximidad",
+                avatar.nearest(walkScene) != null
+                        && avatar.nearest(walkScene).action
+                        == Interactable.Action.STORAGE);
+        walkInput.set(0f, -1f);
+        avatar.update(0.4f, walkInput, walkScene);
+        avatar.update(1.0f, walkInput, walkScene);
+        avatar.update(0.8f, walkInput, walkScene);
+        check("se puede volver a la nave desde la salida",
+                avatar.atExit(walkScene));
+        walkInput.set(1f, 0f);
+        avatar.update(2.0f, walkInput, walkScene);
+        check("el avatar queda dentro de los limites de la sala",
+                walkScene.room("hub") != null
+                        && walkScene.room("hub").contains(avatar.x, avatar.y));
+        InteriorScene shipWalk = InteriorScene.ship("ship-walk");
+        Avatar shipAvatar = new Avatar(shipWalk);
+        InteriorInput shipInput = new InteriorInput();
+        shipInput.set(0f, -1f);
+        shipAvatar.update(0.6f, shipInput, shipWalk);
+        check("el avatar tambien camina en una nave",
+                "cockpit".equals(shipAvatar.roomId)
+                        && shipAvatar.atExit(shipWalk)
+                        && shipWalk.kind == InteriorScene.Kind.SHIP);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

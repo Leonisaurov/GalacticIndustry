@@ -373,6 +373,19 @@ estáticos se reutilizan.
 - El guardado v2 incluye metadatos del interior (`id`, tipo, número de salas,
   puertas e interactuables); el contenido se reconstruye desde los módulos.
 
+## Avatar y movimiento interior (T-1002)
+
+- `Avatar` es un personaje a pie con radio 12 u y velocidad 170 u/s; **sin
+  gravedad ni combate**.
+- `InteriorInput` solo lleva vector de movimiento e intención de salir.
+- Colisión:
+  - las paredes de la sala actual limitan el movimiento y permiten deslizar;
+  - solo se cambia de sala por una `Door` cercana, con radio de alcance 72 u;
+  - no se atraviesan paredes fuera de puertas.
+- `Avatar.nearest()` y `atExit()` preparan la interacción y la vuelta a la nave.
+- `MyGame` guarda el interior/avatar y expone `moveInterior()` para que la UI de
+  T-1003/T-1005 la use.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),
