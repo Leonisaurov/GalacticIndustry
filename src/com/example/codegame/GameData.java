@@ -70,16 +70,16 @@ final class GameData {
         sol.addSector(new SectorDef(START_SECTOR_ID, "SECTOR INICIAL",
                 START_SYSTEM_ID, SEED_SOL_PRIME,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
-                SectorDef.Profile.INICIAL, MOTHERSHIP.safeRadius)
+                SectorDef.Profile.INICIAL, MOTHERSHIP.safeRadius, 0f, 0f)
                 .addStation(MOTHERSHIP));
         sol.addSector(new SectorDef("sol-belt", "CINTURON",
                 START_SYSTEM_ID, SEED_SOL_BELT,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
-                SectorDef.Profile.CINTURON, 340f)
+                SectorDef.Profile.CINTURON, 340f, 2f, 0f)
                 .addStation(MINING_RELAY));
         sol.addSector(new SectorDef("sol-ice", "CAMPO HELADO",
                 START_SYSTEM_ID, SEED_SOL_ICE,
-                10000f, 10000f, SectorDef.Profile.HELADO, 300f)
+                10000f, 10000f, SectorDef.Profile.HELADO, 300f, 0f, 2.6f)
                 .addStation(OUTPOST));
         milkyWay.addSystem(sol);
         universe.addGalaxy(milkyWay);
@@ -92,12 +92,12 @@ final class GameData {
                 ANDROMEDA_GALAXY_ID, SEED_ANDROMEDA_CORE);
         andromedaCore.addSector(new SectorDef("andromeda-forge", "FORJA",
                 "andromeda-core", SEED_ANDROMEDA_FORGE,
-                14000f, 14000f, SectorDef.Profile.METALICO, 380f)
+                14000f, 14000f, SectorDef.Profile.METALICO, 380f, 40f, 10f)
                 .addStation(FORGE));
         andromedaCore.addSector(new SectorDef("andromeda-drift", "DERIVA",
                 "andromeda-core", SEED_ANDROMEDA_DRIFT,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
-                SectorDef.Profile.CINTURON, 340f)
+                SectorDef.Profile.CINTURON, 340f, 44f, 10f)
                 .addStation(OUTPOST));
         andromeda.addSystem(andromedaCore);
         universe.addGalaxy(andromeda);
@@ -111,7 +111,7 @@ final class GameData {
         dracoEye.addSector(new SectorDef("draco-core", "NUCLEO HELADO",
                 "draco-eye", SEED_DRACO_EYE,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
-                SectorDef.Profile.HELADO, 320f)
+                SectorDef.Profile.HELADO, 320f, -30f, -20f)
                 .addStation(OUTPOST));
         draco.addSystem(dracoEye);
         universe.addGalaxy(draco);

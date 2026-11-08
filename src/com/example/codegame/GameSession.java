@@ -26,6 +26,8 @@ class GameSession {
     final UniverseState universe;
     /** Sector activo según la definición del universo. */
     final SectorDef currentSector;
+    /** Streaming de sectores: carga cercanos y descarga lejanos. */
+    final SectorStreamer streamer;
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
     final GameWorld sector;
 
@@ -48,6 +50,8 @@ class GameSession {
         this.lifeSupport = new LifeSupport();
         this.universe = GameData.newUniverse();
         this.currentSector = universe.defaultSector();
+        this.streamer = new SectorStreamer(universe);
+        this.streamer.switchTo(currentSector == null ? null : currentSector.id, null);
         this.sector = new GameWorld(profile.upgrades, currentSector);
         this.sector.attachLifeSupport(lifeSupport);
     }

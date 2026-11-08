@@ -24,6 +24,10 @@ assert_eq "alto del sector" 12000 "$(printf '%s' "$status" | json_get sectorHeig
 assert_eq "mitad del ancho" 6000 "$(printf '%s' "$status" | json_get sectorHalfWidth)"
 assert_eq "mitad del alto" 6000 "$(printf '%s' "$status" | json_get sectorHalfHeight)"
 assert_eq "perfil del sector" INICIAL "$(printf '%s' "$status" | json_get sectorProfile)"
+assert_eq "sectores cargados" 2 "$(printf '%s' "$status" | json_get loadedSectors)"
+assert_eq "sectores descargados" 4 "$(printf '%s' "$status" | json_get unloadedSectors)"
+assert_eq "mapa X" 0.0 "$(printf '%s' "$status" | json_get sectorMapX)"
+assert_eq "mapa Y" 0.0 "$(printf '%s' "$status" | json_get sectorMapY)"
 
 # T-802: límites finitos y borde visible.
 launch_app "--ez test_mode true --ez bounds_test true"
@@ -41,4 +45,4 @@ assert_ge "la nave no sale por abajo" -6000 "$y_now"
 assert_lt "la nave no sale por arriba" 6001 "$y_now"
 
 check_no_crash
-echo "OK 16_universe: 3 galaxias, 3 sistemas, 6 sectores, IDs estables y borde finito"
+echo "OK 16_universe: 3 galaxias, 6 sectores, borde finito y streaming 2/4"

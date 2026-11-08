@@ -206,6 +206,21 @@ estáticos se reutilizan.
 - Los snapshots se validan con `SaveCodec.validate` y se restauran en
   `UniverseState` al cargar.
 
+## Streaming de sectores y regiones
+
+- `SectorStreamer` mantiene cargado el detalle del sector activo y de los que
+  están a **≤2,5 unidades** del mapa de universo (radio de carga).
+- Los sectores lejanos se **descargan**: solo queda su snapshot en
+  `UniverseState`; al volver se recargan con `SectorStreamer.load()`.
+- `SectorDef` incluye posición abstracta de mapa (`mapX`, `mapY`) para medir
+  distancias entre sectores, sistemas y galaxias.
+- El coste depende del número de sectores dentro del radio, **no** del tamaño
+  total del universo: un universo de prueba con 200 sectores solo carga 1.
+- El jugador no ve cortes porque el sector activo sigue siendo el mismo runtime;
+  el cambio efectivo de sector/usuario llega con T-804.
+- La simulación lejana sigue siendo agregada (mercados/agentes cada 2–10 s);
+  no se mantiene detalle de asteroides fuera de carga.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

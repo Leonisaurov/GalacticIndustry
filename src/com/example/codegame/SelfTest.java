@@ -2955,6 +2955,84 @@ public class SelfTest {
                 sectorRestored.generatedChunks().size() > chunksBeforeFar
                         && sectorRestored.asteroids.size > 0);
 
+        // T-808: streaming de sectores y regiones.
+        UniverseState streamU = GameData.newUniverse();
+        SectorStreamer streamer = new SectorStreamer(streamU);
+        streamer.switchTo(GameData.START_SECTOR_ID, null);
+        check("solo se cargan las regiones cercanas",
+                streamer.loadedCount() == 2
+                        && streamer.isLoaded(GameData.START_SECTOR_ID)
+                        && streamer.isLoaded("sol-belt")
+                        && !streamer.isLoaded("sol-ice")
+                        && !streamer.isLoaded("andromeda-forge")
+                        && streamer.unloadedCount() == 4);
+        check("el mapa soporta escala de sistema y galaxia",
+                streamU.sector(GameData.START_SECTOR_ID).distanceTo(
+                        streamU.sector("sol-belt")) < 2.5f
+                        && streamU.sector(GameData.START_SECTOR_ID).distanceTo(
+                        streamU.sector("andromeda-forge")) > 30f
+                        && streamU.sector("andromeda-forge").distanceTo(
+                        streamU.sector("draco-core")) > 50f);
+        GameSession streamSession = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        streamSession.startRun();
+        streamSession.sector.ship.pos.set(3000f, 3000f);
+        streamSession.sector.update(0.01f, new Controls());
+        if (streamSession.sector.asteroids.size > 0) {
+            streamSession.sector.asteroids.removeIndex(0);
+        }
+        int streamReserve = 0;
+        for (int i = 0; i < streamSession.sector.asteroids.size; i++) {
+            streamReserve += streamSession.sector.asteroids.get(i).reserve;
+        }
+        int streamChunks = streamSession.sector.generatedChunks().size();
+        streamSession.streamer.switchTo("andromeda-forge", streamSession.sector);
+        SectorRuntime.Snapshot streamSnap = streamSession.universe.snapshot(
+                GameData.START_SECTOR_ID);
+        check("descargar un sector conserva su estado",
+                streamSnap != null
+                        && SectorRuntime.reserveUnits(streamSnap) == streamReserve
+                        && streamSnap.chunks.size() == streamChunks
+                        && !streamSession.streamer.isLoaded(GameData.START_SECTOR_ID)
+                        && streamSession.streamer.isLoaded("andromeda-forge"));
+        GameWorld streamLoaded = streamSession.streamer.load(
+                GameData.START_SECTOR_ID, new Upgrades(true));
+        check("volver a un sector descargado restaura su estado",
+                streamLoaded != null
+                        && streamLoaded.asteroids.size == streamSnap.asteroids.size()
+                        && streamLoaded.generatedChunks().size() == streamChunks
+                        && SectorRuntime.reserveUnits(
+                        SectorRuntime.capture(streamLoaded, GameData.START_SECTOR_ID))
+                        == streamReserve);
+        streamLoaded.asteroids.clear();
+        streamLoaded.update(0.01f, new Controls());
+        check("el sector recargado no regenera recursos minados",
+                streamLoaded.asteroids.size == 0
+                        && streamLoaded.generatedChunks().size() == streamChunks);
+        UniverseState bigU = new UniverseState();
+        for (int i = 0; i < 200; i++) {
+            String gid = "g-" + i;
+            GalaxyDef galaxy = new GalaxyDef(gid, "G" + i, "", 1000L + i,
+                    0x223344, 0xDDEEFF, null);
+            SystemDef system = new SystemDef("s-" + i, "S" + i, gid, 2000L + i);
+            system.addSector(new SectorDef("sec-" + i, "SEC" + i, system.id,
+                    3000L + i, 12000f, 12000f,
+                    SectorDef.Profile.CINTURON, 100f, i * 5f, 0f));
+            galaxy.addSystem(system);
+            bigU.addGalaxy(galaxy);
+        }
+        SectorStreamer bigStreamer = new SectorStreamer(bigU);
+        long streamStart = System.nanoTime();
+        bigStreamer.switchTo("sec-0", null);
+        for (int i = 1; i < 200; i++) {
+            bigStreamer.switchTo("sec-" + i, null);
+        }
+        long streamMs = (System.nanoTime() - streamStart) / 1_000_000L;
+        check("el coste no depende del tamaño del universo",
+                bigStreamer.loadedCount() == 1
+                        && bigStreamer.unloadedCount() == 199
+                        && streamMs < 100);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

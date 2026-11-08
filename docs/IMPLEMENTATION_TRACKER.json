@@ -4,24 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T05:06:00-06:00",
-    "lastSessionId": "S-063",
+    "lastUpdated": "2026-11-08T05:16:00-06:00",
+    "lastSessionId": "S-064",
     "lastVerification": {
-      "date": "2026-11-08T05:06:00-06:00",
+      "date": "2026-11-08T05:16:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "SectorRuntime captura chunks generados y asteroides/bidones activos",
-        "El snapshot se guarda en sectorSnapshots y se restaura sin duplicar minerales",
-        "Restaurar un sector no regenera recursos minados",
-        "Los chunks no visitados se generan al volver y no se guardan enteros",
-        "16_universe, 13_station y 15_agents: OK",
+        "SectorStreamer carga el sector activo y vecinos dentro de 2.5 unidades",
+        "Los sectores lejanos se descargan dejando solo su snapshot",
+        "Volver a un sector descargado restaura recursos sin regenerarlos",
+        "Universo de 200 sectores: solo 1 cargado y streaming < 100 ms",
+        "16_universe: loadedSectors=2, unloadedSectors=4",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S8",
     "currentTaskId": null,
-    "nextTaskId": "T-808",
+    "nextTaskId": "T-804",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4122,7 +4122,7 @@
       "description": "Añadir viaje libre mediante propulsión warp, sin puertas obligatorias. El coste se integra con combustible, energía y equipamiento; el mapa puede ser muy grande y cargarse dinámicamente.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -5351,7 +5351,7 @@
       "description": "Cargar las zonas cercanas al jugador y descargar o simplificar las lejanas, sin mantener todo el universo cargado. Preparar la escala para viajes entre sistemas y galaxias.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-802",
@@ -5379,10 +5379,43 @@
         "01_logic"
       ],
       "technicalNotes": "No cargar todo el universo. La simulación lejana puede ser agregada; el jugador no debe notar cortes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-064",
+          "date": "2026-11-08T05:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SectorStreamer con radio de carga 2.5: mantiene detalle del sector activo y vecinos, descarga lejanos dejando snapshot y recarga desde ahi sin perder recursos. SectorDef con mapX/mapY para escala sistema/galaxia. Bench de 200 sectores (<100 ms, 1 cargado). Telemetria loaded/unloaded.",
+          "files": [
+            "src/com/example/codegame/SectorStreamer.java",
+            "src/com/example/codegame/SectorRuntime.java",
+            "src/com/example/codegame/SectorDef.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Bench de carga/descarga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS solo se cargan las regiones cercanas",
+        "PASS el mapa soporta escala de sistema y galaxia",
+        "PASS descargar un sector conserva su estado",
+        "PASS volver a un sector descargado restaura su estado",
+        "PASS el sector recargado no regenera recursos minados",
+        "PASS el coste no depende del tamaño del universo",
+        "16_universe: loadedSectors=2 y unloadedSectors=4"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:16:00-06:00"
     },
     {
       "id": "T-907",
@@ -5854,6 +5887,33 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-064",
+      "date": "2026-11-08T05:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Streaming dinámico de sectores",
+      "summary": "SectorStreamer carga solo el sector activo y vecinos (radio 2.5), descarga lejanos con snapshot y recarga sin pérdida. Coordenadas de mapa y bench de 200 sectores.",
+      "tasks": [
+        "T-808"
+      ],
+      "files": [
+        "src/com/example/codegame/SectorStreamer.java",
+        "src/com/example/codegame/SectorRuntime.java",
+        "src/com/example/codegame/SectorDef.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-804 (propulsión warp y TravelService)."
+    },
     {
       "id": "S-063",
       "date": "2026-11-08T05:06:00-06:00",

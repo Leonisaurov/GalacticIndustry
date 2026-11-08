@@ -31,10 +31,19 @@ final class SectorDef {
     final Profile profile;
     /** Radio de seguridad alrededor de la estación principal. */
     final float safeRadius;
+    /** Posición abstracta en el mapa de universo (unidades jugables). */
+    final float mapX;
+    final float mapY;
     private final List<StationDef> stations = new ArrayList<>();
 
     SectorDef(String id, String name, String systemId, long seed,
               float width, float height, Profile profile, float safeRadius) {
+        this(id, name, systemId, seed, width, height, profile, safeRadius, 0f, 0f);
+    }
+
+    SectorDef(String id, String name, String systemId, long seed,
+              float width, float height, Profile profile, float safeRadius,
+              float mapX, float mapY) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("id de sector vacio");
         }
@@ -49,6 +58,17 @@ final class SectorDef {
         this.height = height;
         this.profile = profile == null ? Profile.INICIAL : profile;
         this.safeRadius = Math.max(0f, safeRadius);
+        this.mapX = mapX;
+        this.mapY = mapY;
+    }
+
+    float distanceTo(SectorDef other) {
+        if (other == null) {
+            return Float.MAX_VALUE;
+        }
+        float dx = mapX - other.mapX;
+        float dy = mapY - other.mapY;
+        return (float) Math.sqrt(dx * dx + dy * dy);
     }
 
     SectorDef addStation(StationDef station) {

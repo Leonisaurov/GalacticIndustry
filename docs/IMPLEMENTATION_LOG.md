@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T05:06:00-06:00  
+**Última actualización:** 2026-11-08T05:16:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-064 — Streaming dinámico de sectores
+
+- **Fecha:** 2026-11-08T05:16:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-808
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `SectorStreamer` carga el detalle del sector activo y de los sectores a
+  **≤2,5 unidades** del mapa.
+- Los sectores lejanos se descargan y solo queda su **snapshot**; al volver se
+  recargan sin perder recursos ni regenerar rocas minadas.
+- `SectorDef` incorpora `mapX`/`mapY` para medir distancias a escala de sistema
+  y galaxia.
+- El coste depende del radio de carga, no del tamaño total: un universo de
+  **200 sectores** mantiene solo **1** cargado y tarda **<100 ms** en recorrerlos.
+- Telemetría `loadedSectors` / `unloadedSectors` y coordenadas de mapa.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SectorStreamer.java` (nuevo)
+- `src/com/example/codegame/SectorRuntime.java`
+- `src/com/example/codegame/SectorDef.java`
+- `src/com/example/codegame/UniverseState.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/16_universe.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS solo se cargan las regiones cercanas`
+- `PASS el mapa soporta escala de sistema y galaxia`
+- `PASS descargar un sector conserva su estado`
+- `PASS volver a un sector descargado restaura su estado`
+- `PASS el sector recargado no regenera recursos minados`
+- `PASS el coste no depende del tamaño del universo`
+- `16_universe`: `loadedSectors=2`, `unloadedSectors=4`.
+
+### Decisiones tomadas
+
+- Radio de carga de 2,5 unidades del mapa.
+- Un sector descargado conserva solo su snapshot, nunca su runtime completo.
+- El streaming no cambia todavía el sector activo; eso lo hará el viaje warp
+  de T-804.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-804 — Implementar propulsión warp y TravelService**.
 
 ---
 

@@ -940,7 +940,9 @@ public class MyGame implements ApplicationListener {
                         + "\"galaxyId\":\"%s\",\"sectorId\":\"%s\","
                         + "\"sectorWidth\":%.0f,\"sectorHeight\":%.0f,"
                         + "\"sectorHalfWidth\":%.0f,\"sectorHalfHeight\":%.0f,"
-                        + "\"sectorProfile\":\"%s\"}",
+                        + "\"sectorProfile\":\"%s\","
+                        + "\"sectorMapX\":%.1f,\"sectorMapY\":%.1f,"
+                        + "\"loadedSectors\":%d,\"unloadedSectors\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1010,7 +1012,11 @@ public class MyGame implements ApplicationListener {
                 world.halfWidth(),
                 world.halfHeight(),
                 session.currentSector == null || session.currentSector.profile == null
-                        ? "" : session.currentSector.profile.name()));
+                        ? "" : session.currentSector.profile.name(),
+                session.currentSector == null ? 0f : session.currentSector.mapX,
+                session.currentSector == null ? 0f : session.currentSector.mapY,
+                session.streamer.loadedCount(),
+                session.streamer.unloadedCount()));
     }
 
     void logEvent(String json) {
