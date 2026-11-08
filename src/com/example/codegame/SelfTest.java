@@ -2792,6 +2792,93 @@ public class SelfTest {
         u801Bad.addGalaxy(u801BadGalaxy);
         check("la validación exige estaciones", !u801Bad.valid());
 
+        // T-802: runtime de sector finito.
+        SectorDef tiny802 = new SectorDef("tiny-802", "TINY", "sys", 1L,
+                2000f, 1600f, SectorDef.Profile.CINTURON, 100f)
+                .addStation(GameData.OUTPOST);
+        GameWorld world802 = new GameWorld(new Upgrades(true), tiny802);
+        check("el mundo usa la definición de sector",
+                world802.sector == tiny802
+                        && world802.halfWidth() == 1000f
+                        && world802.halfHeight() == 800f
+                        && !world802.outsideSector(0f, 0f)
+                        && world802.outsideSector(1000.5f, 0f)
+                        && world802.outsideSector(0f, -800.5f));
+        world802.start();
+        world802.asteroids.clear();
+        world802.fuel.clear();
+        world802.ship.pos.set(-99999f, 99999f);
+        world802.ship.vel.set(-50f, 50f);
+        world802.update(0.01f, new Controls());
+        check("la nave queda dentro del sector",
+                world802.ship.pos.x >= -world802.halfWidth()
+                        && world802.ship.pos.x <= world802.halfWidth()
+                        && world802.ship.pos.y >= -world802.halfHeight()
+                        && world802.ship.pos.y <= world802.halfHeight()
+                        && world802.ship.vel.x == 0f && world802.ship.vel.y == 0f);
+        SectorDef respawn802 = new SectorDef("respawn-802", "RESPAWN", "sys", 5L,
+                12000f, 12000f, SectorDef.Profile.CINTURON, 100f)
+                .addStation(GameData.OUTPOST);
+        GameWorld respawnWorld802 = new GameWorld(new Upgrades(true), respawn802);
+        respawnWorld802.start();
+        respawnWorld802.ship.pos.set(3000f, 3000f);
+        respawnWorld802.update(0.01f, new Controls());
+        int chunksBefore802 = respawnWorld802.generatedChunks().size();
+        int rocksBefore802 = respawnWorld802.asteroids.size;
+        respawnWorld802.asteroids.clear();
+        respawnWorld802.update(0.01f, new Controls());
+        check("los recursos minados no reaparecen",
+                rocksBefore802 > 0
+                        && respawnWorld802.asteroids.size == 0
+                        && respawnWorld802.generatedChunks().size() == chunksBefore802);
+        SectorDef metal802 = new SectorDef("metal-802", "METAL", "sys", 777L,
+                12000f, 12000f, SectorDef.Profile.METALICO, 100f)
+                .addStation(GameData.OUTPOST);
+        SectorDef ice802 = new SectorDef("ice-802", "HIELO", "sys", 777L,
+                12000f, 12000f, SectorDef.Profile.HELADO, 100f)
+                .addStation(GameData.OUTPOST);
+        GameWorld metalWorld = new GameWorld(new Upgrades(true), metal802);
+        metalWorld.start();
+        metalWorld.asteroids.clear();
+        metalWorld.ship.pos.set(3000f, 3000f);
+        metalWorld.update(0.01f, new Controls());
+        int metalM = 0;
+        int metalC = 0;
+        for (int i = 0; i < metalWorld.asteroids.size; i++) {
+            AsteroidType type = metalWorld.asteroids.get(i).type;
+            metalM += type == AsteroidType.M ? 1 : 0;
+            metalC += type == AsteroidType.C ? 1 : 0;
+        }
+        GameWorld iceWorld = new GameWorld(new Upgrades(true), ice802);
+        iceWorld.start();
+        iceWorld.asteroids.clear();
+        iceWorld.ship.pos.set(3000f, 3000f);
+        iceWorld.update(0.01f, new Controls());
+        int iceM = 0;
+        int iceC = 0;
+        for (int i = 0; i < iceWorld.asteroids.size; i++) {
+            AsteroidType type = iceWorld.asteroids.get(i).type;
+            iceM += type == AsteroidType.M ? 1 : 0;
+            iceC += type == AsteroidType.C ? 1 : 0;
+        }
+        check("el perfil del sector cambia la generación",
+                metalM > iceM && iceC > metalC);
+        SectorDef small802 = new SectorDef("small-802", "SMALL", "sys", 9L,
+                12000f, 12000f, SectorDef.Profile.CINTURON, 100f)
+                .addStation(GameData.OUTPOST);
+        SectorDef huge802 = new SectorDef("huge-802", "HUGE", "sys", 9L,
+                120000f, 120000f, SectorDef.Profile.CINTURON, 100f)
+                .addStation(GameData.OUTPOST);
+        GameWorld smallWorld802 = new GameWorld(new Upgrades(true), small802);
+        smallWorld802.start();
+        GameWorld hugeWorld802 = new GameWorld(new Upgrades(true), huge802);
+        hugeWorld802.start();
+        check("el coste no depende del tamaño total",
+                smallWorld802.generatedChunks().size()
+                        == hugeWorld802.generatedChunks().size()
+                        && hugeWorld802.generatedChunks().size()
+                        <= (2 * GameWorld.RING + 1) * (2 * GameWorld.RING + 1));
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

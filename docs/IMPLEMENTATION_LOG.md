@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:48:00-06:00  
+**Última actualización:** 2026-11-08T04:56:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-062 — SectorRuntime finito
+
+- **Fecha:** 2026-11-08T04:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-802
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `GameWorld` recibe un `SectorDef` y usa sus límites:
+  - mundo centrado en (0,0), sin wraparound;
+  - la nave se mantiene en `±width/2`, `±height/2`;
+  - al tocar el borde se anula la velocidad hacia fuera.
+- El borde se dibuja con cuatro franjas (`drawSectorBounds`), visible en la
+  captura `31_bounds`.
+- La generación usa el **perfil** del sector:
+  - `HELADO` (más C y bidones), `METALICO` (más M), `CINTURON` (más S) e
+    `INICIAL` (tabla base).
+- Solo se generan chunks alrededor de la nave; una zona visitada no se regenera
+  y **los recursos minados no reaparecen**.
+- Añadido `bounds_test` y telemetría de mitades del sector.
+
+### Archivos modificados
+
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/16_universe.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS el mundo usa la definición de sector`
+- `PASS la nave queda dentro del sector`
+- `PASS los recursos minados no reaparecen`
+- `PASS el perfil del sector cambia la generación`
+- `PASS el coste no depende del tamaño total`
+- `16_universe`: borde `31_bounds` y nave en `y=5860` dentro de ±6000.
+
+### Decisiones tomadas
+
+- El clamp físico sustituye al antiguo mundo infinito sin wraparound.
+- La generación sigue siendo por chunks, pero descarta puntos fuera del sector.
+- Los perfiles ajustan tipos de asteroide y probabilidad de bidones.
+- El cambio de sector y el warp quedan para T-803.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-803**.
 
 ---
 

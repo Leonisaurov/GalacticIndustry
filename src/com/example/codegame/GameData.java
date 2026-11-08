@@ -171,4 +171,42 @@ final class GameData {
     static AsteroidType rollAsteroidType(Random random) {
         return AsteroidType.roll(random);
     }
+
+    /** Tipo de asteroide según el perfil del sector (T-802). */
+    static AsteroidType rollAsteroidType(Random random, SectorDef.Profile profile) {
+        if (profile == null || profile == SectorDef.Profile.INICIAL) {
+            return AsteroidType.roll(random);
+        }
+        int roll = random.nextInt(100);
+        switch (profile) {
+            case HELADO:
+                return roll < 75 ? AsteroidType.C
+                        : roll < 95 ? AsteroidType.S : AsteroidType.M;
+            case METALICO:
+                return roll < 15 ? AsteroidType.C
+                        : roll < 55 ? AsteroidType.S : AsteroidType.M;
+            case CINTURON:
+            default:
+                return roll < 30 ? AsteroidType.C
+                        : roll < 85 ? AsteroidType.S : AsteroidType.M;
+        }
+    }
+
+    /** Probabilidad de bidón según el perfil del sector (T-802). */
+    static float fuelChance(SectorDef.Profile profile) {
+        if (profile == null) {
+            return GameWorld.FUEL_CHANCE;
+        }
+        switch (profile) {
+            case HELADO:
+                return 0.90f;
+            case METALICO:
+                return 0.50f;
+            case CINTURON:
+                return 0.70f;
+            case INICIAL:
+            default:
+                return GameWorld.FUEL_CHANCE;
+        }
+    }
 }

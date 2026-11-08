@@ -48,7 +48,7 @@ class GameSession {
         this.lifeSupport = new LifeSupport();
         this.universe = GameData.newUniverse();
         this.currentSector = universe.defaultSector();
-        this.sector = new GameWorld(profile.upgrades);
+        this.sector = new GameWorld(profile.upgrades, currentSector);
         this.sector.attachLifeSupport(lifeSupport);
     }
 

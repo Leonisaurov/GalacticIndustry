@@ -39,6 +39,8 @@ class GameWorld {
 
     final Upgrades up;
     final Ship ship = new Ship();
+    /** Definición del sector activo: límites, semilla y perfil. */
+    final SectorDef sector;
     /** Nave nodriza del sector inicial; su posición es fija. */
     final Station station = new Station(GameData.MOTHERSHIP,
             GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y);
@@ -100,7 +102,23 @@ class GameWorld {
     }
 
     GameWorld(Upgrades up) {
+        this(up, GameData.newUniverse().defaultSector());
+    }
+
+    GameWorld(Upgrades up, SectorDef sector) {
         this.up = up;
+        this.sector = sector != null ? sector
+                : GameData.newUniverse().defaultSector();
+    }
+
+    /** Mitad del ancho del sector; el mundo está centrado en (0,0). */
+    float halfWidth() {
+        return sector.width * 0.5f;
+    }
+
+    /** Mitad del alto del sector. */
+    float halfHeight() {
+        return sector.height * 0.5f;
     }
 
     /** La sesión conecta su soporte vital para fugas y avisos visuales. */
@@ -436,6 +454,7 @@ class GameWorld {
             }
         }
         ship.update(dt, up, c);
+        clampToSector();
         boolean laserMining = ship.laser.active && ship.laser.canMine(ship, ship.capacitor);
         if (laserMining) {
             minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor, ship.cargo);
@@ -477,6 +496,37 @@ class GameWorld {
         collideMissilesAsteroids();
         fx.update(dt);
         updateChunks();
+    }
+
+    /**
+     * Mantiene la nave dentro de los límites del sector. Al tocar el borde se
+     * anula la componente de velocidad hacia fuera; no hay wraparound.
+     */
+    private void clampToSector() {
+        float hw = halfWidth() - Ship.RADIUS;
+        float hh = halfHeight() - Ship.RADIUS;
+        if (ship.pos.x < -hw) {
+            ship.pos.x = -hw;
+            if (ship.vel.x < 0f) {
+                ship.vel.x = 0f;
+            }
+        } else if (ship.pos.x > hw) {
+            ship.pos.x = hw;
+            if (ship.vel.x > 0f) {
+                ship.vel.x = 0f;
+            }
+        }
+        if (ship.pos.y < -hh) {
+            ship.pos.y = -hh;
+            if (ship.vel.y < 0f) {
+                ship.vel.y = 0f;
+            }
+        } else if (ship.pos.y > hh) {
+            ship.pos.y = hh;
+            if (ship.vel.y > 0f) {
+                ship.vel.y = 0f;
+            }
+        }
     }
 
     /** Versión con teclas y botones: izquierda/derecha giran, acelerar a plena potencia. */
@@ -809,10 +859,14 @@ class GameWorld {
     private void generateChunk(int cx, int cy) {
         Random rnd = new Random(cx * 73856093L ^ cy * 19349663L);
         int count = 2 + rnd.nextInt(3) + Math.min(wave / 2, 2);
+        float safe = Math.max(SAFE_RADIUS, sector.safeRadius);
         for (int i = 0; i < count && asteroids.size < MAX_ASTEROIDS; i++) {
             float x = (cx + rnd.nextFloat()) * CHUNK;
             float y = (cy + rnd.nextFloat()) * CHUNK;
-            if (x * x + y * y < SAFE_RADIUS * SAFE_RADIUS) {
+            if (outsideSector(x, y)) {
+                continue;
+            }
+            if (x * x + y * y < safe * safe) {
                 continue;
             }
             if (station.inSafeZone(x, y)) {
@@ -820,15 +874,23 @@ class GameWorld {
             }
             int roll = rnd.nextInt(100);
             int size = roll < 50 ? Asteroid.SMALL : roll < 85 ? Asteroid.MEDIUM : Asteroid.LARGE;
-            AsteroidType type = GameData.rollAsteroidType(rnd);
+            AsteroidType type = GameData.rollAsteroidType(rnd, sector.profile);
             long seed = rnd.nextLong();
             asteroids.add(new Asteroid(x, y, size, type, seed));
         }
-        if (rnd.nextFloat() < FUEL_CHANCE) {
+        if (rnd.nextFloat() < GameData.fuelChance(sector.profile)) {
             float x = (cx + rnd.nextFloat()) * CHUNK;
             float y = (cy + rnd.nextFloat()) * CHUNK;
-            fuel.add(new FuelPickup(x, y));
+            if (!outsideSector(x, y)) {
+                fuel.add(new FuelPickup(x, y));
+            }
         }
+    }
+
+    /** Un punto está fuera si supera la mitad del ancho/alto del sector. */
+    boolean outsideSector(float x, float y) {
+        return x < -halfWidth() || x > halfWidth()
+                || y < -halfHeight() || y > halfHeight();
     }
 
     private static int chunkOf(float v) {
@@ -841,6 +903,7 @@ class GameWorld {
 
     /** Dibuja el mundo visible con la cámara ya posicionada. */
     void draw(ShapeRenderer shapes) {
+        drawSectorBounds(shapes);
         station.draw(shapes, elapsed);
         traffic.draw(shapes, station, elapsed);
         for (int i = 0; i < fuel.size; i++) {
@@ -861,6 +924,23 @@ class GameWorld {
         drawLegacyWreck(shapes);
         pilot.draw(shapes, ship, elapsed);
         ship.draw(shapes, elapsed);
+    }
+
+    /** Borde visible del sector: cuatro franjas finas en los límites. */
+    private void drawSectorBounds(ShapeRenderer shapes) {
+        float hw = halfWidth();
+        float hh = halfHeight();
+        float thick = 10f;
+        shapes.setColor(0.28f, 0.55f, 0.92f, 0.55f);
+        shapes.rect(-hw, -hh, hw * 2f, thick);
+        shapes.rect(-hw, hh - thick, hw * 2f, thick);
+        shapes.rect(-hw, -hh, thick, hh * 2f);
+        shapes.rect(hw - thick, -hh, thick, hh * 2f);
+        shapes.setColor(0.55f, 0.82f, 1f, 0.30f);
+        shapes.rect(-hw + thick, -hh + thick, hw * 2f - thick * 2f, 2f);
+        shapes.rect(-hw + thick, hh - thick - 2f, hw * 2f - thick * 2f, 2f);
+        shapes.rect(-hw + thick, -hh + thick, 2f, hh * 2f - thick * 2f);
+        shapes.rect(hw - thick - 2f, -hh + thick, 2f, hh * 2f - thick * 2f);
     }
 
     /** Haz continuo desde el morro hasta el punto de impacto, con color por tipo. */

@@ -173,6 +173,23 @@ estáticos se reutilizan.
   límites, perfiles, número de sectores y estaciones.
 - El runtime finito y la carga/descarga por sector llegan en T-802.
 
+## Sector finito (runtime)
+
+- `GameWorld` recibe un `SectorDef` y usa sus límites: el mundo está centrado en
+  (0,0) y la nave queda dentro de `±width/2`, `±height/2`; al tocar el borde se
+  anula la velocidad hacia fuera y no hay wraparound.
+- El borde se dibuja como cuatro franjas finas (`drawSectorBounds`), visible al
+  acercarse.
+- La generación usa el **perfil** del sector:
+  - `HELADO`: mayoría de asteroides C y más bidones;
+  - `METALICO`: más asteroides M y menos bidones;
+  - `CINTURON`: mezcla con predominio S;
+  - `INICIAL`: tabla base del juego.
+- Solo se generan chunks alrededor de la nave (`RING = 2`), y una zona visitada
+  queda marcada: **los recursos minados no reaparecen**. El coste no depende del
+  tamaño total del sector.
+- La carga/descarga efectiva entre sectores y el warp llegan en T-803.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

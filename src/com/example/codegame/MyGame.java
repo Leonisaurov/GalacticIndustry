@@ -107,6 +107,8 @@ public class MyGame implements ApplicationListener {
     private final boolean rescueTest;
     /** Arranca en el mercado para probar compraventa. */
     private final boolean marketTest;
+    /** Arranca junto al borde del sector para revisar límites y borde. */
+    private final boolean boundsTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -284,6 +286,21 @@ public class MyGame implements ApplicationListener {
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, false);
+    }
+
+    /**
+     * @param boundsTest arranca junto al borde del sector para probar límites.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -300,10 +317,12 @@ public class MyGame implements ApplicationListener {
         this.stationServiceTest = stationServiceTest;
         this.rescueTest = rescueTest;
         this.marketTest = marketTest;
+        this.boundsTest = boundsTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
-                || dockingTest || stationServiceTest || rescueTest || marketTest;
+                || dockingTest || stationServiceTest || rescueTest || marketTest
+                || boundsTest;
     }
 
     @Override
@@ -492,6 +511,16 @@ public class MyGame implements ApplicationListener {
             upgrades.setCoins(500);
             state = MARKET;
             marketScreen.enter();
+        } else if (boundsTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(0f, world.halfHeight() - 140f);
+            world.ship.vel.set(0f, 0f);
+            world.ship.heading = 90f;
+            world.ship.dir.set(0f, 1f);
         }
     }
 
@@ -910,6 +939,7 @@ public class MyGame implements ApplicationListener {
                         + "\"galaxyCount\":%d,\"systemCount\":%d,\"sectorCount\":%d,"
                         + "\"galaxyId\":\"%s\",\"sectorId\":\"%s\","
                         + "\"sectorWidth\":%.0f,\"sectorHeight\":%.0f,"
+                        + "\"sectorHalfWidth\":%.0f,\"sectorHalfHeight\":%.0f,"
                         + "\"sectorProfile\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
@@ -977,6 +1007,8 @@ public class MyGame implements ApplicationListener {
                 session.currentSector == null ? "" : session.currentSector.id,
                 session.currentSector == null ? 0f : session.currentSector.width,
                 session.currentSector == null ? 0f : session.currentSector.height,
+                world.halfWidth(),
+                world.halfHeight(),
                 session.currentSector == null || session.currentSector.profile == null
                         ? "" : session.currentSector.profile.name()));
     }

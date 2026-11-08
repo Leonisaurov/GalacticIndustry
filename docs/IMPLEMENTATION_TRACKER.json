@@ -4,23 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T04:48:00-06:00",
-    "lastSessionId": "S-061",
+    "lastUpdated": "2026-11-08T04:56:00-06:00",
+    "lastSessionId": "S-062",
     "lastVerification": {
-      "date": "2026-11-08T04:48:00-06:00",
+      "date": "2026-11-08T04:56:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "UniverseState valida jerarquía, IDs únicos, semillas, paletas y sesgos",
-        "3 galaxias, 3 sistemas y 6 sectores; IDs y semillas estables",
-        "Cada sector tiene límites 12000x12000, perfil y estaciones",
-        "16_universe: galaxia/sector de arranque y perfil INICIAL",
+        "GameWorld usa SectorDef: limites, perfil y borde dibujado",
+        "La nave se mantiene dentro del sector y se anula la velocidad hacia fuera",
+        "Los recursos minados no reaparecen; chunks visitados no se regeneran",
+        "El coste de generacion no depende del tamano total del sector",
+        "16_universe: 3/3/6, 12000x12000 y captura 31_bounds",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S8",
     "currentTaskId": null,
-    "nextTaskId": "T-802",
+    "nextTaskId": "T-803",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3985,7 +3986,7 @@
       "description": "Hacer que el mundo tenga límites, perfil de generación y carga/descarga por sector.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -4010,10 +4011,40 @@
         "Test de límites"
       ],
       "technicalNotes": "Evitar romper el mundo infinito actual antes de que el sector esté probado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-062",
+          "date": "2026-11-08T04:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "GameWorld recibe SectorDef: limites finitos con borde visible, clamp de nave, generacion por perfil (helado/metalico/cinturon/inicial), chunks solo alrededor de la nave y sin reaparicion de recursos. bounds_test y captura 31_bounds; pruebas de limite, perfil y coste.",
+          "files": [
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Test de límites"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mundo usa la definición de sector",
+        "PASS la nave queda dentro del sector",
+        "PASS los recursos minados no reaparecen",
+        "PASS el perfil del sector cambia la generación",
+        "PASS el coste no depende del tamaño total",
+        "16_universe: borde 31_bounds y y=5860 dentro de ±6000"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:56:00-06:00"
     },
     {
       "id": "T-803",
@@ -4022,7 +4053,7 @@
       "description": "Guardar el estado resumido de un sector al salir y reconstruirlo al volver.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -5792,6 +5823,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-062",
+      "date": "2026-11-08T04:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "SectorRuntime finito",
+      "summary": "GameWorld queda ligado a SectorDef: límites y borde visible, clamp de nave, generación según perfil de sector y chunks visitados sin reaparición. Test de límites y captura 31_bounds.",
+      "tasks": [
+        "T-802"
+      ],
+      "files": [
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-803 (warp y cambio de sector)."
+    },
     {
       "id": "S-061",
       "date": "2026-11-08T04:48:00-06:00",
