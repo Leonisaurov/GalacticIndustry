@@ -25,6 +25,29 @@ final class GameData {
     /** El stock inicial arranca al 80 % del objetivo. */
     static final float MARKET_INITIAL = 0.8f;
 
+    /** Objetivo por defecto de un mineral (economía base de la Vía Láctea). */
+    static int defaultMarketTarget(Commodity commodity) {
+        if (commodity == null) {
+            return 100;
+        }
+        switch (commodity) {
+            case HIELO:
+                return MARKET_HIELO;
+            case SILICATO:
+                return MARKET_SILICATO;
+            case HIERRO:
+                return MARKET_HIERRO;
+            case COBRE:
+                return MARKET_COBRE;
+            case TITANIO:
+                return MARKET_TITANIO;
+            case ORO:
+                return MARKET_ORO;
+            default:
+                return 100;
+        }
+    }
+
     /** Agentes autónomos iniciales y máximo. */
     static final int INITIAL_AGENTS = 8;
     static final int MAX_AGENTS = 24;
@@ -56,6 +79,11 @@ final class GameData {
             "RELEVO MINERO", 120f, 160f, 320f, false, true, false, false, true, true);
     static final StationDef FORGE = new StationDef(
             "FORJA", 150f, 190f, 380f, true, true, false, true, true, true);
+    /** Naves nodriza propias de cada galaxia (T-806). */
+    static final StationDef ANDROMEDA_MOTHERSHIP = new StationDef(
+            "NODRIZA ANDROMEDA", 215f, 270f, 500f, true, true, true, true, true, true);
+    static final StationDef DRACO_MOTHERSHIP = new StationDef(
+            "NODRIZA DRACO", 190f, 250f, 460f, true, true, true, false, true, true);
 
     /** Construye el universo inicial con IDs y semillas estables. */
     static UniverseState newUniverse() {
@@ -64,7 +92,9 @@ final class GameData {
         GalaxyDef milkyWay = new GalaxyDef(START_GALAXY_ID, "VIA LACTEA",
                 "Galaxia de arranque; equilibrada y con la nodriza.",
                 SEED_MILKY_WAY, 0x2A3A6A, 0xD8E6FF,
-                biases(1.10f, 1.00f, 1.00f, 1.00f, 0.95f, 0.90f));
+                biases(1.10f, 1.00f, 1.00f, 1.00f, 0.95f, 0.90f),
+                targets(200, 200, 150, 100, 60, 40),
+                MARKET_INITIAL, PriceModel.DEFAULT_SPREAD);
         SystemDef sol = new SystemDef(START_SYSTEM_ID, "SOL",
                 START_GALAXY_ID, SEED_SOL);
         sol.addSector(new SectorDef(START_SECTOR_ID, "SECTOR INICIAL",
@@ -87,13 +117,15 @@ final class GameData {
         GalaxyDef andromeda = new GalaxyDef(ANDROMEDA_GALAXY_ID, "ANDROMEDA",
                 "Galaxia rica en metales y titanio.",
                 SEED_ANDROMEDA, 0x4A2A5A, 0xFFE0C8,
-                biases(0.85f, 1.00f, 1.25f, 1.15f, 1.30f, 1.10f));
+                biases(0.85f, 1.00f, 1.25f, 1.15f, 1.30f, 1.10f),
+                targets(120, 160, 220, 150, 130, 90),
+                0.75f, 0.10f);
         SystemDef andromedaCore = new SystemDef("andromeda-core", "NUCLEO",
                 ANDROMEDA_GALAXY_ID, SEED_ANDROMEDA_CORE);
         andromedaCore.addSector(new SectorDef("andromeda-forge", "FORJA",
                 "andromeda-core", SEED_ANDROMEDA_FORGE,
                 14000f, 14000f, SectorDef.Profile.METALICO, 380f, 40f, 10f)
-                .addStation(FORGE));
+                .addStation(ANDROMEDA_MOTHERSHIP));
         andromedaCore.addSector(new SectorDef("andromeda-drift", "DERIVA",
                 "andromeda-core", SEED_ANDROMEDA_DRIFT,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
@@ -105,18 +137,33 @@ final class GameData {
         GalaxyDef draco = new GalaxyDef(DRACO_GALAXY_ID, "NEBULOSA DRACO",
                 "Galaxia ficticia helada, rica en hielo y silicato.",
                 SEED_DRACO, 0x1F4A4A, 0xC8FFF0,
-                biases(1.50f, 1.20f, 0.90f, 0.85f, 0.80f, 0.70f));
+                biases(1.50f, 1.20f, 0.90f, 0.85f, 0.80f, 0.70f),
+                targets(320, 280, 90, 70, 40, 20),
+                0.85f, 0.06f);
         SystemDef dracoEye = new SystemDef("draco-eye", "OJO",
                 DRACO_GALAXY_ID, SEED_DRACO_EYE);
         dracoEye.addSector(new SectorDef("draco-core", "NUCLEO HELADO",
                 "draco-eye", SEED_DRACO_EYE,
                 SectorDef.DEFAULT_WIDTH, SectorDef.DEFAULT_HEIGHT,
                 SectorDef.Profile.HELADO, 320f, -30f, -20f)
-                .addStation(OUTPOST));
+                .addStation(DRACO_MOTHERSHIP));
         draco.addSystem(dracoEye);
         universe.addGalaxy(draco);
 
         return universe;
+    }
+
+    private static java.util.EnumMap<Commodity, Integer> targets(
+            int hielo, int silicato, int hierro, int cobre, int titanio, int oro) {
+        java.util.EnumMap<Commodity, Integer> map =
+                new java.util.EnumMap<>(Commodity.class);
+        map.put(Commodity.HIELO, hielo);
+        map.put(Commodity.SILICATO, silicato);
+        map.put(Commodity.HIERRO, hierro);
+        map.put(Commodity.COBRE, cobre);
+        map.put(Commodity.TITANIO, titanio);
+        map.put(Commodity.ORO, oro);
+        return map;
     }
 
     private static java.util.EnumMap<Commodity, Float> biases(
@@ -134,16 +181,23 @@ final class GameData {
     }
 
     static Market newMarket() {
+        return newMarket(null);
+    }
+
+    /** Mercado con los objetivos, stock inicial y spread de la galaxia. */
+    static Market newMarket(GalaxyDef galaxy) {
         java.util.EnumMap<Commodity, Integer> targets =
                 new java.util.EnumMap<>(Commodity.class);
-        targets.put(Commodity.HIELO, MARKET_HIELO);
-        targets.put(Commodity.SILICATO, MARKET_SILICATO);
-        targets.put(Commodity.HIERRO, MARKET_HIERRO);
-        targets.put(Commodity.COBRE, MARKET_COBRE);
-        targets.put(Commodity.TITANIO, MARKET_TITANIO);
-        targets.put(Commodity.ORO, MARKET_ORO);
-        Market market = new Market(targets, MARKET_INITIAL);
-        // La nodriza consume hielo para soporte vital y hierro/cobre para
+        for (Commodity commodity : Commodity.values()) {
+            targets.put(commodity, galaxy == null
+                    ? defaultMarketTarget(commodity)
+                    : galaxy.marketTarget(commodity));
+        }
+        float initial = galaxy == null ? MARKET_INITIAL : galaxy.marketInitial;
+        float spread = galaxy == null ? PriceModel.DEFAULT_SPREAD : galaxy.marketSpread;
+        Market market = new Market(targets, initial);
+        market.setSpread(spread);
+        // Cada nodriza consume hielo para soporte vital y hierro/cobre para
         // mantenimiento; produce algo de silicato. El resto queda estable.
         market.setConsumption(Commodity.HIELO, 2);
         market.setConsumption(Commodity.HIERRO, 1);

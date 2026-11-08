@@ -992,7 +992,8 @@ public class MyGame implements ApplicationListener {
                         + "\"loadedSectors\":%d,\"unloadedSectors\":%d,"
                         + "\"warpLevel\":%d,\"snapshotSectors\":%d,"
                         + "\"mapDiscovered\":%d,\"mapHidden\":%d,"
-                        + "\"mapSelected\":\"%s\",\"mapMessage\":\"%s\"}",
+                        + "\"mapSelected\":\"%s\",\"mapMessage\":\"%s\","
+                        + "\"stationName\":\"%s\",\"marketSpread\":%.2f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1072,7 +1073,9 @@ public class MyGame implements ApplicationListener {
                 mapScreen.discoveredCount(),
                 mapScreen.hiddenCount(),
                 mapScreen.selectedSectorId(),
-                state == MAP ? mapScreen.message() : ""));
+                state == MAP ? mapScreen.message() : "",
+                world.station.def.name,
+                world.station.market.spread()));
     }
 
     void logEvent(String json) {

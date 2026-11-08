@@ -28,10 +28,14 @@ final class Station {
     private float rotation;
 
     Station(StationDef def, float x, float y) {
+        this(def, x, y, null);
+    }
+
+    Station(StationDef def, float x, float y, Market market) {
         this.def = def;
         this.pos.set(x, y);
         this.storage = new StationStorage(STORAGE_CAPACITY);
-        this.market = GameData.newMarket();
+        this.market = market != null ? market : GameData.newMarket();
     }
 
     void update(float dt) {

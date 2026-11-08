@@ -88,7 +88,8 @@ final class SectorStreamer {
         if (def == null) {
             return null;
         }
-        GameWorld world = new GameWorld(upgrades, def);
+        GameWorld world = new GameWorld(upgrades, def,
+                universe.galaxyOfSector(def.id));
         world.start();
         SectorRuntime.Snapshot snapshot = universe.snapshot(sectorId);
         if (snapshot != null) {

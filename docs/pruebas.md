@@ -46,7 +46,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios, persistencia, rescate y despegue.
 - `14_market` — mercado: stock, objetivo, spread, cantidades, venta parcial/total, `NADA`, compra, confirmación y persistencia tras reiniciar. Anti-abuso y 30 min simulados en `01_logic`.
 - `15_agents` — 8 pilotos, tick de 2 s, venta con créditos y 3 naves de tráfico cerca de la estación (captura `30_traffic`). Ciclo, LOD, transacciones, bench y offline 12 h se prueban en `01_logic`.
-- `16_universe` — 3 galaxias, 3 sistemas, 6 sectores, IDs estables, sector de 12.000 × 12.000, borde finito (`31_bounds`) y streaming 2 cargados / 4 descargados. Validación, límites, perfiles, persistencia y bench de 200 sectores se cubren en `01_logic`.
+- `16_universe` — 3 galaxias, 3 sistemas, 6 sectores, nodriza propia de la Vía Láctea (NODRIZA, spread 0,08), IDs estables, sector de 12.000 × 12.000, borde finito (`31_bounds`) y streaming 2 cargados / 4 descargados. El contenido diferenciado, la persistencia y el bench de 200 sectores se cubren en `01_logic`.
 - `17_warp` — viaje warp libre con motor, coste de combustible, snapshot del origen y regreso al sector anterior. En `warp_test` se usan `T`/`Y` o zonas invisibles de prueba.
 - `18_map` — mapa de sectores: 5/6 descubiertos, nodo oculto sin datos, coste del destino y viaje warp desde `VIAJAR` (captura `32_map`).
 

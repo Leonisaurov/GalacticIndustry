@@ -28,6 +28,8 @@ assert_eq "sectores cargados" 2 "$(printf '%s' "$status" | json_get loadedSector
 assert_eq "sectores descargados" 4 "$(printf '%s' "$status" | json_get unloadedSectors)"
 assert_eq "mapa X" 0.0 "$(printf '%s' "$status" | json_get sectorMapX)"
 assert_eq "mapa Y" 0.0 "$(printf '%s' "$status" | json_get sectorMapY)"
+assert_eq "nodriza de la Via Lactea" NODRIZA "$(printf '%s' "$status" | json_get stationName)"
+assert_eq "spread galactico" 0.08 "$(printf '%s' "$status" | json_get marketSpread)"
 
 # T-802: límites finitos y borde visible.
 launch_app "--ez test_mode true --ez bounds_test true"
@@ -45,4 +47,4 @@ assert_ge "la nave no sale por abajo" -6000 "$y_now"
 assert_lt "la nave no sale por arriba" 6001 "$y_now"
 
 check_no_crash
-echo "OK 16_universe: 3 galaxias, 6 sectores, borde finito y streaming 2/4"
+echo "OK 16_universe: 3 galaxias, nodriza propia, borde y streaming 2/4"

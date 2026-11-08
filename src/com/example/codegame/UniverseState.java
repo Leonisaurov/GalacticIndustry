@@ -91,6 +91,21 @@ final class UniverseState {
         return null;
     }
 
+    /** Galaxia a la que pertenece un sector, o null si no existe. */
+    GalaxyDef galaxyOfSector(String sectorId) {
+        SectorDef target = sector(sectorId);
+        if (target == null) {
+            return null;
+        }
+        for (int i = 0; i < galaxies.size(); i++) {
+            GalaxyDef galaxy = galaxies.get(i);
+            if (galaxy.system(target.systemId) != null) {
+                return galaxy;
+            }
+        }
+        return null;
+    }
+
     /** Galaxia de arranque: la Vía Láctea. */
     GalaxyDef defaultGalaxy() {
         GalaxyDef galaxy = galaxy(GameData.START_GALAXY_ID);

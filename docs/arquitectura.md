@@ -241,6 +241,23 @@ estáticos se reutilizan.
 - `T`/`Y` y dos zonas invisibles de prueba permiten viajar y volver en
   `warp_test`.
 
+## Galaxias: contenido diferenciado
+
+- Cada galaxia define su propio **contexto económico** en `GalaxyDef`:
+  - objetivos de stock por mineral;
+  - fracción inicial y spread del mercado.
+- La **Vía Láctea** es la galaxia de arranque, equilibrada.
+- **Andrómeda** es rica en metales: más objetivo de hierro, cobre, titanio y oro,
+  spread del 10 %.
+- **Nebulosa Draco** (ficticia) es helada: mucho hielo/silicato, poco oro y
+  spread del 6 %.
+- Cada galaxia tiene su **nave nodriza** en el sector principal:
+  - `NODRIZA`, `NODRIZA ANDROMEDA` y `NODRIZA DRACO`, con tamaño y servicios
+    propios.
+- `GameWorld` crea la estación y el mercado a partir del `SectorDef` y la
+  `GalaxyDef` del sector, así que al viajar cambian nodriza, precios y stock.
+- Añadir una galaxia es añadir datos en `GameData.newUniverse()`.
+
 ## Mapa de sectores (MapScreen)
 
 - Se abre con el botón `MAPA` del HUD en `PLAYING` y se cierra con `VOLVER`.

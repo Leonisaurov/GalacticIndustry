@@ -41,9 +41,8 @@ class GameWorld {
     final Ship ship = new Ship();
     /** Definición del sector activo: límites, semilla y perfil. */
     final SectorDef sector;
-    /** Nave nodriza del sector inicial; su posición es fija. */
-    final Station station = new Station(GameData.MOTHERSHIP,
-            GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y);
+    /** Estación principal del sector; su posición es fija por ahora. */
+    final Station station;
     /** Simulación de mercados; tickea cada 10 s, no por frame. */
     final EconomySim economy = new EconomySim();
     /** Pilotos autónomos del sector; todavía no se renderizan. */
@@ -102,13 +101,25 @@ class GameWorld {
     }
 
     GameWorld(Upgrades up) {
-        this(up, GameData.newUniverse().defaultSector());
+        this(up, GameData.newUniverse().defaultSector(), null);
     }
 
     GameWorld(Upgrades up, SectorDef sector) {
+        this(up, sector, null);
+    }
+
+    GameWorld(Upgrades up, SectorDef sector, GalaxyDef galaxy) {
         this.up = up;
         this.sector = sector != null ? sector
                 : GameData.newUniverse().defaultSector();
+        GalaxyDef owner = galaxy != null ? galaxy
+                : GameData.newUniverse().galaxyOfSector(this.sector.id);
+        StationDef stationDef = this.sector.station(0);
+        if (stationDef == null) {
+            stationDef = GameData.MOTHERSHIP;
+        }
+        this.station = new Station(stationDef, GameData.MOTHERSHIP_X,
+                GameData.MOTHERSHIP_Y, GameData.newMarket(owner));
     }
 
     /** Mitad del ancho del sector; el mundo está centrado en (0,0). */

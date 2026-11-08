@@ -22,10 +22,23 @@ final class GalaxyDef {
     final int starColor;
     private final EnumMap<Commodity, Float> mineralBias =
             new EnumMap<>(Commodity.class);
+    private final EnumMap<Commodity, Integer> marketTargets =
+            new EnumMap<>(Commodity.class);
+    /** Fracción inicial del objetivo de stock y spread del mercado. */
+    final float marketInitial;
+    final float marketSpread;
     final List<SystemDef> systems = new ArrayList<>();
 
     GalaxyDef(String id, String name, String description, long seed,
               int nebulaColor, int starColor, Map<Commodity, Float> biases) {
+        this(id, name, description, seed, nebulaColor, starColor, biases,
+                null, GameData.MARKET_INITIAL, PriceModel.DEFAULT_SPREAD);
+    }
+
+    GalaxyDef(String id, String name, String description, long seed,
+              int nebulaColor, int starColor, Map<Commodity, Float> biases,
+              Map<Commodity, Integer> targets, float marketInitial,
+              float marketSpread) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("id de galaxia vacio");
         }
@@ -39,7 +52,13 @@ final class GalaxyDef {
             float value = biases == null ? 1f
                     : biases.getOrDefault(commodity, 1f);
             mineralBias.put(commodity, value > 0f ? value : 1f);
+            int target = targets == null ? GameData.defaultMarketTarget(commodity)
+                    : targets.getOrDefault(commodity,
+                    GameData.defaultMarketTarget(commodity));
+            marketTargets.put(commodity, Math.max(1, target));
         }
+        this.marketInitial = Math.max(0f, marketInitial);
+        this.marketSpread = Math.max(0.01f, Math.min(0.5f, marketSpread));
     }
 
     SystemDef addSystem(SystemDef system) {
@@ -69,6 +88,15 @@ final class GalaxyDef {
 
     EnumMap<Commodity, Float> biases() {
         return new EnumMap<>(mineralBias);
+    }
+
+    int marketTarget(Commodity commodity) {
+        Integer value = marketTargets.get(commodity);
+        return value == null ? GameData.defaultMarketTarget(commodity) : value;
+    }
+
+    EnumMap<Commodity, Integer> marketTargets() {
+        return new EnumMap<>(marketTargets);
     }
 
     int systemCount() {

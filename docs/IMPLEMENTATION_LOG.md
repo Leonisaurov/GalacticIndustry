@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T05:46:00-06:00  
+**Última actualización:** 2026-11-08T05:58:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-067 — Galaxias reales, ficticias y contenido propio
+
+- **Fecha:** 2026-11-08T05:58:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-806
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Vía Láctea** (arranque): economía equilibrada, `NODRIZA`, spread 8 %.
+- **Andrómeda** (real): metales y titanio, `NODRIZA ANDROMEDA`, spread 10 %.
+- **Nebulosa Draco** (ficticia): hielo y silicato, `NODRIZA DRACO`, spread 6 %.
+- Cada `GalaxyDef` define objetivos de stock, fracción inicial y spread.
+- `GameWorld` crea la estación y el mercado desde el `SectorDef` y su
+  `GalaxyDef`, así que al viajar cambian nodriza, precios y stock.
+- Añadir una galaxia es añadir datos en `GameData.newUniverse()`.
+- Telemetría `stationName` / `marketSpread`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/GalaxyDef.java`
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/UniverseState.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/Station.java`
+- `src/com/example/codegame/SectorStreamer.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/16_universe.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS cada galaxia tiene nave nodriza propia`
+- `PASS cada galaxia tiene contexto economico propio`
+- `PASS la Via Lactea es la galaxia inicial`
+- `PASS al viajar cambia la nodriza y el mercado`
+- `16_universe`: `NODRIZA` y spread 0,08.
+
+### Decisiones tomadas
+
+- Las naves nodriza son datos de cada sector principal.
+- El mercado se crea a partir de la galaxia, no de una tabla global.
+- No se busca exactitud astronómica; solo diferencias jugables.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-807 — Verificación del universo**, que cierra S8.
 
 ---
 

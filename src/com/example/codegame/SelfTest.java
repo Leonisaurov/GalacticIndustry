@@ -3158,6 +3158,45 @@ public class SelfTest {
                         && mapSession.universe.isDiscovered("andromeda-drift")
                         && mapSession.universe.discoveredCount() == 6);
 
+        // T-806: galaxias con nave nodriza y economía propias.
+        UniverseState galU = GameData.newUniverse();
+        SectorDef milkyPrime = galU.sector(GameData.START_SECTOR_ID);
+        SectorDef andromedaPrime = galU.sector("andromeda-forge");
+        SectorDef dracoPrime = galU.sector("draco-core");
+        check("cada galaxia tiene nave nodriza propia",
+                milkyPrime.station(0).name.equals("NODRIZA")
+                        && andromedaPrime.station(0).name.equals("NODRIZA ANDROMEDA")
+                        && dracoPrime.station(0).name.equals("NODRIZA DRACO")
+                        && andromedaPrime.station(0).radius
+                        > milkyPrime.station(0).radius);
+        Market milkyMarket = GameData.newMarket(galU.galaxy(GameData.START_GALAXY_ID));
+        Market androMarket = GameData.newMarket(galU.galaxy(GameData.ANDROMEDA_GALAXY_ID));
+        Market dracoMarket = GameData.newMarket(galU.galaxy(GameData.DRACO_GALAXY_ID));
+        check("cada galaxia tiene contexto economico propio",
+                milkyMarket.target(Commodity.ORO) == 40
+                        && androMarket.target(Commodity.ORO) == 90
+                        && androMarket.target(Commodity.TITANIO) == 130
+                        && dracoMarket.target(Commodity.HIELO) == 320
+                        && dracoMarket.target(Commodity.ORO) == 20
+                        && Math.abs(androMarket.spread() - 0.10f) < 0.001f
+                        && Math.abs(dracoMarket.spread() - 0.06f) < 0.001f);
+        GameSession galaxySession = new GameSession(new PlayerProfile(mapUp));
+        galaxySession.startRun();
+        check("la Via Lactea es la galaxia inicial",
+                GameData.START_GALAXY_ID.equals(
+                        galaxySession.universe.defaultGalaxy().id)
+                        && galaxySession.sector.station.def.name.equals("NODRIZA")
+                        && galaxySession.sector.station.market.target(
+                        Commodity.ORO) == 40);
+        check("al viajar cambia la nodriza y el mercado",
+                TravelService.travel(galaxySession, "andromeda-forge").ok
+                        && galaxySession.sector.station.def.name.equals(
+                        "NODRIZA ANDROMEDA")
+                        && galaxySession.sector.station.market.target(
+                        Commodity.TITANIO) == 130
+                        && Math.abs(galaxySession.sector.station.market.spread()
+                        - 0.10f) < 0.001f);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();
