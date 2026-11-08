@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T12:18:00-06:00  
+**Última actualización:** 2026-11-08T12:38:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,61 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-088 — Música y ambientes dinámicos
+
+- **Fecha:** 2026-11-08T12:38:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1108
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Dos pistas locales: **exploración** y **tensión**.
+- `updateMusic(dt, danger)` mezcla con rampa suave.
+- `danger` se activa con casco <40 %, alerta de O2 o rescate.
+- Silencio de música **independiente** del sonido general.
+- `AudioService` copia los assets comprimidos a `audio-cache/` para que
+  MediaPlayer/SoundPool puedan abrirlos.
+- `21_music` y `19_audio` verifican ambiente y silencios.
+
+### Archivos modificados
+
+- `src/com/example/codegame/AudioService.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/OverlayRenderer.java`
+- `assets/audio/music/explore.mp3` (nuevo)
+- `assets/audio/music/tension.mp3` (nuevo)
+- `tools/tests/21_music.sh` (nuevo)
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `21_music 19_audio`: **2/2 OK**.
+
+### Evidencias
+
+- Assets `explore.mp3` y `tension.mp3`.
+- Telemetría `musicMuted`/`musicMode`.
+- `21_music`: `EXPLORE` y silencio independiente.
+- `19_audio`: silencio general.
+
+### Decisiones tomadas
+
+- Los assets se cachean localmente por la compresión del APK.
+- Música y efectos tienen silencios separados.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1109 — Catálogo de módulos de nave y ranuras**.
 
 ---
 

@@ -51,6 +51,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `18_map` — mapa de sectores: 5/6 descubiertos, nodo oculto sin datos, coste del destino y viaje warp desde `VIAJAR` (captura `32_map`).
 - `18_interiors` — marco (3/2/3), render cenital (`36_interior`, FPS ≥ 25), interacción con módulo (`37_interaction`) y salida a la nave (`39_exit`). Avatar, colisión, puertas y guardado de posición se cubren en `01_logic`.
 - `19_audio` — efectos locales y silencio conmutable desde la pausa. Balance (`BENCH expedicion`) y rendimiento (`BENCH rendimiento`, FPS ≥ 30) en `01_logic`/`16_universe`.
+- `21_music` — ambiente de exploración, mezcla suave y silencio de música independiente (captura `41_music`).
 - `20_accessibility` — pausa legible, botón de silencio y textos ajustados (captura `40_accessibility`).
 - `17_player_station` — plataforma vacía, construcción (`33_base`), módulos/servicios (`34_modules`), acople y gestión (`35_management`), entrada al interior (`38_entry`), mejora, descarga y persistencia. Refinería/mercado y guardado se cubren en `01_logic`; el mercado global sigue en `14_market`.
 

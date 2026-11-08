@@ -467,6 +467,17 @@ estáticos se reutilizan.
 - La fuente sigue siendo ASCII; no se añaden acentos ni glifos ausentes.
 - La localización completa a otros idiomas queda para más adelante.
 
+## Música y ambientes dinámicos (T-1108)
+
+- Dos piezas locales en `assets/audio/music/`: exploración y tensión.
+- `AudioService` las carga desde una copia local (`audio-cache/`) porque los
+  assets del APK van comprimidos y MediaPlayer necesita una ruta real.
+- `updateMusic(dt, danger)` mezcla ambas con una rampa suave; `danger` se activa
+  con casco <40 %, alerta de O2, rescate disponible o activo.
+- `MUSICA ON/OFF` en la pausa es independiente del silencio general.
+- Los assets son locales; sin red.
+- La música se detiene al silenciarla y al liberar el servicio.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

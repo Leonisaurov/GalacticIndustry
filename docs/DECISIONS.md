@@ -362,7 +362,8 @@ Afecta a la Etapa 11 y al tamaño del APK.
 - Efectos para motor, láser, misil, explosión, impacto, recogida, alarma,
   acople, comercio, módulo y warp.
 - Silencio global persistido y botón en la pausa.
-- La música/ambientes quedan para T-1108.
+- La música/ambientes se implementan en T-1108 con dos piezas locales
+  (exploración y tensión) y mezcla suave; el silencio de música es independiente.
 
 ---
 

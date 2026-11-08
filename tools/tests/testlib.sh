@@ -69,6 +69,7 @@ MG_UNDOCK_Y=0
 MG_ENTER_X=0
 MG_ENTER_Y=0
 MUTE_Y=0
+MUSIC_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -173,7 +174,8 @@ device_geometry() {
     MG_ENTER_X=$((W - 74 * U))
     MG_ENTER_Y=$((37 * U))
     # Botón de silencio en la pausa.
-    MUTE_Y=$((H - (H * 44 / 100 - 43 * U)))
+    MUTE_Y=$((H - (H * 44 / 100 - 86 * U)))
+    MUSIC_Y=$((H - (H * 44 / 100 - 122 * U)))
 }
 
 # ---------- build y SelfTest ----------

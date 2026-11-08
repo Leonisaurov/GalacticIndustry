@@ -300,6 +300,14 @@ class Upgrades {
         putInt("audioMuted", muted ? 1 : 0);
     }
 
+    boolean musicMuted() {
+        return getInt("musicMuted") != 0;
+    }
+
+    void setMusicMuted(boolean muted) {
+        putInt("musicMuted", muted ? 1 : 0);
+    }
+
     /** Clase de nave seleccionada; persistida en preferencias. */
     ShipClassDef shipClass() {
         return ShipClassDef.byId(getText("shipClass"));

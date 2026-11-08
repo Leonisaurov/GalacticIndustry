@@ -177,7 +177,7 @@ final class OverlayRenderer {
     void drawPause(float w, float h) {
         float pad = 16f * game.u;
         float pw = Math.min(w - 4f * pad, 520f * game.u);
-        float ph = 390f * game.u;
+        float ph = 470f * game.u;
         float px = (w - pw) * 0.5f;
         float py = (h - ph) * 0.5f;
 
@@ -190,6 +190,7 @@ final class OverlayRenderer {
         ui.drawButton(game.btnResume, Visuals.BTN_PRIMARY, true);
         ui.drawButton(game.btnMenu, Visuals.BTN_SECONDARY, true);
         ui.drawButton(game.btnMute, Visuals.BTN_SECONDARY, true);
+        ui.drawButton(game.btnMusic, Visuals.BTN_SECONDARY, true);
         shapes.end();
 
         batch.begin();
@@ -199,13 +200,14 @@ final class OverlayRenderer {
         ui.drawButtonText(game.btnResume, true);
         ui.drawButtonText(game.btnMenu, true);
         ui.drawButtonText(game.btnMute, true);
+        ui.drawButtonText(game.btnMusic, true);
         batch.end();
     }
 
     void drawOver(float w, float h) {
         float pad = 16f * game.u;
         float pw = Math.min(w - 4f * pad, 520f * game.u);
-        float ph = 390f * game.u;
+        float ph = 470f * game.u;
         float px = (w - pw) * 0.5f;
         float py = (h - ph) * 0.5f;
 

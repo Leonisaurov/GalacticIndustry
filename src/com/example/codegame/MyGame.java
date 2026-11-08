@@ -137,7 +137,7 @@ public class MyGame implements ApplicationListener {
     private static final String TAG = "AsteroidsTelemetry";
 
 
-    Button btnPlay, btnResume, btnMenu, btnRetry, btnOverMenu, btnMute;
+    Button btnPlay, btnResume, btnMenu, btnRetry, btnOverMenu, btnMute, btnMusic;
     /** Barra de aceleración: su rectángulo es btnThrust.bounds. */
     private Button btnThrust, btnPause;
     /** Recuperar la nave del personaje anterior cuando se está cerca. */
@@ -864,6 +864,9 @@ public class MyGame implements ApplicationListener {
         boolean muted = audio != null && audio.muted();
         btnMute = new Button(muted ? "SONIDO OFF" : "SONIDO ON",
                 cx, pauseCy - bh * 1.95f, bw, bh * 0.82f);
+        boolean musicOff = audio != null && audio.musicMuted();
+        btnMusic = new Button(musicOff ? "MUSICA OFF" : "MUSICA ON",
+                cx, pauseCy - bh * 2.60f, bw, bh * 0.82f);
 
         joyR = 70f * u;
         joyCx = pad + joyR * 1.06f;
@@ -1221,7 +1224,8 @@ public class MyGame implements ApplicationListener {
                         + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
                         + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
                         + "\"interiorManagement\":%s,\"shipClass\":\"%s\","
-                        + "\"audioMuted\":%s}",
+                        + "\"audioMuted\":%s,\"musicMuted\":%s,"
+                        + "\"musicMode\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1330,7 +1334,9 @@ public class MyGame implements ApplicationListener {
                 interiorAvatar == null ? 0f : interiorAvatar.y,
                 interiorManagement,
                 session.upgrades().shipClass().id,
-                audio != null && audio.muted()));
+                audio != null && audio.muted(),
+                audio != null && audio.musicMuted(),
+                audio == null ? "OFF" : audio.musicMode()));
     }
 
     void logEvent(String json) {
@@ -1808,6 +1814,15 @@ public class MyGame implements ApplicationListener {
             saveRun();
             return;
         }
+        if (tapped(btnMusic)) {
+            if (audio != null) {
+                audio.toggleMusicMuted();
+            }
+            resetControls();
+            layoutUi();
+            saveRun();
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
             if (world.ship.docked) {
                 state = DOCKED;
@@ -1928,6 +1943,10 @@ public class MyGame implements ApplicationListener {
             return;
         }
         audio.setEngine(world.ship.thrusting && !world.ship.docked);
+        boolean danger = world.ship.part[Ship.HULL] / Math.max(1f, world.ship.maxHull) < 0.40f
+                || session.pilot.o2AlertLevel() > 0
+                || canRescue() || rescue.active();
+        audio.updateMusic(dt, danger);
         if (world.ship.laser.active && !laserWasActive) {
             audio.play(AudioService.Sfx.LASER);
         }
