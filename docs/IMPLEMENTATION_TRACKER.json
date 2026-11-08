@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T07:56:00-06:00",
-    "lastSessionId": "S-074",
+    "lastUpdated": "2026-11-08T08:16:00-06:00",
+    "lastSessionId": "S-075",
     "lastVerification": {
-      "date": "2026-11-08T07:56:00-06:00",
+      "date": "2026-11-08T08:16:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Acople a la plataforma abre StationManagementScreen",
-        "Se ven 6 ranuras, modulos, niveles, servicios y almacen",
-        "Mejorar modulo y descargar carga funcionan en dispositivo",
-        "17_player_station: captura 35_management y persistencia",
+        "REFINERIA convierte 10 hielo en 15 combustible + 20 O2",
+        "MERCADO exige ALMACEN y permite compraventa con TradeService",
+        "Mercado de la plataforma persiste sin duplicar",
+        "17_player_station y 14_market en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S9",
     "currentTaskId": null,
-    "nextTaskId": "T-908",
+    "nextTaskId": "T-906",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4761,7 +4761,7 @@
       "description": "Cerrar la etapa comprobando construcción, módulos, servicios y persistencia.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-904",
@@ -5778,7 +5778,7 @@
       "description": "Añadir módulos construibles de refinería y mercado, con sus funciones económicas y requisitos.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-903",
@@ -5807,10 +5807,44 @@
         "14_market"
       ],
       "technicalNotes": "La estación vacía no comercia ni refina por defecto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-075",
+          "date": "2026-11-08T08:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Refineria y mercado de la estacion personal: REFINERIA convierte hielo en combustible/O2; MERCADO exige ALMACEN y usa TradeService con mercado propio persistente. Botones REFINAR/MERCADO y pruebas de gating, transacciones y guardado.",
+          "files": [
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/TradeService.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "14_market"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin REFINERIA no se refina",
+        "PASS sin MERCADO no se comercia",
+        "PASS el MERCADO exige ALMACEN",
+        "PASS construir REFINERIA y MERCADO",
+        "PASS la REFINERIA convierte hielo en combustible y O2",
+        "PASS el MERCADO permite comprar y vender",
+        "PASS el mercado persiste sin duplicar",
+        "17_player_station y 14_market OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T08:16:00-06:00"
     },
     {
       "id": "T-1007",
@@ -6202,6 +6236,34 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-075",
+      "date": "2026-11-08T08:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Módulos de refinería y mercado",
+      "summary": "REFINERIA y MERCADO solo activos tras construirse; conversión hielo→combustible/O2 y compraventa con TradeService. Mercado persistente y UI de gestión ampliada.",
+      "tasks": [
+        "T-908"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/TradeService.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station",
+        "tools/run-tests.sh 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-906 (verificacion de la estacion personal)."
+    },
     {
       "id": "S-074",
       "date": "2026-11-08T07:56:00-06:00",

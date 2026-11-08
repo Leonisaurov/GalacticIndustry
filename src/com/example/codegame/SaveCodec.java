@@ -255,6 +255,32 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            Market playerMarket = session.playerStation.tradeMarket();
+            if (playerMarket != null) {
+                w.name("playerMarket").object();
+                w.set("spread", playerMarket.spread());
+                w.name("stock").array();
+                for (Commodity commodity : Commodity.values()) {
+                    w.value(playerMarket.stock(commodity));
+                }
+                w.pop();
+                w.name("target").array();
+                for (Commodity commodity : Commodity.values()) {
+                    w.value(playerMarket.target(commodity));
+                }
+                w.pop();
+                w.name("production").array();
+                for (Commodity commodity : Commodity.values()) {
+                    w.value(playerMarket.production(commodity));
+                }
+                w.pop();
+                w.name("consumption").array();
+                for (Commodity commodity : Commodity.values()) {
+                    w.value(playerMarket.consumption(commodity));
+                }
+                w.pop();
+                w.pop();
+            }
             w.pop();
             w.name("sectorSnapshots").array();
             for (SectorRuntime.Snapshot snapshot : session.universe.snapshots()) {
@@ -559,6 +585,18 @@ final class SaveCodec {
                         d.stationModules.add(data);
                     }
                 }
+                JsonValue playerMarket = playerStation.get("playerMarket");
+                if (playerMarket != null) {
+                    d.hasPlayerMarket = true;
+                    d.playerMarketSpread = playerMarket.getFloat("spread",
+                            PriceModel.DEFAULT_SPREAD);
+                    d.playerMarketStock = intArray(playerMarket.get("stock"));
+                    d.playerMarketTarget = intArray(playerMarket.get("target"));
+                    d.playerMarketProduction =
+                            intArray(playerMarket.get("production"));
+                    d.playerMarketConsumption =
+                            intArray(playerMarket.get("consumption"));
+                }
                 JsonValue stationStorage = playerStation.get("storage");
                 if (stationStorage != null && stationStorage.isArray()) {
                     for (int i = 0; i < stationStorage.size; i++) {
@@ -858,6 +896,32 @@ final class SaveCodec {
                 session.playerStation.stationStorage().hold.restore(
                         cargo.commodity, cargo.amount);
             }
+            if (d.hasPlayerMarket) {
+                Market market = GameData.newMarket();
+                market.setSpread(d.playerMarketSpread);
+                for (int i = 0; i < Commodity.values().length; i++) {
+                    Commodity commodity = Commodity.values()[i];
+                    if (d.playerMarketStock != null
+                            && i < d.playerMarketStock.length) {
+                        market.setStock(commodity, d.playerMarketStock[i]);
+                    }
+                    if (d.playerMarketTarget != null
+                            && i < d.playerMarketTarget.length) {
+                        market.setTarget(commodity, d.playerMarketTarget[i]);
+                    }
+                    if (d.playerMarketProduction != null
+                            && i < d.playerMarketProduction.length) {
+                        market.setProduction(commodity,
+                                d.playerMarketProduction[i]);
+                    }
+                    if (d.playerMarketConsumption != null
+                            && i < d.playerMarketConsumption.length) {
+                        market.setConsumption(commodity,
+                                d.playerMarketConsumption[i]);
+                    }
+                }
+                session.playerStation.restoreMarket(market);
+            }
         }
         session.universe.clearSnapshots();
         for (int i = 0; i < d.snapshots.size(); i++) {
@@ -923,6 +987,12 @@ final class SaveCodec {
         String playerStationSector = GameData.START_SECTOR_ID;
         final List<StationModuleData> stationModules = new ArrayList<>();
         final List<CargoData> playerStationStorage = new ArrayList<>();
+        boolean hasPlayerMarket;
+        float playerMarketSpread = PriceModel.DEFAULT_SPREAD;
+        int[] playerMarketStock;
+        int[] playerMarketTarget;
+        int[] playerMarketProduction;
+        int[] playerMarketConsumption;
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;

@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
+import java.util.EnumMap;
+
 /**
  * Estación personal del jugador: una plataforma vacía y acoplable, sin almacén,
  * reparación, refinería ni mercado por defecto. Los servicios solo aparecen si
@@ -27,6 +29,11 @@ final class PlayerStation {
     /** Almacén propio; capacidad 0 hasta construir ALMACEN. */
     private final StationStorage stationStorage = new StationStorage(0f);
     private final StationModule[] slots = new StationModule[SLOTS];
+    /** Mercado propio; null hasta construir MERCADO. */
+    private Market tradeMarket;
+    static final int REFINE_ICE = 10;
+    static final float REFINE_FUEL = 15f;
+    static final float REFINE_O2 = 20f;
     private boolean built;
     private String sectorId = GameData.START_SECTOR_ID;
 
@@ -158,6 +165,60 @@ final class PlayerStation {
         return stationStorage;
     }
 
+    /** Convierte hasta 10 de hielo por lote en combustible y O2. */
+    int refine(CargoHold cargo, Ship ship, Pilot pilot) {
+        if (!refinery() || cargo == null || ship == null || pilot == null) {
+            return 0;
+        }
+        int batches = cargo.amount(Commodity.HIELO) / REFINE_ICE;
+        if (batches <= 0) {
+            return 0;
+        }
+        for (int i = 0; i < batches; i++) {
+            cargo.removeExact(Commodity.HIELO, REFINE_ICE);
+            ship.refuel(REFINE_FUEL);
+            pilot.oxygen = Math.min(pilot.o2Max, pilot.oxygen + REFINE_O2);
+        }
+        return batches;
+    }
+
+    /** Mercado operativo solo si existe el módulo MERCADO. */
+    Market tradeMarket() {
+        if (!market()) {
+            return null;
+        }
+        if (tradeMarket == null) {
+            tradeMarket = GameData.newMarket();
+        }
+        return tradeMarket;
+    }
+
+    TradeService.Result buy(Upgrades upgrades, CargoHold cargo,
+                            Commodity commodity, int amount,
+                            TradeService.Listener listener) {
+        Market market = tradeMarket();
+        if (market == null) {
+            return TradeService.Result.error("SIN MERCADO");
+        }
+        return TradeService.buy(market, upgrades, cargo, commodity, amount,
+                listener);
+    }
+
+    TradeService.Result sell(Upgrades upgrades, CargoHold cargo,
+                             Commodity commodity, int amount,
+                             TradeService.Listener listener) {
+        Market market = tradeMarket();
+        if (market == null) {
+            return TradeService.Result.error("SIN MERCADO");
+        }
+        return TradeService.sell(market, upgrades, cargo, commodity, amount,
+                listener);
+    }
+
+    void restoreMarket(Market market) {
+        tradeMarket = market != null ? market : tradeMarket;
+    }
+
     /** 200 UM por nivel de ALMACEN; 0 si no existe. */
     float storageCapacity() {
         float capacity = 0f;
@@ -256,6 +317,9 @@ final class PlayerStation {
         }
         StationModule installed = new StationModule(module);
         slots[slot] = installed;
+        if (module == ModuleDef.MARKET) {
+            tradeMarket();
+        }
         refreshStorageCapacity();
         return new BuildResult(true, "", installed);
     }
@@ -305,6 +369,9 @@ final class PlayerStation {
             module.upgrade();
         }
         slots[slot] = module;
+        if (def == ModuleDef.MARKET) {
+            tradeMarket();
+        }
         refreshStorageCapacity();
         return true;
     }

@@ -322,6 +322,17 @@ estáticos se reutilizan.
   capacidad se recalcula al construir/ampliar/restaurar módulos.
 - Contenido del almacén y módulos se guardan en el v2.
 
+### Refinería y mercado (T-908)
+
+- `REFINERIA`: convierte **10 de hielo** por lote en **15 de combustible** y
+  **20 de O2**; solo funciona con el módulo construido.
+- `MERCADO`: crea un `Market` propio de la plataforma; sin módulo no hay
+  compraventa. Usa `TradeService` con las mismas reglas que la nodriza.
+- El estado del mercado de la plataforma se persiste en el v2 (stock, objetivo,
+  producción, consumo y spread).
+- La pantalla de gestión incluye `REFINAR` y `MERCADO`; la UI muestra el estado
+  y los precios del hielo.
+
 ### Pantalla de gestión (T-904)
 
 - Al acoplarse a la plataforma, `DockingSystem` marca `dockedAtPlayer` y

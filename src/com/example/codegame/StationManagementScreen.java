@@ -31,6 +31,7 @@ final class StationManagementScreen {
             ModuleDef.STORAGE, ModuleDef.REPAIR, ModuleDef.REFINERY, ModuleDef.MARKET
     };
     private Button btnBuild, btnUpgrade, btnDeposit, btnRepair, btnUndock;
+    private Button btnRefine, btnMarket;
     private int selectedSlot;
     private int selectedCatalog;
     private String message = "";
@@ -65,7 +66,7 @@ final class StationManagementScreen {
         ph = h - pad;
 
         listTop = h - 116f * u;
-        float bottom = py + 232f * u;
+        float bottom = py + 280f * u;
         rowGap = 6f * u;
         rowH = Math.max(34f * u, Math.min(62f * u,
                 (listTop - bottom - 5 * rowGap) / 6f));
@@ -79,18 +80,22 @@ final class StationManagementScreen {
         catalogButtons.clear();
         for (int i = 0; i < 4; i++) {
             catalogButtons.add(new Button("", px + 20f * u + i * catW,
-                    py + 172f * u, catW - 4f * u, 40f * u));
+                    py + 226f * u, catW - 4f * u, 40f * u));
         }
         float halfW = (pw - 48f * u) * 0.5f;
-        btnBuild = new Button("CONSTRUIR", px + 20f * u, py + 122f * u,
+        btnBuild = new Button("CONSTRUIR", px + 20f * u, py + 176f * u,
                 halfW, 42f * u);
         btnUpgrade = new Button("MEJORAR", px + 20f * u + halfW + 8f * u,
-                py + 122f * u, halfW, 42f * u);
-        btnDeposit = new Button("DESCARGAR", px + 20f * u, py + 74f * u,
+                py + 176f * u, halfW, 42f * u);
+        btnRefine = new Button("REFINAR", px + 20f * u, py + 128f * u,
+                halfW, 42f * u);
+        btnMarket = new Button("MERCADO", px + 20f * u + halfW + 8f * u,
+                py + 128f * u, halfW, 42f * u);
+        btnDeposit = new Button("DESCARGAR", px + 20f * u, py + 80f * u,
                 halfW, 42f * u);
         btnRepair = new Button("REPARAR", px + 20f * u + halfW + 8f * u,
-                py + 74f * u, halfW, 42f * u);
-        btnUndock = new Button("DESPEGAR", px + 20f * u, py + 24f * u,
+                py + 80f * u, halfW, 42f * u);
+        btnUndock = new Button("DESPEGAR", px + 20f * u, py + 28f * u,
                 pw - 40f * u, 44f * u);
     }
 
@@ -140,6 +145,14 @@ final class StationManagementScreen {
             repair();
             return true;
         }
+        if (game.tapped(btnRefine)) {
+            refine();
+            return true;
+        }
+        if (game.tapped(btnMarket)) {
+            marketMessage();
+            return true;
+        }
         return false;
     }
 
@@ -172,6 +185,29 @@ final class StationManagementScreen {
         message = moved > 0 ? "DESCARGADAS " + moved + " UM" : "ALMACEN NO DISPONIBLE";
         if (moved > 0) {
             game.saveRun();
+        }
+    }
+
+    private void refine() {
+        int batches = game.session.playerStation.refine(
+                game.world.ship.cargo(), game.world.ship, game.session.pilot);
+        if (batches > 0) {
+            message = "REFINADOS " + batches + " LOTES";
+            game.saveRun();
+        } else {
+            message = "SIN REFINERIA O SIN HIELO";
+        }
+    }
+
+    private void marketMessage() {
+        Market market = game.session.playerStation.tradeMarket();
+        if (market == null) {
+            message = "SIN MERCADO";
+        } else {
+            message = String.format(java.util.Locale.US,
+                    "MERCADO: HIELO C%.1f V%.1f",
+                    market.buyPrice(Commodity.HIELO),
+                    market.sellPrice(Commodity.HIELO));
         }
     }
 
@@ -224,6 +260,10 @@ final class StationManagementScreen {
                 game.session.playerStation.moduleAt(selectedSlot) != null);
         ui.drawButton(btnDeposit, Visuals.BTN_SECONDARY,
                 game.session.playerStation.storage());
+        ui.drawButton(btnRefine, Visuals.BTN_SECONDARY,
+                game.session.playerStation.refinery());
+        ui.drawButton(btnMarket, Visuals.BTN_SECONDARY,
+                game.session.playerStation.market());
         ui.drawButton(btnRepair, Visuals.BTN_WARM,
                 game.session.playerStation.repair());
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
@@ -299,13 +339,15 @@ final class StationManagementScreen {
         for (int i = 0; i < catalogButtons.size; i++) {
             ui.textCentered(catalog[i].displayName, catalogButtons.get(i)
                             .bounds.x + catalogButtons.get(i).bounds.width * 0.5f,
-                    py + 184f * u, 0.62f * u,
+                    py + 238f * u, 0.62f * u,
                     selectedCatalog == i ? Visuals.GOLD : Visuals.TEXT_DIM);
         }
         ui.drawButtonText(btnBuild, true);
         ui.drawButtonText(btnUpgrade, true);
         ui.drawButtonText(btnDeposit, true);
         ui.drawButtonText(btnRepair, true);
+        ui.drawButtonText(btnRefine, true);
+        ui.drawButtonText(btnMarket, true);
         ui.drawButtonText(btnUndock, true);
     }
 

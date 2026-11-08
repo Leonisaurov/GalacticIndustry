@@ -64,15 +64,23 @@ final class TradeService {
 
     static Result buy(GameWorld world, Upgrades upgrades, Commodity commodity,
                       int amount, Listener listener) {
-        if (world == null || upgrades == null || commodity == null || amount <= 0) {
+        if (world == null) {
             return Result.error("Cantidad invalida");
         }
-        Market market = world.station.market;
-        int stock = market.stock(commodity);
-        if (amount > stock) {
+        return buy(world.station.market, upgrades, world.ship.cargo(),
+                commodity, amount, listener);
+    }
+
+    static Result buy(Market market, Upgrades upgrades, CargoHold cargo,
+                      Commodity commodity, int amount, Listener listener) {
+        if (market == null || upgrades == null || cargo == null
+                || commodity == null || amount <= 0) {
+            return Result.error("Cantidad invalida");
+        }
+        if (amount > market.stock(commodity)) {
             return Result.error("Sin stock");
         }
-        if (!world.ship.cargo().canAdd(commodity, amount)) {
+        if (!cargo.canAdd(commodity, amount)) {
             return Result.error("Sin espacio en bodega");
         }
         float unit = market.buyPrice(commodity);
@@ -80,7 +88,7 @@ final class TradeService {
         if (!upgrades.spendCoins(total)) {
             return Result.error("Sin creditos");
         }
-        world.ship.cargo().addExact(commodity, amount);
+        cargo.addExact(commodity, amount);
         market.addStock(commodity, -amount);
         Trade trade = new Trade(true, commodity, amount, unit, total);
         if (listener != null) {
@@ -91,16 +99,25 @@ final class TradeService {
 
     static Result sell(GameWorld world, Upgrades upgrades, Commodity commodity,
                        int amount, Listener listener) {
-        if (world == null || upgrades == null || commodity == null || amount <= 0) {
+        if (world == null) {
             return Result.error("Cantidad invalida");
         }
-        if (world.ship.cargo().amount(commodity) < amount) {
+        return sell(world.station.market, upgrades, world.ship.cargo(),
+                commodity, amount, listener);
+    }
+
+    static Result sell(Market market, Upgrades upgrades, CargoHold cargo,
+                       Commodity commodity, int amount, Listener listener) {
+        if (market == null || upgrades == null || cargo == null
+                || commodity == null || amount <= 0) {
+            return Result.error("Cantidad invalida");
+        }
+        if (cargo.amount(commodity) < amount) {
             return Result.error("Sin carga suficiente");
         }
-        Market market = world.station.market;
         float unit = market.sellPrice(commodity);
         int total = Math.max(1, Math.round(unit * amount));
-        world.ship.cargo().removeExact(commodity, amount);
+        cargo.removeExact(commodity, amount);
         market.addStock(commodity, amount);
         upgrades.addCoins(total);
         Trade trade = new Trade(false, commodity, amount, unit, total);

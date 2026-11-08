@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T07:56:00-06:00  
+**Última actualización:** 2026-11-08T08:16:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,71 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-075 — Módulos de refinería y mercado
+
+- **Fecha:** 2026-11-08T08:16:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-908
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `REFINERIA`: cada lote convierte **10 de hielo** en **15 de combustible** y
+  **20 de O2**; sin módulo no refina.
+- `MERCADO`:
+  - exige `ALMACEN`;
+  - crea un `Market` propio de la plataforma;
+  - usa `TradeService` con compra/venta y stock/precios;
+  - sin módulo no hay comercio.
+- El mercado de la plataforma se persiste en el v2 y no duplica stock.
+- La pantalla de gestión añade `REFINAR` y `MERCADO`.
+- `14_market` sigue verificando el mercado global.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/StationModule.java`
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/TradeService.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+- `tools/run-tests.sh 14_market`: **OK**.
+
+### Evidencias
+
+- `PASS sin REFINERIA no se refina`
+- `PASS sin MERCADO no se comercia`
+- `PASS el MERCADO exige ALMACEN`
+- `PASS construir REFINERIA y MERCADO`
+- `PASS la REFINERIA convierte hielo en combustible y O2`
+- `PASS el MERCADO permite comprar y vender`
+- `PASS el mercado persiste sin duplicar`
+- `17_player_station` y `14_market` en verde.
+
+### Decisiones tomadas
+
+- La refinería trabaja por lotes de 10 hielo.
+- El mercado de la plataforma reutiliza `TradeService`.
+- El mercado y su stock son opcionales en el guardado.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-906 — Verificación de la estación personal**, que cierra S9.
 
 ---
 

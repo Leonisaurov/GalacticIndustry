@@ -3530,6 +3530,87 @@ public class SelfTest {
                         && svcLoaded.playerStation.storage()
                         && svcLoaded.ship().cargo().amount(Commodity.HIELO) == 0);
 
+        // T-908: refineria y mercado solo tras construir sus modulos.
+        PlayerStation bareTrade = new PlayerStation(0f, 0f);
+        CargoHold tradeCargo = new CargoHold(300f);
+        tradeCargo.addExact(Commodity.HIELO, 20);
+        Ship tradeShip = new Ship();
+        tradeShip.reset(new Upgrades(true), 0f, 0f);
+        tradeShip.fuel = 10f;
+        Pilot tradePilot = new Pilot();
+        tradePilot.oxygen = 40f;
+        check("sin REFINERIA no se refina",
+                bareTrade.refine(tradeCargo, tradeShip, tradePilot) == 0
+                        && tradeCargo.amount(Commodity.HIELO) == 20);
+        Upgrades refUp = new Upgrades(true);
+        refUp.setCoins(5000);
+        CargoHold noMarketCargo = new CargoHold(200f);
+        noMarketCargo.addExact(Commodity.HIERRO, 10);
+        check("sin MERCADO no se comercia",
+                !bareTrade.buy(refUp, noMarketCargo,
+                        Commodity.HIERRO, 1, null).ok
+                        && !bareTrade.sell(refUp, noMarketCargo,
+                        Commodity.HIERRO, 1, null).ok);
+        check("el MERCADO exige ALMACEN",
+                !bareTrade.build(0, ModuleDef.MARKET, refUp, noMarketCargo).ok
+                        && !bareTrade.market());
+        GameSession refSession = new GameSession(new PlayerProfile(refUp));
+        refSession.startRun();
+        refSession.ship().pos.set(-1500f, 0f);
+        refSession.ship().cargo().setCapacity(400f);
+        refSession.ship().cargo().addExact(Commodity.HIERRO, 80);
+        refSession.ship().cargo().addExact(Commodity.COBRE, 50);
+        refSession.ship().cargo().addExact(Commodity.SILICATO, 80);
+        refSession.ship().cargo().addExact(Commodity.TITANIO, 20);
+        check("construir REFINERIA y MERCADO",
+                ConstructionService.buildCore(refSession, -1500f, 0f).ok
+                        && refSession.playerStation.build(0, ModuleDef.STORAGE,
+                        refUp, refSession.ship().cargo()).ok
+                        && refSession.playerStation.build(1, ModuleDef.REFINERY,
+                        refUp, refSession.ship().cargo()).ok
+                        && refSession.playerStation.build(2, ModuleDef.MARKET,
+                        refUp, refSession.ship().cargo()).ok
+                        && refSession.playerStation.refinery()
+                        && refSession.playerStation.market()
+                        && refSession.playerStation.tradeMarket() != null);
+        refSession.ship().cargo().addExact(Commodity.HIELO, 20);
+        float refFuel = refSession.ship().fuel;
+        float refO2 = refSession.pilot.oxygen;
+        check("la REFINERIA convierte hielo en combustible y O2",
+                refSession.playerStation.refine(refSession.ship().cargo(),
+                        refSession.ship(), refSession.pilot) == 2
+                        && refSession.ship().cargo().amount(Commodity.HIELO) == 0
+                        && Math.abs(refSession.ship().fuel
+                        - Math.min(refSession.ship().maxFuel, refFuel + 30f)) < 0.01f
+                        && Math.abs(refSession.pilot.oxygen
+                        - Math.min(refSession.pilot.o2Max, refO2 + 40f)) < 0.01f);
+        Market refMarket = refSession.playerStation.tradeMarket();
+        int refStock = refMarket.stock(Commodity.HIERRO);
+        int refCoins = refUp.coins();
+        check("el MERCADO permite comprar y vender",
+                refSession.playerStation.buy(refUp,
+                        refSession.ship().cargo(), Commodity.HIERRO, 5, null).ok
+                        && refMarket.stock(Commodity.HIERRO) == refStock - 5
+                        && refSession.ship().cargo().amount(Commodity.HIERRO) >= 5
+                        && refSession.playerStation.sell(refUp,
+                        refSession.ship().cargo(), Commodity.HIERRO, 5, null).ok
+                        && refMarket.stock(Commodity.HIERRO) == refStock
+                        && refUp.coins() < refCoins);
+        refSession.playerStation.buy(refUp, refSession.ship().cargo(),
+                Commodity.HIERRO, 10, null);
+        int refSavedStock = refMarket.stock(Commodity.HIERRO);
+        SaveService.MemoryStorage refStore = new SaveService.MemoryStorage();
+        SaveService refSaves = new SaveService(refStore);
+        check("la refineria y el mercado se guardan", refSaves.save(refSession));
+        GameSession refLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("el mercado persiste sin duplicar",
+                refSaves.load(refLoaded) == SaveService.LoadStatus.V2
+                        && refLoaded.playerStation.refinery()
+                        && refLoaded.playerStation.market()
+                        && refLoaded.playerStation.tradeMarket().stock(
+                        Commodity.HIERRO) == refSavedStock);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

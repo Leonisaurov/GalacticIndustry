@@ -163,10 +163,10 @@ device_geometry() {
     local mg_pw=$((W - 16 * U))
     local mg_half=$(( (mg_pw - 48 * U) / 2 ))
     MG_UPGRADE_X=$((mg_px + 20 * U + mg_half + 8 * U + mg_half / 2))
-    MG_ACTION1_Y=$((H - 151 * U))
+    MG_ACTION1_Y=$((H - 197 * U))
     MG_DEPOSIT_X=$((mg_px + 20 * U + mg_half / 2))
-    MG_ACTION2_Y=$((H - 103 * U))
-    MG_UNDOCK_Y=$((H - 54 * U))
+    MG_ACTION2_Y=$((H - 101 * U))
+    MG_UNDOCK_Y=$((H - 50 * U))
 }
 
 # ---------- build y SelfTest ----------
