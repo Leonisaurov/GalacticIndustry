@@ -5,7 +5,9 @@ import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 
 public class MainActivity extends AndroidApplication {
-    
+
+    private MyGame game;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,11 +66,23 @@ public class MainActivity extends AndroidApplication {
                 && getIntent().getBooleanExtra("interior_test", false);
         boolean interiorMgmtTest = getIntent() != null
                 && getIntent().getBooleanExtra("interior_mgmt_test", false);
-        initialize(new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
+        this.game = new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
                 wingTest, survivalTest, pilotDeathTest, recoveryTest, cargoTest,
                 miningTest, tractorTest, stationTest, dockingTest,
                 stationServiceTest, rescueTest, marketTest, boundsTest,
                 warpTest, baseTest, moduleTest, interiorTest,
-                interiorMgmtTest), cfg);
+                interiorMgmtTest);
+        initialize(game, cfg);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // El juego decide qué hacer con Atrás; así no se cierra una partida por
+        // accidente. Desde el menú, MyGame termina la aplicación.
+        if (game != null) {
+            game.requestBack();
+            return;
+        }
+        super.onBackPressed();
     }
 }

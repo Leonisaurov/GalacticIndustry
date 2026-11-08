@@ -55,6 +55,8 @@ public class MyGame implements ApplicationListener {
     private MarketScreen marketScreen;
     private MapScreen mapScreen;
     private StationManagementScreen managementScreen;
+    /** Origen del mercado abierto: false = nodriza, true = plataforma. */
+    private boolean marketFromPlayer;
     private InteriorRenderer interiorRenderer;
     /** Interior activo y avatar; la entrada/render llegan en T-1003/T-1005. */
     private InteriorScene interiorScene;
@@ -80,6 +82,8 @@ public class MyGame implements ApplicationListener {
     private final Vector2 touch = new Vector2();
 
     private int state = MENU;
+    /** Botón Atrás de Android: se atiende en el hilo de render. */
+    private volatile boolean backRequested;
     float time;
     float u = 1f;
     /** Tiempo de la secuencia de explosión antes del diálogo de fin de partida. */
@@ -150,6 +154,8 @@ public class MyGame implements ApplicationListener {
     Button btnMap;
     /** Construir la plataforma personal en la posición actual. */
     Button btnBuildBase;
+    /** Acción contextual del interior (abrir módulo o salir). */
+    Button btnInteriorAction;
     /** Zonas invisibles solo para pruebas de warp. */
     private Button btnWarpDebug, btnWarpBackDebug;
     private final RescueService rescue = new RescueService();
@@ -855,22 +861,27 @@ public class MyGame implements ApplicationListener {
         float menuCy = h * 0.33f;
         btnPlay = stacked(runActive ? "CONTINUAR" : "JUGAR", cx, menuCy, bw, bh, gap, 0, 1);
 
-        float pauseCy = h * 0.44f;
-        btnResume = stacked("CONTINUAR", cx, pauseCy, bw, bh, gap, 0, 2);
-        btnMenu = stacked("MENU", cx, pauseCy, bw, bh, gap, 1, 2);
+        // Pausa: panel centrado de 440 u; las acciones y el audio van en
+        // bloques separados para que nunca se solapen.
+        float pausePh = 440f * u;
+        float pausePy = (h - pausePh) * 0.5f;
+        btnResume = new Button("CONTINUAR", cx, pausePy + 270f * u, bw, 56f * u);
+        btnMenu = new Button("MENU", cx, pausePy + 200f * u, bw, 52f * u);
 
-        float overCy = h * 0.41f;
-        btnRetry = stacked(recoveryTest ? "RECUPERAR (DEBUG)" : "NUEVO PERSONAJE",
-                cx, overCy, bw, bh, gap, 0, 2);
-        btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
+        // Fin de partida: mismo criterio de panel centrado.
+        float overPh = 400f * u;
+        float overPy = (h - overPh) * 0.5f;
+        btnRetry = new Button(recoveryTest ? "RECUPERAR (DEBUG)" : "NUEVO PERSONAJE",
+                cx, overPy + 144f * u, bw, 56f * u);
+        btnOverMenu = new Button("MENU", cx, overPy + 86f * u, bw, 52f * u);
         boolean muted = audio != null && audio.muted();
         btnMute = new Button(muted ? "SONIDO OFF" : "SONIDO ON",
-                cx, pauseCy - bh * 1.95f, bw, bh * 0.82f);
+                cx, pausePy + 142f * u, bw, 44f * u);
         boolean musicOff = audio != null && audio.musicMuted();
         btnMusic = new Button(musicOff ? "MUSICA OFF" : "MUSICA ON",
-                cx, pauseCy - bh * 2.60f, bw, bh * 0.82f);
+                cx, pausePy + 86f * u, bw, 44f * u);
 
-        joyR = 70f * u;
+        joyR = Math.min(70f * u, Math.min(w * 0.155f, h * 0.13f));
         joyCx = pad + joyR * 1.06f;
         joyCy = pad + joyR * 1.06f;
         joyZone.set(joyCx - joyR * 1.45f, joyCy - joyR * 1.45f, joyR * 2.9f, joyR * 2.9f);
@@ -882,8 +893,7 @@ public class MyGame implements ApplicationListener {
                 barW + 36f * u, barH + 24f * u);
 
         float ps = 54f * u;
-        float panelH = topPanelH();
-        btnPause = new Button("", w - pad - ps, h - panelH * 0.5f - ps * 0.5f + 6f * u, ps, ps);
+        btnPause = new Button("", w - pad - ps, h - 94f * u, ps, ps);
         btnRecover = new Button("RECUPERAR NAVE", cx + bw * 0.05f, h * 0.30f,
                 bw * 0.9f, 46f * u);
         btnDock = new Button("ACOPLAR", cx + bw * 0.05f, h * 0.38f,
@@ -892,9 +902,13 @@ public class MyGame implements ApplicationListener {
                 bw * 0.9f, 46f * u);
         btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
                 bw * 0.9f, 46f * u);
-        btnMap = new Button("MAPA", w * 0.5f - 70f * u, pad, 140f * u, 44f * u);
+        btnMap = new Button("MAPA", w * 0.5f - Math.min(140f * u, w * 0.18f) * 0.5f,
+                pad, Math.min(140f * u, w * 0.18f), 44f * u);
         btnBuildBase = new Button("CONSTRUIR BASE", cx + bw * 0.05f, h * 0.54f,
                 bw * 0.9f, 46f * u);
+        float ibw = Math.min(w * 0.62f, 300f * u);
+        btnInteriorAction = new Button("", (w - ibw) * 0.5f, pad + 18f * u,
+                ibw, 52f * u);
         if (warpTest) {
             btnWarpDebug = new Button("", w * 0.30f, h * 0.05f, w * 0.18f, h * 0.08f);
             btnWarpBackDebug = new Button("", w * 0.52f, h * 0.05f, w * 0.18f, h * 0.08f);
@@ -912,12 +926,6 @@ public class MyGame implements ApplicationListener {
         if (managementScreen != null) {
             managementScreen.layout(w, h);
         }
-    }
-
-
-
-    private float topPanelH() {
-        return 112f * u;
     }
 
     /** La recarga solo se ofrece con una partida activa, deposito no lleno y saldo suficiente. */
@@ -1082,6 +1090,14 @@ public class MyGame implements ApplicationListener {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        boolean back = backRequested
+                || Gdx.input.isKeyJustPressed(Input.Keys.BACK)
+                || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE);
+        backRequested = false;
+        if (back) {
+            handleBack();
+        }
 
         switch (state) {
             case PLAYING: updatePlaying(dt); break;
@@ -1517,7 +1533,7 @@ public class MyGame implements ApplicationListener {
             travelTo(TravelService.previousSectorId(session));
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnPause)) {
+        if (tapped(btnPause)) {
             resetControls();
             state = PAUSED;
             saveRun();
@@ -1830,21 +1846,78 @@ public class MyGame implements ApplicationListener {
             saveRun();
             return;
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
-            if (world.ship.docked) {
-                state = DOCKED;
-                if (world.dockedAtPlayer) {
-                    managementScreen.enter();
-                } else {
-                    stationScreen.enter();
-                }
-                layoutUi();
-            } else {
-                state = PLAYING;
-            }
+        if (tapped(btnResume)) {
+            resumeGame();
         } else if (tapped(btnMenu)) {
             state = MENU;
             saveRun();
+        }
+    }
+
+    /** Vuelve a la partida o a la pantalla de estación si la nave está acoplada. */
+    private void resumeGame() {
+        if (world.ship.docked) {
+            state = DOCKED;
+            if (world.dockedAtPlayer) {
+                managementScreen.enter();
+            } else {
+                stationScreen.enter();
+            }
+            layoutUi();
+        } else {
+            state = PLAYING;
+        }
+    }
+
+    /** Petición del botón Atrás de Android; la consume el siguiente fotograma. */
+    void requestBack() {
+        backRequested = true;
+    }
+
+    /**
+     * Navegación con Atrás/Escape. Nunca cierra la app durante una partida:
+     * pausa, vuelve de las pantallas y confirma la salida solo desde el menú.
+     */
+    private void handleBack() {
+        switch (state) {
+            case MENU:
+                Gdx.app.exit();
+                break;
+            case PLAYING:
+                resetControls();
+                state = PAUSED;
+                saveRun();
+                break;
+            case PAUSED:
+                resumeGame();
+                break;
+            case DOCKED:
+                if (world.dockedAtPlayer) {
+                    managementBack();
+                } else {
+                    undockFromStation();
+                }
+                break;
+            case MARKET:
+                closeMarket();
+                break;
+            case MAP:
+                closeMap();
+                break;
+            case INTERIOR:
+                if (interiorManagement) {
+                    managementBack();
+                } else {
+                    exitInterior();
+                }
+                break;
+            case OVER:
+                state = MENU;
+                break;
+            case DYING:
+            default:
+                // La explosión no se puede interrumpir.
+                break;
         }
     }
 
@@ -1863,6 +1936,7 @@ public class MyGame implements ApplicationListener {
 
     /** Abrir el mercado desde la estación. */
     void openMarket() {
+        marketFromPlayer = false;
         marketScreen.enter();
         state = MARKET;
         layoutUi();
@@ -1872,7 +1946,12 @@ public class MyGame implements ApplicationListener {
     /** Volver del mercado a la estación. */
     void closeMarket() {
         state = DOCKED;
-        stationScreen.enter();
+        if (marketFromPlayer) {
+            managementScreen.enter(false);
+            marketFromPlayer = false;
+        } else {
+            stationScreen.enter();
+        }
         layoutUi();
     }
 
@@ -1887,6 +1966,7 @@ public class MyGame implements ApplicationListener {
     /** Entrar al interior de la estación personal desde la gestión. */
     void enterInterior() {
         bindInterior(session.playerStation.buildInterior());
+        resetControls();
         interiorManagement = false;
         state = INTERIOR;
         layoutUi();
@@ -1916,6 +1996,14 @@ public class MyGame implements ApplicationListener {
         return interiorScene;
     }
 
+    private String roomName() {
+        if (interiorAvatar == null || interiorScene == null) {
+            return "";
+        }
+        Room room = interiorAvatar.room(interiorScene);
+        return room == null ? "" : room.name;
+    }
+
     /** Movimiento del avatar reutilizable por la UI de interiores. */
     void moveInterior(float x, float y, float dt) {
         if (interiorAvatar == null) {
@@ -1923,6 +2011,29 @@ public class MyGame implements ApplicationListener {
         }
         interiorInput.set(x, y);
         interiorAvatar.update(dt, interiorInput, interiorScene);
+    }
+
+    Market activeMarket() {
+        if (marketFromPlayer && session.playerStation.tradeMarket() != null) {
+            return session.playerStation.tradeMarket();
+        }
+        return world.station.market;
+    }
+
+    String marketName() {
+        return marketFromPlayer ? "PLATAFORMA" : world.station.def.name;
+    }
+
+    /** Abrir el mercado de la plataforma personal. */
+    void openPlayerMarket() {
+        if (session.playerStation.tradeMarket() == null) {
+            return;
+        }
+        marketFromPlayer = true;
+        marketScreen.enter();
+        state = MARKET;
+        layoutUi();
+        logEvent("{\"event\":\"market_open\",\"station\":\"PLATAFORMA\"}");
     }
 
     /** Abrir el mapa desde la partida. */
@@ -1943,6 +2054,14 @@ public class MyGame implements ApplicationListener {
         if (audio != null) {
             audio.play(sfx);
         }
+    }
+
+    boolean audioMuted() {
+        return audio != null && audio.muted();
+    }
+
+    boolean musicMuted() {
+        return audio != null && audio.musicMuted();
     }
 
     private void updateAudio(float dt) {
@@ -2068,6 +2187,7 @@ public class MyGame implements ApplicationListener {
             closeInterior();
             return;
         }
+        updateJoystick();
         float mx = (Gdx.input.isKeyPressed(Input.Keys.LEFT) ? -1f : 0f)
                 + (Gdx.input.isKeyPressed(Input.Keys.RIGHT) ? 1f : 0f);
         float my = (Gdx.input.isKeyPressed(Input.Keys.DOWN) ? -1f : 0f)
@@ -2080,19 +2200,45 @@ public class MyGame implements ApplicationListener {
         interiorAvatar.update(dt, interiorInput, interiorScene);
         interiorInput.reset();
         Interactable near = interiorAvatar.nearest(interiorScene);
-        if (Gdx.input.justTouched() && near != null
-                && near.action == Interactable.Action.EXIT) {
+        btnInteriorAction.label = near == null ? ""
+                : near.action == Interactable.Action.EXIT
+                ? "SALIR A LA NAVE" : "ABRIR " + near.label;
+        if (near != null && tapped(btnInteriorAction)) {
+            interactInterior(near);
+        } else if (near != null && freeInteriorTap()) {
+            interactInterior(near);
+        }
+    }
+
+    /** Toque fuera del joystick y del botón contextual: también interactúa. */
+    private boolean freeInteriorTap() {
+        if (!Gdx.input.justTouched()) {
+            return false;
+        }
+        for (int i = 0; i < wasDown.length; i++) {
+            if (!Gdx.input.isTouched(i)) {
+                continue;
+            }
+            if (pointerInCircle(joyCx, joyCy, joyR * 1.45f, i)
+                    || pointerIn(sliderZone, i)
+                    || pointerIn(btnInteriorAction.bounds, i)) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private void interactInterior(Interactable near) {
+        if (near.action == Interactable.Action.EXIT) {
             exitInterior();
             return;
         }
-        if (Gdx.input.justTouched() && near != null
-                && near.action != Interactable.Action.EXIT) {
-            interiorManagement = true;
-            managementScreen.enter(true);
-            layoutUi();
-            logEvent("{\"event\":\"interior_module\",\"room\":\""
-                    + near.roomId + "\"}");
-        }
+        interiorManagement = true;
+        managementScreen.enter(true);
+        layoutUi();
+        logEvent("{\"event\":\"interior_module\",\"room\":\""
+                + near.roomId + "\"}");
     }
 
     private void closeInterior() {
@@ -2104,9 +2250,37 @@ public class MyGame implements ApplicationListener {
     }
 
     private void drawInterior() {
-        float cx = interiorAvatar == null ? 0f : interiorAvatar.x;
-        float cy = interiorAvatar == null ? 0f : interiorAvatar.y;
-        worldCam.zoom = 1.1f;
+        float sceneMinX = 0f;
+        float sceneMaxX = 0f;
+        float sceneMinY = 0f;
+        float sceneMaxY = 0f;
+        if (interiorScene != null && !interiorScene.rooms.isEmpty()) {
+            Room first = interiorScene.rooms.get(0);
+            sceneMinX = first.x - first.width * 0.5f;
+            sceneMaxX = first.x + first.width * 0.5f;
+            sceneMinY = first.y - first.height * 0.5f;
+            sceneMaxY = first.y + first.height * 0.5f;
+            for (int i = 1; i < interiorScene.rooms.size(); i++) {
+                Room room = interiorScene.rooms.get(i);
+                sceneMinX = Math.min(sceneMinX, room.x - room.width * 0.5f);
+                sceneMaxX = Math.max(sceneMaxX, room.x + room.width * 0.5f);
+                sceneMinY = Math.min(sceneMinY, room.y - room.height * 0.5f);
+                sceneMaxY = Math.max(sceneMaxY, room.y + room.height * 0.5f);
+            }
+        }
+        float margin = 70f;
+        float zoomW = (sceneMaxX - sceneMinX + margin * 2f)
+                / Math.max(1f, worldView.getWorldWidth());
+        float zoomH = (sceneMaxY - sceneMinY + margin * 2f)
+                / Math.max(1f, worldView.getWorldHeight());
+        float zoom = MathUtils.clamp(Math.max(1.1f, Math.max(zoomW, zoomH)),
+                1.1f, 2.2f);
+        boolean wholeScene = zoomW <= zoom + 0.001f && zoomH <= zoom + 0.001f;
+        float cx = wholeScene ? (sceneMinX + sceneMaxX) * 0.5f
+                : (interiorAvatar == null ? 0f : interiorAvatar.x);
+        float cy = wholeScene ? (sceneMinY + sceneMaxY) * 0.5f
+                : (interiorAvatar == null ? 0f : interiorAvatar.y);
+        worldCam.zoom = zoom;
         worldCam.position.set(cx, cy, 0f);
         worldCam.update();
         worldView.apply();
@@ -2117,6 +2291,17 @@ public class MyGame implements ApplicationListener {
         beginShapes();
         shapes.setColor(0.020f, 0.030f, 0.060f, 1f);
         shapes.rect(cx - ww * 0.5f, cy - wh * 0.5f, ww, wh);
+        // Rejilla tenue de plano para que el interior no quede vacío.
+        float grid = 100f;
+        shapes.setColor(0.08f, 0.13f, 0.22f, 0.55f);
+        float gx0 = (float) Math.floor((cx - ww * 0.5f) / grid) * grid;
+        for (float gx = gx0; gx <= cx + ww * 0.5f; gx += grid) {
+            shapes.rect(gx, cy - wh * 0.5f, 1.5f, wh);
+        }
+        float gy0 = (float) Math.floor((cy - wh * 0.5f) / grid) * grid;
+        for (float gy = gy0; gy <= cy + wh * 0.5f; gy += grid) {
+            shapes.rect(cx - ww * 0.5f, gy, ww, 1.5f);
+        }
         interiorRenderer.draw(interiorScene, interiorAvatar, time);
         shapes.end();
         batch.begin();
@@ -2204,17 +2389,41 @@ public class MyGame implements ApplicationListener {
             if (interiorManagement) {
                 managementScreen.draw(w, h);
             } else {
-                batch.begin();
-                ui.textCentered("INTERIOR DE LA ESTACION",
-                        w * 0.5f, h - 40f * u, 0.95f * u, Visuals.ACCENT);
-                ui.textCentered("MUEVETE CON EL JOYSTICK O LAS FLECHAS",
-                        w * 0.5f, h - 68f * u, 0.70f * u, Visuals.TEXT_DIM);
+                hud.time = time;
+                hud.joyCx = joyCx;
+                hud.joyCy = joyCy;
+                hud.joyR = joyR;
+                hud.knobX = knobX;
+                hud.knobY = knobY;
+                hud.joyAiming = joyAiming;
                 Interactable near = interiorAvatar == null ? null
                         : interiorAvatar.nearest(interiorScene);
+                beginShapes();
+                shapes.setColor(0f, 0f, 0f, 0.86f);
+                shapes.rect(0f, h - 84f * u, w, 84f * u);
+                shapes.setColor(0.30f, 0.65f, 1f, 0.55f);
+                shapes.rect(0f, h - 84f * u, w, 2f * u);
+                shapes.end();
+                batch.begin();
+                ui.textCentered("INTERIOR - " + roomName(),
+                        w * 0.5f, h - 38f * u, 0.92f * u, Visuals.ACCENT);
+                ui.textCentered("JOYSTICK MUEVE - FLECHAS TAMBIEN",
+                        w * 0.5f, h - 64f * u, 0.66f * u, Visuals.TEXT_DIM);
+                batch.end();
+                playHud.drawJoystickOnly(w, h);
+                if (near != null) {
+                    beginShapes();
+                    ui.drawButton(btnInteriorAction, Visuals.BTN_PRIMARY, true);
+                    shapes.end();
+                    batch.begin();
+                    ui.drawButtonText(btnInteriorAction, true);
+                    batch.end();
+                }
+                batch.begin();
                 ui.textCenteredFit(near == null
                                 ? "ACERCATE A UN MODULO O A LA SALIDA"
-                                : "TOCA PARA ABRIR " + near.label,
-                        w * 0.5f, 42f * u, 0.68f * u, w - 32f * u,
+                                : "TOCA EL BOTON PARA INTERACTUAR",
+                        w * 0.5f, 16f * u + 104f * u, 0.68f * u, w - 32f * u,
                         near == null ? Visuals.TEXT_OFF : Visuals.ACCENT);
                 batch.end();
             }

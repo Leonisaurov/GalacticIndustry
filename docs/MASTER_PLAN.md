@@ -674,6 +674,13 @@ media; el suelo de 30 FPS se verifica en `16_universe`.
 - Fuente ASCII; textos sin acentos en UI.
 - Mantener paleta y render procedural.
 - No sustituir todos los gráficos.
+- Paneles de pausa y fin de partida centrados y sin solapes: acciones, audio y
+  ayudas en bloques separados.
+- Listas con filas adaptables (máximo 200 u) y texto centrado verticalmente para
+  pantallas altas; el interior ajusta la cámara para mostrar la estación entera
+  cuando cabe.
+- Atrás nunca cierra una partida en curso: pausa, reanuda o vuelve de la
+  pantalla activa; solo sale desde el menú.
 
 ### 11.6 Extensión futura: identidad, facciones y online
 

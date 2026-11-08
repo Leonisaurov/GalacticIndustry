@@ -394,20 +394,22 @@ estáticos se reutilizan.
   - interactuables con pulso;
   - avatar con sombra y dirección.
 - Las etiquetas usan el `BitmapFont` existente; no se crean objetos por frame.
-- La cámara sigue al avatar con zoom 1,1 y `ExtendViewport`.
-- El HUD del interior solo muestra instrucciones; la gestión sigue en su
-  pantalla y la entrada/salida formal llega en T-1005.
+- La cámara calcula los límites de las salas: si la estación cabe, la centra y
+  muestra el conjunto; si no, sigue al avatar. El fondo lleva una rejilla tenue
+  para que el espacio vacío no parezca un fallo de render.
+- El HUD del interior muestra la sala actual, el joystick, una etiqueta de
+  movimiento y un botón contextual `ABRIR`/`SALIR A LA NAVE`.
 - `interior_test` permite revisar el render y medir FPS (captura `36_interior`).
 
 ## Interacción por proximidad (T-1004)
 
 - Dentro del interior, `Avatar.nearest()` devuelve el interactuable en rango.
-- El HUD muestra `TOCA PARA ABRIR <módulo>`; un toque abre
-  `StationManagementScreen` **sin salir del interior**.
+- El HUD muestra el botón `ABRIR <módulo>` o `SALIR A LA NAVE`; un toque en el
+  botón o en el mundo (fuera del joystick) abre `StationManagementScreen`
+  **sin salir del interior**.
 - La pantalla de gestión se reutiliza tal cual: `VOLVER` regresa al interior;
   `DESPEGAR` sigue reservado al acople real.
 - El estado del interior y de la estación se conserva al abrir/cerrar.
-- La salida (`EXIT`) queda para T-1005.
 
 ## Entrada, salida y guardado del interior (T-1005)
 
@@ -445,6 +447,23 @@ estáticos se reutilizan.
 - `MyGame.acceptMission()`/`completeMission()` requieren estar acoplado a una
   estación (no a la plataforma personal).
 - El guardado v2 conserva ofertas, estado y plazo restante.
+
+## Pulido de interacción (T-1110)
+
+- Pausa y fin de partida usan paneles centrados: acciones, toggles de audio y
+  ayudas van en bloques con separación fija, sin solaparse.
+- El HUD superior separa monedas/oleada/puntos, casco, combustible, carga/mods
+  y barras de O2/HP. Las alertas y la energía contextual viven debajo.
+- Estación, mercado, mapa y gestión usan filas de hasta 200 u con texto centrado
+  verticalmente; en pantallas altas se aprovecha el espacio sin tarjetas vacías.
+- Atrás/Escape se atiende en `MyGame.render()`. `MainActivity` solo encola la
+  petición, de modo que el estado se cambia en el hilo de render. Desde el menú
+  la app se cierra; durante una partida se pausa, reanuda o vuelve de la pantalla.
+- Las acciones deshabilitadas de la estación muestran el motivo (`SIN CREDITOS`,
+  `NIVEL MAXIMO`, `BODEGA VACIA`...). El mercado muestra `CONFIRMAR`/`CANCELAR`
+  mientras espera confirmación.
+- El mercado de la plataforma personal usa `MyGame.activeMarket()` también para
+  ejecutar las compras y ventas, no solo para mostrar precios.
 
 ## Audio y efectos (T-1104)
 

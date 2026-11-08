@@ -75,7 +75,7 @@ final class StationManagementScreen {
         listTop = h - 116f * u;
         float bottom = py + 280f * u;
         rowGap = 6f * u;
-        rowH = Math.max(34f * u, Math.min(62f * u,
+        rowH = Math.max(34f * u, Math.min(200f * u,
                 (listTop - bottom - 5 * rowGap) / 6f));
         slotButtons.clear();
         for (int i = 0; i < PlayerStation.SLOTS; i++) {
@@ -120,7 +120,7 @@ final class StationManagementScreen {
         if (btnUndock == null) {
             layout();
         }
-        if (game.tapped(btnEnter)) {
+        if (!fromInterior && game.tapped(btnEnter)) {
             game.enterInterior();
             return true;
         }
@@ -219,10 +219,7 @@ final class StationManagementScreen {
         if (market == null) {
             message = "SIN MERCADO";
         } else {
-            message = String.format(java.util.Locale.US,
-                    "MERCADO: HIELO C%.1f V%.1f",
-                    market.buyPrice(Commodity.HIELO),
-                    market.sellPrice(Commodity.HIELO));
+            game.openPlayerMarket();
         }
     }
 
@@ -282,7 +279,9 @@ final class StationManagementScreen {
         ui.drawButton(btnRepair, Visuals.BTN_WARM,
                 game.session.playerStation.repair());
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
-        ui.drawButton(btnEnter, Visuals.BTN_SECONDARY, true);
+        if (!fromInterior) {
+            ui.drawButton(btnEnter, Visuals.BTN_SECONDARY, true);
+        }
         shapes.end();
 
         batch.begin();
@@ -330,8 +329,9 @@ final class StationManagementScreen {
             Button b = slotButtons.get(i);
             StationModule module = game.session.playerStation.moduleAt(i);
             float x = b.bounds.x + 12f * u;
-            float titleY = b.bounds.y + b.bounds.height - 18f * u;
-            float descY = b.bounds.y + 14f * u;
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            float titleY = mid + 10f * u;
+            float descY = mid - 12f * u;
             if (module == null) {
                 ui.textLeftFit("RANURA " + (i + 1) + "  VACIA", x, titleY,
                         0.82f * u, b.bounds.width * 0.7f, Visuals.TEXT_OFF);
@@ -365,7 +365,9 @@ final class StationManagementScreen {
         ui.drawButtonText(btnRefine, true);
         ui.drawButtonText(btnMarket, true);
         ui.drawButtonText(btnUndock, true);
-        ui.drawButtonText(btnEnter, true);
+        if (!fromInterior) {
+            ui.drawButtonText(btnEnter, true);
+        }
     }
 
     private void beginShapes() {

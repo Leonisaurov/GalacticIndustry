@@ -23,6 +23,7 @@ assert_eq "definiciones de módulos" 4 "$(printf '%s' "$status" | json_get modul
 # T-902: construir la plataforma vacía.
 launch_app "--ez test_mode true --ez base_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de construcción"
+wait_status_field canBuildBase true 10 || fail "no se puede construir la base"
 sleep 0.5
 status=$(latest_status)
 assert_eq "se puede construir la base" true "$(printf '%s' "$status" | json_get canBuildBase)"
@@ -52,6 +53,7 @@ assert_eq "sigue sin servicios" 0 "$(printf '%s' "$status" | json_get playerStat
 # T-903: módulos construidos y servicios derivados.
 launch_app "--ez test_mode true --ez module_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de módulos"
+wait_status_field playerStationModules 2 10 || fail "los módulos no aparecieron"
 sleep 0.5
 status=$(latest_status)
 assert_eq "módulos construidos" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
@@ -97,6 +99,7 @@ assert_eq "el almacen persiste" 50 "$(printf '%s' "$status" | json_get baseStora
 # T-1005: entrar al interior desde la gestión.
 launch_app "--ez test_mode true --ez module_test true"
 wait_current_state PLAYING 10 || fail "no arrancó para entrar al interior"
+wait_status_field playerStationModules 2 10 || fail "los módulos no aparecieron para entrar"
 sleep 0.4
 tap "$DOCK_X" "$DOCK_Y" 0.5
 wait_current_state DOCKED 5 || fail "no se acopló para entrar"

@@ -98,11 +98,11 @@ device_geometry() {
 
     MENU_PLAY_Y=$((H * 67 / 100))
     PAUSE_X=$((W - PAD - 27 * U))
-    PAUSE_Y=$((50 * U))
-    PAUSE_CONTINUE_Y=$((H - (H * 44 / 100 + BW / 2 + GAP / 2)))
-    PAUSE_MENU_Y=$((H - (H * 44 / 100 - BW / 2 - GAP / 2)))
-    OVER_RETRY_Y=$((H - (H * 41 / 100 + (BW + GAP) / 2)))
-    OVER_MENU_Y=$((H - (H * 41 / 100 - (BW + GAP) / 2)))
+    PAUSE_Y=$((67 * U))
+    PAUSE_CONTINUE_Y=$((H / 2 - 78 * U))
+    PAUSE_MENU_Y=$((H / 2 - 6 * U))
+    OVER_RETRY_Y=$((H / 2 + 28 * U))
+    OVER_MENU_Y=$((H / 2 + 88 * U))
     # Botón RECUPERAR NAVE: centro de la pantalla, a 30 % de altura + 23 u.
     RECOVER_X=$((W / 2))
     RECOVER_Y=$((H - (H * 30 / 100 + 23 * U)))
@@ -122,15 +122,16 @@ device_geometry() {
     local st_list_top=$((H - 160 * U))
     local st_bottom=$((8 * U + 100 * U))
     local st_gap=$((8 * U))
-    local st_row_h=$(( (st_list_top - st_bottom - 4 * st_gap) / 5 ))
-    [ "$st_row_h" -gt $((86 * U)) ] && st_row_h=$((86 * U))
+    local st_avail=$((st_list_top - st_bottom))
+    local st_row_h=$(( (st_avail - 4 * st_gap) / 5 ))
+    [ "$st_row_h" -gt $((200 * U)) ] && st_row_h=$((200 * U))
     ST_ROW1_Y=$((H - (st_list_top - st_row_h / 2)))
     ST_ROW2_Y=$((H - (st_list_top - (st_row_h + st_gap) - st_row_h / 2)))
     ST_ROW3_Y=$((H - (st_list_top - 2 * (st_row_h + st_gap) - st_row_h / 2)))
     ST_ROW4_Y=$((H - (st_list_top - 3 * (st_row_h + st_gap) - st_row_h / 2)))
     ST_ROW5_Y=$((H - (st_list_top - 4 * (st_row_h + st_gap) - st_row_h / 2)))
-    local st_row_h8=$(( (st_list_top - st_bottom - 7 * st_gap) / 8 ))
-    [ "$st_row_h8" -gt $((86 * U)) ] && st_row_h8=$((86 * U))
+    local st_row_h8=$(( (st_avail - 7 * st_gap) / 8 ))
+    [ "$st_row_h8" -gt $((200 * U)) ] && st_row_h8=$((200 * U))
     ST_UPG1_Y=$((H - (st_list_top - st_row_h8 / 2)))
     ST_UNDOCK_Y=$((H - (8 * U + 60 * U)))
     RESCUE_X=$((W / 2))
@@ -173,9 +174,9 @@ device_geometry() {
     MG_UNDOCK_Y=$((H - 50 * U))
     MG_ENTER_X=$((W - 74 * U))
     MG_ENTER_Y=$((37 * U))
-    # Botón de silencio en la pausa.
-    MUTE_Y=$((H - (H * 44 / 100 - 86 * U)))
-    MUSIC_Y=$((H - (H * 44 / 100 - 122 * U)))
+    # Botones de audio en la pausa (panel centrado de 440 U).
+    MUTE_Y=$((H / 2 + 56 * U))
+    MUSIC_Y=$((H / 2 + 112 * U))
 }
 
 # ---------- build y SelfTest ----------

@@ -187,24 +187,21 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:20:00-06:00",
-    "lastSessionId": "S-041",
+    "lastUpdated": "2026-11-08T10:45:00-06:00",
+    "lastSessionId": "S-091",
     "lastVerification": {
-      "date": "2026-11-08T02:20:00-06:00",
+      "date": "2026-11-08T10:45:00-06:00",
       "result": "OK",
       "checks": [
-        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Station y StationDef en el sector inicial",
-        "Radio 200, acople 260, zona segura 480 y 6 servicios",
-        "Almacén de 2000 UM y zona segura sin asteroides",
-        "13_station: escala, zona segura y telemetría OK",
-        "12_mining, 04_autopilot, 03_controls, 07_visual_play, 13_tractor y 16_universe: OK",
-        "python3 tools/sync-dashboard.py --check"
+        "01_logic: SelfTest TODO OK",
+        "02_navigation, 03_controls, 05_death, 09_wing_damage, 10_survival, 11_cargo, 12_mining, 13_station, 13_tractor, 14_market, 15_agents, 16_universe, 17_player_station, 17_warp, 18_interiors, 18_map, 19_audio, 20_accessibility, 21_music y 22_ui_polish: OK",
+        "06_visual_menu actualizado al menú actual",
+        "Panel sincronizado con el estado final"
       ]
     },
-    "currentStageId": "S5",
+    "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-502",
+    "nextTaskId": null,
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -310,7 +307,7 @@
       "id": "S5",
       "order": 5,
       "name": "Nave nodriza y acoplamiento",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Convertir la tienda abstracta en una estación física acoplable, con almacén y servicios.",
       "gate": "El ciclo minar-volver-descargar-vender-reparar funciona desde la estación.",
@@ -321,7 +318,7 @@
       "id": "S6",
       "order": 6,
       "name": "Economía comercial básica",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Introducir mercado, stock, precios, spread y compraventa de minerales.",
       "gate": "Los precios reaccionan al stock y no hay arbitraje trivial.",
@@ -332,7 +329,7 @@
       "id": "S7",
       "order": 7,
       "name": "Pilotos autónomos",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Simular una cantidad limitada de pilotos que minen, transporten y comercien, afectando a los mercados.",
       "gate": "Los precios cambian sin intervención del jugador y la simulación es determinista y ligera.",
@@ -343,7 +340,7 @@
       "id": "S8",
       "order": 8,
       "name": "Expansión del universo y galaxias",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Estructurar galaxias, sistemas, sectores y puertas de salto; añadir una segunda galaxia de contenido.",
       "gate": "Dos sistemas y dos galaxias con viaje, persistencia y mapas.",
@@ -354,7 +351,7 @@
       "id": "S9",
       "order": 9,
       "name": "Estación espacial personal",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Permitir construir y ampliar una estación propia con módulos, almacén y servicios.",
       "gate": "Núcleo, módulos y servicios persisten y son utilizables.",
@@ -365,7 +362,7 @@
       "id": "S10",
       "order": 10,
       "name": "Interiores y actividades avanzadas",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Permitir moverse a pie por la estación propia e interactuar con sus módulos.",
       "gate": "Se entra, camina, interactúa y se vuelve a la nave.",
@@ -376,12 +373,12 @@
       "id": "S11",
       "order": 11,
       "name": "Expansión y refinamiento",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Ampliar contenido, pulir balance, identidad visual, audio, accesibilidad y rendimiento.",
       "gate": "Regresión completa y rendimiento aceptable en el dispositivo objetivo.",
-      "taskCount": 9,
-      "implementationTaskCount": 8
+      "taskCount": 10,
+      "implementationTaskCount": 9
     }
   ],
   "tasks": [
@@ -2806,7 +2803,7 @@
       "description": "Permitir aproximarse, frenar, acoplar, desacoplar y que el piloto automático lleve a la estación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-501"
@@ -2830,10 +2827,47 @@
         "01_logic"
       ],
       "technicalNotes": "No implementar interiores; es una transición de estado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-042",
+          "date": "2026-11-08T02:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "DockingSystem añade canDock/dock/undock (≤260 u y <30 u/s). Autopilot.STATION vuela, limita la aproximación y frena a ~242 u sin penetrar el casco. El HUD muestra ACOPLAR, el estado DOCKED abre una pantalla mínima con DESPEGAR y la telemetría expone docked/canDock.",
+          "files": [
+            "src/com/example/codegame/DockingSystem.java",
+            "src/com/example/codegame/Autopilot.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "04_autopilot",
+            "12_mining",
+            "07_visual_play"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS se puede acoplar cerca y despacio; PASS no se acopla con velocidad alta",
+        "PASS el acople detiene la nave y activa DOCKED; PASS el desacople devuelve la nave al exterior",
+        "PASS el piloto entra en modo STATION",
+        "PASS Autopilot.STATION frena en la zona de acople",
+        "PASS Autopilot.STATION no penetra el casco de la estacion",
+        "13_station: ACOPLAR -> DOCKED -> DESPEGAR -> PLAYING",
+        "Capturas 26_dock y 27_docked correctas"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T02:30:00-06:00"
     },
     {
       "id": "T-503",
@@ -2842,7 +2876,7 @@
       "description": "Añadir descarga, venta a precio base, combustible, O2, reparaciones y mejoras desde la estación.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-502",
@@ -2869,10 +2903,42 @@
         "03_controls"
       ],
       "technicalNotes": "La venta a precio base es un puente hasta el mercado de la Etapa 6.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-043",
+          "date": "2026-11-08T02:40:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "StationScreen con pestañas SERVICIOS/MEJORAS: descarga al almacén, venta a precio base, combustible, O2, reparación completa y compra de mejoras. StationStorage gestiona capacidad y venta. Nuevo station_service_test y 13_station cubre el flujo.",
+          "files": [
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "02_navigation",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el almacén recibe la bodega",
+        "PASS la venta usa el precio base",
+        "PASS la descarga parcial respeta la capacidad",
+        "PASS la estación descarga desde la nave",
+        "13_station: descarga, venta, combustible, O2, reparación, Motor y despegue",
+        "Captura 27_docked con SERVICIOS/MEJORAS"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T02:40:00-06:00"
     },
     {
       "id": "T-504",
@@ -2881,7 +2947,7 @@
       "description": "Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-503"
@@ -2908,10 +2974,47 @@
         "13_station"
       ],
       "technicalNotes": "D-002 aprobada: eliminar la tienda de pausa; no dejar una vía de economía infinita desde la pausa.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-044",
+          "date": "2026-11-08T02:46:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Retirada total de la tienda económica de pausa y del menú. Se eliminan ShopRenderer, FUNDIR y la fundición temporal; compras, ventas, combustible, O2, reparaciones y mejoras pasan a StationScreen. Tests 02/03/07/09 actualizados y station_service_test como transición.",
+          "files": [
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/02_navigation.sh",
+            "tools/tests/03_controls.sh",
+            "tools/tests/07_visual_play.sh",
+            "tools/tests/09_wing_damage.sh",
+            "tools/tests/testlib.sh",
+            "docs/DECISIONS.md",
+            "docs/arquitectura.md"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "07_visual_play",
+            "09_wing_damage",
+            "13_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "La pausa solo tiene CONTINUAR y MENU",
+        "02_navigation: MENU -> PLAYING -> PAUSED -> MENU -> PLAYING",
+        "03_controls: PLAYING -> PAUSED -> PLAYING sin tienda",
+        "09_wing_damage repara el ala en la estación",
+        "19_melt eliminado; la venta se cubre en 13_station",
+        "docs/DECISIONS.md D-002 actualizada"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T02:46:00-06:00"
     },
     {
       "id": "T-505",
@@ -2920,7 +3023,7 @@
       "description": "Guardar y restaurar estaciones, almacén, posición y estado de acoplamiento.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-501",
@@ -2945,10 +3048,38 @@
         "Guardado/carga"
       ],
       "technicalNotes": "Cuidado con guardar dos veces la misma transacción.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-045",
+          "date": "2026-11-08T02:52:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SaveCodec v2 guarda posición/nombre de estación, almacén y flag docked. Al cargar se restauran sin duplicar; CONTINUAR abre DOCKED si la nave estaba acoplada. Guardados sin los campos nuevos siguen cargando con valores por defecto. 13_station verifica persistencia tras force-stop.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "02_navigation",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la estación se restaura con su almacén y acople",
+        "PASS no se duplica mineral al cargar",
+        "PASS un guardado sin docked carga desacoplado",
+        "13_station: almacén 100 UM y DOCKED tras reiniciar; despegue y nueva carga",
+        "02_navigation y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T02:52:00-06:00"
     },
     {
       "id": "T-506",
@@ -2957,7 +3088,7 @@
       "description": "Evitar el softlock cuando el jugador no puede volver a la estación, sin convertir el rescate en una resurrección automática ni en un punto de reaparición.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-502"
@@ -2982,10 +3113,42 @@
         "01_logic"
       ],
       "technicalNotes": "D-001 aprobada: la muerte es permanente; este rescate es solo para combustible/estado, no para revivir personajes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-046",
+          "date": "2026-11-08T03:00:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "RescueService evita el softlock: espera 3 s, cobra 100 créditos (o todo el saldo), pierde 25 %/50 % de carga y remolca a la nave a 40 u fuera del acople con 20 de combustible. HUD contextual, log rescue_request/rescue y telemetría. No revive personajes.",
+          "files": [
+            "src/com/example/codegame/RescueService.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh",
+            "tools/tests/testlib.sh",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin combustible se puede pedir rescate",
+        "PASS el rescate se solicita con espera",
+        "PASS el rescate cobra, pierde carga y remolca",
+        "PASS sin saldo el rescate cuesta toda la cuenta y más carga",
+        "PASS el rescate se cancela si llega combustible",
+        "PASS no se pide rescate acoplado/muerto",
+        "13_station: fuel 20, 75 UM, 100 cr, distancia 300 y evento rescue"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T03:00:00-06:00"
     },
     {
       "id": "T-507",
@@ -2994,7 +3157,7 @@
       "description": "Cerrar la etapa comprobando acople, servicios, persistencia, rescate y retirada de la tienda de pausa.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-503",
@@ -3021,10 +3184,39 @@
         "03_controls"
       ],
       "technicalNotes": "No implementar mercado dinámico ni NPC.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-047",
+          "date": "2026-11-08T03:08:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S5: acople/despegue, descarga/venta, repostaje/O2, reparación, mejoras, rescate contra softlock, persistencia y economía sin pausa. Añadido bloque integrado al SelfTest y matriz en docs/pruebas.md. S5 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "02_navigation",
+            "03_controls",
+            "09_wing_damage"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S5: acople y despegue",
+        "PASS S5: descarga y venta a precio base",
+        "PASS S5: repostar y O2 tienen coste",
+        "PASS S5: comprar mejora en estación",
+        "PASS S5: reparar parte restaura integridad",
+        "PASS S5: el rescate evita el softlock",
+        "PASS S5: la economia no depende de la pausa"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:08:00-06:00"
     },
     {
       "id": "T-601",
@@ -3033,7 +3225,7 @@
       "description": "Implementar stock, target, precio base, spread y límites por estación y mineral.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-503"
@@ -3058,10 +3250,43 @@
         "Test de precios"
       ],
       "technicalNotes": "No añadir todavía producción/consumo complejos ni NPC.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-048",
+          "date": "2026-11-08T03:12:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Market y PriceModel: stock/objetivo por mineral, factor con límites, spread configurable y precios de compra/venta. GameData define objetivos iniciales y la estación crea su mercado; telemetría y 14_market verifican los valores.",
+          "files": [
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/PriceModel.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/tests/14_market.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de precios"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el factor de precio depende del stock",
+        "PASS el precio medio usa el factor",
+        "PASS el spread separa compra y venta",
+        "PASS los precios tienen limites",
+        "PASS cada mineral tiene stock y objetivo",
+        "PASS compra por encima del medio y venta por debajo",
+        "PASS el spread es configurable",
+        "PASS la estación tiene mercado",
+        "14_market: hierro 120/150 y oro 32/40"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:12:00-06:00"
     },
     {
       "id": "T-602",
@@ -3070,7 +3295,7 @@
       "description": "Permitir comprar y vender con validación de créditos, capacidad y stock.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -3095,10 +3320,41 @@
         "Test de abuso"
       ],
       "technicalNotes": "No permitir beneficio en la misma estación por el spread.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-049",
+          "date": "2026-11-08T03:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "TradeService con compra/venta atómicas: valida cantidad, stock, créditos y capacidad; actualiza stock y precios; devuelve Trade con precio unitario/total y listener para registrar. Tests de reacción de precios y abuso en SelfTest.",
+          "files": [
+            "src/com/example/codegame/TradeService.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/Cargo.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de abuso"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS comprar mueve carga, créditos y stock",
+        "PASS comprar sube el precio",
+        "PASS vender mueve carga, créditos y stock",
+        "PASS vender baja el precio",
+        "PASS no se vende lo que no se tiene",
+        "PASS no se compra sin créditos",
+        "PASS no se compra más stock del disponible",
+        "PASS no se compra sin capacidad",
+        "PASS no se compra una cantidad inválida"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:16:00-06:00"
     },
     {
       "id": "T-603",
@@ -3107,7 +3363,7 @@
       "description": "Añadir la pantalla de mercado con precios, stock, cantidades y confirmación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-602"
@@ -3130,10 +3386,42 @@
         "Revisión visual"
       ],
       "technicalNotes": "Extraer UiKit si MyGame crece demasiado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-050",
+          "date": "2026-11-08T03:24:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MarketScreen con lista de minerales, stock/objetivo, precios, selector de cantidad, TODO/NADA y confirmación de compra/venta. Integrada como pestaña MERCADO de la estación; TradeService registra trades y guarda. market_test y 14_market cubren el flujo completo.",
+          "files": [
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/UiKit.java",
+            "tools/tests/14_market.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "13_station",
+            "09_wing_damage",
+            "02_navigation",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S5: descarga y venta (mercado separado)",
+        "14_market: precios visibles, venta 10, venta total, NADA y compra 1",
+        "Stock 120->130->170->169 y créditos/bodega coherentes",
+        "Captura 29_market",
+        "VOLVER devuelve a DOCKED"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:24:00-06:00"
     },
     {
       "id": "T-604",
@@ -3142,7 +3430,7 @@
       "description": "Hacer que las estaciones consuman/produzcan mineral y que los precios tiendan a su base.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -3166,10 +3454,40 @@
         "Test de 30 min simulados"
       ],
       "technicalNotes": "No simular por frame; usar intervalos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-051",
+          "date": "2026-11-08T03:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "EconomySim con tick de 10 s, producción/consumo por mercado y reversión al objetivo acotada. La nodriza consume hielo/hierro/cobre y produce silicato. Test de 30 min simulados, estabilidad y configurabilidad.",
+          "files": [
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de 30 min simulados"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS 30 min simulados mueven el stock",
+        "PASS el consumo sube el precio del hielo",
+        "PASS la producción baja el precio del silicato",
+        "PASS el stock queda acotado",
+        "PASS la economia no oscila sin control",
+        "PASS producción y consumo son configurables",
+        "PASS el tick usa intervalos, no cada frame"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:30:00-06:00"
     },
     {
       "id": "T-605",
@@ -3178,7 +3496,7 @@
       "description": "Guardar y restaurar stock, precios y almacén sin duplicar transacciones.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601",
@@ -3203,10 +3521,38 @@
         "Guardado/carga"
       ],
       "technicalNotes": "Guardar después de transacciones y al pausar.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-052",
+          "date": "2026-11-08T03:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SaveCodec v2 guarda el mercado (stock, objetivo, producción, consumo y spread) junto con estación, almacén y acople. Compatible con guardados sin mercado; 14_market verifica persistencia de stock/carga/créditos tras force-stop.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/14_market.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "Guardado/carga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mercado se guarda",
+        "PASS el mercado se restaura",
+        "PASS un guardado sin mercado usa los valores por defecto",
+        "14_market: hierro 169, carga 1 y créditos persisten tras reiniciar",
+        "13_station OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:36:00-06:00"
     },
     {
       "id": "T-606",
@@ -3215,7 +3561,7 @@
       "description": "Cerrar la etapa con pruebas de precios, stock, spread, capacidad, persistencia y rentabilidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-603",
@@ -3240,10 +3586,38 @@
         "14_market"
       ],
       "technicalNotes": "No implementar NPC todavía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-053",
+          "date": "2026-11-08T03:42:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S6: precios reaccionan al stock, sin arbitraje en ida/vuelta, mercado persistente y expedición rentable. Añadido bloque al SelfTest, anti-arbitraje a 14_market y matriz en docs/pruebas.md. S6 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/14_market.sh",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "13_station",
+            "02_navigation"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S6: comprar y vender no da arbitraje",
+        "PASS S6: una expedición completa da beneficio",
+        "PASS S6: los precios reaccionan al stock",
+        "PASS S6: el mercado persiste",
+        "14_market: ida/vuelta de compraventa sin beneficio",
+        "Captura 29_market legible"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:42:00-06:00"
     },
     {
       "id": "T-701",
@@ -3252,7 +3626,7 @@
       "description": "Introducir agentes con nave resumida, carga, combustible, estado y objetivo.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-606"
@@ -3276,10 +3650,43 @@
         "Guardado de agentes"
       ],
       "technicalNotes": "Empezar con mineros; dejar transportistas para más adelante.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-054",
+          "date": "2026-11-08T03:50:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "PilotAgent y AgentRoster con 8 mineros iniciales configurables (máx. 24), nave resumida, bodega, combustible, estado y objetivo. Persistencia v2 con compatibilidad y telemetría; sin render.",
+          "files": [
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/AgentRoster.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Guardado de agentes"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS hay ocho agentes iniciales",
+        "PASS cada agente tiene rol, carga, combustible y estado",
+        "PASS la plantilla es configurable",
+        "PASS el roster respeta el máximo",
+        "PASS los agentes no se renderizan",
+        "PASS los agentes se guardan/restauran",
+        "PASS un guardado sin agentes crea la plantilla",
+        "15_agents: 8/24/8"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:50:00-06:00"
     },
     {
       "id": "T-702",
@@ -3288,7 +3695,7 @@
       "description": "Hacer que los agentes elijan destino, viajen, minen, vuelvan, vendan y reposten.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-701"
@@ -3312,10 +3719,41 @@
         "Test de ciclo completo"
       ],
       "technicalNotes": "No usar pathfinding 2D; el viaje es abstracto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-055",
+          "date": "2026-11-08T03:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "AgentBrain con ciclo DOCKED→TRAVEL→MINE→RETURN→SELL→REFUEL, viaje abstracto y decisión por utilidad entre minerales comunes. Sin beneficio pasa a IDLE; vender mueve stock/precio; repostaje con créditos del agente. Persistencia de créditos/mineral y telemetría de estado.",
+          "files": [
+            "src/com/example/codegame/AgentBrain.java",
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Test de ciclo completo"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el agente completa un ciclo minero",
+        "PASS los estados del agente son observables",
+        "PASS el agente mueve el stock del mercado",
+        "PASS la decisión es determinista y por utilidad",
+        "PASS sin beneficio el agente espera",
+        "PASS créditos y mineral del agente persisten",
+        "15_agents: estado DOCKED observable"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:58:00-06:00"
     },
     {
       "id": "T-703",
@@ -3324,7 +3762,7 @@
       "description": "Actualizar agentes y mercados por intervalos, con distinto detalle según distancia.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-702"
@@ -3348,10 +3786,41 @@
         "01_logic"
       ],
       "technicalNotes": "No crear hilos; el tick va en el bucle de simulación.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-056",
+          "date": "2026-11-08T04:06:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SimClock con LOD 2/5/60 s y EconomySim integrado: agentes cada 2 s, mercados cada 10 s y simulación offline limitada a 12 h, sin trabajo por frame. Bench de 24 agentes y estados TRAVEL/MINE verificados en dispositivo.",
+          "files": [
+            "src/com/example/codegame/SimClock.java",
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Bench de rendimiento"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el reloj define cerca/lejos/offline",
+        "PASS el reloj solo dispara ticks completos",
+        "PASS la economía no se ejecuta por frame",
+        "PASS cerca, los agentes despiertan a los 2 s",
+        "PASS los mercados tickean cada 10 s",
+        "PASS 24 agentes se simulan sin bloquear",
+        "PASS offline usa ticks de 60 s",
+        "15_agents: TRAVEL y MINE observables"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:06:00-06:00"
     },
     {
       "id": "T-704",
@@ -3360,7 +3829,7 @@
       "description": "Hacer que las compras/ventas de los agentes muevan stock y precios.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-703",
@@ -3385,10 +3854,40 @@
         "Test de impacto"
       ],
       "technicalNotes": "Registrar transacciones para depuración.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-057",
+          "date": "2026-11-08T04:14:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Market.sellTo/buyTo centralizan las transacciones de agentes con validación de carga, créditos, stock y capacidad. AgentBrain vende con sellTo; precios y stock reaccionan. Tests de ida/vuelta, abuso y créditos; 15_agents verifica la venta real.",
+          "files": [
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/AgentBrain.java",
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Test de abuso"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS las ventas de agentes suben stock y bajan precio",
+        "PASS las compras de agentes bajan stock y suben precio",
+        "PASS un agente no vende lo que no tiene",
+        "PASS un agente sin créditos no compra",
+        "PASS un agente no compra más stock del disponible",
+        "PASS un agente no compra sin capacidad",
+        "15_agents: créditos del agente suben tras vender"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:14:00-06:00"
     },
     {
       "id": "T-705",
@@ -3397,7 +3896,7 @@
       "description": "Permitir que el universo avance al cerrar el juego con un límite y sin servidor.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-703",
@@ -3424,10 +3923,38 @@
         "Test offline 12 h"
       ],
       "technicalNotes": "D-007 resuelta técnicamente: 8 inicial, 24 máximo, 12 h de catch-up.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-058",
+          "date": "2026-11-08T04:22:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "lastSimTime en el guardado y catch-up offline de hasta 12 h en pasos de 60 s (EconomySim.updateOffline). Precios acotados, agentes persisten y sin red/hilos. Test de 12/24 h y guardados sin lastSimTime.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Test offline 12 h"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el guardado escribe lastSimTime",
+        "PASS 12 h offline se simulan al cargar",
+        "PASS los precios offline no se descontrolan",
+        "PASS los agentes siguen tras 12 h offline",
+        "PASS el catch-up se limita a 12 h",
+        "PASS un guardado sin lastSimTime no simula offline"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:22:00-06:00"
     },
     {
       "id": "T-706",
@@ -3436,7 +3963,7 @@
       "description": "Mostrar algunas naves de agentes entrando/saliendo para que el universo se sienta activo, sin simulación visual completa.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-704",
@@ -3460,10 +3987,36 @@
         "Revisión de FPS"
       ],
       "technicalNotes": "Es cosmético; no confundir con la simulación real.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-059",
+          "date": "2026-11-08T04:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "StationTraffic con 3 naves cosméticas entrando/saliendo, activas a ≤1400 u, sin colisión ni efecto económico. Usa Ship.drawBody y estelas ligeras; captura y telemetría en 15_agents.",
+          "files": [
+            "src/com/example/codegame/StationTraffic.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "15_agents",
+            "Revisión de FPS"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el tráfico se activa cerca de la estación",
+        "PASS el tráfico no toca la economía",
+        "PASS el tráfico se desactiva lejos",
+        "PASS el tráfico no degrada el rendimiento",
+        "15_agents: 3 naves y captura 30_traffic"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:30:00-06:00"
     },
     {
       "id": "T-707",
@@ -3472,7 +4025,7 @@
       "description": "Cerrar la etapa comprobando ciclos, impacto de mercado, offline, persistencia y FPS.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-704",
@@ -3498,10 +4051,39 @@
         "Bench de rendimiento"
       ],
       "technicalNotes": "No implementar facciones ni combate.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-060",
+          "date": "2026-11-08T04:38:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S7: con el jugador quieto los precios cambian en 30 min; con 24 agentes el mercado cambia de forma acotada y determinista; bench de 30 min en 2 ms; 15_agents verifica FPS >= 25. Persistencia y offline respetados. S7 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/15_agents.sh",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Bench de rendimiento"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS 30 min con el jugador quieto mueven precios",
+        "PASS 30 min con agentes cambian el mercado de forma acotada",
+        "PASS la simulación es determinista",
+        "BENCH agentes 24 30min=2ms",
+        "PASS 24 agentes no bloquean 30 min de simulación",
+        "PASS el estado de agentes y mercado persiste",
+        "PASS el offline respeta el límite",
+        "15_agents: FPS >= 25 con agentes y tráfico"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:38:00-06:00"
     },
     {
       "id": "T-801",
@@ -3510,7 +4092,7 @@
       "description": "Definir la jerarquía de universo y sus datos configurables.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-606",
@@ -3536,10 +4118,46 @@
         "Validación de datos"
       ],
       "technicalNotes": "No simular astronomía real.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-061",
+          "date": "2026-11-08T04:48:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "UniverseState/GalaxyDef/SystemDef/SectorDef con jerarquía completa, IDs y semillas estables, paleta y sesgos por galaxia, límites/perfil/estaciones por sector y validación de datos. GameData.newUniverse() define Vía Láctea, Andrómeda y Nebulosa Draco; telemetría y 16_universe.",
+          "files": [
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GalaxyDef.java",
+            "src/com/example/codegame/SystemDef.java",
+            "src/com/example/codegame/SectorDef.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Validación de datos"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el universo es coherente",
+        "PASS hay varias galaxias, sistemas y sectores",
+        "PASS cada galaxia tiene semilla, paleta y sesgos",
+        "PASS el sector inicial tiene límites, perfil y estación",
+        "PASS todos los sectores tienen límites, perfil y estaciones",
+        "PASS los IDs y semillas son estables",
+        "PASS las galaxias se diferencian por sesgos",
+        "PASS la validación detecta datos incompletos",
+        "PASS la validación exige estaciones",
+        "16_universe: 3/3/6 y sol-prime INICIAL"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:48:00-06:00"
     },
     {
       "id": "T-802",
@@ -3548,7 +4166,7 @@
       "description": "Hacer que el mundo tenga límites, perfil de generación y carga/descarga por sector.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -3573,10 +4191,40 @@
         "Test de límites"
       ],
       "technicalNotes": "Evitar romper el mundo infinito actual antes de que el sector esté probado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-062",
+          "date": "2026-11-08T04:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "GameWorld recibe SectorDef: limites finitos con borde visible, clamp de nave, generacion por perfil (helado/metalico/cinturon/inicial), chunks solo alrededor de la nave y sin reaparicion de recursos. bounds_test y captura 31_bounds; pruebas de limite, perfil y coste.",
+          "files": [
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Test de límites"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mundo usa la definición de sector",
+        "PASS la nave queda dentro del sector",
+        "PASS los recursos minados no reaparecen",
+        "PASS el perfil del sector cambia la generación",
+        "PASS el coste no depende del tamaño total",
+        "16_universe: borde 31_bounds y y=5860 dentro de ±6000"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:56:00-06:00"
     },
     {
       "id": "T-803",
@@ -3585,7 +4233,7 @@
       "description": "Guardar el estado resumido de un sector al salir y reconstruirlo al volver.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -3611,10 +4259,41 @@
         "Guardado/carga de sector"
       ],
       "technicalNotes": "Usar semilla + estado de recursos, no guardar todos los asteroides inactivos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-063",
+          "date": "2026-11-08T05:06:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SectorRuntime captura/restaura estado resumido por sector (chunks generados, asteroides con semilla y reserva, bidones). GameSession.captureCurrentSector y UniverseState guardan snapshots; SaveCodec v2 los serializa en sectorSnapshots y los restaura sin duplicar minerales. Chunks no visitados se generan al volver.",
+          "files": [
+            "src/com/example/codegame/SectorRuntime.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/Asteroid.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Guardado/carga de sector"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS al salir se captura el sector",
+        "PASS los chunks no visitados no se guardan enteros",
+        "PASS el guardado con sectores es válido",
+        "PASS el guardado incluye el snapshot del sector",
+        "PASS el snapshot del sector se restaura",
+        "PASS restaurar el sector no duplica minerales",
+        "PASS los recursos minados no reaparecen al volver",
+        "PASS los chunks no visitados se generan al volver"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T05:06:00-06:00"
     },
     {
       "id": "T-804",
@@ -3623,7 +4302,7 @@
       "description": "Añadir viaje libre mediante propulsión warp, sin puertas obligatorias. El coste se integra con combustible, energía y equipamiento; el mapa puede ser muy grande y cargarse dinámicamente.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -3653,10 +4332,47 @@
         "Bench de carga"
       ],
       "technicalNotes": "D-004 aprobada. No implementar vuelo real continuo a escala astronómica; usar viaje abstracto/local con carga dinámica.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-065",
+          "date": "2026-11-08T05:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "TravelService con warp libre sin puertas obligatorias: coste por distancia y motor, requisito de motor nivel 1, consumo de combustible/energia, JumpGate opcional y cambio de sector por streaming conservando la nave. Origen en snapshot, regreso y persistencia del sector actual. 17_warp en dispositivo.",
+          "files": [
+            "src/com/example/codegame/TravelService.java",
+            "src/com/example/codegame/JumpGate.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_warp.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Prueba de viaje warp"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el warp calcula coste sin puerta",
+        "PASS el viaje warp carga el destino y conserva la nave",
+        "PASS el sector de origen queda como snapshot",
+        "PASS el jugador puede regresar al sector anterior",
+        "PASS sin equipamiento warp no se viaja",
+        "PASS las puertas son atajos opcionales",
+        "PASS el viaje puede cruzar de sistema/galaxia",
+        "PASS el viaje warp se puede guardar",
+        "PASS al cargar se restaura el sector actual",
+        "17_warp: viaje, coste de combustible y regreso"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:30:00-06:00"
     },
     {
       "id": "T-805",
@@ -3665,7 +4381,7 @@
       "description": "Añadir el mapa de sectores/sistemas/galaxias con posición actual, destinos, coste estimado y descubrimiento, orientado a viaje libre warp.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-804"
@@ -3691,10 +4407,43 @@
         "Revisión visual"
       ],
       "technicalNotes": "No usar imágenes externas; dibujar con formas.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-066",
+          "date": "2026-11-08T05:46:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MapScreen vertical con posicion actual, lista de sectores, descubrimientos (sistema inicial + faros + sistema al llegar), nodos ocultos sin datos y coste distancia/combustible/energia. Viaje desde VIAJAR con validacion de TravelService. Boton MAPA en HUD, telemetria y 18_map/32_map.",
+          "files": [
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/TravelService.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_map.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "16_universe",
+            "Revisión visual",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mapa conoce el sistema inicial y faros",
+        "PASS los sectores no descubiertos no se pueden viajar",
+        "PASS el mapa puede viajar a otro sistema/galaxia",
+        "PASS al llegar se descubre el sistema de destino",
+        "18_map: 5/6 descubiertos, coste y viaje a sol-belt",
+        "Captura 32_map con nodo oculto y costes C/E"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:46:00-06:00"
     },
     {
       "id": "T-806",
@@ -3703,7 +4452,7 @@
       "description": "Crear la galaxia inicial Vía Láctea y al menos otra galaxia real, con posibilidad de añadir galaxias ficticias. Diferenciar composición, precios, estaciones y nave nodriza.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -3732,10 +4481,42 @@
         "Prueba de contenido"
       ],
       "technicalNotes": "D-011 aprobada: galaxias reales y ficticias; prioridad a jugabilidad, no a astronomía exacta.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-067",
+          "date": "2026-11-08T05:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Galaxias diferenciadas: Via Lactea equilibrada, Andromeda metalica y Nebulosa Draco helada. Cada una define objetivos de mercado, stock inicial y spread, y su propia nave nodriza. GameWorld crea estacion y mercado desde SectorDef/GalaxyDef; al viajar cambian. SelfTest y telemetria.",
+          "files": [
+            "src/com/example/codegame/GalaxyDef.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/SectorStreamer.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Prueba de contenido"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS cada galaxia tiene nave nodriza propia",
+        "PASS cada galaxia tiene contexto economico propio",
+        "PASS la Via Lactea es la galaxia inicial",
+        "PASS al viajar cambia la nodriza y el mercado",
+        "16_universe: NODRIZA y spread 0.08"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:58:00-06:00"
     },
     {
       "id": "T-807",
@@ -3744,7 +4525,7 @@
       "description": "Cerrar la etapa comprobando viaje, persistencia, mapa, diferencias económicas y rendimiento.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-803",
@@ -3773,10 +4554,38 @@
         "Bench de rendimiento"
       ],
       "technicalNotes": "No implementar estación propia todavía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-068",
+          "date": "2026-11-08T06:12:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S8: mapa con descubrimientos/costes, warp libre de ida y vuelta, estado por sector sin duplicar, galaxias con nodriza/economia propias y streaming acotado. Bench de 8 viajes en 1 ms. S8 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Bench de rendimiento"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S8: el mapa muestra descubrimientos y coste",
+        "PASS S8: el streaming no mantiene todo el universo",
+        "PASS S8: viaje libre de ida",
+        "PASS S8: se puede cambiar de sector y volver",
+        "PASS S8: cada sector conserva su estado",
+        "PASS S8: Via Lactea y otra galaxia difieren",
+        "BENCH universo 8 viajes=1ms",
+        "PASS S8: se puede volver a la Via Lactea"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T06:12:00-06:00"
     },
     {
       "id": "T-901",
@@ -3785,7 +4594,7 @@
       "description": "Definir la estación del jugador como una plataforma vacía acoplable, con ranuras y definiciones de módulos, sin servicios de serie.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601",
@@ -3812,10 +4621,41 @@
         "17_player_station"
       ],
       "technicalNotes": "D-005 aprobada: nada de estación completa de serie. La arquitectura debe ser modular y extensible.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-069",
+          "date": "2026-11-08T06:28:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "PlayerStation como plataforma vacia y acoplable, separada de la nodriza. 6 ranuras y ModuleDef (almacen/taller/refineria/mercado) con coste, materiales, requisito y servicio. Los servicios solo existen con modulos; 17_player_station y SelfTest.",
+          "files": [
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/ModuleDef.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la plataforma personal está vacía",
+        "PASS la plataforma no es la nave nodriza",
+        "PASS la plataforma permite acoplar la nave",
+        "PASS existen ranuras y definiciones de módulos",
+        "PASS los módulos se construyen progresivamente",
+        "PASS una ranura ocupada o invalida no acepta módulos",
+        "PASS una plataforma no colocada no acopla ni construye",
+        "17_player_station: 6 ranuras y 0 servicios"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T06:28:00-06:00"
     },
     {
       "id": "T-902",
@@ -3824,7 +4664,7 @@
       "description": "Permitir comprar/colocar la plataforma inicial vacía en una ubicación válida, pagando créditos y materiales, sin servicios automáticos.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-901"
@@ -3851,10 +4691,48 @@
         "Prueba de ubicación"
       ],
       "technicalNotes": "Sin interiores; solo entidad y pantalla de gestión.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-070",
+          "date": "2026-11-08T06:44:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "ConstructionService compra/coloca el nucleo por 300 cr y materiales, validando limites y distancia a la nodriza. PlayerStation se dibuja con zona segura, nace vacia y persiste posicion/estado en SaveCodec v2. Boton CONSTRUIR BASE y 17_player_station/33_base.",
+          "files": [
+            "src/com/example/codegame/ConstructionService.java",
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SectorStreamer.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "Prueba de ubicación"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la base exige ubicacion y materiales",
+        "PASS construir la base cobra creditos y materiales",
+        "PASS la base nace vacia y sin servicios",
+        "PASS no se construye dos veces",
+        "PASS sin creditos no se construye",
+        "PASS la base se guarda",
+        "PASS la base se restaura vacia",
+        "17_player_station: construccion, 33_base y persistencia"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T06:44:00-06:00"
     },
     {
       "id": "T-903",
@@ -3863,7 +4741,7 @@
       "description": "Crear el sistema de ranuras, requisitos, construcción y ampliación de módulos. Los servicios solo existen si el jugador construye el módulo correspondiente.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-902"
@@ -3891,10 +4769,40 @@
         "Prueba de servicios"
       ],
       "technicalNotes": "D-005 aprobada. Este task implementa el sistema, no el catálogo completo de módulos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-071",
+          "date": "2026-11-08T07:02:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Sistema modular generico: StationModule con nivel 1-3, PlayerStation.build() transaccional con creditos/materiales/requisitos, upgrade() y serviceMask. Los servicios solo existen con modulos. module_test y SelfTest.",
+          "files": [
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/ModuleDef.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "Prueba de servicios"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS los módulos se construyen en orden y con coste",
+        "PASS construir descuenta creditos y materiales",
+        "PASS sin materiales no se construye y no se cobra",
+        "PASS los módulos se pueden ampliar",
+        "PASS una ranura ocupada o invalida no acepta módulos",
+        "17_player_station: module_test 2 módulos y máscara 3"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T07:02:00-06:00"
     },
     {
       "id": "T-904",
@@ -3903,7 +4811,7 @@
       "description": "Añadir la pantalla de gestión de la plataforma vacía, construcción de módulos, almacén y servicios disponibles según lo construido.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-903",
@@ -3928,10 +4836,38 @@
         "Revisión visual"
       ],
       "technicalNotes": "No convertir la pantalla en un árbol de menús interminable.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-074",
+          "date": "2026-11-08T07:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "StationManagementScreen vertical: servicios/almacen, 6 ranuras con modulo y nivel, catalogo, construir/mejorar/descargar/reparar/despegar. DockingSystem distingue plataforma (dockedAtPlayer) y MyGame abre la pantalla correcta. 17_player_station/35_management.",
+          "files": [
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/DockingSystem.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "17_player_station",
+            "Revisión visual"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "17_player_station: acople en la base y dockedAtPlayer=true",
+        "Captura 35_management con 6 ranuras y servicios",
+        "Mejora de modulo: nivel 2",
+        "Descarga al almacen: 50 UM",
+        "Persistencia de modulos y almacen tras reiniciar"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T07:56:00-06:00"
     },
     {
       "id": "T-905",
@@ -3940,7 +4876,7 @@
       "description": "Guardar y restaurar plataforma, módulos construidos, almacén y servicios disponibles.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-901",
@@ -3968,10 +4904,36 @@
         "Guardado/carga"
       ],
       "technicalNotes": "Guardar tras construcción/transacción.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-072",
+          "date": "2026-11-08T07:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Persistencia de la estacion personal: SaveCodec v2 guarda posicion/sector/estado y modulos con ranura, tipo y nivel. Al cargar se restauran y serviceMask se deriva. Sin duplicar creditos/materiales. 17_player_station verifica modulos y servicios tras reiniciar.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "Guardado/carga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la estacion con modulos se guarda",
+        "PASS la estacion restaura modulos y niveles",
+        "PASS la estacion no duplica recursos al cargar",
+        "17_player_station: 2 modulos y mascara 3 persisten tras reiniciar"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T07:18:00-06:00"
     },
     {
       "id": "T-906",
@@ -3980,7 +4942,7 @@
       "description": "Cerrar la etapa comprobando construcción, módulos, servicios y persistencia.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-904",
@@ -4007,10 +4969,37 @@
         "17_player_station"
       ],
       "technicalNotes": "D-005 aprobada: la estación no entrega servicios de serie; el jugador los construye.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-076",
+          "date": "2026-11-08T08:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S9: plataforma vacia, acople propio, 4 modulos, almacen/reparacion/refineria/mercado solo tras construirse, persistencia completa y sin movimiento a pie. S9 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "14_market"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S9: la plataforma vacia no da servicios",
+        "PASS S9: se construye la plataforma y se acopla",
+        "PASS S9: se construyen los cuatro modulos",
+        "PASS S9: refineria y taller funcionan tras construirse",
+        "PASS S9: almacen y mercado funcionan tras construirse",
+        "PASS S9: la estacion se guarda",
+        "PASS S9: todo persiste y no hay movimiento a pie"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T08:36:00-06:00"
     },
     {
       "id": "T-1001",
@@ -4019,7 +5008,7 @@
       "description": "Definir un marco genérico de interiores aplicable a estaciones espaciales, estación propia y naves: salas, puertas, interactuables y relación con módulos.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-906"
@@ -4045,10 +5034,42 @@
         "18_interiors"
       ],
       "technicalNotes": "D-006 aprobada a largo plazo. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan en T-1007.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-077",
+          "date": "2026-11-08T08:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Marco de interiores con InteriorScene/Room/Door/Interactable para estaciones y naves. El interior de la estacion se deriva de modulos (hub + habitacion/puerta/interactuable por modulo), valida conexiones, tiene nearest() y metadatos persistidos. 18_interiors.",
+          "files": [
+            "src/com/example/codegame/InteriorScene.java",
+            "src/com/example/codegame/Room.java",
+            "src/com/example/codegame/Door.java",
+            "src/com/example/codegame/Interactable.java",
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "18_interiors"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el interior vacio solo tiene el nucleo",
+        "PASS cada modulo se mapea a una habitacion",
+        "PASS las puertas conectan salas",
+        "PASS los interactuables tienen posicion y accion",
+        "PASS el marco tambien sirve para naves",
+        "PASS el interior se deriva del estado guardado",
+        "18_interiors: 3/2/3"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T08:56:00-06:00"
     },
     {
       "id": "T-1002",
@@ -4057,7 +5078,7 @@
       "description": "Añadir el personaje a pie con joystick, colisiones y límites de sala.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -4082,10 +5103,40 @@
         "Revisión de controles"
       ],
       "technicalNotes": "La velocidad debe ser cómoda; evitar caminar largos pasillos vacíos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-078",
+          "date": "2026-11-08T09:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Avatar e InteriorInput con movimiento a pie, colision por salas/puertas, deslizamiento en paredes, nearest()/atExit() y soporte de naves. MyGame expone moveInterior para T-1003/T-1005. Pruebas logicas de movimiento y salida.",
+          "files": [
+            "src/com/example/codegame/Avatar.java",
+            "src/com/example/codegame/InteriorInput.java",
+            "src/com/example/codegame/InteriorScene.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "18_interiors",
+            "Revisión de controles",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el avatar nace en el nucleo",
+        "PASS sin entrada el avatar no se mueve",
+        "PASS las paredes bloquean fuera de la puerta",
+        "PASS la puerta conecta con la habitacion del modulo",
+        "PASS el avatar puede interactuar por proximidad",
+        "PASS se puede volver a la nave desde la salida",
+        "PASS el avatar queda dentro de los limites de la sala",
+        "PASS el avatar tambien camina en una nave"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:16:00-06:00"
     },
     {
       "id": "T-1003",
@@ -4094,7 +5145,7 @@
       "description": "Dibujar el interior cenital con ShapeRenderer y cámara estable.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -4118,10 +5169,36 @@
         "Revisión de FPS"
       ],
       "technicalNotes": "Mantener el orden shapes → aditivo → texto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-079",
+          "date": "2026-11-08T09:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "InteriorRenderer cenital con salas, paredes, puertas, interactuables y avatar; etiquetas con BitmapFont y sin objetos por frame. Camara sigue al avatar (zoom 1.1) y HUD de instrucciones. interior_test y captura 36_interior.",
+          "files": [
+            "src/com/example/codegame/InteriorRenderer.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors visual",
+            "Revisión de FPS"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Render de salas, puertas e interactuables",
+        "Camara centrada en el avatar",
+        "Captura 36_interior",
+        "FPS interior >= 25"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:36:00-06:00"
     },
     {
       "id": "T-1004",
@@ -4130,7 +5207,7 @@
       "description": "Permitir abrir almacén, reparación, refinería y mercado desde el interior.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -4156,10 +5233,37 @@
         "17_player_station"
       ],
       "technicalNotes": "No duplicar la lógica de servicios; reutilizar las pantallas existentes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-080",
+          "date": "2026-11-08T09:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Interaccion por proximidad en interiores: nearest() habilita tocar un modulo y abrir StationManagementScreen reutilizada sin salir del interior. Gestion desde interior muestra VOLVER y conserva estado. interior_mgmt_test y 37_interaction.",
+          "files": [
+            "src/com/example/codegame/Interactable.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors",
+            "17_player_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Avatar junto al almacén (module-0)",
+        "Gestión abierta desde el interior (interiorManagement=true)",
+        "Captura 37_interaction con VOLVER",
+        "Gestión cerrada devuelve a INTERIOR sin despegar"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:56:00-06:00"
     },
     {
       "id": "T-1005",
@@ -4168,7 +5272,7 @@
       "description": "Permitir entrar/salir de la estación y guardar la posición del personaje.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -4193,10 +5297,39 @@
         "Guardado/carga"
       ],
       "technicalNotes": "La salida debe ser rápida y clara.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-081",
+          "date": "2026-11-08T10:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Entrada/salida del interior: ENTRAR desde gestion, EXIT devuelve a la nave desacoplando. GameSession guarda room/x/y/active del avatar en el bloque interior del v2 y se restaura al volver. Pruebas de guardado y capturas 38_entry/39_exit.",
+          "files": [
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors",
+            "Guardado/carga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la posicion del avatar persiste",
+        "PASS el avatar se restaura junto al modulo",
+        "PASS salir del interior no rompe el guardado de vuelo",
+        "17_player_station: ENTRAR abre INTERIOR (38_entry)",
+        "18_interiors: EXIT devuelve a PLAYING (39_exit)"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T10:18:00-06:00"
     },
     {
       "id": "T-1006",
@@ -4205,7 +5338,7 @@
       "description": "Cerrar la etapa comprobando movimiento, colisión, interacción, salida y persistencia.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1005"
@@ -4231,10 +5364,37 @@
         "Regresión 03/12/13"
       ],
       "technicalNotes": "D-006 aprobada: interiores de estación propia primero; naves y estaciones no propias quedan como extensión posterior.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-082",
+          "date": "2026-11-08T10:38:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Gate S10: caminar/colision, interaccion con modulo, salida a la nave y persistencia del interior; sin regresiones en controles, mineria ni estacion. S10 cerrada.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/pruebas.md",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "18_interiors",
+            "Regresión 03/12/13"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S10: se camina y las paredes colisionan",
+        "PASS S10: se interactua con un modulo",
+        "PASS S10: el estado del interior se guarda",
+        "PASS S10: el interior se restaura",
+        "PASS S10: se vuelve a la nave",
+        "PASS S10: no hay regresion en vuelo/comercio",
+        "03_controls, 12_mining y 13_station OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T10:38:00-06:00"
     },
     {
       "id": "T-1101",
@@ -4243,7 +5403,7 @@
       "description": "Añadir modelos de nave distintos en formas, características y capacidades, no simples variaciones visuales; preparar especializaciones (minería, exploración, transporte).",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-807"
@@ -4269,10 +5429,43 @@
         "Regresión"
       ],
       "technicalNotes": "Priorizar contenido con función económica, no decoración vacía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-083",
+          "date": "2026-11-08T10:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Clases de nave MINER/EXPLORER/HAULER con multiplicadores de bodega, combustible, casco, empuje/velocidad y siluetas propias. Upgrades y Ship usan la clase; persiste en v2 y guardados antiguos usan MINER. Modulos intercambiables. 16_universe/01_logic.",
+          "files": [
+            "src/com/example/codegame/ShipClassDef.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS hay al menos tres clases de nave",
+        "PASS las clases difieren en funcion y forma",
+        "PASS la clase cambia capacidad y prestaciones",
+        "PASS la nave instanciada usa la clase",
+        "PASS los modulos siguen siendo intercambiables",
+        "PASS la clase de nave se guarda/restaura",
+        "PASS un guardado anterior usa la clase por defecto",
+        "16_universe: shipClass=minero"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T10:58:00-06:00"
     },
     {
       "id": "T-1102",
@@ -4281,7 +5474,7 @@
       "description": "Permitir encargos de transporte/minería que conecten economía y progresión.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -4306,10 +5499,41 @@
         "Regresión"
       ],
       "technicalNotes": "No convertirlo en una lista infinita de fetch quests.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-084",
+          "date": "2026-11-08T11:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Contratos de estacion: Mission/MissionService con ofertas deterministas, objetivo, recompensa y plazo; aceptar, avanzar, completar con carga y caducar. MyGame accept/complete, persistencia v2 de misiones y pruebas.",
+          "files": [
+            "src/com/example/codegame/Mission.java",
+            "src/com/example/codegame/MissionService.java",
+            "src/com/example/codegame/Station.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Contratos",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la estacion ofrece contratos",
+        "PASS el contrato tiene objetivo, recompensa y plazo",
+        "PASS se puede aceptar un contrato",
+        "PASS el plazo del contrato avanza",
+        "PASS sin carga no se completa",
+        "PASS entregar el contrato paga la recompensa",
+        "PASS las misiones se guardan/restauran",
+        "PASS el contrato caduca por plazo"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T11:18:00-06:00"
     },
     {
       "id": "T-1103",
@@ -4356,7 +5580,7 @@
       "description": "Añadir el sistema de audio y los efectos de motores, warp, láseres, misiles, explosiones, impactos, recuperación de minerales, alarmas, acoplamiento, maquinaria de estaciones, comercio y módulos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -4380,10 +5604,37 @@
         "Regresión"
       ],
       "technicalNotes": "D-009 aprobada. La música/ambientes se implementan en T-1108.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-085",
+          "date": "2026-11-08T11:38:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "AudioService local con WAV en assets/audio: motor en bucle, laser, misil, explosion, impacto, recogida, alarma, acople, comercio, modulo y warp. Silencio global persistido y boton SONIDO en pausa. 19_audio.",
+          "files": [
+            "src/com/example/codegame/AudioService.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "assets/audio/*",
+            "tools/tests/19_audio.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "Revisión en dispositivo",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Assets WAV presentes en assets/audio del APK",
+        "Telemetria audioMuted",
+        "19_audio: activo, silencio on/off y reanudacion"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T11:38:00-06:00"
     },
     {
       "id": "T-1105",
@@ -4392,7 +5643,7 @@
       "description": "Medir tiempos, beneficio, mortalidad, FPS y memoria; ajustar parámetros.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -4416,10 +5667,36 @@
         "Regresión"
       ],
       "technicalNotes": "No ajustar a ciegas; usar telemetría.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-086",
+          "date": "2026-11-08T11:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Balance medido: expedicion de 100 Silicato deja +166 cr netos; 3000 frames mantienen 25 chunks y ~2 MB; FPS>=30 en dispositivo. Documentada la tabla en MASTER_PLAN y pruebas. Sin cambios de precios por margen sano.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/MASTER_PLAN.md",
+            "docs/pruebas.md",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "Bench",
+            "16_universe",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "BENCH expedicion ingreso=206 combustible=40 neto=166",
+        "PASS una expedicion completa deja beneficio",
+        "BENCH rendimiento frames=3000 chunks=25 rocas=0 memDeltaMB=2",
+        "PASS 3000 frames mantienen recursos acotados",
+        "16_universe: fps>=30"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T11:58:00-06:00"
     },
     {
       "id": "T-1106",
@@ -4428,7 +5705,7 @@
       "description": "Mejorar legibilidad, tamaños táctiles, avisos no cromáticos y textos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1105"
@@ -4450,10 +5727,38 @@
         "Regresión"
       ],
       "technicalNotes": "La localización completa puede quedar para más adelante; priorizar accesibilidad.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-087",
+          "date": "2026-11-08T12:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Accesibilidad: botones tactiles >=44u, avisos con prefijo ! y texto explicito, textCenteredFit/textLeftFit contra cortes y fuente ASCII. Captura 40_accessibility y regresion.",
+          "files": [
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "docs/convenciones.md",
+            "tools/tests/20_accessibility.sh"
+          ],
+          "tests": [
+            "Revisión visual",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Botones de mapa/mercado/gestion >=44u",
+        "Avisos ! O2 CRITICO y ! SIN COMBUSTIBLE",
+        "Textos largos ajustados sin cortes",
+        "20_accessibility: 40_accessibility"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T12:18:00-06:00"
     },
     {
       "id": "T-1107",
@@ -4462,7 +5767,7 @@
       "description": "Ejecutar la regresión completa, revisar guardado, economía y rendimiento, y cerrar la documentación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -4502,10 +5807,45 @@
         "18_interiors"
       ],
       "technicalNotes": "Solo ejecutar --all si el usuario lo pide.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-090",
+          "date": "2026-11-08T13:20:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Regresión final 11/11, guardado largo completo y economía acotada 24 h. Panel y documentación cerrados; S11 completada.",
+          "files": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/IMPLEMENTATION_LOG.md",
+            "docs/MASTER_PLAN.md",
+            "docs/pruebas.md",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "03_controls",
+            "04_autopilot",
+            "05_death",
+            "12_mining",
+            "13_station",
+            "14_market",
+            "15_agents",
+            "16_universe",
+            "17_player_station",
+            "18_interiors"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Regresión 11/11 OK",
+        "PASS una partida larga se guarda",
+        "PASS una partida larga se restaura completa",
+        "PASS 24 h simuladas no descontrolan la economia",
+        "Panel sincronizado"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T13:20:00-06:00"
     },
     {
       "id": "T-107",
@@ -4852,7 +6192,7 @@
       "description": "Cargar las zonas cercanas al jugador y descargar o simplificar las lejanas, sin mantener todo el universo cargado. Preparar la escala para viajes entre sistemas y galaxias.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-802",
@@ -4880,10 +6220,43 @@
         "01_logic"
       ],
       "technicalNotes": "No cargar todo el universo. La simulación lejana puede ser agregada; el jugador no debe notar cortes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-064",
+          "date": "2026-11-08T05:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SectorStreamer con radio de carga 2.5: mantiene detalle del sector activo y vecinos, descarga lejanos dejando snapshot y recarga desde ahi sin perder recursos. SectorDef con mapX/mapY para escala sistema/galaxia. Bench de 200 sectores (<100 ms, 1 cargado). Telemetria loaded/unloaded.",
+          "files": [
+            "src/com/example/codegame/SectorStreamer.java",
+            "src/com/example/codegame/SectorRuntime.java",
+            "src/com/example/codegame/SectorDef.java",
+            "src/com/example/codegame/UniverseState.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Bench de carga/descarga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS solo se cargan las regiones cercanas",
+        "PASS el mapa soporta escala de sistema y galaxia",
+        "PASS descargar un sector conserva su estado",
+        "PASS volver a un sector descargado restaura su estado",
+        "PASS el sector recargado no regenera recursos minados",
+        "PASS el coste no depende del tamaño del universo",
+        "16_universe: loadedSectors=2 y unloadedSectors=4"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:16:00-06:00"
     },
     {
       "id": "T-907",
@@ -4892,7 +6265,7 @@
       "description": "Añadir módulos construibles de almacenamiento y taller de reparación. Solo proporcionan capacidad/servicio después de construirlos.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-903"
@@ -4919,10 +6292,43 @@
         "Prueba de servicios"
       ],
       "technicalNotes": "No dar estos servicios en la plataforma vacía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-073",
+          "date": "2026-11-08T07:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "ALMACEN y TALLER funcionales: capacidad 200 UM/nivel y reparacion con coste solo al construir el modulo. StationStorage en PlayerStation, persistencia de contenido en v2 y telemetria. Tests de servicios y 17_player_station.",
+          "files": [
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "Prueba de servicios"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin ALMACEN no hay capacidad ni descarga",
+        "PASS sin TALLER no se repara",
+        "PASS construir ALMACEN da capacidad",
+        "PASS ampliar ALMACEN aumenta la capacidad",
+        "PASS construir TALLER permite reparar",
+        "PASS el ALMACEN descarga la bodega",
+        "PASS el TALLER repara y cobra",
+        "PASS el almacen persiste sin duplicar",
+        "17_player_station: almacen 200 UM y taller"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T07:36:00-06:00"
     },
     {
       "id": "T-908",
@@ -4931,7 +6337,7 @@
       "description": "Añadir módulos construibles de refinería y mercado, con sus funciones económicas y requisitos.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-903",
@@ -4960,10 +6366,44 @@
         "14_market"
       ],
       "technicalNotes": "La estación vacía no comercia ni refina por defecto.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-075",
+          "date": "2026-11-08T08:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Refineria y mercado de la estacion personal: REFINERIA convierte hielo en combustible/O2; MERCADO exige ALMACEN y usa TradeService con mercado propio persistente. Botones REFINAR/MERCADO y pruebas de gating, transacciones y guardado.",
+          "files": [
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/StationModule.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/TradeService.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_player_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "17_player_station",
+            "14_market"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin REFINERIA no se refina",
+        "PASS sin MERCADO no se comercia",
+        "PASS el MERCADO exige ALMACEN",
+        "PASS construir REFINERIA y MERCADO",
+        "PASS la REFINERIA convierte hielo en combustible y O2",
+        "PASS el MERCADO permite comprar y vender",
+        "PASS el mercado persiste sin duplicar",
+        "17_player_station y 14_market OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T08:16:00-06:00"
     },
     {
       "id": "T-1007",
@@ -5007,7 +6447,7 @@
       "description": "Implementar el catálogo de módulos de nave: autopiloto, minería, radar, propulsión, herramientas y otros, con ranuras y funciones reales.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -5037,10 +6477,41 @@
         "Prueba de especialización"
       ],
       "technicalNotes": "D-010 aprobada. Empezar por un catálogo pequeño con funciones claras, no por docenas de módulos numéricos.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-089",
+          "date": "2026-11-08T12:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Catalogo ShipModuleDef (autopiloto, mineria, radar, propulsion, herramientas) en 4 ranuras; instalacion con coste y efectos reales. Autopiloto requiere modulo; HUD MODS n/4 y persistencia v2. Regression 04/11/12/13.",
+          "files": [
+            "src/com/example/codegame/ShipModuleDef.java",
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "11_cargo",
+            "12_mining",
+            "Prueba de especialización"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS existe un catalogo de modulos de nave",
+        "PASS los modulos se instalan y cobran",
+        "PASS PROPULSION mejora empuje y velocidad",
+        "PASS MINERIA y HERRAMIENTAS tienen efecto real",
+        "PASS se puede quitar un modulo",
+        "PASS la configuracion de modulos se guarda/restaura",
+        "04_autopilot, 11_cargo, 12_mining y 13_station OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T12:58:00-06:00"
     },
     {
       "id": "T-1108",
@@ -5049,7 +6520,7 @@
       "description": "Añadir música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones, con transiciones suaves.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1104"
@@ -5075,10 +6546,130 @@
         "Regresión"
       ],
       "technicalNotes": "D-009 aprobada. No bloquear las mecánicas; el audio llega en refinamiento.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-088",
+          "date": "2026-11-08T12:38:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Musica ambiental y de tension con dos MP3 locales, mezcla por rampa segun peligro y silencio de musica independiente. AudioService copia assets comprimidos a cache local para MediaPlayer/SoundPool. 19_audio/21_music.",
+          "files": [
+            "src/com/example/codegame/AudioService.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "assets/audio/music/*",
+            "tools/tests/21_music.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "Revisión en dispositivo",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Assets explore.mp3 y tension.mp3 en assets/audio/music",
+        "Telemetria musicMuted/musicMode",
+        "21_music: EXPLORE y silencio de musica",
+        "19_audio: silencio general"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T12:38:00-06:00"
+    },
+    {
+      "id": "T-1110",
+      "stageId": "S11",
+      "title": "Pulido de interacción, pausa y HUD adaptable",
+      "description": "Corregir los solapes de la pausa, ordenar el HUD, adaptar las listas a pantallas altas, añadir navegación Atrás, un botón contextual de interior y feedback claro en las acciones.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1107"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "AndroidManifest.xml",
+        "tools/tests/testlib.sh",
+        "tools/tests/06_visual_menu.sh",
+        "tools/tests/16_universe.sh",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/22_ui_polish.sh"
+      ],
+      "acceptanceCriteria": [
+        "La pausa no solapa CONTINUAR, MENU, SONIDO ni MUSICA en las resoluciones soportadas.",
+        "El HUD separa monedas, oleada, puntos, casco, combustible, carga y supervivencia sin solapes.",
+        "Estación, mercado, mapa y gestión aprovechan pantallas altas sin huecos muertos ni tarjetas gigantes.",
+        "Atrás pausa/reanuda y vuelve de mapa, mercado, estación e interior sin cerrar la aplicación.",
+        "El interior dibuja el joystick, muestra el módulo cercano y ofrece un botón contextual para interactuar o salir.",
+        "Las acciones deshabilitadas explican el motivo y el mercado muestra CONFIRMAR/CANCELAR mientras espera confirmación.",
+        "Las pruebas de audio, navegación, interiores, estación y mercado siguen pasando."
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls",
+        "13_station",
+        "14_market",
+        "18_interiors",
+        "19_audio",
+        "21_music",
+        "22_ui_polish"
+      ],
+      "technicalNotes": "Se mantiene u = densidad para no alterar el resto del HUD. La pausa usa un panel centrado de 440 u y el fin de partida de 400 u. Atrás se consume en MainActivity y se procesa en el hilo de render. Las filas de las listas usan un máximo de 200 u y texto centrado verticalmente.",
+      "executionLog": [
+        {
+          "sessionId": "S-091",
+          "date": "2026-11-08T10:45:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pausa y fin de partida redistribuidos sin solapes; HUD superior reordenado; listas adaptables en pantallas altas; navegación Atrás completa; joystick y acción contextual visibles en interiores; feedback de acciones y confirmación de mercado.",
+          "files": [
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "AndroidManifest.xml",
+            "tools/tests/testlib.sh",
+            "tools/tests/22_ui_polish.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "13_station",
+            "14_market",
+            "18_interiors",
+            "19_audio",
+            "21_music",
+            "22_ui_polish"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "19_audio, 21_music y 22_ui_polish OK en dispositivo",
+        "02_navigation, 03_controls, 05_death y 09_wing_damage OK",
+        "13_station, 14_market, 18_interiors, 18_map y 17_warp OK",
+        "01_logic: SelfTest TODO OK",
+        "Capturas 05_pause, 10_gameover, 29_market y 36_interior revisadas sin solapes"
+      ],
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T10:45:00-06:00"
     }
   ],
   "decisions": [
@@ -5355,6 +6946,1258 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-091",
+      "date": "2026-11-08T10:45:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pulido de interacción, pausa y HUD adaptable",
+      "summary": "Pausa y fin de partida sin solapes, HUD reordenado, listas adaptables, navegación Atrás, joystick y acción contextual en interiores y feedback de acciones.",
+      "tasks": [
+        "T-1110"
+      ],
+      "files": [
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "AndroidManifest.xml",
+        "tools/tests/testlib.sh",
+        "tools/tests/22_ui_polish.sh"
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls",
+        "13_station",
+        "14_market",
+        "18_interiors",
+        "19_audio",
+        "21_music",
+        "22_ui_polish"
+      ],
+      "outcome": "Completado",
+      "notes": "82/82 tareas de progreso (100 %). No quedan tareas en progreso."
+    },
+    {
+      "id": "S-090",
+      "date": "2026-11-08T13:20:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Regresión final y cierre del proyecto",
+      "summary": "Regresión 11/11, guardado largo y economía estable; S11 y el plan de progreso cerrados.",
+      "tasks": [
+        "T-1107"
+      ],
+      "files": [
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/MASTER_PLAN.md",
+        "docs/pruebas.md",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh --no-build 01_logic 03_controls 04_autopilot 05_death 12_mining 13_station 14_market 15_agents 16_universe 17_player_station 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Plan de progreso completado; T-1103 y T-1007 quedan pospuestas."
+    },
+    {
+      "id": "S-089",
+      "date": "2026-11-08T12:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Catálogo de módulos de nave y ranuras",
+      "summary": "Cinco módulos con funciones reales en cuatro ranuras; autopiloto instalable, efectos de minería/radar/propulsión/herramientas, HUD y persistencia.",
+      "tasks": [
+        "T-1109"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipModuleDef.java",
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 04_autopilot 11_cargo 12_mining 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1107 (regresion final y cierre del proyecto)."
+    },
+    {
+      "id": "S-088",
+      "date": "2026-11-08T12:38:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Música y ambientes dinámicos",
+      "summary": "Dos pistas locales con mezcla suave exploración/tensión y silencio de música independiente; carga desde caché local por assets comprimidos.",
+      "tasks": [
+        "T-1108"
+      ],
+      "files": [
+        "src/com/example/codegame/AudioService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "assets/audio/music/*",
+        "tools/tests/21_music.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 21_music",
+        "tools/run-tests.sh 19_audio"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1109 (catalogo de modulos de nave)."
+    },
+    {
+      "id": "S-087",
+      "date": "2026-11-08T12:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Accesibilidad y localización",
+      "summary": "Botones táctiles mayores, avisos no cromáticos, ajuste de texto y fuente ASCII; revisión visual 40_accessibility.",
+      "tasks": [
+        "T-1106"
+      ],
+      "files": [
+        "src/com/example/codegame/UiKit.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "docs/convenciones.md",
+        "tools/tests/20_accessibility.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 20_accessibility",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1108 (musica y ambientes)."
+    },
+    {
+      "id": "S-086",
+      "date": "2026-11-08T11:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Balance, telemetría y rendimiento",
+      "summary": "Datos de expedición (+166 netos), 3000 frames acotados y FPS≥30; tabla de balance documentada y sin ajustes necesarios.",
+      "tasks": [
+        "T-1105"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/MASTER_PLAN.md",
+        "docs/pruebas.md",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1106 (accesibilidad y localizacion)."
+    },
+    {
+      "id": "S-085",
+      "date": "2026-11-08T11:38:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Infraestructura de audio y efectos",
+      "summary": "Audio local con efectos principales, motor en bucle y silencio persistido. Assets WAV locales y prueba 19_audio.",
+      "tasks": [
+        "T-1104"
+      ],
+      "files": [
+        "src/com/example/codegame/AudioService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "assets/audio/*",
+        "tools/tests/19_audio.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 19_audio",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1105 (balance, telemetria y rendimiento)."
+    },
+    {
+      "id": "S-084",
+      "date": "2026-11-08T11:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Contratos y misiones de estación",
+      "summary": "Misiones con objetivo, recompensa y plazo; aceptar, completar y caducar, con persistencia v2. Métodos de juego para aceptar/entregar.",
+      "tasks": [
+        "T-1102"
+      ],
+      "files": [
+        "src/com/example/codegame/Mission.java",
+        "src/com/example/codegame/MissionService.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1104 (audio y efectos)."
+    },
+    {
+      "id": "S-083",
+      "date": "2026-11-08T10:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Clases de nave y especializaciones",
+      "summary": "MINER/EXPLORER/HAULER con estadísticas y siluetas distintas, persistencia y módulos intercambiables; guardados antiguos compatibles.",
+      "tasks": [
+        "T-1101"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipClassDef.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1102 (contratos y misiones)."
+    },
+    {
+      "id": "S-082",
+      "date": "2026-11-08T10:38:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre de interiores",
+      "summary": "Gate S10 completo: movimiento, colisión, interacción, salida y persistencia, con regresión de vuelo/minería/estación. S10 cerrada y S11 lista.",
+      "tasks": [
+        "T-1006"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_interiors 03_controls 12_mining 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S11, primera tarea T-1101."
+    },
+    {
+      "id": "S-081",
+      "date": "2026-11-08T10:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Entrada, salida y guardado del interior",
+      "summary": "ENTRAR/EXIT funcionales, salida desacopla a la nave y la posición del avatar se persiste sin romper el guardado de vuelo.",
+      "tasks": [
+        "T-1005"
+      ],
+      "files": [
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1006 (verificacion de interiores)."
+    },
+    {
+      "id": "S-080",
+      "date": "2026-11-08T09:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Interacción con módulos desde el interior",
+      "summary": "Interacción por proximidad que abre la gestión modular reutilizada; VOLVER regresa al interior y conserva estado. Prueba visual 37_interaction.",
+      "tasks": [
+        "T-1004"
+      ],
+      "files": [
+        "src/com/example/codegame/Interactable.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 18_interiors",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1005 (entrada, salida y guardado del interior)."
+    },
+    {
+      "id": "S-079",
+      "date": "2026-11-08T09:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "InteriorRenderer y cámara",
+      "summary": "Render cenital del interior con formas, etiquetas sin asignaciones, cámara sobre el avatar y HUD de instrucciones. Prueba visual 36_interior.",
+      "tasks": [
+        "T-1003"
+      ],
+      "files": [
+        "src/com/example/codegame/InteriorRenderer.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 18_interiors",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1004 (interaccion con modulos)."
+    },
+    {
+      "id": "S-078",
+      "date": "2026-11-08T09:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Avatar, movimiento y colisión",
+      "summary": "Avatar sin gravedad/combate con colisión por salas y puertas, deslizamiento, salida a la nave y soporte de naves.",
+      "tasks": [
+        "T-1002"
+      ],
+      "files": [
+        "src/com/example/codegame/Avatar.java",
+        "src/com/example/codegame/InteriorInput.java",
+        "src/com/example/codegame/InteriorScene.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1003 (InteriorRenderer y camara)."
+    },
+    {
+      "id": "S-077",
+      "date": "2026-11-08T08:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Marco de interiores",
+      "summary": "InteriorScene/Room/Door/Interactable para estaciones y naves; habitaciones derivadas de módulos y metadatos persistentes. Prueba 18_interiors.",
+      "tasks": [
+        "T-1001"
+      ],
+      "files": [
+        "src/com/example/codegame/InteriorScene.java",
+        "src/com/example/codegame/Room.java",
+        "src/com/example/codegame/Door.java",
+        "src/com/example/codegame/Interactable.java",
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1002 (Avatar y movimiento)."
+    },
+    {
+      "id": "S-076",
+      "date": "2026-11-08T08:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre de la estación personal",
+      "summary": "Gate S9 completo: plataforma, acople, módulos, servicios, persistencia y ausencia de movimiento a pie. S9 cerrada y S10 lista.",
+      "tasks": [
+        "T-906"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S10, primera tarea T-1001."
+    },
+    {
+      "id": "S-075",
+      "date": "2026-11-08T08:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Módulos de refinería y mercado",
+      "summary": "REFINERIA y MERCADO solo activos tras construirse; conversión hielo→combustible/O2 y compraventa con TradeService. Mercado persistente y UI de gestión ampliada.",
+      "tasks": [
+        "T-908"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/TradeService.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station",
+        "tools/run-tests.sh 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-906 (verificacion de la estacion personal)."
+    },
+    {
+      "id": "S-074",
+      "date": "2026-11-08T07:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pantalla de gestión modular",
+      "summary": "StationManagementScreen con ranuras, modulos, construir/mejorar, descarga, reparacion y despegue. Acople propio de la plataforma y prueba visual.",
+      "tasks": [
+        "T-904"
+      ],
+      "files": [
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/DockingSystem.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 17_player_station",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-908 (refineria y mercado)."
+    },
+    {
+      "id": "S-073",
+      "date": "2026-11-08T07:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Módulos de almacenamiento y reparación",
+      "summary": "ALMACEN (200 UM/nivel) y TALLER (reparación con coste) solo funcionan tras construirse. Almacén persistente y sin servicios de serie.",
+      "tasks": [
+        "T-907"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-904 (pantalla de gestión modular)."
+    },
+    {
+      "id": "S-072",
+      "date": "2026-11-08T07:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia de la estación personal",
+      "summary": "El guardado v2 conserva plataforma, modulos y niveles; los servicios se derivan al cargar. Prueba en dispositivo tras reiniciar.",
+      "tasks": [
+        "T-905"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-907 (modulos de almacenamiento y reparacion)."
+    },
+    {
+      "id": "S-071",
+      "date": "2026-11-08T07:02:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Sistema modular de estación",
+      "summary": "StationModule con niveles, construcción transaccional y ampliaciones; servicios derivados solo de módulos. Prueba en dispositivo con base y dos módulos.",
+      "tasks": [
+        "T-903"
+      ],
+      "files": [
+        "src/com/example/codegame/StationModule.java",
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/ModuleDef.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-905 (persistir la estación personal)."
+    },
+    {
+      "id": "S-070",
+      "date": "2026-11-08T06:44:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Construcción de la plataforma vacía",
+      "summary": "Compra y colocación del núcleo con coste y validación de ubicación; plataforma visible, vacía, zona segura y persistente. Botón de construcción y prueba en dispositivo.",
+      "tasks": [
+        "T-902"
+      ],
+      "files": [
+        "src/com/example/codegame/ConstructionService.java",
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SectorStreamer.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-903 (sistema modular de estación)."
+    },
+    {
+      "id": "S-069",
+      "date": "2026-11-08T06:28:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Plataforma personal vacía y módulos",
+      "summary": "PlayerStation vacía y acoplable, con 6 ranuras y catálogo ModuleDef. Los servicios solo se obtienen construyendo módulos; persistencia y colocación quedan para T-902/T-903.",
+      "tasks": [
+        "T-901"
+      ],
+      "files": [
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/ModuleDef.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_player_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_player_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-902 (construir/colocar la plataforma vacía)."
+    },
+    {
+      "id": "S-068",
+      "date": "2026-11-08T06:12:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre del universo",
+      "summary": "Gate S8 completado: warp libre y regreso, mapa con descubrimientos, persistencia por sector, galaxias diferenciadas y streaming acotado. S8 cerrada y S9 lista.",
+      "tasks": [
+        "T-807"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe 18_map"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S9, primera tarea T-901."
+    },
+    {
+      "id": "S-067",
+      "date": "2026-11-08T05:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Galaxias reales, ficticias y contenido propio",
+      "summary": "Via Lactea, Andromeda y Nebulosa Draco con nodriza, objetivos de mercado y spread propios. GameWorld usa SectorDef/GalaxyDef; al viajar cambia la economia.",
+      "tasks": [
+        "T-806"
+      ],
+      "files": [
+        "src/com/example/codegame/GalaxyDef.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/SectorStreamer.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-807 (verificacion del universo)."
+    },
+    {
+      "id": "S-066",
+      "date": "2026-11-08T05:46:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "MapScreen y navegación warp",
+      "summary": "Mapa vertical con descubrimientos, nodos ocultos, coste de warp y viaje desde VIAJAR. Botón MAPA en el HUD; prueba 18_map y captura 32_map.",
+      "tasks": [
+        "T-805"
+      ],
+      "files": [
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/TravelService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_map.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_map",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-806 (Vía Láctea, galaxias reales y ficticias)."
+    },
+    {
+      "id": "S-065",
+      "date": "2026-11-08T05:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Propulsión warp y TravelService",
+      "summary": "Viaje warp libre sin puertas: coste por distancia/motor, consumo de combustible y energía, destino cargado por streaming, nave conservada, origen en snapshot, regreso y persistencia del sector actual.",
+      "tasks": [
+        "T-804"
+      ],
+      "files": [
+        "src/com/example/codegame/TravelService.java",
+        "src/com/example/codegame/JumpGate.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_warp.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_warp",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-805 (MapScreen y navegación warp)."
+    },
+    {
+      "id": "S-064",
+      "date": "2026-11-08T05:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Streaming dinámico de sectores",
+      "summary": "SectorStreamer carga solo el sector activo y vecinos (radio 2.5), descarga lejanos con snapshot y recarga sin pérdida. Coordenadas de mapa y bench de 200 sectores.",
+      "tasks": [
+        "T-808"
+      ],
+      "files": [
+        "src/com/example/codegame/SectorStreamer.java",
+        "src/com/example/codegame/SectorRuntime.java",
+        "src/com/example/codegame/SectorDef.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-804 (propulsión warp y TravelService)."
+    },
+    {
+      "id": "S-063",
+      "date": "2026-11-08T05:06:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia y descarga de sectores",
+      "summary": "SectorRuntime y UniverseState guardan un estado resumido por sector: chunks generados y recursos activos con semilla. SaveCodec v2 serializa snapshots y al volver se restaura sin duplicar minerales; los chunks no visitados se regeneran.",
+      "tasks": [
+        "T-803"
+      ],
+      "files": [
+        "src/com/example/codegame/SectorRuntime.java",
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/Asteroid.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe 13_station 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-808 (streaming dinámico de sectores)."
+    },
+    {
+      "id": "S-062",
+      "date": "2026-11-08T04:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "SectorRuntime finito",
+      "summary": "GameWorld queda ligado a SectorDef: límites y borde visible, clamp de nave, generación según perfil de sector y chunks visitados sin reaparición. Test de límites y captura 31_bounds.",
+      "tasks": [
+        "T-802"
+      ],
+      "files": [
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-803 (warp y cambio de sector)."
+    },
+    {
+      "id": "S-061",
+      "date": "2026-11-08T04:48:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Jerarquía del universo",
+      "summary": "UniverseState con galaxias, sistemas y sectores configurables: semillas, paletas, sesgos de minerales, límites, perfiles y estaciones con IDs estables. Validación y prueba 16_universe.",
+      "tasks": [
+        "T-801"
+      ],
+      "files": [
+        "src/com/example/codegame/UniverseState.java",
+        "src/com/example/codegame/GalaxyDef.java",
+        "src/com/example/codegame/SystemDef.java",
+        "src/com/example/codegame/SectorDef.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-802 (SectorRuntime finito)."
+    },
+    {
+      "id": "S-060",
+      "date": "2026-11-08T04:38:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre de agentes",
+      "summary": "Gate S7 completado: mercado reactivo y determinista con agentes, bench ligero de 24 agentes, FPS estable, persistencia y offline acotado. S7 cerrada y S8 lista.",
+      "tasks": [
+        "T-707"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/15_agents.sh",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S8, primera tarea T-801."
+    },
+    {
+      "id": "S-059",
+      "date": "2026-11-08T04:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Tráfico cosmético de la estación",
+      "summary": "3 naves entrando/saliendo de la nodriza, activas por distancia, sin colisión ni economía. Captura y telemetría verificadas.",
+      "tasks": [
+        "T-706"
+      ],
+      "files": [
+        "src/com/example/codegame/StationTraffic.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-707 (verificación de agentes, determinismo y rendimiento)."
+    },
+    {
+      "id": "S-058",
+      "date": "2026-11-08T04:22:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Simulación offline y persistencia de agentes",
+      "summary": "El guardado incluye lastSimTime; al cargar se simulan hasta 12 h en pasos de 60 s sin red. Precios acotados y agentes persistentes.",
+      "tasks": [
+        "T-705"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/DECISIONS.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-706 (tráfico cosmético cerca de la estación)."
+    },
+    {
+      "id": "S-057",
+      "date": "2026-11-08T04:14:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Transacciones de agentes en el mercado",
+      "summary": "Market.sellTo/buyTo con validación y AgentBrain vendiendo por esa vía. Las ventas suben stock y bajan precio; las compras al revés; no se crean créditos sin carga.",
+      "tasks": [
+        "T-704"
+      ],
+      "files": [
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/AgentBrain.java",
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-705 (simulación offline y persistencia de agentes)."
+    },
+    {
+      "id": "S-056",
+      "date": "2026-11-08T04:06:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Tick y LOD de la economía",
+      "summary": "SimClock 2/5/60 s y EconomySim con agentes cada 2 s, mercados cada 10 s y offline acotado. Bench de 24 agentes y verificación en dispositivo.",
+      "tasks": [
+        "T-703"
+      ],
+      "files": [
+        "src/com/example/codegame/SimClock.java",
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-704 (transacciones de agentes en el mercado)."
+    },
+    {
+      "id": "S-055",
+      "date": "2026-11-08T03:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "AgentBrain y ciclo minero",
+      "summary": "Máquina de estados autónoma con viaje abstracto, decisión por utilidad, venta que mueve el mercado y repostaje. IDLE si no hay beneficio; persistencia y telemetría.",
+      "tasks": [
+        "T-702"
+      ],
+      "files": [
+        "src/com/example/codegame/AgentBrain.java",
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-703 (tick y LOD de agentes/economía)."
+    },
+    {
+      "id": "S-054",
+      "date": "2026-11-08T03:50:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pilotos autónomos: datos y plantilla",
+      "summary": "PilotAgent y AgentRoster con 8 mineros configurables, persistencia y telemetría. Sin render ni cerebro todavía.",
+      "tasks": [
+        "T-701"
+      ],
+      "files": [
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/AgentRoster.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-702 (AgentBrain y máquina de estados)."
+    },
+    {
+      "id": "S-053",
+      "date": "2026-11-08T03:42:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre del mercado",
+      "summary": "Gate S6 completado: precios reactivos, anti-arbitraje, persistencia y expedición rentable. S6 cerrada y S7 lista.",
+      "tasks": [
+        "T-606"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/14_market.sh",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station 02_navigation"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S7, primera tarea T-701."
+    },
+    {
+      "id": "S-052",
+      "date": "2026-11-08T03:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia de mercados y almacenes",
+      "summary": "El guardado v2 conserva el mercado completo además de estación y almacén. Compatible con guardados antiguos; la persistencia se verifica en SelfTest y 14_market.",
+      "tasks": [
+        "T-605"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/14_market.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-606 (verificación de mercado y anti-exploit)."
+    },
+    {
+      "id": "S-051",
+      "date": "2026-11-08T03:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Consumo, producción y deriva de precios",
+      "summary": "EconomySim tickea cada 10 s y mueve stock con producción/consumo y reversión al objetivo. La nodriza consume hielo/hierro/cobre y produce silicato; 30 min simulados verifican precios y estabilidad.",
+      "tasks": [
+        "T-604"
+      ],
+      "files": [
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-605 (persistir mercados y almacenes)."
+    },
+    {
+      "id": "S-050",
+      "date": "2026-11-08T03:24:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "MarketScreen y compraventa",
+      "summary": "Pantalla de mercado con precios, stock, cantidades y confirmación, integrada como pestaña de la estación. Flujo de compra/venta verificado en 14_market.",
+      "tasks": [
+        "T-603"
+      ],
+      "files": [
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/UiKit.java",
+        "tools/tests/14_market.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station 09_wing_damage 02_navigation 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-604 (consumo, producción y deriva de precios)."
+    },
+    {
+      "id": "S-049",
+      "date": "2026-11-08T03:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "TradeService y transacciones",
+      "summary": "Compra y venta atómicas contra el mercado, con validación de stock/créditos/capacidad, reacción de precios y datos de transacción registrables. UI de mercado pendiente para T-603.",
+      "tasks": [
+        "T-602"
+      ],
+      "files": [
+        "src/com/example/codegame/TradeService.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/Cargo.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-603 (MarketScreen y flujo de compraventa)."
+    },
+    {
+      "id": "S-048",
+      "date": "2026-11-08T03:12:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Mercado y modelo de precios",
+      "summary": "Market por estación con stock/objetivo y PriceModel con factor limitado y spread configurable. Objetivos iniciales en GameData, telemetría y prueba 14_market.",
+      "tasks": [
+        "T-601"
+      ],
+      "files": [
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/PriceModel.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/tests/14_market.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-602 (TradeService y transacciones)."
+    },
+    {
+      "id": "S-047",
+      "date": "2026-11-08T03:08:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Verificación y cierre de la estación",
+      "summary": "Gate S5 completado: acople, servicios, rescate, persistencia y economía fuera de la pausa. S5 cerrada y S6 lista.",
+      "tasks": [
+        "T-507"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/pruebas.md",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 13_station 02_navigation 03_controls 09_wing_damage"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente etapa: S6, primera tarea T-601."
+    },
+    {
+      "id": "S-046",
+      "date": "2026-11-08T03:00:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Rescate por combustible agotado",
+      "summary": "Rescate con espera, coste en créditos, pérdida de carga y remolque a la estación. Evita el softlock sin resucitar al piloto; HUD, log y telemetría verificados en 13_station.",
+      "tasks": [
+        "T-506"
+      ],
+      "files": [
+        "src/com/example/codegame/RescueService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh",
+        "tools/tests/testlib.sh",
+        "docs/DECISIONS.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-507 (verificación y cierre de S5)."
+    },
+    {
+      "id": "S-045",
+      "date": "2026-11-08T02:52:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia de estación y acople",
+      "summary": "El guardado v2 conserva estación, almacén y estado DOCKED. Al reanudar una partida acoplada se abre la estación; el almacén sobrevive a reinicios y no se duplica mineral.",
+      "tasks": [
+        "T-505"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 13_station",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-506 (rescate por combustible agotado)."
+    },
+    {
+      "id": "S-044",
+      "date": "2026-11-08T02:46:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Retirada de la tienda de pausa",
+      "summary": "La economía sale de la pausa y del menú. ShopRenderer/FUNDIR se eliminan; toda compra, venta, repostaje y reparación ocurre en StationScreen. Tests de navegación y capturas actualizados.",
+      "tasks": [
+        "T-504"
+      ],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/02_navigation.sh",
+        "tools/tests/03_controls.sh",
+        "tools/tests/07_visual_play.sh",
+        "tools/tests/09_wing_damage.sh",
+        "tools/tests/testlib.sh",
+        "docs/DECISIONS.md",
+        "docs/arquitectura.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls 07_visual_play 09_wing_damage 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-505 (persistir estación y acople)."
+    },
+    {
+      "id": "S-043",
+      "date": "2026-11-08T02:40:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "StationScreen y servicios básicos",
+      "summary": "Pantalla de estación con descarga/venta, combustible, O2, reparaciones y mejoras; almacén con capacidad y venta a precio base. Flujo completo verificado en 13_station.",
+      "tasks": [
+        "T-503"
+      ],
+      "files": [
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/Station.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 13_station",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-504 (retirar tienda de pausa)."
+    },
+    {
+      "id": "S-042",
+      "date": "2026-11-08T02:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Acoplamiento y Autopilot.STATION",
+      "summary": "Acople por proximidad/velocidad, transición DOCKED con pantalla mínima y despegue. Autopilot.STATION frena a 242 u y no penetra el casco. HUD contextual y telemetría; 13_station cubre el flujo completo.",
+      "tasks": [
+        "T-502"
+      ],
+      "files": [
+        "src/com/example/codegame/DockingSystem.java",
+        "src/com/example/codegame/Autopilot.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 13_station 04_autopilot 12_mining 07_visual_play"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-503 (StationScreen y servicios)."
+    },
     {
       "id": "S-041",
       "date": "2026-11-08T02:20:00-06:00",
@@ -6427,7 +9270,8 @@
       ],
       "createdAt": "2026-11-07"
     }
-  ]
+  ],
+  "status": null
 }
 </script>
 <!-- TRACKER_DATA_END -->

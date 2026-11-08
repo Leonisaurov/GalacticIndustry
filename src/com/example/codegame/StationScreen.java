@@ -28,6 +28,7 @@ final class StationScreen {
     private final Array<Button> tabButtons = new Array<>();
     private Button btnUndock;
     private int tab;
+    private String message = "";
     private float px;
     private float py;
     private float pw;
@@ -48,6 +49,7 @@ final class StationScreen {
 
     void enter() {
         tab = 0;
+        message = "";
         layout();
     }
 
@@ -75,7 +77,7 @@ final class StationScreen {
         listTop = h - 160f * u;
         float bottom = py + 100f * u;
         rowGap = 8f * u;
-        rowH = Math.min(86f * u,
+        rowH = Math.min(200f * u,
                 (listTop - bottom - (rows - 1) * rowGap) / rows);
         rowH = Math.max(40f * u, rowH);
 
@@ -100,6 +102,7 @@ final class StationScreen {
         if (game.tapped(tabButtons.get(0))) {
             if (tab != 0) {
                 tab = 0;
+                message = "";
                 layout();
             }
             return true;
@@ -107,11 +110,13 @@ final class StationScreen {
         if (game.tapped(tabButtons.get(1))) {
             if (tab != 1) {
                 tab = 1;
+                message = "";
                 layout();
             }
             return true;
         }
         if (game.tapped(tabButtons.get(2))) {
+            message = "";
             game.openMarket();
             return true;
         }
@@ -122,6 +127,10 @@ final class StationScreen {
         for (int i = 0; i < rowButtons.size; i++) {
             if (!game.tapped(rowButtons.get(i))) {
                 continue;
+            }
+            if (!rowEnabled(i)) {
+                message = rowLockReason(i);
+                return true;
             }
             if (tab == 0) {
                 service(i);
@@ -140,6 +149,7 @@ final class StationScreen {
         if (index == 0) {
             int moved = station.storage.depositAll(ship.cargo());
             if (moved > 0) {
+                message = "DESCARGADAS " + moved + " UM";
                 game.saveRun();
                 game.logEvent("{\"event\":\"store\",\"units\":" + moved + "}");
             }
@@ -147,6 +157,7 @@ final class StationScreen {
             int credits = station.storage.sellAll();
             if (credits > 0) {
                 up.addCoins(credits);
+                message = "VENDIDO POR " + credits + " CR";
                 game.saveRun();
                 game.logEvent("{\"event\":\"sell\",\"credits\":" + credits
                         + ",\"coins\":" + up.coins() + "}");
@@ -155,6 +166,7 @@ final class StationScreen {
             int cost = fuelCost();
             if (cost > 0 && up.spendCoins(cost)) {
                 ship.refuel(ship.maxFuel);
+                message = "COMBUSTIBLE COMPLETO";
                 game.saveRun();
                 game.logEvent("{\"event\":\"station_fuel\",\"cost\":" + cost + "}");
             }
@@ -162,6 +174,7 @@ final class StationScreen {
             int cost = o2Cost();
             if (cost > 0 && up.spendCoins(cost)) {
                 game.session.pilot.oxygen = game.session.pilot.o2Max;
+                message = "OXIGENO COMPLETO";
                 game.saveRun();
                 game.logEvent("{\"event\":\"station_o2\",\"cost\":" + cost + "}");
             }
@@ -171,6 +184,7 @@ final class StationScreen {
                 for (int i = 0; i < Ship.PART_COUNT; i++) {
                     game.repairPart(i);
                 }
+                message = "NAVE REPARADA";
                 game.saveRun();
                 game.logEvent("{\"event\":\"station_repair\",\"cost\":" + cost + "}");
             }
@@ -179,8 +193,31 @@ final class StationScreen {
 
     private void upgrade(int index) {
         if (game.upgrades.buy(index)) {
+            message = "MEJORA COMPRADA";
             game.applyUpgradeToRun(index);
         }
+    }
+
+    private String rowLockReason(int index) {
+        if (tab == 1) {
+            if (game.upgrades.level(index) >= Upgrades.MAX_LEVEL) {
+                return "NIVEL MAXIMO";
+            }
+            return "SIN CREDITOS";
+        }
+        if (index == 0) {
+            return "BODEGA VACIA";
+        }
+        if (index == 1) {
+            return "ALMACEN VACIO";
+        }
+        if (index == 2) {
+            return fuelCost() <= 0 ? "DEPOSITO LLENO" : "SIN CREDITOS";
+        }
+        if (index == 3) {
+            return o2Cost() <= 0 ? "OXIGENO LLENO" : "SIN CREDITOS";
+        }
+        return repairAllCost() <= 0 ? "SIN DANOS" : "SIN CREDITOS";
     }
 
     private int fuelCost() {
@@ -236,6 +273,14 @@ final class StationScreen {
                     rowButtons.get(i).bounds.width + 12f * u,
                     rowButtons.get(i).bounds.height + 12f * u, 14f * u,
                     CARD_C, enabled ? CARD_EDGE_C : Visuals.PANEL_EDGE);
+            if (enabled) {
+                shapes.setColor(0.36f, 0.86f, 1f, 0.55f);
+            } else {
+                shapes.setColor(0.52f, 0.56f, 0.66f, 0.22f);
+            }
+            Visuals.roundRect(shapes, rowButtons.get(i).bounds.x + 8f * u,
+                    rowButtons.get(i).bounds.y + 10f * u, 4f * u,
+                    rowButtons.get(i).bounds.height - 20f * u, 2f * u);
         }
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
         shapes.end();
@@ -245,6 +290,10 @@ final class StationScreen {
                 px + 28f * u, h - 34f * u, 0.88f * u, Visuals.ACCENT);
         drawCoins(w, h);
         drawTabs();
+        if (!message.isEmpty()) {
+            ui.textCenteredFit(message, w * 0.5f, h - 112f * u,
+                    0.70f * u, pw - 40f * u, Visuals.ACCENT);
+        }
         drawRows();
         ui.drawButtonText(btnUndock, true);
         batch.end();
@@ -265,40 +314,42 @@ final class StationScreen {
     private void drawRows() {
         float u = game.u;
         if (tab == 0) {
-            drawServiceRow(0, "DESCARGAR BODEGA", cargoUnits() + " UM en la nave");
-            drawServiceRow(1, "VENDER ALMACEN",
-                    Math.round(game.world.station.storage.totalValue()) + " cr a precio base");
-            drawServiceRow(2, "REPOSTAR COMBUSTIBLE",
-                    "Coste " + fuelCost() + " cr");
-            drawServiceRow(3, "RELLENAR OXIGENO", "Coste " + o2Cost() + " cr");
-            drawServiceRow(4, "REPARAR TODO", "Coste " + repairAllCost() + " cr");
+            drawServiceRow(0, "DESCARGAR BODEGA", "Mineral en la nave", cargoUnits() + " UM");
+            drawServiceRow(1, "VENDER ALMACEN", "Valor del almacen",
+                    Math.round(game.world.station.storage.totalValue()) + " CR");
+            drawServiceRow(2, "REPOSTAR COMBUSTIBLE", "Deposito al maximo", fuelCost() + " CR");
+            drawServiceRow(3, "RELLENAR OXIGENO", "Soporte vital", o2Cost() + " CR");
+            drawServiceRow(4, "REPARAR TODO", "Casco y sistemas", repairAllCost() + " CR");
         } else {
             for (int i = 0; i < Upgrades.COUNT; i++) {
                 Button b = rowButtons.get(i);
                 float x = b.bounds.x + 18f * u;
-                float top = b.bounds.y + b.bounds.height;
-                ui.textLeftFit(Upgrades.NAMES[i], x, top - 20f * u,
+                float mid = b.bounds.y + b.bounds.height * 0.5f;
+                ui.textLeftFit(Upgrades.NAMES[i], x, mid + 12f * u,
                         0.95f * u, b.bounds.width - 30f * u, Visuals.TEXT);
-                ui.textLeftFit(Upgrades.DESCS[i], x, b.bounds.y + 20f * u,
+                ui.textLeftFit(Upgrades.DESCS[i], x, mid - 12f * u,
                         0.68f * u, b.bounds.width - 180f * u, Visuals.TEXT_DIM);
                 String label = game.upgrades.level(i) >= Upgrades.MAX_LEVEL
                         ? "MAX" : "COMPRAR " + game.upgrades.cost(i);
                 ui.textLeft(label, b.bounds.x + b.bounds.width - 150f * u,
-                        b.bounds.y + b.bounds.height * 0.5f + 5f * u,
+                        mid + 6f * u,
                         0.82f * u, rowEnabled(i) ? Visuals.GOLD : Visuals.TEXT_OFF);
             }
         }
     }
 
-    private void drawServiceRow(int index, String title, String desc) {
+    private void drawServiceRow(int index, String title, String desc, String status) {
         Button b = rowButtons.get(index);
         float u = game.u;
         float x = b.bounds.x + 18f * u;
-        float top = b.bounds.y + b.bounds.height;
-        ui.textLeftFit(title, x, top - 22f * u, 0.95f * u,
-                b.bounds.width - 30f * u, rowEnabled(index) ? Visuals.TEXT : Visuals.TEXT_OFF);
-        ui.textLeftFit(desc, x, b.bounds.y + 20f * u, 0.70f * u,
-                b.bounds.width - 30f * u, Visuals.TEXT_DIM);
+        float mid = b.bounds.y + b.bounds.height * 0.5f;
+        ui.textLeftFit(title, x, mid + 12f * u, 0.95f * u,
+                b.bounds.width * 0.56f, rowEnabled(index) ? Visuals.TEXT : Visuals.TEXT_OFF);
+        ui.textLeftFit(desc, x, mid - 12f * u, 0.70f * u,
+                b.bounds.width * 0.56f, Visuals.TEXT_DIM);
+        ui.textLeft(status, b.bounds.x + b.bounds.width - 150f * u,
+                mid + 6f * u, 0.82f * u,
+                rowEnabled(index) ? Visuals.GOLD : Visuals.TEXT_OFF);
     }
 
     private boolean rowEnabled(int index) {

@@ -42,6 +42,7 @@ assert_ge "fps objetivo" 30 "$fps"
 # T-802: límites finitos y borde visible.
 launch_app "--ez test_mode true --ez bounds_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de límites"
+wait_status_field y 5860.0 10 || fail "la nave no apareció en el borde superior"
 sleep 0.6
 status=$(latest_status)
 assert_eq "borde superior" 5860 "$(printf '%s' "$status" | json_get y | cut -d. -f1)"

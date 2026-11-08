@@ -4,17 +4,16 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T13:20:00-06:00",
-    "lastSessionId": "S-090",
+    "lastUpdated": "2026-11-08T10:45:00-06:00",
+    "lastSessionId": "S-091",
     "lastVerification": {
-      "date": "2026-11-08T13:20:00-06:00",
+      "date": "2026-11-08T10:45:00-06:00",
       "result": "OK",
       "checks": [
-        "Regresión 01,03,04,05,12,13,14,15,16,17,18: 11/11 OK",
-        "Partida larga guardada y restaurada completa",
-        "24 h simuladas mantienen economía acotada",
-        "Panel sincronizado con el estado final",
-        "python3 tools/sync-dashboard.py --check"
+        "01_logic: SelfTest TODO OK",
+        "02_navigation, 03_controls, 05_death, 09_wing_damage, 10_survival, 11_cargo, 12_mining, 13_station, 13_tractor, 14_market, 15_agents, 16_universe, 17_player_station, 17_warp, 18_interiors, 18_map, 19_audio, 20_accessibility, 21_music y 22_ui_polish: OK",
+        "06_visual_menu actualizado al menú actual",
+        "Panel sincronizado con el estado final"
       ]
     },
     "currentStageId": "S11",
@@ -195,8 +194,8 @@
       "type": "implementation",
       "objective": "Ampliar contenido, pulir balance, identidad visual, audio, accesibilidad y rendimiento.",
       "gate": "Regresión completa y rendimiento aceptable en el dispositivo objetivo.",
-      "taskCount": 9,
-      "implementationTaskCount": 8
+      "taskCount": 10,
+      "implementationTaskCount": 9
     }
   ],
   "tasks": [
@@ -6394,6 +6393,100 @@
       ],
       "createdAt": "2026-11-07",
       "updatedAt": "2026-11-08T12:38:00-06:00"
+    },
+    {
+      "id": "T-1110",
+      "stageId": "S11",
+      "title": "Pulido de interacción, pausa y HUD adaptable",
+      "description": "Corregir los solapes de la pausa, ordenar el HUD, adaptar las listas a pantallas altas, añadir navegación Atrás, un botón contextual de interior y feedback claro en las acciones.",
+      "category": "implementation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": true,
+      "dependencies": [
+        "T-1107"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "AndroidManifest.xml",
+        "tools/tests/testlib.sh",
+        "tools/tests/06_visual_menu.sh",
+        "tools/tests/16_universe.sh",
+        "tools/tests/17_player_station.sh",
+        "tools/tests/22_ui_polish.sh"
+      ],
+      "acceptanceCriteria": [
+        "La pausa no solapa CONTINUAR, MENU, SONIDO ni MUSICA en las resoluciones soportadas.",
+        "El HUD separa monedas, oleada, puntos, casco, combustible, carga y supervivencia sin solapes.",
+        "Estación, mercado, mapa y gestión aprovechan pantallas altas sin huecos muertos ni tarjetas gigantes.",
+        "Atrás pausa/reanuda y vuelve de mapa, mercado, estación e interior sin cerrar la aplicación.",
+        "El interior dibuja el joystick, muestra el módulo cercano y ofrece un botón contextual para interactuar o salir.",
+        "Las acciones deshabilitadas explican el motivo y el mercado muestra CONFIRMAR/CANCELAR mientras espera confirmación.",
+        "Las pruebas de audio, navegación, interiores, estación y mercado siguen pasando."
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls",
+        "13_station",
+        "14_market",
+        "18_interiors",
+        "19_audio",
+        "21_music",
+        "22_ui_polish"
+      ],
+      "technicalNotes": "Se mantiene u = densidad para no alterar el resto del HUD. La pausa usa un panel centrado de 440 u y el fin de partida de 400 u. Atrás se consume en MainActivity y se procesa en el hilo de render. Las filas de las listas usan un máximo de 200 u y texto centrado verticalmente.",
+      "executionLog": [
+        {
+          "sessionId": "S-091",
+          "date": "2026-11-08T10:45:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Pausa y fin de partida redistribuidos sin solapes; HUD superior reordenado; listas adaptables en pantallas altas; navegación Atrás completa; joystick y acción contextual visibles en interiores; feedback de acciones y confirmación de mercado.",
+          "files": [
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "AndroidManifest.xml",
+            "tools/tests/testlib.sh",
+            "tools/tests/22_ui_polish.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "13_station",
+            "14_market",
+            "18_interiors",
+            "19_audio",
+            "21_music",
+            "22_ui_polish"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "19_audio, 21_music y 22_ui_polish OK en dispositivo",
+        "02_navigation, 03_controls, 05_death y 09_wing_damage OK",
+        "13_station, 14_market, 18_interiors, 18_map y 17_warp OK",
+        "01_logic: SelfTest TODO OK",
+        "Capturas 05_pause, 10_gameover, 29_market y 36_interior revisadas sin solapes"
+      ],
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T10:45:00-06:00"
     }
   ],
   "decisions": [
@@ -6670,6 +6763,42 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-091",
+      "date": "2026-11-08T10:45:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pulido de interacción, pausa y HUD adaptable",
+      "summary": "Pausa y fin de partida sin solapes, HUD reordenado, listas adaptables, navegación Atrás, joystick y acción contextual en interiores y feedback de acciones.",
+      "tasks": [
+        "T-1110"
+      ],
+      "files": [
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "AndroidManifest.xml",
+        "tools/tests/testlib.sh",
+        "tools/tests/22_ui_polish.sh"
+      ],
+      "tests": [
+        "01_logic",
+        "02_navigation",
+        "03_controls",
+        "13_station",
+        "14_market",
+        "18_interiors",
+        "19_audio",
+        "21_music",
+        "22_ui_polish"
+      ],
+      "outcome": "Completado",
+      "notes": "82/82 tareas de progreso (100 %). No quedan tareas en progreso."
+    },
     {
       "id": "S-090",
       "date": "2026-11-08T13:20:00-06:00",

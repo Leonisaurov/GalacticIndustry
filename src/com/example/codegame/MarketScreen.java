@@ -80,9 +80,9 @@ final class MarketScreen {
         ph = h - pad;
 
         listTop = h - 118f * u;
-        float bottom = py + 255f * u;
+        float bottom = py + 275f * u;
         rowGap = 6f * u;
-        rowH = Math.min(62f * u, (listTop - bottom - 5 * rowGap) / 6f);
+        rowH = Math.min(200f * u, (listTop - bottom - 5 * rowGap) / 6f);
         rowH = Math.max(38f * u, rowH);
 
         rowButtons.clear();
@@ -198,13 +198,15 @@ final class MarketScreen {
     }
 
     private void confirm() {
-        Market market = game.world.station.market;
+        Market market = game.activeMarket();
         int qty = quantity;
         Commodity commodity = selectedCommodity();
         TradeService.Listener listener = game::logTrade;
         TradeService.Result result = pendingBuy
-                ? TradeService.buy(game.world, game.upgrades, commodity, qty, listener)
-                : TradeService.sell(game.world, game.upgrades, commodity, qty, listener);
+                ? TradeService.buy(market, game.upgrades, game.world.ship.cargo(),
+                commodity, qty, listener)
+                : TradeService.sell(market, game.upgrades, game.world.ship.cargo(),
+                commodity, qty, listener);
         if (result.ok) {
             message = pendingBuy ? "Comprados " + qty : "Vendidos " + qty;
             setQuantity(0);
@@ -225,7 +227,7 @@ final class MarketScreen {
     }
 
     private int maxBuy() {
-        Market market = game.world.station.market;
+        Market market = game.activeMarket();
         Commodity commodity = selectedCommodity();
         float price = market.buyPrice(commodity);
         int affordable = price <= 0f ? 0
@@ -237,7 +239,7 @@ final class MarketScreen {
     }
 
     private float pendingTotal() {
-        Market market = game.world.station.market;
+        Market market = game.activeMarket();
         float price = pendingBuy ? market.buyPrice(selectedCommodity())
                 : market.sellPrice(selectedCommodity());
         return Math.max(1f, Math.round(price * quantity));
@@ -263,8 +265,10 @@ final class MarketScreen {
 
         beginShapes();
         ui.panel(px, py, pw, ph, 20f * u, PANEL_C, Visuals.PANEL_EDGE);
+        btnBuy.label = pending ? (pendingBuy ? "CONFIRMAR" : "CANCELAR") : "COMPRAR";
+        btnSell.label = pending ? (!pendingBuy ? "CONFIRMAR" : "CANCELAR") : "VENDER";
+        boolean idle = !pending;
         for (int i = 0; i < rowButtons.size; i++) {
-            float top = rowButtons.get(i).bounds.y + rowButtons.get(i).bounds.height;
             ui.panel(rowButtons.get(i).bounds.x - 5f * u, rowButtons.get(i).bounds.y - 5f * u,
                     rowButtons.get(i).bounds.width + 10f * u,
                     rowButtons.get(i).bounds.height + 10f * u, 12f * u,
@@ -273,21 +277,23 @@ final class MarketScreen {
         }
         for (int i = 0; i < qtyButtons.size; i++) {
             ui.drawButton(qtyButtons.get(i), Visuals.BTN_SECONDARY,
-                    qtyEnabled(i));
+                    idle && qtyEnabled(i));
         }
-        ui.drawButton(btnTodo, Visuals.BTN_SECONDARY, maxSell() > 0);
-        ui.drawButton(btnNada, Visuals.BTN_SECONDARY, quantity > 0);
-        ui.drawButton(btnBuy, Visuals.BTN_PRIMARY, quantity > 0 && quantity <= maxBuy());
-        ui.drawButton(btnSell, Visuals.BTN_WARM, quantity > 0 && quantity <= maxSell());
-        if (pending) {
-            ui.drawButton(btnBuy, Visuals.BTN_PRIMARY, true);
-            ui.drawButton(btnSell, Visuals.BTN_SECONDARY, true);
-        }
+        ui.drawButton(btnTodo, Visuals.BTN_SECONDARY, idle && maxSell() > 0);
+        ui.drawButton(btnNada, Visuals.BTN_SECONDARY, idle && quantity > 0);
+        ui.drawButton(btnBuy,
+                pending ? (pendingBuy ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY)
+                        : Visuals.BTN_PRIMARY,
+                pending || (quantity > 0 && quantity <= maxBuy()));
+        ui.drawButton(btnSell,
+                pending ? (!pendingBuy ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY)
+                        : Visuals.BTN_WARM,
+                pending || (quantity > 0 && quantity <= maxSell()));
         ui.drawButton(btnBack, Visuals.BTN_SECONDARY, true);
         shapes.end();
 
         batch.begin();
-        ui.textLeft("MERCADO " + game.world.station.def.name,
+        ui.textLeft("MERCADO " + game.marketName(),
                 px + 24f * u, h - 36f * u, 1.0f * u, Visuals.ACCENT);
         ui.textLeft("CREDITOS " + game.upgrades.coins()
                         + "   BODEGA " + Math.round(game.world.ship.cargo().usedMass())
@@ -308,14 +314,14 @@ final class MarketScreen {
 
     private void drawRows() {
         float u = game.u;
-        Market market = game.world.station.market;
+        Market market = game.activeMarket();
         for (int i = 0; i < rowButtons.size; i++) {
             Commodity c = Commodity.values()[i];
             Button b = rowButtons.get(i);
             float x = b.bounds.x + 14f * u;
-            float top = b.bounds.y + b.bounds.height;
-            float titleY = top - 19f * u;
-            float descY = b.bounds.y + 17f * u;
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            float titleY = mid + 12f * u;
+            float descY = mid - 12f * u;
             ui.textLeftFit(c.displayName + "  " + market.stock(c) + "/" + market.target(c),
                     x, titleY, 0.86f * u, b.bounds.width * 0.52f, Visuals.TEXT);
             ui.textLeftFit("compra " + String.format(java.util.Locale.US, "%.2f", market.buyPrice(c))
@@ -329,7 +335,7 @@ final class MarketScreen {
 
     private void drawControls() {
         float u = game.u;
-        Market market = game.world.station.market;
+        Market market = game.activeMarket();
         Commodity c = selectedCommodity();
         ui.textLeftFit("SELECCION: " + c.displayName + "   CANTIDAD " + quantity
                         + "   MAX " + Math.max(maxSell(), maxBuy()),
@@ -354,7 +360,7 @@ final class MarketScreen {
                             + quantity + " " + c.displayName + " por "
                             + (int) pendingTotal() + " cr",
                     px + pw * 0.5f, py + 184f * u, 0.76f * u, Visuals.WARN);
-            ui.textCentered("Pulsa COMPRAR/VENDER para confirmar o el otro botón para cancelar",
+            ui.textCentered("Pulsa CONFIRMAR o CANCELAR", 
                     px + pw * 0.5f, py + 72f * u, 0.62f * u, Visuals.TEXT_DIM);
         } else {
             ui.drawButtonText(btnBuy, quantity > 0 && quantity <= maxBuy());

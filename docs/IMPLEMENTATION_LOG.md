@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T13:20:00-06:00  
+**Última actualización:** 2026-11-08T10:45:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,81 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-091 — Pulido de interacción, pausa y HUD adaptable
+
+- **Fecha:** 2026-11-08T10:45:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1110
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Pausa y fin de partida** rediseñados sobre un panel centrado: CONTINUAR,
+  MENU, SONIDO y MUSICA quedan en bloques separados y ya no se solapan.
+- **HUD superior** reordenado: monedas, oleada, puntos, casco, combustible,
+  carga/mods y barras de O2/HP tienen filas propias. La energía contextual baja
+  para no tapar la carga.
+- **Listas adaptables**: estación, mercado, mapa y gestión usan filas de hasta
+  200 u con texto centrado, de modo que las pantallas altas no dejan huecos
+  muertos ni tarjetas gigantes.
+- **Navegación Atrás** completa: pausa/reanuda, cierra mapa y mercado, sale de
+  la estación o del interior y solo cierra la app desde el menú.
+- **Interiores**: joystick visible y funcional, cabecera con la sala actual,
+  botón contextual ABRIR/SALIR y toque libre fuera del joystick.
+- **Feedback**: las filas deshabilitadas de la estación explican el motivo y el
+  mercado muestra CONFIRMAR/CANCELAR mientras espera confirmación. El mercado
+  de la plataforma usa su propio mercado al comprar y vender.
+- La pantalla de gestión oculta ENTRAR cuando ya se abrió desde el interior.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/OverlayRenderer.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/StationScreen.java`
+- `src/com/example/codegame/MarketScreen.java`
+- `src/com/example/codegame/MapScreen.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `AndroidManifest.xml`
+- `tools/tests/testlib.sh`
+- `tools/tests/06_visual_menu.sh`
+- `tools/tests/16_universe.sh`
+- `tools/tests/17_player_station.sh`
+- `tools/tests/22_ui_polish.sh` (nuevo)
+- `AGENTS.md`, `docs/IMPLEMENTATION_TRACKER.json`, `docs/IMPLEMENTATION_LOG.md`,
+  `docs/MASTER_PLAN.md`, `docs/pruebas.md`
+
+### Pruebas ejecutadas
+
+- `01_logic`: SelfTest **TODO OK**.
+- `02_navigation`, `03_controls`, `05_death`, `09_wing_damage`, `10_survival`,
+  `11_cargo`, `12_mining`, `13_station`, `13_tractor`, `14_market`, `15_agents`,
+  `16_universe`, `17_player_station`, `17_warp`, `18_interiors`, `18_map`,
+  `19_audio`, `20_accessibility`, `21_music`, `22_ui_polish`: **OK**.
+- `06_visual_menu` actualizado al menú actual (la tienda de pausa ya no existe).
+
+### Evidencias
+
+- `19_audio` y `21_music` confirman los toggles de sonido y música.
+- `22_ui_polish` confirma pausa, audio y navegación Atrás sin salir de la app.
+- `18_interiors` confirma el joystick y la interacción contextual.
+- Capturas revisadas: `05_pause`, `10_gameover`, `29_market`, `36_interior`.
+- `python3 tools/sync-dashboard.py --check`: OK.
+
+### Decisiones tomadas
+
+- Se mantiene `u = Gdx.graphics.getDensity()` para no alterar el resto del HUD;
+  la adaptación se hace con paneles y filas relativas.
+- Atrás se consume en `MainActivity` y se procesa en el siguiente fotograma para
+  no tocar el estado del juego desde el hilo de UI.
+
+### Pendiente / siguiente paso
+
+- Ninguno. El plan sigue completo: **82/82 tareas de progreso (100 %)**.
 
 ---
 

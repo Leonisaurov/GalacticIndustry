@@ -71,7 +71,7 @@ final class MapScreen {
         float bottom = py + 220f * u;
         rowGap = 6f * u;
         rowH = (listTop - bottom - 5 * rowGap) / 6f;
-        rowH = Math.max(34f * u, Math.min(68f * u, rowH));
+        rowH = Math.max(34f * u, Math.min(200f * u, rowH));
 
         rows.clear();
         for (int i = 0; i < game.session.universe.sectorCount(); i++) {
@@ -263,8 +263,9 @@ final class MapScreen {
             boolean current = sector != null
                     && sector.id.equals(game.session.currentSector.id);
             float x = row.bounds.x + 12f * u;
-            float titleY = row.bounds.y + row.bounds.height - 18f * u;
-            float descY = row.bounds.y + 14f * u;
+            float mid = row.bounds.y + row.bounds.height * 0.5f;
+            float titleY = mid + 10f * u;
+            float descY = mid - 12f * u;
             String title;
             String desc;
             Color color;

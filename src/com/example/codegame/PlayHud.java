@@ -64,7 +64,7 @@ final class PlayHud {
     }
 
     private float topPanelH() {
-        return 112f * u;
+        return 172f * u;
     }
 
     void drawPlayHud(float w, float h) {
@@ -102,7 +102,9 @@ final class PlayHud {
         if (hud.canBuildBase) {
             ui.drawButton(hud.buildBase, Visuals.BTN_PRIMARY, true);
         }
-        drawIconButton(hud.pause);
+        if (hud.state == MyGame.PLAYING) {
+            drawIconButton(hud.pause);
+        }
         ui.drawCoinIcon(pad + 18f * u, h - 54f * u, 13f * u);
         if (hud.state == MyGame.PLAYING) {
             drawControls();
@@ -113,26 +115,36 @@ final class PlayHud {
 
         batch.begin();
         ui.textLeft(String.valueOf(upgrades.coins() + world.coinsEarned),
-                pad + 38f * u, h - 44f * u, 1.15f * u, Visuals.GOLD);
-        ui.textCentered("OLEADA " + world.wave, w * 0.38f, h - 44f * u, 0.82f * u, Visuals.TEXT);
+                pad + 38f * u, h - 60f * u, 1.15f * u, Visuals.GOLD);
+        boolean narrow = w < 600f * u;
+        String statusText = "OLEADA " + world.wave + "   PUNTOS " + world.score;
+        if (narrow) {
+            float left = pad + 8f * u;
+            float right = hullChipX(w) - 12f * u;
+            ui.textCenteredFit(statusText, (left + right) * 0.5f, h - 82f * u,
+                    0.72f * u, Math.max(40f * u, right - left), Visuals.TEXT);
+        } else {
+            float left = pad + 56f * u;
+            float right = hullChipX(w) - 12f * u;
+            ui.textCenteredFit(statusText, (left + right) * 0.5f, h - 60f * u,
+                    0.78f * u, Math.max(40f * u, right - left), Visuals.TEXT);
+        }
         float hullFrac = world.ship.part[Ship.HULL] / world.ship.maxHull;
         float hx = hullChipX(w);
         float hy = hullChipY(h);
         ui.textLeft("CASCO", hx + 34f * u, hy + 31f * u, 0.55f * u, Visuals.TEXT_DIM);
         ui.textLeft(Math.round(hullFrac * 100f) + "%", hx + 34f * u, hy + 17f * u,
                 0.78f * u, UiKit.partColor(hullFrac));
-        ui.textLeftMiddle("PUNTOS " + world.score, pad + 44f * u + fuelBarW(w) + 14f * u,
-                h - 86f * u, 0.78f * u, Visuals.TEXT_DIM);
-        ui.textLeft("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
-                        + Math.round(world.ship.cargo().capacity()) + " UM",
-                pad + 8f * u, h - 100f * u, 0.60f * u, Visuals.TEXT_DIM);
-        ui.textLeft("MODS " + upgrades.shipModuleCount() + "/"
+        ui.textLeftFit("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
+                        + Math.round(world.ship.cargo().capacity()) + " UM"
+                        + "   MODS " + upgrades.shipModuleCount() + "/"
                         + upgrades.loadout().moduleSlots(),
-                pad + 8f * u, h - 114f * u, 0.56f * u, Visuals.TEXT_OFF);
+                pad + 8f * u, h - 134f * u, 0.60f * u, w - 2f * pad,
+                Visuals.TEXT_DIM);
         drawEnergyText(w, h);
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         ui.textCenteredMiddle(Math.round(frac * 100f) + "%",
-                pad + 44f * u + fuelBarW(w) * 0.5f, h - 86f * u, 0.78f * u, Color.WHITE);
+                pad + 44f * u + fuelBarW(w) * 0.5f, h - 110f * u, 0.78f * u, Color.WHITE);
         drawSurvivalText(w, h);
         if (world.ship.damageFlash > 0f && world.ship.lastDamaged > 0) {
             int hit = world.ship.lastDamaged;
@@ -145,14 +157,14 @@ final class PlayHud {
         int o2Pct = Math.round(session.pilot.oxygenFraction() * 100f);
         if (o2Alert == 2) {
             ui.textLeft("! O2 CRITICO " + o2Pct + "%",
-                    pad + 8f * u, h - 154f * u, 0.78f * u, Visuals.DANGER);
+                    pad + 8f * u, h - 196f * u, 0.78f * u, Visuals.DANGER);
         } else if (o2Alert == 1) {
             ui.textLeft("O2 BAJO " + o2Pct + "%",
-                    pad + 8f * u, h - 154f * u, 0.78f * u, Visuals.WARN);
+                    pad + 8f * u, h - 196f * u, 0.78f * u, Visuals.WARN);
         }
         if (session.lifeSupport.leak > 0.01f || session.lifeSupport.breach) {
             ui.textLeft(session.lifeSupport.breach ? "BRECHA O2" : "FUGA O2",
-                    pad + 8f * u, h - 176f * u, 0.78f * u,
+                    pad + 8f * u, h - 218f * u, 0.78f * u,
                     session.lifeSupport.breach ? Visuals.DANGER : Visuals.WARN);
         }
         int slot = 0;
@@ -217,13 +229,13 @@ final class PlayHud {
 
     float fuelBarW(float w) {
         float pad = 16f * u;
-        return w - 2f * pad - 44f * u - 80f * u;
+        return w - 2f * pad - 44f * u;
     }
 
     void drawFuelBar(float w, float h, float panelH) {
         float pad = 16f * u;
         float barX = pad + 44f * u;
-        float barY = h - 96f * u;
+        float barY = h - 120f * u;
         float barH = 20f * u;
         float barW = fuelBarW(w);
         float frac = world.ship.maxFuel > 0f ? MathUtils.clamp(world.ship.fuel / world.ship.maxFuel, 0f, 1f) : 0f;
@@ -265,7 +277,7 @@ final class PlayHud {
     }
 
     float energyBarY(float h) {
-        return h - 110f * u;
+        return h - 244f * u;
     }
 
     float energyBarW() {
@@ -332,7 +344,7 @@ final class PlayHud {
     }
 
     float hullChipY(float h) {
-        return h - 74f * u;
+        return h - 87f * u;
     }
 
     void drawHullChip(float w, float h) {
@@ -368,8 +380,8 @@ final class PlayHud {
     }
 
     float survivalY(float h) {
-        // Justo debajo del panel superior (112 u de alto).
-        return h - 130f * u;
+        // Bajo la fila de carga/mods; el panel superior mide 172 u.
+        return h - 162f * u;
     }
 
     void drawSurvivalBars(float w, float h) {
@@ -519,7 +531,12 @@ final class PlayHud {
     }
 
     void drawControls() {
-        // Joystick: base, anillo, dirección y nudo.
+        drawJoystick();
+        drawThrottle();
+    }
+
+    /** Joystick reutilizable por la partida y por los interiores. */
+    void drawJoystick() {
         shapes.setColor(0.10f, 0.18f, 0.35f, 0.28f);
         shapes.circle(hud.joyCx, hud.joyCy, hud.joyR, 40);
         shapes.setColor(0.30f, 0.65f, 1f, 0.30f);
@@ -544,8 +561,22 @@ final class PlayHud {
         shapes.setColor(0.36f, 0.80f, 1f, 0.95f);
         shapes.circle(hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 0.38f, 24);
         shapes.setColor(0.80f, 0.96f, 1f, 0.65f);
-        shapes.circle(hud.joyCx + hud.knobX - hud.joyR * 0.10f, hud.joyCy + hud.knobY + hud.joyR * 0.10f, hud.joyR * 0.12f, 10);
+        shapes.circle(hud.joyCx + hud.knobX - hud.joyR * 0.10f,
+                hud.joyCy + hud.knobY + hud.joyR * 0.10f, hud.joyR * 0.12f, 10);
+    }
 
+    /** Solo joystick y su etiqueta: se usa en los interiores. */
+    void drawJoystickOnly(float w, float h) {
+        beginShapes();
+        drawJoystick();
+        shapes.end();
+        batch.begin();
+        ui.textCenteredMiddle("MOVER", hud.joyCx, hud.joyCy + hud.joyR + 28f * u,
+                0.68f * u, Visuals.TEXT_DIM);
+        batch.end();
+    }
+
+    void drawThrottle() {
         // Barra de aceleración.
         float x = hud.thrust.bounds.x;
         float y = hud.thrust.bounds.y;
@@ -592,7 +623,7 @@ final class PlayHud {
             art.glow(batch, x, knobYLocal, hud.thrust.bounds.width * 0.85f, Visuals.ACCENT, 0.12f);
         }
         float barX = 16f * u + 44f * u;
-        float barY = h - 96f * u;
+        float barY = h - 120f * u;
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         if (frac < 0.25f) {
             float pulse = 0.5f + 0.5f * MathUtils.sin(hud.time * 9f);

@@ -150,13 +150,15 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: ninguna. **Plan de progreso completado.**
+- Etapa actual: S11, completada.
 - No hay tarea en progreso ni siguiente tarea.
-- Última tarea completada: `T-1107` — Regresión final y cierre del proyecto.
+- Última tarea completada: `T-1110` — Pulido de interacción, pausa y HUD adaptable.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **100 %** (81 de 81 tareas de progreso).
+- La implementación del juego está al **100 %** (82 de 82 tareas de progreso).
 - Quedan **2 tareas pospuestas**: T-1103 (facciones/combate/online) y T-1007
   (interiores de naves y estaciones no propias).
+- La pausa, el fin de partida y el HUD se adaptan a pantallas altas sin solapes;
+  Atrás pausa, reanuda y vuelve de las pantallas sin cerrar la partida.
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
