@@ -19,34 +19,45 @@ import java.util.Random;
 class Visuals {
 
     // ---------- paleta ----------
-    static final Color SKY_TOP = new Color(0.035f, 0.045f, 0.13f, 1f);
-    static final Color SKY_BOTTOM = new Color(0.12f, 0.055f, 0.235f, 1f);
+    // Identidad "simulador industrial": grafito azulado, acero, ambar de
+    // seguridad y cian de instrumentacion. Sin neon ni saturacion arcade.
+    static final Color SKY_TOP = new Color(0.018f, 0.028f, 0.046f, 1f);
+    static final Color SKY_BOTTOM = new Color(0.055f, 0.075f, 0.105f, 1f);
 
-    static final Color ACCENT = new Color(0.36f, 0.86f, 1f, 1f);
-    static final Color ACCENT_DIM = new Color(0.25f, 0.55f, 0.8f, 1f);
-    static final Color O2 = new Color(0.36f, 0.86f, 1f, 1f);
-    static final Color HEALTH = new Color(0.45f, 1f, 0.60f, 1f);
-    static final Color GOLD = new Color(1f, 0.80f, 0.30f, 1f);
-    static final Color GOOD = new Color(0.35f, 1f, 0.60f, 1f);
-    static final Color WARN = new Color(1f, 0.72f, 0.22f, 1f);
-    static final Color DANGER = new Color(1f, 0.32f, 0.42f, 1f);
-    static final Color TEXT = new Color(0.92f, 0.96f, 1f, 1f);
-    static final Color TEXT_DIM = new Color(0.55f, 0.63f, 0.78f, 1f);
-    static final Color TEXT_OFF = new Color(0.52f, 0.56f, 0.66f, 1f);
+    static final Color ACCENT = new Color(0.96f, 0.68f, 0.26f, 1f);
+    static final Color ACCENT_DIM = new Color(0.55f, 0.42f, 0.24f, 1f);
+    static final Color INFO = new Color(0.44f, 0.72f, 0.86f, 1f);
+    static final Color O2 = new Color(0.42f, 0.80f, 0.92f, 1f);
+    static final Color HEALTH = new Color(0.52f, 0.84f, 0.62f, 1f);
+    static final Color GOLD = new Color(0.98f, 0.78f, 0.36f, 1f);
+    static final Color GOOD = new Color(0.55f, 0.86f, 0.64f, 1f);
+    static final Color WARN = new Color(0.95f, 0.70f, 0.30f, 1f);
+    static final Color DANGER = new Color(0.88f, 0.36f, 0.34f, 1f);
+    static final Color TEXT = new Color(0.91f, 0.92f, 0.90f, 1f);
+    static final Color TEXT_DIM = new Color(0.62f, 0.67f, 0.71f, 1f);
+    static final Color TEXT_OFF = new Color(0.43f, 0.48f, 0.53f, 1f);
 
-    static final Color PANEL = new Color(0.035f, 0.055f, 0.125f, 0.88f);
-    static final Color PANEL_EDGE = new Color(0.30f, 0.62f, 0.95f, 0.45f);
-    static final Color CARD = new Color(0.07f, 0.11f, 0.21f, 0.86f);
-    static final Color CARD_EDGE = new Color(0.26f, 0.48f, 0.75f, 0.38f);
+    static final Color PANEL = new Color(0.045f, 0.062f, 0.086f, 0.94f);
+    static final Color PANEL_EDGE = new Color(0.32f, 0.44f, 0.52f, 0.55f);
+    static final Color GLASS = new Color(0.030f, 0.045f, 0.060f, 0.46f);
+    static final Color CARD = new Color(0.065f, 0.087f, 0.116f, 0.94f);
+    static final Color CARD_EDGE = new Color(0.24f, 0.33f, 0.40f, 0.52f);
 
-    static final Color BTN_PRIMARY = new Color(0.10f, 0.52f, 0.72f, 0.95f);
-    static final Color BTN_SECONDARY = new Color(0.13f, 0.22f, 0.42f, 0.92f);
-    static final Color BTN_WARM = new Color(0.72f, 0.38f, 0.10f, 0.95f);
-    static final Color BTN_OFF = new Color(0.16f, 0.17f, 0.22f, 0.82f);
+    static final Color BTN_PRIMARY = new Color(0.58f, 0.37f, 0.13f, 0.97f);
+    static final Color BTN_SECONDARY = new Color(0.10f, 0.15f, 0.20f, 0.95f);
+    static final Color BTN_WARM = new Color(0.48f, 0.21f, 0.16f, 0.97f);
+    static final Color BTN_OFF = new Color(0.13f, 0.15f, 0.17f, 0.85f);
 
-    static final Color NEBULA_PURPLE = new Color(0.55f, 0.22f, 0.85f, 1f);
-    static final Color NEBULA_BLUE = new Color(0.18f, 0.42f, 0.85f, 1f);
-    static final Color NEBULA_TEAL = new Color(0.12f, 0.62f, 0.68f, 1f);
+    /** Acero de paneles, tornillos y marcas tecnicas. */
+    static final Color STEEL = new Color(0.30f, 0.40f, 0.48f, 1f);
+    static final Color STEEL_LIGHT = new Color(0.55f, 0.66f, 0.72f, 1f);
+    static final Color STEEL_DARK = new Color(0.09f, 0.12f, 0.16f, 1f);
+    static final Color GRID = new Color(0.30f, 0.42f, 0.50f, 1f);
+    static final Color LED_OFF = new Color(0.20f, 0.24f, 0.27f, 1f);
+
+    static final Color NEBULA_PURPLE = new Color(0.28f, 0.19f, 0.40f, 1f);
+    static final Color NEBULA_BLUE = new Color(0.14f, 0.28f, 0.42f, 1f);
+    static final Color NEBULA_TEAL = new Color(0.10f, 0.33f, 0.36f, 1f);
 
     /** Haz del láser según el tipo de roca: C hielo, S silicato, M metálico. */
     static final Color LASER_C = new Color(0.45f, 0.95f, 1f, 1f);

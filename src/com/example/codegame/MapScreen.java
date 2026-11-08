@@ -14,11 +14,12 @@ import com.badlogic.gdx.utils.Array;
  */
 final class MapScreen {
 
-    private static final Color PANEL_C = new Color(0.020f, 0.035f, 0.080f, 0.94f);
-    private static final Color CARD_C = new Color(0.07f, 0.11f, 0.21f, 0.94f);
-    private static final Color CARD_SEL_C = new Color(0.10f, 0.22f, 0.38f, 0.96f);
-    private static final Color CARD_CURRENT_C = new Color(0.08f, 0.18f, 0.16f, 0.96f);
-    private static final Color CARD_EDGE_C = new Color(0.26f, 0.48f, 0.75f, 0.40f);
+    private static final Color PANEL_C = new Color(0.030f, 0.042f, 0.058f, 0.95f);
+    private static final Color CARD_C = new Color(0.060f, 0.080f, 0.100f, 0.94f);
+    private static final Color CARD_SEL_C = new Color(0.110f, 0.115f, 0.100f, 0.96f);
+    private static final Color CARD_CURRENT_C = new Color(0.075f, 0.110f, 0.090f, 0.96f);
+    private static final Color CARD_EDGE_C = new Color(0.24f, 0.33f, 0.40f, 0.50f);
+    private static final Color DECK_C = new Color(0.035f, 0.048f, 0.062f, 0.92f);
 
     private final MyGame game;
     private final UiKit ui;
@@ -213,18 +214,37 @@ final class MapScreen {
         Visuals.normal(batch);
 
         beginShapes();
-        ui.panel(px, py, pw, ph, 20f * u, PANEL_C, Visuals.PANEL_EDGE);
+        ui.grid(w, h, 80f * u, 0.018f);
+        ui.frame(px, py, pw, ph, 14f * u, PANEL_C, Visuals.PANEL_EDGE, Visuals.ACCENT);
+        ui.divider(px + 22f * u, h - 92f * u, pw - 44f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
+        ui.panel(px + 14f * u, py + 56f * u, pw - 28f * u, 158f * u,
+                8f * u, DECK_C, Visuals.PANEL_EDGE);
         for (int i = 0; i < rows.size; i++) {
             Button row = rows.get(i);
             SectorDef sector = sectorAt(i);
             boolean current = sector != null
                     && sector.id.equals(game.session.currentSector.id);
+            boolean discovered = sector != null
+                    && game.session.universe.isDiscovered(sector.id);
             Color fill = i == selected ? CARD_SEL_C
                     : current ? CARD_CURRENT_C : CARD_C;
             ui.panel(row.bounds.x - 4f * u, row.bounds.y - 4f * u,
                     row.bounds.width + 8f * u, row.bounds.height + 8f * u,
-                    10f * u, fill,
+                    7f * u, fill,
                     i == selected ? Visuals.ACCENT : CARD_EDGE_C);
+            float mid = row.bounds.y + row.bounds.height * 0.5f;
+            ui.led(row.bounds.x + 16f * u, mid, 3.2f * u,
+                    current ? Visuals.GOOD
+                            : discovered ? (i == selected ? Visuals.ACCENT : Visuals.INFO)
+                            : Visuals.LED_OFF);
+            drawSectorIcon(row.bounds.x + 42f * u, mid, 11f * u,
+                    current, discovered);
+            if (i == selected) {
+                shapes.setColor(Visuals.ACCENT);
+                shapes.rect(row.bounds.x + 2f * u, row.bounds.y + 10f * u,
+                        3f * u, row.bounds.height - 20f * u);
+            }
         }
         SectorDef chosen = sectorAt(selected);
         boolean canTravel = chosen != null
@@ -232,22 +252,25 @@ final class MapScreen {
                 && game.session.universe.isDiscovered(chosen.id);
         ui.drawButton(btnTravel, Visuals.BTN_PRIMARY, canTravel);
         ui.drawButton(btnBack, Visuals.BTN_SECONDARY, true);
+        ui.drawWarpIcon(btnTravel.bounds.x + 22f * u,
+                btnTravel.bounds.y + btnTravel.bounds.height * 0.5f,
+                8f * u, canTravel ? Visuals.ACCENT : Visuals.TEXT_OFF);
         shapes.end();
 
         batch.begin();
-        ui.textLeft("MAPA DE SECTORES", px + 22f * u, h - 34f * u,
-                1.0f * u, Visuals.ACCENT);
+        ui.textLeft("MAPA DE SECTORES", px + 24f * u, h - 32f * u,
+                0.94f * u, Visuals.TEXT);
         GalaxyDef currentGalaxy = galaxyOf(game.session.currentSector);
         SystemDef currentSystem = systemOf(game.session.currentSector);
-        ui.textLeftFit("ACTUAL: "
+        ui.textLeftFit("ACTUAL  "
                         + (currentGalaxy == null ? "?" : currentGalaxy.name)
                         + " / " + (currentSystem == null ? "?" : currentSystem.name)
                         + " / " + (game.session.currentSector == null ? "?"
                         : game.session.currentSector.name),
-                px + 22f * u, h - 62f * u, 0.70f * u, pw - 44f * u,
+                px + 24f * u, h - 58f * u, 0.66f * u, pw - 48f * u,
                 Visuals.TEXT_DIM);
         ui.textLeft("DESCUBIERTOS " + discoveredCount() + "/" + sectorsCount(),
-                px + 22f * u, h - 84f * u, 0.68f * u, Visuals.TEXT_OFF);
+                px + 24f * u, h - 80f * u, 0.60f * u, Visuals.TEXT_OFF);
         drawRows();
         drawFooter();
         batch.end();
@@ -262,38 +285,40 @@ final class MapScreen {
                     && game.session.universe.isDiscovered(sector.id);
             boolean current = sector != null
                     && sector.id.equals(game.session.currentSector.id);
-            float x = row.bounds.x + 12f * u;
+            float x = row.bounds.x + 76f * u;
             float mid = row.bounds.y + row.bounds.height * 0.5f;
-            float titleY = mid + 10f * u;
-            float descY = mid - 12f * u;
+            float titleY = mid + 18f * u;
+            float descY = mid - 10f * u;
             String title;
             String desc;
             Color color;
             if (!discovered) {
-                title = "???  SECTOR DESCONOCIDO";
-                desc = "SIN DATOS";
+                title = "???   SECTOR DESCONOCIDO";
+                desc = "SIN DATOS DE NAVEGACION";
                 color = Visuals.TEXT_OFF;
             } else {
                 GalaxyDef galaxy = galaxyOf(sector);
                 SystemDef system = systemOf(sector);
-                title = (current ? "AQUI  " : "") + sector.name;
+                title = (current ? "AQUI   " : "") + sector.name;
                 desc = (galaxy == null ? "?" : galaxy.name) + " / "
                         + (system == null ? "?" : system.name);
                 color = current ? Visuals.GOOD : Visuals.TEXT;
             }
-            ui.textLeftFit(title, x, titleY, 0.84f * u,
-                    row.bounds.width * 0.64f, color);
-            ui.textLeftFit(desc, x, descY, 0.64f * u,
-                    row.bounds.width * 0.64f, Visuals.TEXT_DIM);
+            ui.textLeftFit(title, x, titleY, 0.86f * u,
+                    row.bounds.width * 0.52f, color);
+            ui.textLeftFit(desc, x, descY, 0.62f * u,
+                    row.bounds.width * 0.52f, Visuals.TEXT_DIM);
             if (discovered && !current && sector != null) {
                 TravelService.Quote quote = TravelService.quote(
                         game.session, sector.id);
                 if (quote.ok || quote.warpLevel > 0) {
-                    ui.textLeft(String.format(java.util.Locale.US,
-                                    "%.1f u  C%d E%d", quote.distance,
-                                    quote.fuelCost, quote.energyCost),
-                            row.bounds.x + row.bounds.width * 0.64f,
-                            titleY, 0.62f * u,
+                    ui.textRight(String.format(java.util.Locale.US,
+                                    "%.1f u", quote.distance),
+                            row.bounds.x + row.bounds.width - 22f * u,
+                            titleY, 0.72f * u, Visuals.TEXT);
+                    ui.textRight("C" + quote.fuelCost + "  E" + quote.energyCost,
+                            row.bounds.x + row.bounds.width - 22f * u,
+                            descY, 0.60f * u,
                             quote.ok ? Visuals.ACCENT : Visuals.WARN);
                 }
             }
@@ -313,25 +338,42 @@ final class MapScreen {
         } else if (sector.id.equals(game.session.currentSector.id)) {
             info = "ESTAS EN " + sector.name;
         } else if (quote != null && quote.ok) {
-            info = "DESTINO " + sector.name + "  " + String.format(
-                    java.util.Locale.US, "%.1f u  C%d E%d", quote.distance,
+            info = "DESTINO " + sector.name + "   " + String.format(
+                    java.util.Locale.US, "%.1f u   C%d E%d", quote.distance,
                     quote.fuelCost, quote.energyCost);
         } else {
             info = quote == null || quote.error.isEmpty()
                     ? "SIN COSTE" : quote.error;
         }
         ui.textCenteredFit(info, px + pw * 0.5f, py + 178f * u,
-                0.70f * u, pw - 40f * u, Visuals.TEXT);
+                0.68f * u, pw - 40f * u, Visuals.TEXT);
         if (!message.isEmpty()) {
             ui.textCenteredFit(message, px + pw * 0.5f, py + 152f * u,
-                    0.68f * u, pw - 40f * u, Visuals.WARN);
+                    0.64f * u, pw - 40f * u, Visuals.WARN);
         } else {
             ui.textCentered("EL WARP NO NECESITA PUERTAS",
-                    px + pw * 0.5f, py + 152f * u, 0.62f * u,
+                    px + pw * 0.5f, py + 152f * u, 0.56f * u,
                     Visuals.TEXT_OFF);
         }
         ui.drawButtonText(btnTravel, true);
         ui.drawButtonText(btnBack, true);
+    }
+
+    private void drawSectorIcon(float cx, float cy, float r,
+                                boolean current, boolean discovered) {
+        float u = game.u;
+        if (current) {
+            ui.drawStationIcon(cx, cy, r, Visuals.GOOD);
+        } else if (discovered) {
+            ui.drawWarpIcon(cx, cy, r, Visuals.INFO);
+        } else {
+            shapes.setColor(Visuals.TEXT_OFF.r, Visuals.TEXT_OFF.g,
+                    Visuals.TEXT_OFF.b, 0.65f);
+            shapes.rect(cx - r, cy - r, r * 2f, 2f * u);
+            shapes.rect(cx - r, cy + r - 2f * u, r * 2f, 2f * u);
+            shapes.rect(cx - r, cy - r, 2f * u, r * 2f);
+            shapes.rect(cx + r - 2f * u, cy - r, 2f * u, r * 2f);
+        }
     }
 
     private void beginShapes() {

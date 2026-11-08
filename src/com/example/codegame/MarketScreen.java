@@ -14,10 +14,11 @@ import com.badlogic.gdx.utils.Array;
  */
 final class MarketScreen {
 
-    private static final Color PANEL_C = new Color(0.020f, 0.035f, 0.080f, 0.92f);
-    private static final Color CARD_C = new Color(0.07f, 0.11f, 0.21f, 0.92f);
-    private static final Color CARD_SEL_C = new Color(0.10f, 0.22f, 0.38f, 0.95f);
-    private static final Color CARD_EDGE_C = new Color(0.26f, 0.48f, 0.75f, 0.40f);
+    private static final Color PANEL_C = new Color(0.030f, 0.042f, 0.058f, 0.94f);
+    private static final Color CARD_C = new Color(0.060f, 0.080f, 0.100f, 0.94f);
+    private static final Color CARD_SEL_C = new Color(0.110f, 0.115f, 0.100f, 0.96f);
+    private static final Color CARD_EDGE_C = new Color(0.24f, 0.33f, 0.40f, 0.50f);
+    private static final Color DECK_C = new Color(0.035f, 0.048f, 0.062f, 0.92f);
 
     private final MyGame game;
     private final UiKit ui;
@@ -264,16 +265,45 @@ final class MarketScreen {
         Visuals.normal(batch);
 
         beginShapes();
-        ui.panel(px, py, pw, ph, 20f * u, PANEL_C, Visuals.PANEL_EDGE);
+        ui.grid(w, h, 80f * u, 0.018f);
+        ui.frame(px, py, pw, ph, 14f * u, PANEL_C, Visuals.PANEL_EDGE, Visuals.ACCENT);
+        ui.divider(px + 24f * u, h - 70f * u, pw - 48f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
+        // Cubierta de mando: agrupa cantidad y acciones en un bloque estable.
+        ui.panel(px + 14f * u, py + 56f * u, pw - 28f * u, 210f * u,
+                8f * u, DECK_C, Visuals.PANEL_EDGE);
         btnBuy.label = pending ? (pendingBuy ? "CONFIRMAR" : "CANCELAR") : "COMPRAR";
         btnSell.label = pending ? (!pendingBuy ? "CONFIRMAR" : "CANCELAR") : "VENDER";
         boolean idle = !pending;
         for (int i = 0; i < rowButtons.size; i++) {
-            ui.panel(rowButtons.get(i).bounds.x - 5f * u, rowButtons.get(i).bounds.y - 5f * u,
-                    rowButtons.get(i).bounds.width + 10f * u,
-                    rowButtons.get(i).bounds.height + 10f * u, 12f * u,
+            Button row = rowButtons.get(i);
+            ui.panel(row.bounds.x - 5f * u, row.bounds.y - 5f * u,
+                    row.bounds.width + 10f * u,
+                    row.bounds.height + 10f * u, 7f * u,
                     i == selected ? CARD_SEL_C : CARD_C,
                     i == selected ? Visuals.ACCENT : CARD_EDGE_C);
+            if (i == selected) {
+                shapes.setColor(Visuals.ACCENT);
+                shapes.rect(row.bounds.x + 2f * u, row.bounds.y + 10f * u,
+                        3f * u, row.bounds.height - 20f * u);
+            }
+            Commodity c = Commodity.values()[i];
+            ui.drawOreIcon(row.bounds.x + 22f * u,
+                    row.bounds.y + row.bounds.height * 0.5f, 9f * u,
+                    commodityColor(c));
+            Market market = game.activeMarket();
+            int stock = market.stock(c);
+            int target = market.target(c);
+            float frac = target > 0 ? Math.min(1f, stock / (float) target) : 0f;
+            float barX = row.bounds.x + 44f * u;
+            float barY = row.bounds.y + row.bounds.height * 0.5f - 30f * u;
+            shapes.setColor(0.030f, 0.042f, 0.055f, 0.90f);
+            Visuals.roundRect(shapes, barX, barY, 132f * u, 6f * u, 3f * u);
+            if (frac > 0.01f) {
+                shapes.setColor(frac > 0.35f ? Visuals.GOOD : Visuals.WARN);
+                Visuals.roundRect(shapes, barX, barY,
+                        Math.max(6f * u, 132f * u * frac), 6f * u, 3f * u);
+            }
         }
         for (int i = 0; i < qtyButtons.size; i++) {
             ui.drawButton(qtyButtons.get(i), Visuals.BTN_SECONDARY,
@@ -293,12 +323,20 @@ final class MarketScreen {
         shapes.end();
 
         batch.begin();
+        // Cabecera de columnas de la tabla.
+        float headY = listTop + 20f * u;
+        ui.textLeft("MINERAL", px + 62f * u, headY, 0.54f * u, Visuals.TEXT_OFF);
+        ui.textRight("COMPRA", px + pw - 250f * u, headY, 0.54f * u, Visuals.TEXT_OFF);
+        ui.textRight("VENTA", px + pw - 150f * u, headY, 0.54f * u, Visuals.TEXT_OFF);
+        ui.textRight("CARGA", px + pw - 62f * u, headY, 0.54f * u, Visuals.TEXT_OFF);
         ui.textLeft("MERCADO " + game.marketName(),
-                px + 24f * u, h - 36f * u, 1.0f * u, Visuals.ACCENT);
-        ui.textLeft("CREDITOS " + game.upgrades.coins()
+                px + 26f * u, h - 32f * u, 0.94f * u, Visuals.TEXT);
+        ui.textLeft("CONTRATOS DE COMPRA Y VENTA", px + 26f * u, h - 54f * u,
+                0.54f * u, Visuals.TEXT_OFF);
+        ui.textRight("CREDITOS " + game.upgrades.coins()
                         + "   BODEGA " + Math.round(game.world.ship.cargo().usedMass())
                         + "/" + Math.round(game.world.ship.cargo().capacity()) + " UM",
-                px + 24f * u, h - 62f * u, 0.78f * u, Visuals.TEXT_DIM);
+                btnBack.bounds.x - 18f * u, h - 34f * u, 0.66f * u, Visuals.TEXT_DIM);
         drawRows();
         drawControls();
         ui.drawButtonText(btnBack, true);
@@ -318,18 +356,27 @@ final class MarketScreen {
         for (int i = 0; i < rowButtons.size; i++) {
             Commodity c = Commodity.values()[i];
             Button b = rowButtons.get(i);
-            float x = b.bounds.x + 14f * u;
+            float x = b.bounds.x + 44f * u;
             float mid = b.bounds.y + b.bounds.height * 0.5f;
-            float titleY = mid + 12f * u;
-            float descY = mid - 12f * u;
-            ui.textLeftFit(c.displayName + "  " + market.stock(c) + "/" + market.target(c),
-                    x, titleY, 0.86f * u, b.bounds.width * 0.52f, Visuals.TEXT);
-            ui.textLeftFit("compra " + String.format(java.util.Locale.US, "%.2f", market.buyPrice(c))
-                            + "  venta " + String.format(java.util.Locale.US, "%.2f", market.sellPrice(c)),
-                    x, descY, 0.66f * u, b.bounds.width * 0.58f, Visuals.TEXT_DIM);
+            float titleY = mid + 18f * u;
+            float descY = mid - 10f * u;
+            ui.textLeftFit(c.displayName, x, titleY, 0.88f * u,
+                    b.bounds.width * 0.34f, Visuals.TEXT);
+            int stock = market.stock(c);
+            int target = market.target(c);
+            ui.textLeftFit("STOCK " + stock + "/" + target + "  " + c.use,
+                    x, descY, 0.58f * u, b.bounds.width * 0.40f, Visuals.TEXT_DIM);
+            ui.textRight(String.format(java.util.Locale.US, "%.2f", market.buyPrice(c)),
+                    b.bounds.x + b.bounds.width - 228f * u, mid + 9f * u,
+                    0.76f * u, Visuals.TEXT);
+            ui.textRight(String.format(java.util.Locale.US, "%.2f", market.sellPrice(c)),
+                    b.bounds.x + b.bounds.width - 128f * u, mid + 9f * u,
+                    0.76f * u, Visuals.TEXT);
             int have = game.world.ship.cargo().amount(c);
-            ui.textLeft("T " + have, b.bounds.x + b.bounds.width - 52f * u,
-                    titleY, 0.78f * u, have > 0 ? Visuals.GOOD : Visuals.TEXT_OFF);
+            ui.textRight(String.valueOf(have), b.bounds.x + b.bounds.width - 40f * u,
+                    mid + 9f * u, 0.82f * u, have > 0 ? Visuals.GOOD : Visuals.TEXT_OFF);
+            ui.textRight("por unidad", b.bounds.x + b.bounds.width - 228f * u,
+                    mid - 12f * u, 0.46f * u, Visuals.TEXT_OFF);
         }
     }
 
@@ -337,20 +384,21 @@ final class MarketScreen {
         float u = game.u;
         Market market = game.activeMarket();
         Commodity c = selectedCommodity();
-        ui.textLeftFit("SELECCION: " + c.displayName + "   CANTIDAD " + quantity
-                        + "   MAX " + Math.max(maxSell(), maxBuy()),
-                px + 24f * u, py + 246f * u, 0.72f * u, pw - 48f * u, Visuals.TEXT);
-        ui.textCentered(qtyText(0), qtyButtons.get(0).bounds.x + qtyButtons.get(0).bounds.width * 0.5f,
-                py + 208f * u, 0.82f * u, Visuals.TEXT);
-        ui.textCentered(qtyText(1), qtyButtons.get(1).bounds.x + qtyButtons.get(1).bounds.width * 0.5f,
-                py + 208f * u, 0.82f * u, Visuals.TEXT);
-        ui.textCentered(String.valueOf(quantity),
-                qtyButtons.get(2).bounds.x + qtyButtons.get(2).bounds.width * 0.5f,
-                py + 208f * u, 0.95f * u, Visuals.GOLD);
-        ui.textCentered(qtyText(3), qtyButtons.get(3).bounds.x + qtyButtons.get(3).bounds.width * 0.5f,
-                py + 208f * u, 0.82f * u, Visuals.TEXT);
-        ui.textCentered(qtyText(4), qtyButtons.get(4).bounds.x + qtyButtons.get(4).bounds.width * 0.5f,
-                py + 208f * u, 0.82f * u, Visuals.TEXT);
+        ui.textLeftFit("SELECCION " + c.displayName, px + 26f * u, py + 252f * u,
+                0.66f * u, pw * 0.45f, Visuals.TEXT);
+        ui.textRight("CANTIDAD " + quantity + "   MAX " + Math.max(maxSell(), maxBuy()),
+                px + pw - 26f * u, py + 252f * u, 0.66f * u, Visuals.GOLD);
+        // Las etiquetas se centran en el centro real de cada boton, no en una Y
+        // fija: asi quedan alineadas con su espacio aunque cambie la altura.
+        for (int i = 0; i < qtyButtons.size; i++) {
+            Button b = qtyButtons.get(i);
+            String label = i == 2 ? String.valueOf(quantity) : qtyText(i);
+            ui.textCenteredMiddle(label,
+                    b.bounds.x + b.bounds.width * 0.5f,
+                    b.bounds.y + b.bounds.height * 0.5f,
+                    i == 2 ? 0.95f * u : 0.82f * u,
+                    i == 2 ? Visuals.GOLD : Visuals.TEXT);
+        }
         ui.drawButtonText(btnTodo, maxSell() > 0);
         ui.drawButtonText(btnNada, quantity > 0);
         if (pending) {
@@ -359,21 +407,38 @@ final class MarketScreen {
             ui.textCentered((pendingBuy ? "CONFIRMAR COMPRA " : "CONFIRMAR VENTA ")
                             + quantity + " " + c.displayName + " por "
                             + (int) pendingTotal() + " cr",
-                    px + pw * 0.5f, py + 184f * u, 0.76f * u, Visuals.WARN);
-            ui.textCentered("Pulsa CONFIRMAR o CANCELAR", 
-                    px + pw * 0.5f, py + 72f * u, 0.62f * u, Visuals.TEXT_DIM);
+                    px + pw * 0.5f, py + 184f * u, 0.72f * u, Visuals.WARN);
+            ui.textCentered("PULSA CONFIRMAR O CANCELAR",
+                    px + pw * 0.5f, py + 72f * u, 0.58f * u, Visuals.TEXT_DIM);
         } else {
             ui.drawButtonText(btnBuy, quantity > 0 && quantity <= maxBuy());
             ui.drawButtonText(btnSell, quantity > 0 && quantity <= maxSell());
             if (!message.isEmpty()) {
                 ui.textCentered(message, px + pw * 0.5f, py + 72f * u,
-                        0.68f * u, Visuals.TEXT_DIM);
+                        0.66f * u, Visuals.ACCENT);
             } else {
-                ui.textLeft("Compra " + String.format(java.util.Locale.US, "%.2f", market.buyPrice(c))
-                                + " cr/u   Venta " + String.format(java.util.Locale.US, "%.2f", market.sellPrice(c))
-                                + " cr/u",
-                        px + 24f * u, py + 72f * u, 0.70f * u, Visuals.TEXT_DIM);
+                ui.textCentered("COMPRA " + String.format(java.util.Locale.US, "%.2f", market.buyPrice(c))
+                                + " CR/U   VENTA " + String.format(java.util.Locale.US, "%.2f", market.sellPrice(c))
+                                + " CR/U",
+                        px + pw * 0.5f, py + 72f * u, 0.62f * u, Visuals.TEXT_DIM);
             }
+        }
+    }
+
+    private static Color commodityColor(Commodity c) {
+        switch (c) {
+            case HIELO:
+                return Visuals.O2;
+            case SILICATO:
+                return Visuals.STEEL_LIGHT;
+            case HIERRO:
+                return Visuals.WARN;
+            case COBRE:
+                return Visuals.BTN_WARM;
+            case TITANIO:
+                return Visuals.INFO;
+            default:
+                return Visuals.GOLD;
         }
     }
 

@@ -14,10 +14,10 @@ import com.badlogic.gdx.utils.Array;
  */
 final class StationManagementScreen {
 
-    private static final Color PANEL_C = new Color(0.020f, 0.035f, 0.080f, 0.94f);
-    private static final Color CARD_C = new Color(0.07f, 0.11f, 0.21f, 0.94f);
-    private static final Color CARD_SEL_C = new Color(0.10f, 0.22f, 0.38f, 0.96f);
-    private static final Color CARD_EDGE_C = new Color(0.26f, 0.48f, 0.75f, 0.40f);
+    private static final Color PANEL_C = new Color(0.030f, 0.042f, 0.058f, 0.95f);
+    private static final Color CARD_C = new Color(0.060f, 0.080f, 0.100f, 0.94f);
+    private static final Color CARD_SEL_C = new Color(0.110f, 0.115f, 0.100f, 0.96f);
+    private static final Color CARD_EDGE_C = new Color(0.24f, 0.33f, 0.40f, 0.50f);
 
     private final MyGame game;
     private final UiKit ui;
@@ -252,19 +252,47 @@ final class StationManagementScreen {
         Visuals.normal(batch);
 
         beginShapes();
-        ui.panel(px, py, pw, ph, 20f * u, PANEL_C, Visuals.PANEL_EDGE);
+        ui.grid(w, h, 80f * u, 0.018f);
+        ui.frame(px, py, pw, ph, 14f * u, PANEL_C, Visuals.PANEL_EDGE, Visuals.ACCENT);
+        ui.divider(px + 22f * u, h - 112f * u, pw - 44f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
         for (int i = 0; i < slotButtons.size; i++) {
             Button b = slotButtons.get(i);
+            StationModule module = game.session.playerStation.moduleAt(i);
             ui.panel(b.bounds.x - 4f * u, b.bounds.y - 4f * u,
                     b.bounds.width + 8f * u, b.bounds.height + 8f * u,
-                    10f * u, i == selectedSlot ? CARD_SEL_C : CARD_C,
+                    7f * u, i == selectedSlot ? CARD_SEL_C : CARD_C,
                     i == selectedSlot ? Visuals.ACCENT : CARD_EDGE_C);
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            ui.led(b.bounds.x + 16f * u, mid, 3.2f * u,
+                    module == null ? Visuals.LED_OFF : Visuals.GOOD);
+            drawModuleIcon(i, b.bounds.x + 42f * u, mid, 11f * u,
+                    module == null ? Visuals.TEXT_OFF : Visuals.ACCENT);
+            shapes.setColor(0f, 0f, 0f, 0.30f);
+            shapes.rect(b.bounds.x + 64f * u, b.bounds.y + 10f * u, 1.2f * u,
+                    b.bounds.height - 20f * u);
+            if (module != null) {
+                ui.drawLevelPips(b.bounds.x + 76f * u, b.bounds.y + 14f * u,
+                        module.level());
+            }
+            if (i == selectedSlot) {
+                shapes.setColor(Visuals.ACCENT);
+                shapes.rect(b.bounds.x + 2f * u, b.bounds.y + 10f * u,
+                        3f * u, b.bounds.height - 20f * u);
+            }
         }
         for (int i = 0; i < catalogButtons.size; i++) {
             boolean can = game.session.playerStation.moduleAt(
                     selectedSlot) == null && selectedCatalog == i;
             ui.drawButton(catalogButtons.get(i),
                     can ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
+            float bx = catalogButtons.get(i).bounds.x;
+            float by = catalogButtons.get(i).bounds.y;
+            drawModuleChipIcon(i, bx + 17f * u, by + 20f * u, 8f * u,
+                    can ? Visuals.ACCENT : Visuals.STEEL_LIGHT);
+            ui.led(bx + catalogButtons.get(i).bounds.width - 12f * u,
+                    by + 20f * u, 2.6f * u,
+                    can ? Visuals.ACCENT : Visuals.LED_OFF);
         }
         ui.drawButton(btnBuild, Visuals.BTN_PRIMARY,
                 game.session.playerStation.moduleAt(selectedSlot) == null);
@@ -278,6 +306,8 @@ final class StationManagementScreen {
                 game.session.playerStation.market());
         ui.drawButton(btnRepair, Visuals.BTN_WARM,
                 game.session.playerStation.repair());
+        ui.divider(px + 20f * u, py + 76f * u, pw - 40f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
         if (!fromInterior) {
             ui.drawButton(btnEnter, Visuals.BTN_SECONDARY, true);
@@ -285,25 +315,66 @@ final class StationManagementScreen {
         shapes.end();
 
         batch.begin();
-        ui.textLeft("ESTACION PERSONAL", px + 22f * u, h - 34f * u,
-                1.0f * u, Visuals.ACCENT);
+        ui.textLeft("ESTACION PERSONAL", px + 24f * u, h - 32f * u,
+                0.94f * u, Visuals.TEXT);
+        ui.textLeft("CONSOLA DE GESTION", px + 24f * u, h - 54f * u,
+                0.54f * u, Visuals.TEXT_OFF);
         ui.textLeftFit("SERVICIOS " + servicesText()
                         + "   ALMACEN " + Math.round(
                         game.session.playerStation.stationStorage().totalUnits())
                         + "/" + Math.round(game.session.playerStation.storageCapacity())
                         + " UM",
-                px + 22f * u, h - 60f * u, 0.70f * u, pw - 44f * u,
+                px + 24f * u, h - 78f * u, 0.66f * u, pw - 48f * u,
                 Visuals.TEXT_DIM);
         ui.textLeft("MODULOS " + game.session.playerStation.moduleCount()
                         + "/" + PlayerStation.SLOTS,
-                px + 22f * u, h - 84f * u, 0.68f * u, Visuals.TEXT_OFF);
+                px + 24f * u, h - 100f * u, 0.62f * u, Visuals.TEXT_OFF);
         if (!message.isEmpty()) {
-            ui.textLeftFit(message, px + 22f * u, h - 102f * u, 0.64f * u,
-                    pw - 44f * u, Visuals.ACCENT);
+            ui.textRight(message, px + pw - 24f * u, h - 100f * u, 0.62f * u,
+                    Visuals.ACCENT);
         }
         drawSlots();
         drawFooter();
         batch.end();
+    }
+
+    private void drawModuleIcon(int slot, float cx, float cy, float r, Color c) {
+        StationModule module = game.session.playerStation.moduleAt(slot);
+        if (module == null) {
+            ui.drawCargoIcon(cx, cy, r, c);
+            return;
+        }
+        switch (module.def) {
+            case STORAGE:
+                ui.drawCargoIcon(cx, cy, r, c);
+                break;
+            case REPAIR:
+                ui.drawGearIcon(cx, cy, r, c);
+                break;
+            case REFINERY:
+                ui.drawEnergyIcon(cx, cy, r, c);
+                break;
+            default:
+                ui.drawOreIcon(cx, cy, r, c);
+                break;
+        }
+    }
+
+    private void drawModuleChipIcon(int index, float cx, float cy, float r, Color c) {
+        switch (catalog[index]) {
+            case STORAGE:
+                ui.drawCargoIcon(cx, cy, r, c);
+                break;
+            case REPAIR:
+                ui.drawGearIcon(cx, cy, r, c);
+                break;
+            case REFINERY:
+                ui.drawEnergyIcon(cx, cy, r, c);
+                break;
+            default:
+                ui.drawOreIcon(cx, cy, r, c);
+                break;
+        }
     }
 
     private String servicesText() {
@@ -328,24 +399,30 @@ final class StationManagementScreen {
         for (int i = 0; i < slotButtons.size; i++) {
             Button b = slotButtons.get(i);
             StationModule module = game.session.playerStation.moduleAt(i);
-            float x = b.bounds.x + 12f * u;
+            float x = b.bounds.x + 76f * u;
             float mid = b.bounds.y + b.bounds.height * 0.5f;
-            float titleY = mid + 10f * u;
-            float descY = mid - 12f * u;
+            float titleY = mid + 18f * u;
+            float descY = mid - 10f * u;
             if (module == null) {
-                ui.textLeftFit("RANURA " + (i + 1) + "  VACIA", x, titleY,
-                        0.82f * u, b.bounds.width * 0.7f, Visuals.TEXT_OFF);
-                ui.textLeftFit("Elige modulo abajo y CONSTRUIR", x, descY,
+                ui.textLeftFit("RANURA " + (i + 1) + "   VACIA", x, titleY,
+                        0.86f * u, b.bounds.width * 0.7f, Visuals.TEXT_OFF);
+                ui.textLeftFit("Elige modulo abajo y pulsa CONSTRUIR", x, descY,
                         0.60f * u, b.bounds.width, Visuals.TEXT_DIM);
             } else {
-                ui.textLeftFit(module.def.displayName + "  Nv." + module.level(),
-                        x, titleY, 0.82f * u, b.bounds.width * 0.6f,
-                        Visuals.TEXT);
-                ui.textLeftFit(module.def.description, x, descY, 0.60f * u,
-                        b.bounds.width * 0.7f, Visuals.TEXT_DIM);
-                ui.textLeft("C" + module.def.creditCost * (module.level() + 1),
-                        b.bounds.x + b.bounds.width - 70f * u, titleY,
-                        0.68f * u, Visuals.GOLD);
+                ui.textLeftFit(module.def.displayName, x, titleY, 0.90f * u,
+                        b.bounds.width * 0.52f, Visuals.TEXT);
+                ui.textLeftFit(module.def.description, x, descY, 0.62f * u,
+                        b.bounds.width * 0.58f, Visuals.TEXT_DIM);
+                ui.textRight("NV." + module.level(), b.bounds.x + b.bounds.width - 24f * u,
+                        titleY, 0.76f * u, Visuals.ACCENT);
+                if (module.canUpgrade()) {
+                    ui.textRight("MEJORA " + module.upgradeCredits() + " CR",
+                            b.bounds.x + b.bounds.width - 24f * u, descY,
+                            0.58f * u, Visuals.GOLD);
+                } else {
+                    ui.textRight("NIVEL MAXIMO", b.bounds.x + b.bounds.width - 24f * u,
+                            descY, 0.58f * u, Visuals.TEXT_OFF);
+                }
             }
         }
     }
@@ -353,10 +430,14 @@ final class StationManagementScreen {
     private void drawFooter() {
         float u = game.u;
         for (int i = 0; i < catalogButtons.size; i++) {
-            ui.textCentered(catalog[i].displayName, catalogButtons.get(i)
-                            .bounds.x + catalogButtons.get(i).bounds.width * 0.5f,
-                    py + 238f * u, 0.62f * u,
+            Button b = catalogButtons.get(i);
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            ui.textLeftMiddle(catalog[i].displayName, b.bounds.x + 34f * u,
+                    mid, 0.62f * u,
                     selectedCatalog == i ? Visuals.GOLD : Visuals.TEXT_DIM);
+            ui.textRightMiddle(String.valueOf(catalog[i].creditCost),
+                    b.bounds.x + b.bounds.width - 24f * u, mid,
+                    0.54f * u, selectedCatalog == i ? Visuals.GOLD : Visuals.TEXT_OFF);
         }
         ui.drawButtonText(btnBuild, true);
         ui.drawButtonText(btnUpgrade, true);

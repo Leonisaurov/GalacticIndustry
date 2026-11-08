@@ -14,13 +14,13 @@ import com.badlogic.gdx.math.MathUtils;
  */
 final class PlayHud {
 
-    private static final Color PANEL_BOTTOM_C = new Color(0.020f, 0.035f, 0.085f, 0.88f);
-    private static final Color PANEL_TOP_C = new Color(0.070f, 0.110f, 0.230f, 0.93f);
-    private static final Color FUEL_TRACK_C = new Color(0.03f, 0.05f, 0.10f, 0.95f);
-    private static final Color FUEL_EDGE_C = new Color(0.22f, 0.38f, 0.58f, 0.55f);
-    private static final Color CONTROL_TRACK_C = new Color(0.04f, 0.07f, 0.14f, 0.62f);
-    private static final Color CONTROL_EDGE_C = new Color(0.28f, 0.55f, 0.85f, 0.30f);
-    private static final Color COIN_CHIP_C = new Color(0.08f, 0.09f, 0.16f, 0.92f);
+    private static final Color PANEL_BOTTOM_C = new Color(0.030f, 0.042f, 0.058f, 0.94f);
+    private static final Color PANEL_TOP_C = new Color(0.070f, 0.095f, 0.122f, 0.96f);
+    private static final Color FUEL_TRACK_C = new Color(0.025f, 0.038f, 0.052f, 0.96f);
+    private static final Color FUEL_EDGE_C = new Color(0.28f, 0.38f, 0.44f, 0.65f);
+    private static final Color CONTROL_TRACK_C = new Color(0.035f, 0.055f, 0.075f, 0.72f);
+    private static final Color CONTROL_EDGE_C = new Color(0.32f, 0.44f, 0.52f, 0.45f);
+    private static final Color COIN_CHIP_C = new Color(0.07f, 0.09f, 0.11f, 0.94f);
     private static final Color tint = new Color();
     private static final Color tint2 = new Color();
 
@@ -77,10 +77,28 @@ final class PlayHud {
                 PANEL_BOTTOM_C,
                 PANEL_TOP_C,
                 PANEL_TOP_C);
-        shapes.setColor(0.30f, 0.65f, 1f, 0.45f);
-        shapes.rect(0f, h - panelH, w, 2f * u);
-        shapes.setColor(0f, 0f, 0f, 0.35f);
+        // Franja de consola: acento, canales de ventilacion y tornillos.
+        shapes.setColor(0.020f, 0.030f, 0.040f, 0.96f);
+        shapes.rect(0f, h - panelH, w, 12f * u);
+        shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.70f);
+        shapes.rect(0f, h - panelH + 12f * u, w, 2f * u);
+        shapes.setColor(0f, 0f, 0f, 0.45f);
         shapes.rect(0f, h - panelH - 4f * u, w, 4f * u);
+        shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.50f);
+        shapes.rect(0f, h - 2.5f * u, w, 1.5f * u);
+        shapes.setColor(Visuals.STEEL_LIGHT.r, Visuals.STEEL_LIGHT.g,
+                Visuals.STEEL_LIGHT.b, 0.20f);
+        shapes.rect(0f, h - 4f * u, w, 1f * u);
+        shapes.setColor(1f, 1f, 1f, 0.035f);
+        shapes.rect(0f, h - panelH + 14f * u, w, 1.5f * u);
+        shapes.setColor(Visuals.STEEL_LIGHT.r, Visuals.STEEL_LIGHT.g,
+                Visuals.STEEL_LIGHT.b, 0.30f);
+        shapes.circle(24f * u, h - panelH + 6f * u, 2f * u, 8);
+        shapes.circle(w - 24f * u, h - panelH + 6f * u, 2f * u, 8);
+        shapes.setColor(0f, 0f, 0f, 0.35f);
+        for (int i = 0; i < 8; i++) {
+            shapes.rect(w * 0.50f + i * 9f * u, h - panelH + 5f * u, 5f * u, 2f * u);
+        }
 
         drawFuelBar(w, h, panelH);
         drawEnergyBar(w, h);
@@ -114,8 +132,8 @@ final class PlayHud {
         drawHudGlow(w, h);
 
         batch.begin();
-        ui.textLeft(String.valueOf(upgrades.coins() + world.coinsEarned),
-                pad + 38f * u, h - 60f * u, 1.15f * u, Visuals.GOLD);
+        ui.textLeftMiddle(String.valueOf(upgrades.coins() + world.coinsEarned),
+                pad + 38f * u, h - 54f * u, 1.15f * u, Visuals.GOLD);
         boolean narrow = w < 600f * u;
         String statusText = "OLEADA " + world.wave + "   PUNTOS " + world.score;
         if (narrow) {
@@ -132,9 +150,9 @@ final class PlayHud {
         float hullFrac = world.ship.part[Ship.HULL] / world.ship.maxHull;
         float hx = hullChipX(w);
         float hy = hullChipY(h);
-        ui.textLeft("CASCO", hx + 34f * u, hy + 31f * u, 0.55f * u, Visuals.TEXT_DIM);
-        ui.textLeft(Math.round(hullFrac * 100f) + "%", hx + 34f * u, hy + 17f * u,
-                0.78f * u, UiKit.partColor(hullFrac));
+        ui.textLeft("CASCO", hx + 32f * u, hy + 36f * u, 0.46f * u, Visuals.TEXT_DIM);
+        ui.textLeft(Math.round(hullFrac * 100f) + "%", hx + 32f * u, hy + 22f * u,
+                0.74f * u, UiKit.partColor(hullFrac));
         ui.textLeftFit("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
                         + Math.round(world.ship.cargo().capacity()) + " UM"
                         + "   MODS " + upgrades.shipModuleCount() + "/"
@@ -177,7 +195,7 @@ final class PlayHud {
             float ay = alertY(h, panelH, slot);
             int pct = Math.round(pf * 100f);
             ui.textLeft(Ship.PART_NAMES[i] + " " + pct + "%",
-                    ax + 14f * u, ay + 15f * u, 0.68f * u, UiKit.partColor(pf));
+                    ax + 30f * u, ay + 15f * u, 0.68f * u, UiKit.partColor(pf));
             slot++;
         }
         if (hud.canRecover) {
@@ -263,6 +281,14 @@ final class PlayHud {
             Visuals.roundRect(shapes, barX + inset + 2f * u, barY + barH * 0.55f,
                     Math.max(0f, fw - 4f * u), barH * 0.28f, barH * 0.14f);
         }
+        // Graduacion cada 10 %: lectura de instrumento, no barra decorativa.
+        for (int i = 1; i < 10; i++) {
+            shapes.setColor(0f, 0f, 0f, 0.30f);
+            shapes.rect(barX + barW * i / 10f, barY + 4f * u, 1.2f * u, barH - 8f * u);
+        }
+        shapes.setColor(Visuals.STEEL_LIGHT.r, Visuals.STEEL_LIGHT.g,
+                Visuals.STEEL_LIGHT.b, 0.35f);
+        shapes.rect(barX + barW - 3f * u, barY + 4f * u, 3f * u, barH - 8f * u);
     }
 
     /** El capacitor solo se muestra cuando el láser está en uso o acaba de minar. */
@@ -287,7 +313,7 @@ final class PlayHud {
     Color energyColor() {
         float frac = world.ship.capacitor.fraction();
         if (frac > 0.5f) {
-            return Visuals.ACCENT;
+            return Visuals.INFO;
         }
         return frac > 0.25f ? Visuals.WARN : Visuals.DANGER;
     }
@@ -311,11 +337,7 @@ final class PlayHud {
         // Rayo del icono.
         float bx = energyBarX() - 13f * u;
         float by = y + bh * 0.5f;
-        shapes.setColor(energyColor());
-        shapes.triangle(bx - 2f * u, by + 5f * u, bx + 4f * u, by + 1f * u,
-                bx - 1f * u, by + 1f * u);
-        shapes.triangle(bx + 2f * u, by - 5f * u, bx - 4f * u, by - 1f * u,
-                bx + 1f * u, by - 1f * u);
+        ui.drawEnergyIcon(bx, by, 6f * u, energyColor());
     }
 
     void drawEnergyText(float w, float h) {
@@ -332,11 +354,11 @@ final class PlayHud {
     }
 
     float hullChipW() {
-        return 96f * u;
+        return 104f * u;
     }
 
     float hullChipH() {
-        return 40f * u;
+        return 46f * u;
     }
 
     float hullChipX(float w) {
@@ -344,7 +366,7 @@ final class PlayHud {
     }
 
     float hullChipY(float h) {
-        return h - 87f * u;
+        return h - 89f * u;
     }
 
     void drawHullChip(float w, float h) {
@@ -355,8 +377,13 @@ final class PlayHud {
         float frac = world.ship.part[Ship.HULL] / world.ship.maxHull;
         ui.panel(x, y, cw, ch, ch * 0.34f, COIN_CHIP_C, Visuals.PANEL_EDGE);
         drawShield(x + 18f * u, y + ch * 0.60f, 9f * u, UiKit.partColor(frac));
-        ui.drawIntegrityBar(x + 34f * u, y + 6f * u, cw - 44f * u,
-                Math.max(4f * u, ch * 0.15f), frac);
+        ui.drawIntegrityBar(x + 32f * u, y + 3f * u, cw - 40f * u,
+                Math.max(3.5f * u, ch * 0.09f), frac);
+        for (int i = 1; i < 4; i++) {
+            shapes.setColor(0f, 0f, 0f, 0.35f);
+            shapes.rect(x + 32f * u + (cw - 40f * u) * i / 4f, y + 3f * u,
+                    1.2f * u, Math.max(3.5f * u, ch * 0.09f));
+        }
     }
 
     float survivalBarH() {
@@ -411,6 +438,10 @@ final class PlayHud {
             shapes.setColor(1f, 1f, 1f, 0.18f);
             Visuals.roundRect(shapes, x + inset + 2f * u, y + h * 0.56f,
                     Math.max(0f, fw - 4f * u), h * 0.24f, h * 0.12f);
+        }
+        for (int i = 1; i < 4; i++) {
+            shapes.setColor(0f, 0f, 0f, 0.28f);
+            shapes.rect(x + w * i / 4f, y + 3f * u, 1.2f * u, h - 6f * u);
         }
         float iconX = x + h * 0.62f;
         float iconY = y + h * 0.5f;
@@ -509,6 +540,7 @@ final class PlayHud {
             ui.panel(x, y, alertW(), alertH(), alertH() * 0.45f, COIN_CHIP_C, Visuals.PANEL_EDGE);
             shapes.setColor(UiKit.partColor(frac));
             Visuals.roundRect(shapes, x + 4f * u, y + 4f * u, 4f * u, alertH() - 8f * u, 2f * u);
+            ui.drawAlertIcon(x + 18f * u, y + alertH() * 0.5f, 6f * u, UiKit.partColor(frac));
             slot++;
         }
     }
@@ -518,16 +550,18 @@ final class PlayHud {
         float y = b.bounds.y;
         float w = b.bounds.width;
         float h = b.bounds.height;
-        float r = h * 0.30f;
+        float r = 5f * u;
         boolean pressed = ui.pressed != null && ui.pressed.is(b);
         ui.panel(x, y, w, h, r,
                 pressed ? tint2.set(Visuals.BTN_PRIMARY).lerp(Color.WHITE, 0.12f) : Visuals.BTN_SECONDARY,
                 Visuals.PANEL_EDGE);
-        float bw = w * 0.10f;
-        float bh = h * 0.42f;
-        shapes.setColor(0.85f, 0.95f, 1f, 0.95f);
-        Visuals.roundRect(shapes, x + w * 0.5f - bw * 1.6f, y + h * 0.5f - bh * 0.5f, bw, bh, bw * 0.5f);
-        Visuals.roundRect(shapes, x + w * 0.5f + bw * 0.6f, y + h * 0.5f - bh * 0.5f, bw, bh, bw * 0.5f);
+        shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.75f);
+        shapes.rect(x + 5f * u, y + 6f * u, 2.5f * u, h - 12f * u);
+        float bw = w * 0.09f;
+        float bh = h * 0.38f;
+        shapes.setColor(0.88f, 0.90f, 0.88f, 0.95f);
+        Visuals.roundRect(shapes, x + w * 0.5f - bw * 1.7f, y + h * 0.5f - bh * 0.5f, bw, bh, 1f * u);
+        Visuals.roundRect(shapes, x + w * 0.5f + bw * 0.7f, y + h * 0.5f - bh * 0.5f, bw, bh, 1f * u);
     }
 
     void drawControls() {
@@ -537,32 +571,39 @@ final class PlayHud {
 
     /** Joystick reutilizable por la partida y por los interiores. */
     void drawJoystick() {
-        shapes.setColor(0.10f, 0.18f, 0.35f, 0.28f);
+        shapes.setColor(0.02f, 0.03f, 0.04f, 0.55f);
+        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR + 2f * u, 40);
+        shapes.setColor(Visuals.STEEL.r, Visuals.STEEL.g, Visuals.STEEL.b, 0.34f);
         shapes.circle(hud.joyCx, hud.joyCy, hud.joyR, 40);
-        shapes.setColor(0.30f, 0.65f, 1f, 0.30f);
-        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR, 40);
-        shapes.setColor(0.06f, 0.10f, 0.22f, 0.55f);
-        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR - 3f * u, 40);
-        shapes.setColor(0.30f, 0.65f, 1f, 0.18f);
-        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR * 0.72f, 32);
-        // Cuatro marcas cardinales.
-        for (int i = 0; i < 4; i++) {
-            float a = i * 90f;
-            shapes.setColor(0.55f, 0.85f, 1f, 0.45f);
-            shapes.circle(hud.joyCx + MathUtils.cosDeg(a) * hud.joyR * 0.84f,
-                    hud.joyCy + MathUtils.sinDeg(a) * hud.joyR * 0.84f, 2.2f * u, 5);
+        shapes.setColor(0.045f, 0.065f, 0.085f, 0.88f);
+        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR - 2.5f * u, 40);
+        shapes.setColor(Visuals.STEEL_LIGHT.r, Visuals.STEEL_LIGHT.g,
+                Visuals.STEEL_LIGHT.b, 0.20f);
+        shapes.circle(hud.joyCx, hud.joyCy, hud.joyR * 0.70f, 32);
+        // Ocho marcas de rumbo.
+        for (int i = 0; i < 8; i++) {
+            float a = i * 45f;
+            float len = i % 2 == 0 ? 6f * u : 3.5f * u;
+            shapes.setColor(Visuals.STEEL_LIGHT.r, Visuals.STEEL_LIGHT.g,
+                    Visuals.STEEL_LIGHT.b, 0.42f);
+            shapes.circle(hud.joyCx + MathUtils.cosDeg(a) * hud.joyR * 0.86f,
+                    hud.joyCy + MathUtils.sinDeg(a) * hud.joyR * 0.86f,
+                    len * 0.35f, 6);
         }
         if (hud.joyAiming) {
-            shapes.setColor(0.36f, 0.86f, 1f, 0.30f);
-            shapes.rectLine(hud.joyCx, hud.joyCy, hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, 4f * u);
+            shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.30f);
+            shapes.rectLine(hud.joyCx, hud.joyCy, hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, 3f * u);
         }
-        shapes.setColor(0.10f, 0.30f, 0.55f, 0.95f);
-        shapes.circle(hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 0.46f, 28);
-        shapes.setColor(0.36f, 0.80f, 1f, 0.95f);
+        Color knob = hud.joyAiming ? Visuals.ACCENT : Visuals.STEEL_LIGHT;
+        shapes.setColor(0.02f, 0.03f, 0.04f, 0.85f);
+        shapes.circle(hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 0.47f, 28);
+        shapes.setColor(knob.r * 0.55f, knob.g * 0.55f, knob.b * 0.55f, 1f);
         shapes.circle(hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 0.38f, 24);
-        shapes.setColor(0.80f, 0.96f, 1f, 0.65f);
-        shapes.circle(hud.joyCx + hud.knobX - hud.joyR * 0.10f,
-                hud.joyCy + hud.knobY + hud.joyR * 0.10f, hud.joyR * 0.12f, 10);
+        shapes.setColor(knob);
+        shapes.circle(hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 0.29f, 20);
+        shapes.setColor(1f, 1f, 1f, 0.45f);
+        shapes.circle(hud.joyCx + hud.knobX - hud.joyR * 0.08f,
+                hud.joyCy + hud.knobY + hud.joyR * 0.08f, hud.joyR * 0.08f, 8);
     }
 
     /** Solo joystick y su etiqueta: se usa en los interiores. */
@@ -584,15 +625,15 @@ final class PlayHud {
         float bh = hud.thrust.bounds.height;
         float max = world.up.maxSpeed();
         float speedFrac = max > 0f ? MathUtils.clamp(world.ship.vel.len() / max, 0f, 1f) : 0f;
-        ui.panel(x, y, bw, bh, bw * 0.46f,
+        ui.panel(x, y, bw, bh, bw * 0.30f,
                 CONTROL_TRACK_C,
                 CONTROL_EDGE_C);
         if (hud.throttle > 0.01f) {
-            shapes.setColor(0.14f, 0.52f, 0.82f, 0.30f);
+            shapes.setColor(0.42f, 0.29f, 0.12f, 0.42f);
             Visuals.roundRect(shapes, x + 4f * u, y + 4f * u,
-                    bw - 8f * u, (bh - 8f * u) * hud.throttle, bw * 0.40f);
-            shapes.setColor(0.35f, 0.86f, 1f, 0.38f);
-            shapes.rect(x + 7f * u, y + 7f * u, bw - 14f * u, (bh - 14f * u) * hud.throttle);
+                    bw - 8f * u, (bh - 8f * u) * hud.throttle, bw * 0.26f);
+            shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.55f);
+            shapes.rect(x + 8f * u, y + 8f * u, bw - 16f * u, (bh - 16f * u) * hud.throttle);
         }
         // Marcas de nivel.
         for (int i = 1; i < 5; i++) {
@@ -602,15 +643,18 @@ final class PlayHud {
         }
         // Marca blanca de velocidad actual.
         shapes.setColor(1f, 1f, 1f, 0.90f);
-        shapes.rect(x - 6f * u, y + bh * speedFrac - 2f * u, bw + 12f * u, 4f * u);
-        shapes.setColor(1f, 0.75f, 0.35f, 0.90f);
-        shapes.circle(x + bw * 0.5f, y + bh * speedFrac, 4f * u, 10);
+        shapes.rect(x - 6f * u, y + bh * speedFrac - 2f * u, bw + 12f * u, 3f * u);
+        shapes.setColor(Visuals.ACCENT);
+        shapes.circle(x + bw * 0.5f, y + bh * speedFrac, 3.5f * u, 10);
         // Nudo del acelerador.
         float knobYLocal = y + bh * hud.throttle;
-        shapes.setColor(0.10f, 0.30f, 0.55f, 0.95f);
-        shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.30f, 20);
-        shapes.setColor(0.36f, 0.80f, 1f, 0.95f);
-        shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.22f, 16);
+        shapes.setColor(0f, 0f, 0f, 0.65f);
+        shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.34f, 20);
+        shapes.setColor(Visuals.STEEL_LIGHT.r * 0.55f, Visuals.STEEL_LIGHT.g * 0.55f,
+                Visuals.STEEL_LIGHT.b * 0.55f, 1f);
+        shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.27f, 16);
+        shapes.setColor(Visuals.ACCENT);
+        shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.19f, 14);
     }
 
     void drawHudGlow(float w, float h) {

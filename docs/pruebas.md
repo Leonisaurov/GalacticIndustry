@@ -79,6 +79,12 @@ Salidas:
 - `build/test-logs/selftest.txt` y `build/test-logs/crash.txt`.
 - Las capturas y logs están dentro de `build/`, que no se versiona.
 
+La identidad visual de UPD-003 se revisa en las capturas de menú, partida,
+pausa, muerte, estación, mercado, mapa, gestión e interior. Los tests de
+dispositivo usan geometría fija de `tools/tests/testlib.sh`: si cambia la
+posición de un botón, hay que actualizar esa geometría y volver a ejecutar el
+test afectado.
+
 Los tests de dispositivo activan temporalmente **No Molestar** para que no
 aparezcan notificaciones personales en las capturas y restauran el valor
 anterior en un `trap` (también con Ctrl-C).
