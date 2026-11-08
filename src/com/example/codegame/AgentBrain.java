@@ -133,10 +133,7 @@ final class AgentBrain {
         if (units <= 0) {
             return;
         }
-        int total = Math.max(1, Math.round(market.sellPrice(agent.commodity) * units));
-        agent.cargo.removeExact(agent.commodity, units);
-        market.addStock(agent.commodity, units);
-        agent.credits += total;
+        market.sellTo(agent, agent.commodity, units);
     }
 
     private static void refuel(PilotAgent agent) {

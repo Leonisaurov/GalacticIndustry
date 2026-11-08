@@ -2488,6 +2488,52 @@ public class SelfTest {
                         || offlineWorld.agents.get(0).state.ordinal() != offlineState
                         || offlineWorld.agents.get(0).timer > 0f);
 
+        // T-704: ventas y compras de agentes contra el mercado.
+        Market agentMarket = GameData.newMarket();
+        PilotAgent trader = new PilotAgent("T-704", "TRADER",
+                PilotAgent.Role.MINER, AgentRoster.CARGO_CAPACITY,
+                AgentRoster.MAX_FUEL, AgentRoster.SPEED, AgentRoster.MINING_RATE);
+        trader.cargo.addExact(Commodity.HIELO, 10);
+        int hieloStock0 = agentMarket.stock(Commodity.HIELO);
+        float hieloSell0 = agentMarket.sellPrice(Commodity.HIELO);
+        int traderCoins0 = trader.credits;
+        int sold = agentMarket.sellTo(trader, Commodity.HIELO, 10);
+        check("las ventas de agentes suben stock y bajan precio",
+                sold > 0
+                        && agentMarket.stock(Commodity.HIELO) == hieloStock0 + 10
+                        && agentMarket.sellPrice(Commodity.HIELO) < hieloSell0
+                        && trader.credits == traderCoins0 + sold
+                        && trader.cargo.isEmpty());
+        int hierroStock0 = agentMarket.stock(Commodity.HIERRO);
+        float hierroBuy0 = agentMarket.buyPrice(Commodity.HIERRO);
+        int traderCoins1 = trader.credits;
+        int bought = agentMarket.buyTo(trader, Commodity.HIERRO, 5);
+        check("las compras de agentes bajan stock y suben precio",
+                bought > 0
+                        && agentMarket.stock(Commodity.HIERRO) == hierroStock0 - 5
+                        && agentMarket.buyPrice(Commodity.HIERRO) > hierroBuy0
+                        && trader.credits == traderCoins1 - bought
+                        && trader.cargo.amount(Commodity.HIERRO) == 5);
+        int coinsBeforeFail = trader.credits;
+        check("un agente no vende lo que no tiene",
+                agentMarket.sellTo(trader, Commodity.ORO, 1) == 0
+                        && trader.credits == coinsBeforeFail);
+        PilotAgent broke = new PilotAgent("T-704B", "BROKE",
+                PilotAgent.Role.MINER, AgentRoster.CARGO_CAPACITY,
+                AgentRoster.MAX_FUEL, AgentRoster.SPEED, AgentRoster.MINING_RATE);
+        broke.credits = 0;
+        check("un agente sin créditos no compra",
+                agentMarket.buyTo(broke, Commodity.HIERRO, 1) == 0
+                        && broke.cargo.isEmpty());
+        check("un agente no compra más stock del disponible",
+                agentMarket.buyTo(trader, Commodity.ORO, 999) == 0);
+        PilotAgent full = new PilotAgent("T-704C", "FULL",
+                PilotAgent.Role.MINER, AgentRoster.CARGO_CAPACITY,
+                AgentRoster.MAX_FUEL, AgentRoster.SPEED, AgentRoster.MINING_RATE);
+        full.cargo.addExact(Commodity.SILICATO, 60);
+        check("un agente no compra sin capacidad",
+                agentMarket.buyTo(full, Commodity.HIELO, 1) == 0);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

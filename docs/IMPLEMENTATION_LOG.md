@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:06:00-06:00  
+**Última actualización:** 2026-11-08T04:14:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,65 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-057 — Transacciones de agentes en el mercado
+
+- **Fecha:** 2026-11-08T04:14:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-704
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Market.sellTo()`: vende carga del agente, sube stock, baja precio y paga
+  créditos solo si hay carga.
+- `Market.buyTo()`: compra para el agente, baja stock, sube precio y exige
+  créditos y capacidad.
+- `AgentBrain` usa `sellTo()` al vender.
+- Las operaciones inválidas no crean créditos ni mueven stock.
+- `15_agents` verifica que un agente vende y gana créditos en dispositivo.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/AgentBrain.java`
+- `src/com/example/codegame/PilotAgent.java`
+- `src/com/example/codegame/EconomySim.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/15_agents.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS las ventas de agentes suben stock y bajan precio`
+- `PASS las compras de agentes bajan stock y suben precio`
+- `PASS un agente no vende lo que no tiene`
+- `PASS un agente sin créditos no compra`
+- `PASS un agente no compra más stock del disponible`
+- `PASS un agente no compra sin capacidad`
+- `15_agents`: el agente vende y sus créditos superan 200.
+
+### Decisiones tomadas
+
+- Las transacciones de agentes viven en `Market` y comparten precios con el
+  jugador.
+- El cerebro usa la venta; la compra queda disponible para transportistas y
+  pruebas.
+- No se crean créditos sin una venta válida.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-705 — Simulación offline y persistencia de agentes**.
 
 ---
 

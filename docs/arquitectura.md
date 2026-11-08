@@ -173,6 +173,9 @@ estáticos se reutilizan.
   `valorCarga · fill − combustible − tiempo · oportunidad − riesgo`.
   Un minero básico solo considera Hielo, Silicato, Hierro y Cobre.
 - Si la mejor utilidad no es positiva, pasa a `IDLE` y espera.
+- `Market.sellTo()` y `Market.buyTo()` son las transacciones de agentes:
+  - vender sube stock, baja el precio y paga créditos solo si hay carga;
+  - comprar baja stock, sube el precio y exige créditos y capacidad.
 - Al vender, el stock de la estación sube y el precio baja; el agente cobra y
   reposta con sus créditos (sin saldo negativo).
 - El tick/LOD de agentes llega en T-703; el render limitado, en T-706.

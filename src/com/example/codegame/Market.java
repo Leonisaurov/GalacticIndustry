@@ -112,4 +112,40 @@ final class Market {
         return PriceModel.midPrice(commodity.basePrice, stock(commodity),
                 target(commodity));
     }
+
+    /**
+     * Un agente vende {@code units} al mercado: sube stock, baja el precio y
+     * cobra créditos. Devuelve el total pagado, o 0 si no es válido.
+     */
+    int sellTo(PilotAgent agent, Commodity commodity, int units) {
+        if (agent == null || commodity == null || units <= 0
+                || agent.cargo.amount(commodity) < units) {
+            return 0;
+        }
+        int total = Math.max(1, Math.round(sellPrice(commodity) * units));
+        agent.cargo.removeExact(commodity, units);
+        addStock(commodity, units);
+        agent.credits += total;
+        return total;
+    }
+
+    /**
+     * Un agente compra {@code units}: baja stock, sube el precio y paga con sus
+     * créditos. Devuelve el total pagado, o 0 si no es válido.
+     */
+    int buyTo(PilotAgent agent, Commodity commodity, int units) {
+        if (agent == null || commodity == null || units <= 0
+                || stock(commodity) < units
+                || !agent.cargo.canAdd(commodity, units)) {
+            return 0;
+        }
+        int total = Math.max(1, Math.round(buyPrice(commodity) * units));
+        if (agent.credits < total) {
+            return 0;
+        }
+        agent.credits -= total;
+        addStock(commodity, -units);
+        agent.cargo.addExact(commodity, units);
+        return total;
+    }
 }

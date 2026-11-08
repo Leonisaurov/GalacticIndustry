@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S7` — Pilotos autónomos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-703` — Crear EconomySim con tick y LOD.
-- Primera tarea disponible: `T-704` — Conectar transacciones de agentes con el mercado.
+- Última tarea completada: `T-704` — Conectar transacciones de agentes con el mercado.
+- Primera tarea disponible: `T-705` — Simulación offline y persistencia de agentes.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **58 %** (47 de 81 tareas de progreso).
+- La implementación del juego está al **59 %** (48 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

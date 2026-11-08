@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T04:06:00-06:00",
-    "lastSessionId": "S-056",
+    "lastUpdated": "2026-11-08T04:14:00-06:00",
+    "lastSessionId": "S-057",
     "lastVerification": {
-      "date": "2026-11-08T04:06:00-06:00",
+      "date": "2026-11-08T04:14:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "SimClock cerca 2 s / lejos 5 s / offline 60 s",
-        "Agentes tickean cada 2 s y mercados cada 10 s, no por frame",
-        "Bench de 24 agentes sin bloquear",
-        "15_agents: TRAVEL y MINE observables en dispositivo",
+        "Market.sellTo/buyTo mueven stock, precio y créditos del agente",
+        "Ventas suben stock y bajan precio; compras al revés",
+        "Sin carga, créditos, stock o capacidad la operación falla sin crear créditos",
+        "15_agents: el agente vende y gana créditos",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S7",
     "currentTaskId": null,
-    "nextTaskId": "T-704",
+    "nextTaskId": "T-705",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3648,7 +3648,7 @@
       "description": "Hacer que las compras/ventas de los agentes muevan stock y precios.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-703",
@@ -3673,10 +3673,40 @@
         "Test de impacto"
       ],
       "technicalNotes": "Registrar transacciones para depuración.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-057",
+          "date": "2026-11-08T04:14:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Market.sellTo/buyTo centralizan las transacciones de agentes con validación de carga, créditos, stock y capacidad. AgentBrain vende con sellTo; precios y stock reaccionan. Tests de ida/vuelta, abuso y créditos; 15_agents verifica la venta real.",
+          "files": [
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/AgentBrain.java",
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/EconomySim.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Test de abuso"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS las ventas de agentes suben stock y bajan precio",
+        "PASS las compras de agentes bajan stock y suben precio",
+        "PASS un agente no vende lo que no tiene",
+        "PASS un agente sin créditos no compra",
+        "PASS un agente no compra más stock del disponible",
+        "PASS un agente no compra sin capacidad",
+        "15_agents: créditos del agente suben tras vender"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T04:14:00-06:00"
     },
     {
       "id": "T-705",
@@ -3685,7 +3715,7 @@
       "description": "Permitir que el universo avance al cerrar el juego con un límite y sin servidor.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-703",
@@ -5643,6 +5673,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-057",
+      "date": "2026-11-08T04:14:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Transacciones de agentes en el mercado",
+      "summary": "Market.sellTo/buyTo con validación y AgentBrain vendiendo por esa vía. Las ventas suben stock y bajan precio; las compras al revés; no se crean créditos sin carga.",
+      "tasks": [
+        "T-704"
+      ],
+      "files": [
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/AgentBrain.java",
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/EconomySim.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-705 (simulación offline y persistencia de agentes)."
+    },
     {
       "id": "S-056",
       "date": "2026-11-08T04:06:00-06:00",

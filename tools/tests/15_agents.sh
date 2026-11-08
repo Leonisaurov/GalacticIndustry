@@ -15,6 +15,13 @@ assert_eq "agentes acoplados" 8 "$(printf '%s' "$status" | json_get agentsDocked
 assert_eq "estado observable del agente 0" DOCKED "$(printf '%s' "$status" | json_get agent0State)"
 wait_status_field agent0State TRAVEL 5 || fail "el agente no despertó a los 2 s"
 wait_status_field agent0State MINE 6 || fail "el agente no llegó a minar"
+credits=200
+for _ in $(seq 1 60); do
+    credits=$(latest_status | json_get agent0Credits)
+    [ "$credits" -gt 200 ] && break
+    sleep 0.5
+done
+assert_ge "el agente gana créditos vendiendo" 201 "$credits"
 
 check_no_crash
-echo "OK 15_agents: 8 mineros, tick cada 2 s y estados observables sin render"
+echo "OK 15_agents: 8 mineros, tick, ciclo y venta con créditos"
