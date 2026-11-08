@@ -4075,6 +4075,39 @@ public class SelfTest {
                         ShipModuleDef.PROPULSION)
                         && configLoaded.upgrades().shipModuleCount() == 2);
 
+        // T-1107: cierre final, guardado largo y economia estable.
+        GameWorld longWorld = new GameWorld(new Upgrades(true));
+        longWorld.start();
+        Market longMarket = longWorld.station.market;
+        for (int i = 0; i < 8640; i++) {
+            EconomySim.tick(longMarket);
+        }
+        boolean longBounded = true;
+        for (Commodity c : Commodity.values()) {
+            int stock = longMarket.stock(c);
+            float buy = longMarket.buyPrice(c);
+            longBounded = longBounded && stock >= 0
+                    && stock <= longMarket.target(c) * EconomySim.MAX_STOCK_FACTOR
+                    && buy > 0f && Float.isFinite(buy);
+        }
+        System.out.println("BENCH final 24h precios acotados=" + longBounded);
+        check("24 h simuladas no descontrolan la economia", longBounded);
+        SaveService.MemoryStorage finalStore = new SaveService.MemoryStorage();
+        SaveService finalSaves = new SaveService(finalStore);
+        check("una partida larga se guarda", finalSaves.save(s9));
+        String finalText = finalStore.read(SaveService.SAVE_NAME);
+        GameSession finalLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("una partida larga se restaura completa",
+                SaveCodec.validate(finalText)
+                        && finalSaves.load(finalLoaded) == SaveService.LoadStatus.V2
+                        && finalLoaded.playerStation.built()
+                        && finalLoaded.playerStation.moduleCount() == 4
+                        && finalLoaded.playerStation.serviceMask() == 15
+                        && finalLoaded.sector.agents.size() == 8
+                        && finalLoaded.sector.station.market != null
+                        && finalLoaded.sector.station.missions.missions().size() >= 2);
+
         // T-1105: balance de una expedicion y estabilidad de recursos.
         GameSession balance = new GameSession(new PlayerProfile(new Upgrades(true)));
         balance.startRun();

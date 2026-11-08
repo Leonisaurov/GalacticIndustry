@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T12:58:00-06:00  
+**Última actualización:** 2026-11-08T13:20:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,57 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-090 — Regresión final y cierre del proyecto
+
+- **Fecha:** 2026-11-08T13:20:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1107
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Regresión 11/11**:
+  `01_logic`, `03_controls`, `04_autopilot`, `05_death`, `12_mining`,
+  `13_station`, `14_market`, `15_agents`, `16_universe`, `17_player_station`
+  y `18_interiors`.
+- **Partida larga** guardada/restaurada con estación, módulos, agentes, mercado
+  y misiones.
+- **24 h simuladas** mantienen stock y precios acotados.
+- Panel y documentación sincronizados.
+- **S11 completada**; **81/81 tareas de progreso (100 %)**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- Regresión completa (11 tests): **11/11 OK**.
+- `01_logic`: **TODO OK** tras el gate final.
+
+### Evidencias
+
+- `PASS una partida larga se guarda`
+- `PASS una partida larga se restaura completa`
+- `BENCH final 24h precios acotados=true`
+- `PASS 24 h simuladas no descontrolan la economia`
+- `Implementación: 81/81 (100 %)`.
+
+### Decisiones tomadas
+
+- El plan de progreso se cierra con T-1103 y T-1007 pospuestas.
+- No quedan tareas críticas abiertas.
+
+### Pendiente / siguiente paso
+
+- Ninguno. El plan está completado.
 
 ---
 

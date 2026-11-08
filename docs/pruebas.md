@@ -281,6 +281,16 @@ Verificación de T-1006:
 | El estado se guarda | `PASS S10: el interior se restaura`; `38_entry` |
 | Sin regresiones en vuelo/minería/comercio | `03_controls`, `12_mining`, `13_station` |
 
+## Cierre del proyecto (T-1107)
+
+- Regresión completa: `01_logic`, `03_controls`, `04_autopilot`, `05_death`,
+  `12_mining`, `13_station`, `14_market`, `15_agents`, `16_universe`,
+  `17_player_station`, `18_interiors` — **11/11 OK**.
+- Partida larga: guardado/restauración de estación, módulos, agentes, mercado y
+  misiones.
+- Economía: 24 h simuladas mantienen stock y precios acotados.
+- Panel sincronizado con el estado final.
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

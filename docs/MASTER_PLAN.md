@@ -3,7 +3,7 @@
 **Proyecto:** GalacticIndustry / *Asteroides*  
 **Motor:** Java + LibGDX 1.14.2 · Android  
 **Documento:** visión, arquitectura y plan de transformación  
-**Estado:** auditoría y preparación completadas; implementación del juego **no iniciada**  
+**Estado:** implementación completada; 81/81 tareas de progreso (2 pospuestas)  
 **Última actualización:** 2026-11-07  
 **Fuente canónica de ejecución:** [`docs/IMPLEMENTATION_TRACKER.json`](IMPLEMENTATION_TRACKER.json)  
 **Panel:** [`docs/dashboard/index.html`](dashboard/index.html)  
@@ -707,7 +707,7 @@ La granularidad ejecutable está en `IMPLEMENTATION_TRACKER.json`. Esta tabla es
 | S8 | Universo | Warp libre, streaming, galaxias reales/ficticias | S5–S7 | T-801..T-808 | **Completada**: viaje libre y streaming |
 | S9 | Estación propia | Plataforma vacía, módulos construibles | S6, S8 | T-901..T-908 | **Completada**: construir y ampliar |
 | S10 | Interiores | Movimiento a pie; estación propia y base para naves | S9 | T-1001..T-1007 | **Completada**: entrar, caminar y salir |
-| S11 | Expansión | Naves modulares, audio completo, balance | S8–S10 | T-1101..T-1109 | Regresión final |
+| S11 | Expansión | Naves modulares, audio completo, balance | S8–S10 | T-1101..T-1109 | **Completada**: regresión final |
 
 ### 12.1 Reglas de las etapas
 
