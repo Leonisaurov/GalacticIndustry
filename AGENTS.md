@@ -10,30 +10,39 @@ Juego Android en **Java + libGDX 1.14.2**. Build canónico: **apkc + apkc-deps**
 ## Cómo continuar el proyecto (obligatorio)
 
 Este repositorio usa un sistema persistente de continuidad. **No dependas de la
-memoria de una conversación anterior.** El estado real está en archivos.
+memoria de una conversación anterior.** El estado real está en archivos y puede
+haber otras sesiones trabajando al mismo tiempo.
 
 Al empezar cualquier sesión, en este orden:
 
 1. Lee este `AGENTS.md`.
-2. Consulta `docs/STATUS.md` para conocer el estado real sin abrir el tracker
+2. Ejecuta `git status --short` y `python3 tools/continuity.py status`. Registra
+   qué archivos ya estaban modificados o sin seguimiento y qué tareas o sesiones
+   están activas. **No son tuyos.**
+3. Consulta `docs/STATUS.md` para conocer el estado real sin abrir el tracker
    completo.
-3. Consulta `docs/INDEX.md` para localizar el sistema, los archivos, el diseño,
+4. Consulta `docs/INDEX.md` para localizar el sistema, los archivos, el diseño,
    las decisiones, las tareas y las pruebas.
-4. Localiza la tarea `EN_PROGRESO` o `LISTO` y sus dependencias, primero en el
-   plan base y después en la actualización aprobada. Usa `contextFiles` y
-   `contextDocs` si están registrados.
-5. Identifica solo los archivos y documentos pertinentes.
-6. Contrasta la documentación con el código real antes de modificarlo.
-7. Consulta las decisiones aplicables en `docs/DECISIONS.md`.
-8. Comprueba que las dependencias están `COMPLETADO` y que no hay decisiones
-   pendientes que bloqueen la tarea.
+5. Abre **solo** la ficha `docs/systems/<sistema>.md` correspondiente. No leas
+   todas las fichas ni todo `MASTER_PLAN.md`.
+6. Localiza la tarea `EN_PROGRESO` o `LISTO` y sus dependencias, primero en el
+   plan base y después en la actualización aprobada. Usa `contextFiles`,
+   `contextDocs`, `artifacts` y `tests` si están registrados.
+7. Identifica solo los archivos y documentos pertinentes.
+8. Contrasta la documentación con el código real antes de modificarlo.
+9. Consulta las decisiones aplicables en `docs/DECISIONS.md`.
+10. Comprueba que las dependencias están `COMPLETADO` y que no hay decisiones
+    pendientes que bloqueen la tarea.
+11. Reserva la tarea con `python3 tools/continuity.py claim ...`. No empieces una
+    tarea que ya esté `EN_PROGRESO` con otra sesión.
 
 Después, implementa **una sola tarea**, ejecuta sus pruebas, verifica sus
-criterios y actualiza tracker, log, decisiones, documentación y panel. Detente.
-No empieces automáticamente la siguiente tarea.
+criterios y actualiza tracker, ficha de sistema, sesión, decisiones y panel.
+Detente. No empieces automáticamente la siguiente tarea.
 
-> **Regla de oro:** una sesión = una tarea. No implementes una etapa completa
-> ni te adelantes a funcionalidades posteriores.
+> **Regla de oro:** una sesión = una tarea principal. Varias sesiones pueden
+> trabajar a la vez en tareas distintas. No implementes una etapa completa ni te
+> adelantes a funcionalidades posteriores.
 
 ### Reglas de lectura
 
@@ -42,9 +51,34 @@ No empieces automáticamente la siguiente tarea.
 - No explores indiscriminadamente todo `src/` cuando el índice ya señala los
   archivos. Lee solo los fragmentos necesarios.
 - Si el índice no cubre el sistema, haz búsquedas dirigidas y, al terminar,
-  valora añadir o corregir la entrada en `docs/INDEX.md`.
+  añade o corrige la ficha y la fila de `docs/INDEX.md`.
 - Si un documento y el código discrepan, prevalece el código real; corrige la
   documentación o el comentario obsoleto y deja constancia.
+
+## Coordinación entre sesiones
+
+No hay un agente coordinador permanente. Cada sesión documenta y sincroniza su
+propio trabajo. El protocolo completo está en `docs/CONCURRENCY.md`.
+
+- **Detecta cambios ajenos:** `git status --short`; inspecciona antes de editar.
+  No uses `git reset --hard`, `git clean`, `git checkout --`, `git stash` ajeno
+  ni `git add .`.
+- **Reserva tu tarea:** `tools/continuity.py claim T-XXX --session S-XXX`.
+  No reasignes una tarea `EN_PROGRESO` de otra sesión sin inspeccionarla y sin
+  autorización.
+- **Actualiza el tracker:** `tools/continuity.py apply plan.json`. Relee dentro
+  del bloqueo, aplica solo tu tarea, valida y escribe de forma atómica. Usa
+  `expectUpdatedAt` para detectar conflictos.
+- **Documentos compartidos:** `tools/continuity.py replace ARCHIVO --old-file ... --new-file ... --count 1`
+  para cambios localizados, o `append` para añadir al final.
+- **Sesiones:** `tools/continuity.py new-session` crea
+  `docs/sessions/S-XXX.md`. El log histórico anterior a S-093 no se reescribe.
+- **Sincroniza:** `python3 tools/sync-dashboard.py` regenera `STATUS.md` y el
+  panel bajo bloqueo.
+- **Bloqueo breve:** `docs/.continuity.lock` (`flock`). No se mantiene durante la
+  implementación. Se libera al terminar el proceso.
+- **Conflicto:** si dos sesiones tocan la misma tarea o los mismos campos, el
+  segundo recibe conflicto y debe releer. No sobrescribas una copia antigua.
 
 ## Archivos de continuidad
 
@@ -53,9 +87,12 @@ No empieces automáticamente la siguiente tarea.
 | `AGENTS.md` | Punto de entrada y protocolo |
 | `docs/STATUS.md` | **Resumen generado** del estado; no editar a mano |
 | `docs/INDEX.md` | Mapa de sistemas → código, diseño, decisiones, tareas y pruebas |
-| `docs/MASTER_PLAN.md` | Plan maestro, arquitectura, fórmulas, riesgos |
+| `docs/systems/*.md` | Fichas de referencia por sistema; navegación selectiva |
+| `docs/CONCURRENCY.md` | Bloqueos, escrituras atómicas y coordinación entre sesiones |
+| `docs/sessions/S-XXX.md` | Registro independiente de cada sesión nueva |
+| `docs/MASTER_PLAN.md` | Plan maestro histórico, arquitectura, fórmulas, riesgos |
 | `docs/IMPLEMENTATION_TRACKER.json` | **Fuente canónica** de etapas, tareas, estados, dependencias y progreso |
-| `docs/IMPLEMENTATION_LOG.md` | Historial cronológico de sesiones |
+| `docs/IMPLEMENTATION_LOG.md` | Historial narrativo hasta S-092; no se reescribe |
 | `docs/DECISIONS.md` | Decisiones de producto y técnicas |
 | `docs/PENDING_DECISIONS.md` | Resumen de decisiones cerradas; ya no hay pendientes |
 | `docs/updates/README.md` | Flujo, estados, esquema y restricciones de las actualizaciones |
@@ -65,6 +102,8 @@ No empieces automáticamente la siguiente tarea.
 | `docs/dashboard/dashboard.js` | Lógica del panel (filtros, temas, enlaces y render) |
 | `docs/PROJECT_DASHBOARD.html` | Redirección de compatibilidad a `docs/dashboard/index.html` |
 | `tools/sync-dashboard.py` | Validación del tracker, sincronización JSON → HTML y generación de `STATUS.md` |
+| `tools/continuity.py` | Reserva de tareas, planes de actualización, sesiones y bloqueo |
+| `tools/continuity_io.py` | Bloqueo `flock` y escritura atómica reutilizable |
 
 No edites a mano el bloque `tracker-data` de `docs/dashboard/index.html` salvo que sea imprescindible.
 Después de modificar el JSON, ejecuta:
@@ -86,8 +125,11 @@ a ejecutar el sincronizador.
 | `docs/DECISIONS.md` | Decisiones aprobadas, aplazadas o resueltas | Copia del estado de las tareas |
 | `docs/MASTER_PLAN.md` | Especificación histórica y planificación | Estado de ejecución actualizado |
 | `docs/INDEX.md` | Mapa de navegación entre sistemas y documentos | Duplicación del plan maestro |
+| `docs/systems/*.md` | Ficha de referencia de un sistema | Duplicación del plan maestro |
 | `docs/STATUS.md` | Resumen generado del estado actual | Datos escritos a mano |
-| `docs/IMPLEMENTATION_LOG.md` | Historial cronológico de sesiones | Fuente canónica de estado |
+| `docs/IMPLEMENTATION_LOG.md` | Historial narrativo hasta S-092 | Fuente canónica de estado |
+| `docs/sessions/S-XXX.md` | Registro de una sesión | Estado canónico o copia del tracker |
+| `docs/CONCURRENCY.md` | Protocolo de bloqueo y coordinación | Estado de tareas |
 
 Los demás documentos deben enlazar a estas fuentes en lugar de reproducir
 bloques extensos. No se añaden nuevas fuentes de verdad.
@@ -111,12 +153,15 @@ bloques extensos. No se añaden nuevas fuentes de verdad.
 
 ## Protocolo al iniciar una tarea
 
-1. Identifica el alcance exacto en el tracker.
+1. Identifica el alcance exacto en el tracker y en la ficha del sistema.
 2. Comprueba que todas sus dependencias están `COMPLETADO`.
 3. Revisa si tiene `decisionIds` pendientes. Si los tiene, no implementes:
    registra la decisión y detente.
 4. Inspecciona los archivos y el código existente.
-5. Marca la tarea `EN_PROGRESO` en el tracker y añade una entrada inicial al log.
+5. Reserva la tarea con `python3 tools/continuity.py claim T-XXX --session S-XXX`.
+   La herramienta marca `EN_PROGRESO`, registra `assignedSessionId` y añade una
+   entrada inicial al `executionLog`. Si ya está en progreso con otra sesión, no
+   la reclames sin inspeccionarla.
 6. Implementa solo lo necesario para esa tarea.
 7. No refactorices sistemas ajenos salvo que sea imprescindible; justifícalo.
 8. No implementes tareas posteriores “de paso”.
@@ -125,8 +170,9 @@ bloques extensos. No se añaden nuevas fuentes de verdad.
 
 1. Ejecuta las pruebas de la tarea.
 2. Verifica cada criterio de aceptación.
-3. Registra archivos modificados y decisiones técnicas.
-4. Actualiza el tracker:
+3. Registra archivos modificados, contexto consultado y decisiones técnicas.
+4. Prepara un plan JSON y aplica los cambios al tracker con
+   `python3 tools/continuity.py apply plan.json`. Incluye:
    - estado de la tarea;
    - `meta.lastUpdated`, `meta.lastSessionId`;
    - `meta.currentStageId`, `meta.currentTaskId`, `meta.nextTaskId`;
@@ -135,50 +181,54 @@ bloques extensos. No se añaden nuevas fuentes de verdad.
    - `artifacts` con los archivos realmente creados o modificados;
    - `contextFiles`/`contextDocs` si la tarea se reabre o se revisa;
    - evidencias y `executionLog`;
-   - sesión en `sessions`.
-5. Añade la sesión a `docs/IMPLEMENTATION_LOG.md`.
-6. Actualiza `docs/DECISIONS.md` si tomaste una decisión.
-7. Actualiza `docs/INDEX.md` si cambió un sistema, una ruta, una tarea o una
-   prueba. Actualiza el documento `docs/updates/UPD-XXX.md` si la tarea
-   pertenece a una actualización. No reescribas el plan maestro: solo aclara si
-   cambió el diseño y las dependencias del plan base.
+   - sesión en `sessions`, con `document` apuntando a `docs/sessions/S-XXX.md`.
+5. Escribe el resumen completo en `docs/sessions/S-XXX.md`. No reescribas
+   `docs/IMPLEMENTATION_LOG.md`; conserva el histórico anterior a S-093.
+6. Actualiza `docs/systems/<sistema>.md` si cambió arquitectura, clases,
+   responsabilidades, dependencias, pruebas o problemas conocidos.
+7. Actualiza `docs/DECISIONS.md` si tomaste una decisión. Actualiza la fila
+   correspondiente de `docs/INDEX.md` solo si cambió un sistema, una ruta, una
+   tarea o una prueba.
 8. Ejecuta `python3 tools/sync-dashboard.py`; esto regenera `docs/STATUS.md` y
-   sincroniza el panel. No edites `STATUS.md` a mano.
-9. Haz commit de la tarea (ver “Git: un commit por paso”).
-10. Detente.
+   sincroniza el panel bajo bloqueo. No edites `STATUS.md` a mano.
+9. Revisa `git status --short` y comprueba que no has pisado cambios ajenos.
+10. No hagas commit salvo que el usuario lo pida expresamente. Detente.
 
-## Git: un commit por paso
+## Git: conservación del trabajo
 
-Cada tarea o paso completado debe quedar guardado en un commit local:
+Los commits no son automáticos. El repositorio puede contener cambios de otras
+sesiones.
 
-1. Ejecuta las pruebas y `python3 tools/sync-dashboard.py` antes de commitear.
-2. Revisa `git status` y añade solo lo que corresponda a la tarea:
-   código, tracker, log, documentación, panel y pruebas.
-3. Usa un mensaje con el ID y el título:
-   - `T-207: integración y balance de supervivencia`
-   - `docs: ...` solo para cambios documentales sin tarea.
-4. No mezcles varias tareas en el mismo commit.
-5. No commitees archivos generados: `build/`, `jar/`, `res/__deps/`,
-   `deps.installed.json`, `R.java`, `Manifest.java` (ya están ignorados).
-6. Si la tarea queda interrumpida, haz un commit `WIP T-XXX: ...` para no
-   perder el estado; el commit final se hace al completarla.
+1. Antes de empezar, guarda una lista de los archivos ya modificados.
+2. No uses `git reset --hard`, `git clean`, `git checkout --` sobre archivos
+   modificados, `git stash` de cambios ajenos ni `git add .`.
+3. Si el usuario pide un commit, selecciona archivos concretos, inspecciona el
+   diff preparado y comprueba que solo incluye trabajo propio.
+4. Usa un mensaje con el ID y el título (`T-207: ...`, `UPD-002-T03: ...`).
+5. No mezcles varias tareas en el mismo commit.
+6. No commitees archivos generados (`build/`, `jar/`, `res/__deps/`,
+   `deps.installed.json`, `R.java`, `Manifest.java`).
 7. No hagas `push` salvo que el usuario lo pida.
-8. Si el árbol ya tenía cambios previos sin commit, no los mezcles a ciegas:
-   revisa el diff y deja constancia en el mensaje o en el log.
+8. La conservación del trabajo de todas las sesiones tiene prioridad sobre la
+   limpieza del repositorio.
 
 ## Recuperación tras una interrupción
 
 Si una tarea está `EN_PROGRESO`:
 
 1. No la des por terminada.
-2. Lee el log y el tracker.
-3. Inspecciona los cambios reales en el código.
-4. Ejecuta las pruebas relevantes.
-5. Determina qué falta exactamente.
-6. Continúa la misma tarea.
-7. Si no puedes continuar, márcala `BLOQUEADO` con el motivo y lo que falta.
+2. Ejecuta `python3 tools/continuity.py status` y mira `assignedSessionId` y
+   `assignedAt`.
+3. Abre `docs/sessions/S-XXX.md` de la sesión asignada y `docs/IMPLEMENTATION_LOG.md`.
+4. Inspecciona los cambios reales en el código y en `git status --short`.
+5. Ejecuta las pruebas relevantes.
+6. Determina qué falta exactamente.
+7. Continúa la misma tarea con la misma sesión o, si está abandonada y el usuario
+   lo autoriza, reclámala con `--allow-reassign --reason`.
+8. Si no puedes continuar, márcala `BLOQUEADO` con el motivo y lo que falta.
 
-No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
+No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable. No borres una
+asignación solo porque haya pasado tiempo.
 
 ## Planificación y cambios
 
@@ -195,129 +245,38 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 ## Actualizaciones complementarias y revisiones
 
-El plan maestro (`docs/MASTER_PLAN.md`) es **histórico**. No se reescribe para
-incorporar correcciones posteriores. Todo cambio posterior al plan base se
-registra como una actualización complementaria.
+El plan maestro (`docs/MASTER_PLAN.md`) es **histórico**. Todo cambio posterior
+se registra como una actualización `UPD-XXX` en `docs/updates/` y en
+`updates[]` del tracker. El flujo completo está en `docs/updates/README.md`.
 
-### Cuándo crear una actualización
+### Reglas esenciales
 
-- El usuario critica o pide cambiar una funcionalidad ya implementada.
-- Se descubre un fallo, una limitación o un desequilibrio.
-- Se propone una mejora, refactorización o característica nueva.
-- Se revisa un expediente de revisión y hay observaciones que aplicar.
-
-### Flujo obligatorio
-
-1. Leer `AGENTS.md`, el tracker y `docs/updates/README.md`.
-2. Consultar el elemento afectado: etapa, tarea, funcionalidad, sistema o
-   actualización.
-3. Revisar el código real y los registros de implementación.
-4. Analizar las observaciones del usuario sin inventar datos ausentes.
-5. Preparar una propuesta complementaria con alcance, tareas, criterios,
-   pruebas, riesgos y referencias a tareas históricas.
-6. Registrar una nueva actualización en estado `PROPUESTA` o
-   `PENDIENTE_APROBACION`, con `approval.status = "PENDIENTE"`.
-7. **Esperar la aprobación explícita del usuario.** No implementar nada todavía.
-8. Tras la aprobación, cambiar la actualización a `APROBADA` y registrar quién
-   aprobó, cuándo y con qué base.
-9. Trabajar **una tarea de actualización por sesión** (`UPD-XXX-TNN`).
-10. Registrar evidencias, actualizar el tracker, el log, las decisiones y el
-    panel; después detenerse.
-
-### Estados de actualización
-
-| Estado | Uso |
-|---|---|
-| `PROPUESTA` | Idea registrada; sin autorización para implementar. |
-| `EN_REVISION` | Se está contrastando alcance, código y observaciones. |
-| `PENDIENTE_APROBACION` | Plan listo; espera decisión del usuario. |
-| `APROBADA` | Autorizada; aún sin tareas activas. |
-| `EN_PROGRESO` | Hay tareas de implementación activas. |
-| `BLOQUEADA` | Existe un impedimento documentado. |
-| `COMPLETADA` | Tareas implementadas y verificadas. |
-| `RECHAZADA` | Se decidió no continuar; se conserva como antecedente. |
-| `ARCHIVADA` | Se conserva como antecedente sin trabajo previsto. |
-
-El estado de una actualización es independiente del estado de sus tareas. Una
-actualización en `PROPUESTA`, `EN_REVISION` o `PENDIENTE_APROBACION` no puede
-tener tareas `EN_PROGRESO` ni `COMPLETADO`.
-
-### Identificadores y estructura
-
-- Actualización: `UPD-001`, `UPD-002`, …
-- Tarea: `UPD-001-T01`, `UPD-001-T02`, …
-- Documento: `docs/updates/UPD-001.md`.
-- Las tareas de actualización viven en `updates[].tasks` del tracker, no en
-  `tasks`; así no alteran el progreso del plan base.
-- Una tarea nueva puede depender de una tarea histórica mediante
-  `dependencies` o `relatedTaskIds`. La tarea histórica **no cambia de estado**.
+- Una actualización nueva nace en `PROPUESTA`, `EN_REVISION` o
+  `PENDIENTE_APROBACION`, con `approval.status = "PENDIENTE"`.
+- **No se implementa nada sin aprobación explícita del usuario.**
+- Tras la aprobación se registra `approvedBy`, `approvedAt` y `basis`, y la
+  actualización pasa a `APROBADA`.
+- Las tareas de actualización (`UPD-XXX-TNN`) viven en `updates[].tasks`, no en
+  `tasks`; no alteran el progreso del plan base.
+- Una tarea nueva puede referenciar una tarea histórica con `relatedTaskIds` o
+  `dependencies`; la tarea histórica **no cambia de estado**.
 - No se reutilizan IDs ni se renumeran tareas existentes.
-
-### Propuestas y aprobación
-
-- El panel permite redactar una propuesta y descargarla en `.md` o `.txt`, además
-  de copiar un bloque JSON para el tracker.
-- El navegador no puede escribir en el directorio del proyecto desde `file://`.
-  Los borradores de `localStorage` son una comodidad, no la fuente canónica.
-- Un agente guarda el documento en `docs/updates/`, registra la actualización en
-  el tracker y ejecuta `python3 tools/sync-dashboard.py`.
-- La aprobación se registra en `approval` con `approvedBy`, `approvedAt` y
-  `basis`. Sin esos datos, la actualización no puede avanzar.
-
-### Expediente de revisión
-
-1. En el panel, pulsar **Preparar expediente de revisión**.
-2. Seleccionar etapas, tareas, funcionalidades, sistemas, tareas de
-   actualización y/o actualizaciones completadas.
-3. Descargar el documento en Markdown o TXT.
-4. Añadir la sección **OBSERVACIONES DEL USUARIO**.
-5. Entregarlo a un agente para contrastar las observaciones con el código real.
-6. El agente prepara una propuesta nueva; no modifica el plan histórico.
-
-El expediente refleja el tracker. Si falta un archivo, una prueba o un resultado,
-debe indicarlo como no documentado; no se inventan detalles técnicos.
-
-### Reglas del panel
-
-- El plan base aparece como historial contraíble.
-- Las actualizaciones se ordenan cronológicamente.
-- Solo la actualización actual se expande automáticamente; las anteriores se
-  pueden expandir a mano y no se eliminan.
-- El panel no es una fuente de verdad: lee el tracker embebido y, por HTTP,
-  puede releer `IMPLEMENTATION_TRACKER.json`.
+- Una actualización en `PROPUESTA`, `EN_REVISION` o `PENDIENTE_APROBACION` no
+  puede tener tareas `EN_PROGRESO` ni `COMPLETADO`.
+- El panel permite preparar propuestas y expedientes de revisión descargables,
+  pero no escribe en el proyecto. Los borradores de `localStorage` no son
+  estado canónico.
 - No se añaden servidores, backends, bases de datos, CDN ni APIs.
 
+Estados: `PROPUESTA`, `EN_REVISION`, `PENDIENTE_APROBACION`, `APROBADA`,
+`EN_PROGRESO`, `BLOQUEADA`, `COMPLETADA`, `RECHAZADA`, `ARCHIVADA`.
 
-## Estado actual
 
-No mantengas aquí un resumen manual de progreso: quedaría desactualizado. El
-estado real está en:
+## Estado y documentación
 
-- `docs/STATUS.md` — resumen generado (etapa, tarea actual, próxima tarea,
-  conteos, decisiones pendientes y últimas sesiones).
-- `docs/IMPLEMENTATION_TRACKER.json` — fuente canónica de etapas, tareas,
-  decisiones, sesiones, incidencias y actualizaciones.
-- `docs/INDEX.md` — mapa de sistemas para localizar código, diseño y pruebas.
-
-El plan base está cerrado; los cambios posteriores se registran como
-actualizaciones (`docs/updates/`). No confundas “plan escrito” con
-“funcionalidad implementada”.
-
-## Documentación existente
-
-- [Estado resumido (generado)](docs/STATUS.md)
-- [Índice de sistemas](docs/INDEX.md)
-- [Plan maestro](docs/MASTER_PLAN.md)
-- [Tracker](docs/IMPLEMENTATION_TRACKER.json)
-- [Log de implementación](docs/IMPLEMENTATION_LOG.md)
-- [Decisiones](docs/DECISIONS.md)
-- [Decisiones cerradas](docs/PENDING_DECISIONS.md)
-- [Actualizaciones complementarias](docs/updates/README.md)
-- [Panel](docs/dashboard/index.html)
-- [Build, dependencias y layout](docs/build.md)
-- [Pruebas y telemetría](docs/pruebas.md)
-- [Arquitectura, render y piloto automático](docs/arquitectura.md)
-- [Convenciones](docs/convenciones.md)
+- Estado actual: `docs/STATUS.md` (generado) y `docs/IMPLEMENTATION_TRACKER.json` (canónico).
+- Navegación: `docs/INDEX.md` y `docs/systems/`; sesiones en `docs/sessions/`.
+- El plan base está cerrado; los cambios posteriores se registran como actualizaciones (`docs/updates/`). No confundas “plan escrito” con “funcionalidad implementada”.
 
 ## Comandos mínimos
 
@@ -337,8 +296,15 @@ tools/run-tests.sh 01_logic 04_autopilot
 # tools/run-tests.sh --all  solo si el usuario lo pide
 
 # Continuidad
+python3 tools/continuity.py status
+python3 tools/continuity.py new-session --agent "..." --title "..."
+python3 tools/continuity.py claim T-XXX --session S-XXX --agent "..."
+python3 tools/continuity.py apply plan.json
+python3 tools/continuity.py replace docs/INDEX.md --old-file old.txt --new-file new.txt
+python3 tools/continuity.py append docs/IMPLEMENTATION_LOG.md --text "..."
 python3 tools/sync-dashboard.py
 python3 tools/sync-dashboard.py --check
+python3 tools/tests/continuity_test.py
 ```
 
 ## Reglas críticas del juego
@@ -364,9 +330,10 @@ python3 tools/sync-dashboard.py --check
 ## Definición de terminado
 
 Una tarea está terminada cuando compila, pasa sus pruebas, cumple sus criterios,
-no rompe lo existente, está registrada en el tracker, tiene entrada en el log,
-las decisiones están documentadas, `docs/INDEX.md` sigue siendo correcto y el
-panel y `docs/STATUS.md` están sincronizados.
+no rompe lo existente, está registrada en el tracker, tiene sesión documentada en
+`docs/sessions/S-XXX.md`, las decisiones están documentadas, la ficha del sistema
+y `docs/INDEX.md` siguen siendo correctos y el panel y `docs/STATUS.md` están
+sincronizados.
 
 Una etapa está terminada cuando todas sus tareas de progreso están
 `COMPLETADO` o `POSPUESTO` con justificación, y su gate se ha verificado.
@@ -385,5 +352,10 @@ Una etapa está terminada cuando todas sus tareas de progreso están
 - No presentar borradores de `localStorage` como estado canónico.
 - No editar `docs/STATUS.md` a mano: se regenera con `tools/sync-dashboard.py`.
 - No duplicar en `AGENTS.md` cifras o resúmenes de progreso que ya genera `STATUS.md`.
-- No inventar clases, archivos, pruebas ni rutas en `docs/INDEX.md`.
+- No inventar clases, archivos, pruebas ni rutas en `docs/INDEX.md` ni en las fichas.
 - No empezar la siguiente tarea después de terminar la actual.
+- No hacer commits automáticos ni mezclar trabajo de otras sesiones.
+- No usar `git reset --hard`, `git clean`, `git checkout --` sobre archivos modificados, `git stash` ajeno ni `git add .`.
+- No reasignar una tarea `EN_PROGRESO` de otra sesión sin inspeccionarla y sin autorización.
+- No escribir el tracker directamente sin releerlo y validarlo; usa `tools/continuity.py`.
+- No mantener el bloqueo durante la implementación, las pruebas o la edición de código.

@@ -33,6 +33,12 @@ Reglas:
 
 ---
 
+> **Histórico cerrado en S-092.** Desde S-093 las sesiones se registran en
+> `docs/sessions/S-XXX.md`, una por archivo, para permitir escrituras
+> concurrentes sin reescribir este log. El tracker sigue siendo la fuente
+> canónica de los resúmenes de sesión. Ver `docs/sessions/README.md` y
+> `docs/CONCURRENCY.md`.
+
 ## S-092 — Sistema de actualizaciones, revisiones y planes complementarios
 
 - **Fecha:** 2026-11-08T12:00:00-06:00

@@ -292,6 +292,27 @@ Verificación de T-1006:
 - Economía: 24 h simuladas mantienen stock y precios acotados.
 - Panel sincronizado con el estado final.
 
+## Continuidad y concurrencia
+
+Estas pruebas no usan el dispositivo ni el APK. Se ejecutan en un sandbox
+temporal y no tocan el tracker real.
+
+```sh
+python3 tools/tests/continuity_test.py
+python3 tools/sync-dashboard.py --check
+```
+
+| Prueba | Qué verifica | Resultado esperado |
+|---|---|---|
+| A | Dos procesos modifican tareas distintas | Ambas modificaciones persisten |
+| B | Dos procesos modifican la misma tarea | Una escribe; la otra recibe conflicto 2 |
+| C | Interrupción durante la escritura | El tracker original sigue válido |
+| D | Bloqueo ocupado y proceso muerto | Espera controlada; el bloqueo se libera |
+| E | Dos sincronizaciones simultáneas | HTML y `STATUS.md` coherentes con el tracker |
+| F | Trabajo ajeno preexistente | No se sobrescribe |
+| G | Reserva de tarea | La segunda sesión recibe conflicto |
+| H | IDs de sesión concurrentes | No se repiten |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

@@ -21,3 +21,6 @@ src/**/Manifest.java
 # Python generado
 __pycache__/
 *.pyc
+
+# Bloqueo de continuidad (runtime; no es estado del proyecto)
+docs/.continuity.lock
