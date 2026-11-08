@@ -45,6 +45,15 @@ final class EnergyCapacitor {
         }
     }
 
+    /** Consume energía de un sistema auxiliar (rayo tractor) y retrasa la recarga. */
+    void drain(float amount) {
+        if (amount <= 0f) {
+            return;
+        }
+        energy = Math.max(0f, energy - amount);
+        rechargeDelay = RECHARGE_DELAY;
+    }
+
     /** Avanza consumo o recarga. */
     void update(float dt, boolean mining) {
         if (dt <= 0f) {
