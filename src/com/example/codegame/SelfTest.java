@@ -51,6 +51,10 @@ public class SelfTest {
         return json.substring(0, start) + json.substring(end);
     }
 
+    private static float minerSpeed() {
+        return new Upgrades(true).maxSpeed();
+    }
+
     private static int dStationInteriorRooms(GameSession session) {
         return session.playerStation.buildInterior().roomCount();
     }
@@ -3887,6 +3891,74 @@ public class SelfTest {
                         && g10.universe.sectorCount() == 6
                         && g10.playerStation.tradeMarket() == null
                         && g10.sector.station.market != null);
+
+        // T-1101: clases de nave con funcion y forma propias.
+        check("hay al menos tres clases de nave",
+                ShipClassDef.values().length >= 3
+                        && GameData.SHIP_CLASSES.length >= 3);
+        ShipClassDef miner = ShipClassDef.MINER;
+        ShipClassDef explorer = ShipClassDef.EXPLORER;
+        ShipClassDef hauler = ShipClassDef.HAULER;
+        check("las clases difieren en funcion y forma",
+                explorer.cargoMultiplier < miner.cargoMultiplier
+                        && explorer.fuelMultiplier > miner.fuelMultiplier
+                        && hauler.cargoMultiplier > miner.cargoMultiplier
+                        && hauler.speedMultiplier < miner.speedMultiplier
+                        && explorer.shapeLength > miner.shapeLength
+                        && hauler.shapeWidth > miner.shapeWidth);
+        Upgrades classUp = new Upgrades(true);
+        classUp.setShipClass(miner);
+        float minerCargo = classUp.cargoCapacity();
+        float minerFuel = classUp.maxFuel();
+        classUp.setShipClass(explorer);
+        float explorerCargo = classUp.cargoCapacity();
+        float explorerFuel = classUp.maxFuel();
+        classUp.setShipClass(hauler);
+        float haulerCargo = classUp.cargoCapacity();
+        float haulerSpeed = classUp.maxSpeed();
+        check("la clase cambia capacidad y prestaciones",
+                explorerCargo < minerCargo
+                        && explorerFuel > minerFuel
+                        && haulerCargo > minerCargo
+                        && haulerSpeed < minerSpeed());
+        Upgrades explorerUp = new Upgrades(true);
+        explorerUp.setShipClass(explorer);
+        Ship explorerShip = new Ship();
+        explorerShip.reset(explorerUp, 0f, 0f);
+        check("la nave instanciada usa la clase",
+                explorerShip.shipClass == explorer
+                        && Math.abs(explorerShip.cargo().capacity()
+                        - explorerCargo) < 0.01f
+                        && Math.abs(explorerShip.maxFuel - explorerFuel) < 0.01f);
+        check("los modulos siguen siendo intercambiables",
+                explorerUp.loadout().installModule(0, "radar")
+                        && explorerUp.loadout().installModule(1, "mining")
+                        && explorerUp.loadout().hasModule("radar")
+                        && explorerUp.loadout().hasModule("mining")
+                        && explorerUp.loadout().removeModule(0)
+                        && !explorerUp.loadout().hasModule("radar"));
+        GameSession classSession = new GameSession(
+                new PlayerProfile(explorerUp));
+        classSession.startRun();
+        SaveService.MemoryStorage classStore = new SaveService.MemoryStorage();
+        SaveService classSaves = new SaveService(classStore);
+        check("la clase de nave se guarda", classSaves.save(classSession));
+        GameSession classLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("la clase de nave se restaura",
+                classSaves.load(classLoaded) == SaveService.LoadStatus.V2
+                        && classLoaded.upgrades().shipClass() == explorer
+                        && classLoaded.ship().shipClass == explorer);
+        String classText = classStore.read(SaveService.SAVE_NAME);
+        String oldClassText = classText.replaceAll(
+                ",\"shipClass\":\"[a-z]+\"", "");
+        GameSession oldClassLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("un guardado anterior usa la clase por defecto",
+                !classText.equals(oldClassText)
+                        && SaveCodec.decode(oldClassText, oldClassLoaded)
+                        && oldClassLoaded.upgrades().shipClass()
+                        == ShipClassDef.MINER);
 
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));

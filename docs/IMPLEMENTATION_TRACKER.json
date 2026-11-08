@@ -4,22 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T10:38:00-06:00",
-    "lastSessionId": "S-082",
+    "lastUpdated": "2026-11-08T10:58:00-06:00",
+    "lastSessionId": "S-083",
     "lastVerification": {
-      "date": "2026-11-08T10:38:00-06:00",
+      "date": "2026-11-08T10:58:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Gate S10: caminar, colision, interaccion, salida y persistencia",
-        "Regresion 03_controls, 12_mining y 13_station sin fallos",
-        "18_interiors en verde",
+        "Tres clases con estadisticas y siluetas distintas",
+        "Upgrades y Ship usan la clase; modulos siguen intercambiables",
+        "La clase persiste y los guardados antiguos usan MINER",
+        "16_universe: clase minero",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1101",
+    "nextTaskId": "T-1102",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5221,7 +5222,7 @@
       "description": "Añadir modelos de nave distintos en formas, características y capacidades, no simples variaciones visuales; preparar especializaciones (minería, exploración, transporte).",
       "category": "implementation",
       "priority": "P2",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-807"
@@ -5247,10 +5248,43 @@
         "Regresión"
       ],
       "technicalNotes": "Priorizar contenido con función económica, no decoración vacía.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-083",
+          "date": "2026-11-08T10:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Clases de nave MINER/EXPLORER/HAULER con multiplicadores de bodega, combustible, casco, empuje/velocidad y siluetas propias. Upgrades y Ship usan la clase; persiste en v2 y guardados antiguos usan MINER. Modulos intercambiables. 16_universe/01_logic.",
+          "files": [
+            "src/com/example/codegame/ShipClassDef.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS hay al menos tres clases de nave",
+        "PASS las clases difieren en funcion y forma",
+        "PASS la clase cambia capacidad y prestaciones",
+        "PASS la nave instanciada usa la clase",
+        "PASS los modulos siguen siendo intercambiables",
+        "PASS la clase de nave se guarda/restaura",
+        "PASS un guardado anterior usa la clase por defecto",
+        "16_universe: shipClass=minero"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T10:58:00-06:00"
     },
     {
       "id": "T-1102",
@@ -5259,7 +5293,7 @@
       "description": "Permitir encargos de transporte/minería que conecten economía y progresión.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101",
@@ -6433,6 +6467,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-083",
+      "date": "2026-11-08T10:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Clases de nave y especializaciones",
+      "summary": "MINER/EXPLORER/HAULER con estadísticas y siluetas distintas, persistencia y módulos intercambiables; guardados antiguos compatibles.",
+      "tasks": [
+        "T-1101"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipClassDef.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1102 (contratos y misiones)."
+    },
     {
       "id": "S-082",
       "date": "2026-11-08T10:38:00-06:00",

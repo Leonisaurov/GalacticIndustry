@@ -30,6 +30,7 @@ assert_eq "mapa X" 0.0 "$(printf '%s' "$status" | json_get sectorMapX)"
 assert_eq "mapa Y" 0.0 "$(printf '%s' "$status" | json_get sectorMapY)"
 assert_eq "nodriza de la Via Lactea" NODRIZA "$(printf '%s' "$status" | json_get stationName)"
 assert_eq "spread galactico" 0.08 "$(printf '%s' "$status" | json_get marketSpread)"
+assert_eq "clase de nave" minero "$(printf '%s' "$status" | json_get shipClass)"
 
 # T-802: límites finitos y borde visible.
 launch_app "--ez test_mode true --ez bounds_test true"

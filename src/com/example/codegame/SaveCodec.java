@@ -88,6 +88,7 @@ final class SaveCodec {
             w.set("hull", ship.part[Ship.HULL]);
             w.set("invulnerable", ship.invulnerable);
             w.set("docked", ship.docked);
+            w.set("shipClass", session.upgrades().shipClass().id);
             w.name("parts").array();
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 w.value(ship.part[i]);
@@ -390,6 +391,7 @@ final class SaveCodec {
             d.hull = ship.getFloat("hull", 0f);
             d.invulnerable = ship.getFloat("invulnerable", 0f);
             d.docked = ship.getBoolean("docked", false);
+            d.shipClass = ship.getString("shipClass", ShipClassDef.MINER.id);
             JsonValue parts = ship.get("parts");
             // Los guardados anteriores a T-201 tienen 7 partes; LIFE_SUPPORT se
             // rellena con integridad completa.
@@ -778,6 +780,7 @@ final class SaveCodec {
         for (int i = 0; i < ShipLoadout.COUNT; i++) {
             up.loadout.setLevel(i, d.levels[i]);
         }
+        up.setShipClass(ShipClassDef.byId(d.shipClass));
         for (int i = 0; i < ShipLoadout.MODULE_SLOTS; i++) {
             if (d.modules[i] == null) {
                 up.loadout.removeModule(i);
@@ -1007,6 +1010,7 @@ final class SaveCodec {
         float elapsed;
         long lastSimTime;
         boolean docked;
+        String shipClass = ShipClassDef.MINER.id;
         float stationX = GameData.MOTHERSHIP_X;
         float stationY = GameData.MOTHERSHIP_Y;
         String stationName = GameData.MOTHERSHIP.name;

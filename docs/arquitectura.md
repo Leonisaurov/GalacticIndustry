@@ -420,6 +420,19 @@ estáticos se reutilizan.
   sigue existiendo.
 - Salir no rompe el guardado de vuelo: nave, sector y economía siguen intactos.
 
+## Clases de nave (T-1101)
+
+- `ShipClassDef` define tres clases funcionales:
+  - `MINER` equilibrada;
+  - `EXPLORER` rápida, más depósito y menos bodega;
+  - `HAULER` gran bodega y casco, lenta.
+- Cada clase multiplica bodega, combustible, casco, empuje y velocidad, y cambia
+  las proporciones de la silueta (`shapeWidth` / `shapeLength`), no solo el color.
+- `Upgrades.shipClass()` selecciona la clase y la persiste en preferencias; el
+  guardado v2 la incluye y los guardados antiguos caen en `MINER`.
+- La personalización sigue usando los módulos intercambiables de `ShipLoadout`.
+- `GameData.SHIP_CLASSES` expone el catálogo.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

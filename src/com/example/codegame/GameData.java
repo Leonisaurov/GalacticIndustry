@@ -8,6 +8,7 @@ final class GameData {
     static final float BASE_CARGO_CAPACITY = CargoHold.DEFAULT_CAPACITY;
     static final Commodity[] COMMODITIES = Commodity.values();
     static final AsteroidType[] ASTEROID_TYPES = AsteroidType.values();
+    static final ShipClassDef[] SHIP_CLASSES = ShipClassDef.values();
 
     /** Nave nodriza del sector inicial: gran estación con todos los servicios. */
     static final float MOTHERSHIP_X = 0f;

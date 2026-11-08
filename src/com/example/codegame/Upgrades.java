@@ -230,15 +230,15 @@ class Upgrades {
     }
 
     float thrust() {
-        return 260f + 60f * level(MOTOR);
+        return (260f + 60f * level(MOTOR)) * shipClass().thrustMultiplier;
     }
 
     float maxSpeed() {
-        return 220f + 40f * level(MOTOR);
+        return (220f + 40f * level(MOTOR)) * shipClass().speedMultiplier;
     }
 
     float maxFuel() {
-        return 160f + 30f * level(DEPOSITO);
+        return (160f + 30f * level(DEPOSITO)) * shipClass().fuelMultiplier;
     }
 
     int damage() {
@@ -251,7 +251,7 @@ class Upgrades {
 
     /** Integridad maxima del casco: 100 sin mejora y 225 al nivel 5 de Blindaje. */
     float hull() {
-        return 100f + 25f * level(BLINDAJE);
+        return (100f + 25f * level(BLINDAJE)) * shipClass().hullMultiplier;
     }
 
     /** Multiplicador del consumo de combustible: 1 sin mejora, 0.6 con nivel máximo. */
@@ -261,7 +261,8 @@ class Upgrades {
 
     /** Capacidad de bodega: 100 UM base y +25 UM por nivel de Bodega. */
     float cargoCapacity() {
-        return GameData.BASE_CARGO_CAPACITY + 25f * level(BODEGA);
+        return (GameData.BASE_CARGO_CAPACITY + 25f * level(BODEGA))
+                * shipClass().cargoMultiplier;
     }
 
     /** Nivel del láser minero; afecta a potencia, penetración y capacitor. */
@@ -290,6 +291,15 @@ class Upgrades {
         return TractorBeam.BASE_TARGETS + level(TRACTOR);
     }
 
+
+    /** Clase de nave seleccionada; persistida en preferencias. */
+    ShipClassDef shipClass() {
+        return ShipClassDef.byId(getText("shipClass"));
+    }
+
+    void setShipClass(ShipClassDef def) {
+        putText("shipClass", def == null ? ShipClassDef.MINER.id : def.id);
+    }
 
     /** Loadout activo de la nave; lo usara tambien ShipState en tareas posteriores. */
     ShipLoadout loadout() {

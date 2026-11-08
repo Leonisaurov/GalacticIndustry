@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T10:38:00-06:00  
+**Última actualización:** 2026-11-08T10:58:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-083 — Clases de nave y especializaciones
+
+- **Fecha:** 2026-11-08T10:58:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1101
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `ShipClassDef` con tres clases funcionales:
+  - `MINER` equilibrada;
+  - `EXPLORER` rápida, más depósito y menos bodega;
+  - `HAULER` gran bodega y casco, lenta.
+- Cada clase cambia bodega, combustible, casco, empuje, velocidad y **silueta**.
+- `Upgrades.shipClass()` selecciona y persiste la clase; `Ship` la aplica.
+- La personalización sigue usando módulos intercambiables de `ShipLoadout`.
+- El guardado v2 incluye la clase; los guardados antiguos usan `MINER`.
+- `16_universe` comprueba `shipClass=minero`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ShipClassDef.java` (nuevo)
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/16_universe.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS hay al menos tres clases de nave`
+- `PASS las clases difieren en funcion y forma`
+- `PASS la clase cambia capacidad y prestaciones`
+- `PASS la nave instanciada usa la clase`
+- `PASS los modulos siguen siendo intercambiables`
+- `PASS la clase de nave se guarda/restaura`
+- `PASS un guardado anterior usa la clase por defecto`
+- `16_universe`: `shipClass=minero`.
+
+### Decisiones tomadas
+
+- Las clases son datos funcionales, no skins.
+- La clase por defecto es `MINER`.
+- La clase se persiste aparte de los niveles de mejora.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1102 — Añadir contratos y misiones de estación**.
 
 ---
 

@@ -1205,7 +1205,7 @@ public class MyGame implements ApplicationListener {
                         + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
                         + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
                         + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
-                        + "\"interiorManagement\":%s}",
+                        + "\"interiorManagement\":%s,\"shipClass\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1312,7 +1312,8 @@ public class MyGame implements ApplicationListener {
                 interiorAvatar == null ? "" : interiorAvatar.roomId,
                 interiorAvatar == null ? 0f : interiorAvatar.x,
                 interiorAvatar == null ? 0f : interiorAvatar.y,
-                interiorManagement));
+                interiorManagement,
+                session.upgrades().shipClass().id));
     }
 
     void logEvent(String json) {

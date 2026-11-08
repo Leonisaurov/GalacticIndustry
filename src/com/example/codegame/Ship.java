@@ -61,12 +61,15 @@ class Ship {
     boolean wrecked;
     /** La nave está acoplada a una estación. */
     boolean docked;
+    /** Clase de nave; afecta a estadisticas y silueta. */
+    ShipClassDef shipClass = ShipClassDef.MINER;
 
     void reset(Upgrades up, float x, float y) {
         pos.set(x, y);
         vel.set(0f, 0f);
         heading = 90f;
         dir.set(0f, 1f);
+        shipClass = up.shipClass();
         maxHull = up.hull();
         for (int i = 0; i < PART_COUNT; i++) {
             part[i] = i == HULL ? maxHull : PART_MAX;
@@ -287,7 +290,7 @@ class Ship {
         // Un poco más grande que el radio de colisión: la nave se lee mejor en pantalla
         // y el margen extra perdona al jugador.
         drawBody(shapes, pos.x, pos.y, heading, RADIUS * 1.28f, thrusting, flicker, time,
-                part[WING_LEFT], part[WING_RIGHT]);
+                part[WING_LEFT], part[WING_RIGHT], shipClass);
     }
 
     /** Brillo del motor y escudo, en la pasada aditiva. */
@@ -331,8 +334,17 @@ class Ship {
     static void drawBody(ShapeRenderer s, float x, float y, float headingDeg, float size,
                          boolean thrusting, float alpha, float time,
                          float wingLeft, float wingRight) {
+        drawBody(s, x, y, headingDeg, size, thrusting, alpha, time,
+                wingLeft, wingRight, ShipClassDef.MINER);
+    }
+
+    static void drawBody(ShapeRenderer s, float x, float y, float headingDeg, float size,
+                         boolean thrusting, float alpha, float time,
+                         float wingLeft, float wingRight, ShipClassDef shipClass) {
         float c = MathUtils.cosDeg(headingDeg);
         float sn = MathUtils.sinDeg(headingDeg);
+        float sw = shipClass == null ? 1f : shipClass.shapeWidth;
+        float sl = shipClass == null ? 1f : shipClass.shapeLength;
         float leftScale = wingLeft <= 0f ? 0f : 0.55f + 0.45f * wingLeft / PART_MAX;
         float rightScale = wingRight <= 0f ? 0f : 0.55f + 0.45f * wingRight / PART_MAX;
 
@@ -351,10 +363,10 @@ class Ship {
         int n = OUTLINE.length / 2;
         for (int i = 0; i < n; i++) {
             int j = (i + 1) % n;
-            float ax = OUTLINE[i * 2];
-            float ay = OUTLINE[i * 2 + 1];
-            float bx = OUTLINE[j * 2];
-            float by = OUTLINE[j * 2 + 1];
+            float ax = OUTLINE[i * 2] * sw;
+            float ay = OUTLINE[i * 2 + 1] * sl;
+            float bx = OUTLINE[j * 2] * sw;
+            float by = OUTLINE[j * 2 + 1] * sl;
             if ((i == 2 || i == 3) && leftScale < 1f) {
                 ax = 0.35f + (ax - 0.35f) * leftScale;
                 ay = 0.13f + (ay - 0.13f) * leftScale;
