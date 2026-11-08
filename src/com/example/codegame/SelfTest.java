@@ -2358,6 +2358,71 @@ public class SelfTest {
                         && SaveCodec.decode(noAgents, noAgentsLoaded)
                         && noAgentsLoaded.sector.agents.size() == 8);
 
+        // T-702: AgentBrain y ciclo minero.
+        AgentRoster cycleRoster = new AgentRoster(1);
+        PilotAgent worker = cycleRoster.get(0);
+        Market cycleMarket = GameData.newMarket();
+        boolean[] seen = new boolean[PilotAgent.State.values().length];
+        int creditsBefore = worker.credits;
+        int stockCommodityBefore = -1;
+        for (int i = 0; i < 400; i++) {
+            seen[worker.state.ordinal()] = true;
+            AgentBrain.update(worker, cycleMarket, 0.5f);
+            seen[worker.state.ordinal()] = true;
+            if (stockCommodityBefore < 0) {
+                stockCommodityBefore = cycleMarket.stock(worker.commodity);
+            }
+            if (worker.credits > creditsBefore
+                    && worker.cargo.isEmpty()
+                    && seen[PilotAgent.State.MINE.ordinal()]
+                    && seen[PilotAgent.State.RETURN.ordinal()]
+                    && seen[PilotAgent.State.SELL.ordinal()]) {
+                break;
+            }
+        }
+        check("el agente completa un ciclo minero",
+                worker.credits > creditsBefore && worker.cargo.isEmpty());
+        check("los estados del agente son observables",
+                seen[PilotAgent.State.TRAVEL.ordinal()]
+                        && seen[PilotAgent.State.MINE.ordinal()]
+                        && seen[PilotAgent.State.RETURN.ordinal()]
+                        && seen[PilotAgent.State.SELL.ordinal()]
+                        && seen[PilotAgent.State.REFUEL.ordinal()]);
+        check("el agente mueve el stock del mercado",
+                cycleMarket.stock(worker.commodity) > stockCommodityBefore);
+        AgentRoster brainA = new AgentRoster(1);
+        AgentRoster brainB = new AgentRoster(1);
+        Market marketA = GameData.newMarket();
+        Market marketB = GameData.newMarket();
+        AgentBrain.update(brainA.get(0), marketA, 0.1f);
+        AgentBrain.update(brainB.get(0), marketB, 0.1f);
+        check("la decisión es determinista y por utilidad",
+                brainA.get(0).commodity == brainB.get(0).commodity
+                        && brainA.get(0).state == brainB.get(0).state);
+        PilotAgent smallMiner = new PilotAgent("T-1", "TEST", PilotAgent.Role.MINER,
+                5f, AgentRoster.MAX_FUEL, AgentRoster.SPEED, AgentRoster.MINING_RATE);
+        Market poorMarket = GameData.newMarket();
+        for (Commodity c : Commodity.values()) {
+            poorMarket.setStock(c, poorMarket.target(c) * 3);
+        }
+        AgentBrain.update(smallMiner, poorMarket, 0.1f);
+        check("sin beneficio el agente espera",
+                smallMiner.state == PilotAgent.State.IDLE);
+        worker.credits = 321;
+        worker.commodity = Commodity.ORO;
+        GameSession agentBrainSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        agentBrainSession.startRun();
+        agentBrainSession.sector.agents.get(0).credits = 321;
+        agentBrainSession.sector.agents.get(0).commodity = Commodity.ORO;
+        SaveService.MemoryStorage brainStore = new SaveService.MemoryStorage();
+        SaveService brainService = new SaveService(brainStore);
+        brainService.save(agentBrainSession);
+        GameSession brainLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        brainService.load(brainLoaded);
+        check("créditos y mineral del agente persisten",
+                brainLoaded.sector.agents.get(0).credits == 321
+                        && brainLoaded.sector.agents.get(0).commodity == Commodity.ORO);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

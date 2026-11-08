@@ -208,6 +208,8 @@ final class SaveCodec {
                 w.set("state", agent.state.name());
                 w.set("fuel", agent.fuel);
                 w.set("maxFuel", agent.maxFuel);
+                w.set("credits", agent.credits);
+                w.set("commodity", agent.commodity.name());
                 w.set("objective", agent.objective);
                 w.name("cargo").array();
                 for (Cargo cargo : agent.cargo.entries()) {
@@ -456,6 +458,9 @@ final class SaveCodec {
                                 a.getString("state", PilotAgent.State.DOCKED.name()));
                         data.fuel = a.getFloat("fuel", AgentRoster.MAX_FUEL);
                         data.maxFuel = a.getFloat("maxFuel", AgentRoster.MAX_FUEL);
+                        data.credits = a.getInt("credits", 200);
+                        data.commodity = Commodity.byDisplayName(
+                                a.getString("commodity", Commodity.SILICATO.name()));
                         data.objective = a.getString("objective", "NODRIZA");
                         JsonValue agentCargo = a.get("cargo");
                         if (agentCargo != null && agentCargo.isArray()) {
@@ -606,6 +611,10 @@ final class SaveCodec {
                         AgentRoster.SPEED, AgentRoster.MINING_RATE);
                 agent.state = data.state;
                 agent.fuel = Math.max(0f, Math.min(data.fuel, data.maxFuel));
+                agent.credits = Math.max(0, data.credits);
+                if (data.commodity != null) {
+                    agent.commodity = data.commodity;
+                }
                 agent.objective = data.objective;
                 agent.cargo.clear();
                 for (int k = 0; k < data.cargo.size(); k++) {
@@ -724,6 +733,8 @@ final class SaveCodec {
         PilotAgent.State state = PilotAgent.State.DOCKED;
         float fuel = AgentRoster.MAX_FUEL;
         float maxFuel = AgentRoster.MAX_FUEL;
+        int credits = 200;
+        Commodity commodity = Commodity.SILICATO;
         String objective = "NODRIZA";
         final List<CargoData> cargo = new ArrayList<>();
     }

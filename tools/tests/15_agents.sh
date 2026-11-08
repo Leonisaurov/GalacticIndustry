@@ -12,6 +12,7 @@ status=$(latest_status)
 assert_eq "agentes iniciales" 8 "$(printf '%s' "$status" | json_get agents)"
 assert_eq "máximo de agentes" 24 "$(printf '%s' "$status" | json_get agentsMax)"
 assert_eq "agentes acoplados" 8 "$(printf '%s' "$status" | json_get agentsDocked)"
+assert_eq "estado observable del agente 0" DOCKED "$(printf '%s' "$status" | json_get agent0State)"
 
 check_no_crash
-echo "OK 15_agents: 8 mineros iniciales, máximo 24 y sin render"
+echo "OK 15_agents: 8 mineros iniciales, estado observable y sin render"

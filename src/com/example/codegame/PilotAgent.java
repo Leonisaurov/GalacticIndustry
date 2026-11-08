@@ -33,6 +33,12 @@ final class PilotAgent {
     final CargoHold cargo;
     State state = State.DOCKED;
     float fuel;
+    /** Reloj interno del estado actual. */
+    float timer;
+    /** Créditos del agente; nunca negativos. */
+    int credits = 200;
+    /** Mineral que decidió minar el cerebro. */
+    Commodity commodity = Commodity.SILICATO;
     String objective = "NODRIZA";
 
     PilotAgent(String id, String name, Role role, float cargoCapacity,
@@ -56,6 +62,9 @@ final class PilotAgent {
         state = State.DOCKED;
         fuel = maxFuel;
         cargo.clear();
+        credits = 200;
+        commodity = Commodity.SILICATO;
+        timer = 0f;
         objective = "NODRIZA";
     }
 

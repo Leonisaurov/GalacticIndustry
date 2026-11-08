@@ -167,8 +167,15 @@ estáticos se reutilizan.
   **24**. La plantilla es configurable.
 - Los agentes viven en el sector (`GameWorld.agents`), se guardan en v2 y se
   restauran; un guardado sin agentes recibe la plantilla inicial.
-- No se renderizan todavía: el cerebro y el ciclo minero llegan en T-702, y el
-  tráfico cosmético/limitado a los cercanos en T-706.
+- `AgentBrain` implementa el ciclo `DOCKED → TRAVEL → MINE → RETURN → SELL →
+  REFUEL → DOCKED`. El viaje es tiempo abstracto (2 s), sin pathfinding.
+- La decisión es determinista por utilidad:
+  `valorCarga · fill − combustible − tiempo · oportunidad − riesgo`.
+  Un minero básico solo considera Hielo, Silicato, Hierro y Cobre.
+- Si la mejor utilidad no es positiva, pasa a `IDLE` y espera.
+- Al vender, el stock de la estación sube y el precio baja; el agente cobra y
+  reposta con sus créditos (sin saldo negativo).
+- El tick/LOD de agentes llega en T-703; el render limitado, en T-706.
 
 ## Render y aspecto visual
 

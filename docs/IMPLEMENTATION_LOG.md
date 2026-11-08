@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:50:00-06:00  
+**Última actualización:** 2026-11-08T03:58:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,67 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-055 — AgentBrain y ciclo minero
+
+- **Fecha:** 2026-11-08T03:58:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-702
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `AgentBrain` implementa `DOCKED → TRAVEL → MINE → RETURN → SELL → REFUEL`:
+  - viaje abstracto de 2 s, sin pathfinding;
+  - minado según capacidad, masa y tasa;
+  - venta al mercado que sube stock y baja precio;
+  - repostaje con los créditos del agente, sin saldo negativo.
+- Decisión determinista por utilidad entre Hielo, Silicato, Hierro y Cobre.
+- Si la mejor utilidad no es positiva, el agente pasa a `IDLE` y espera.
+- Créditos y mineral elegido persisten en el guardado.
+- Telemetría `agent0State`/`agent0Credits`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/AgentBrain.java` (nuevo)
+- `src/com/example/codegame/PilotAgent.java`
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `src/com/example/codegame/MyGame.java`
+- `tools/tests/15_agents.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS el agente completa un ciclo minero`
+- `PASS los estados del agente son observables`
+- `PASS el agente mueve el stock del mercado`
+- `PASS la decisión es determinista y por utilidad`
+- `PASS sin beneficio el agente espera`
+- `PASS créditos y mineral del agente persisten`
+- `15_agents`: 8 mineros, `DOCKED` observable y sin render.
+
+### Decisiones tomadas
+
+- El viaje es tiempo abstracto; no hay pathfinding 2D.
+- Los mineros básicos solo trabajan minerales comunes.
+- El repostaje usa 1 crédito por unidad y nunca deja créditos negativos.
+- El tick/LOD de agentes se deja para T-703.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-703 — Crear EconomySim con tick y LOD**.
 
 ---
 
