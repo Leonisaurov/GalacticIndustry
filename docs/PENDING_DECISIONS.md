@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:38:00-06:00  
+**Última actualización:** 2026-11-08T04:48:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -35,4 +35,4 @@ Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
 - `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
 - `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
 
-Las Etapas 1, 2, 3, 4, 5, 6 y 7 están completadas. La siguiente tarea de implementación es **T-801 — Crear UniverseState, GalaxyDef, SystemDef y SectorDef** (Etapa 8).
+Las Etapas 1, 2, 3, 4, 5, 6 y 7 están completadas. La siguiente tarea de implementación es **T-802 — Convertir GameWorld en SectorRuntime finito** (Etapa 8).

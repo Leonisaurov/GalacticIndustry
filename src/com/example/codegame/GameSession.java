@@ -22,6 +22,10 @@ class GameSession {
     final Pilot pilot;
     /** Filtro y fugas del soporte vital; se conectará al O2 en T-202/T-203. */
     final LifeSupport lifeSupport;
+    /** Jerarquía de universo; el runtime finito llega en T-802. */
+    final UniverseState universe;
+    /** Sector activo según la definición del universo. */
+    final SectorDef currentSector;
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
     final GameWorld sector;
 
@@ -42,6 +46,8 @@ class GameSession {
         this.profile = profile;
         this.pilot = new Pilot();
         this.lifeSupport = new LifeSupport();
+        this.universe = GameData.newUniverse();
+        this.currentSector = universe.defaultSector();
         this.sector = new GameWorld(profile.upgrades);
         this.sector.attachLifeSupport(lifeSupport);
     }

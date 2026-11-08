@@ -156,6 +156,23 @@ estáticos se reutilizan.
 - Se registran `rescue_request` y `rescue` en el log; telemetría
   `canRescue`, `rescueActive` y `rescueSeconds`.
 
+## Universo y galaxias (datos)
+
+- Jerarquía: `UniverseState` → `GalaxyDef` → `SystemDef` → `SectorDef`.
+- `GalaxyDef`: id, nombre, semilla, paleta (`nebulaColor`/`starColor`) y sesgos
+  de minerales por galaxia.
+- `SystemDef`: id, galaxia, semilla y de **1 a 3 sectores**.
+- `SectorDef`: id, sistema, semilla, límites (`12000 × 12000` por defecto),
+  perfil de generación (`INICIAL`, `CINTURON`, `METALICO`, `HELADO`), radio
+  seguro y estaciones.
+- IDs y semillas son estables y se construyen en `GameData.newUniverse()`:
+  - `milky-way` / `sol` / `sol-prime` (arranque, nodriza);
+  - `andromeda` (metales y titanio);
+  - `nebula-draco` (ficticia, hielo y silicato).
+- `UniverseState.validate()` comprueba IDs únicos, semillas, paletas, sesgos,
+  límites, perfiles, número de sectores y estaciones.
+- El runtime finito y la carga/descarga por sector llegan en T-802.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

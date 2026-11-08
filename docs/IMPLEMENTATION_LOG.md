@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:38:00-06:00  
+**Última actualización:** 2026-11-08T04:48:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,75 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-061 — Jerarquía del universo
+
+- **Fecha:** 2026-11-08T04:48:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-801
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Nueva jerarquía de datos:
+  - `UniverseState` → `GalaxyDef` → `SystemDef` → `SectorDef`.
+- Cada galaxia tiene **semilla, paleta y sesgos de minerales**.
+- Cada sistema tiene **1–3 sectores**.
+- Cada sector tiene **límites** (12.000 × 12.000 por defecto), **perfil**
+  (`INICIAL`, `CINTURON`, `METALICO`, `HELADO`), radio seguro y **estaciones**.
+- `GameData.newUniverse()` define:
+  - `milky-way` / `sol` / `sol-prime` (arranque con nodriza);
+  - `andromeda` (metales y titanio);
+  - `nebula-draco` (ficticia, hielo y silicato).
+- IDs y semillas **estables**; `UniverseState.validate()` comprueba coherencia.
+- Telemetría de galaxias/sistemas/sectores y prueba `16_universe`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/UniverseState.java` (nuevo)
+- `src/com/example/codegame/GalaxyDef.java` (nuevo)
+- `src/com/example/codegame/SystemDef.java` (nuevo)
+- `src/com/example/codegame/SectorDef.java` (nuevo)
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/16_universe.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS el universo es coherente`
+- `PASS hay varias galaxias, sistemas y sectores`
+- `PASS cada galaxia tiene semilla, paleta y sesgos`
+- `PASS el sector inicial tiene límites, perfil y estación`
+- `PASS todos los sectores tienen límites, perfil y estaciones`
+- `PASS los IDs y semillas son estables`
+- `PASS las galaxias se diferencian por sesgos`
+- `PASS la validación detecta datos incompletos`
+- `PASS la validación exige estaciones`
+- `16_universe`: 3 galaxias, 3 sistemas, 6 sectores y `sol-prime` INICIAL.
+
+### Decisiones tomadas
+
+- Las definiciones son datos puros, sin render ni simulación.
+- El universo inicial tiene tres galaxias para cubrir real, ficticia y arranque.
+- El sector inicial mantiene la nodriza; los demás usan puestos.
+- El runtime finito y el streaming son T-802.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-802 — Convertir GameWorld en SectorRuntime finito**.
 
 ---
 

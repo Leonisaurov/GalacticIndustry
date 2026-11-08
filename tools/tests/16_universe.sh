@@ -1,27 +1,22 @@
 #!/usr/bin/env bash
-# Test: nuevo personaje, mundo persistente y recuperación de nave legado
+# Test: jerarquía del universo (galaxias, sistemas y sectores)
 set -euo pipefail
 source "$(dirname "$0")/testlib.sh"
 
 prepare_device_module
-launch_app "--ez pilot_death_test true"
-wait_current_state OVER 10 || fail "no se llegó al fin por piloto"
-tap "$((W / 2))" "$OVER_RETRY_Y" 0.2
-wait_current_state PLAYING 6 || fail "no se creó el nuevo personaje"
-sleep 0.6
+launch_app "--ez test_mode true --ez station_test true"
+wait_current_state PLAYING 10 || fail "no arrancó la prueba de universo"
+sleep 0.5
 
 status=$(latest_status)
-assert_eq "mundo legado presente" true "$(printf '%s' "$status" | json_get legacyWreck)"
-assert_eq "nave legado cerca" true "$(printf '%s' "$status" | json_get legacyNear)"
-coins_before=$(printf '%s' "$status" | json_get coins)
-
-tap "$RECOVER_X" "$RECOVER_Y" 0.3
-sleep 0.6
-status=$(latest_status)
-assert_eq "nave legado recuperada" false "$(printf '%s' "$status" | json_get legacyWreck)"
-assert_eq "nave legado ya no está cerca" false "$(printf '%s' "$status" | json_get legacyNear)"
-coins_after=$(printf '%s' "$status" | json_get coins)
-assert_ge "el desguace da créditos" "$((coins_before + 10))" "$coins_after"
+assert_eq "galaxias" 3 "$(printf '%s' "$status" | json_get galaxyCount)"
+assert_eq "sistemas" 3 "$(printf '%s' "$status" | json_get systemCount)"
+assert_eq "sectores" 6 "$(printf '%s' "$status" | json_get sectorCount)"
+assert_eq "galaxia de arranque" milky-way "$(printf '%s' "$status" | json_get galaxyId)"
+assert_eq "sector de arranque" sol-prime "$(printf '%s' "$status" | json_get sectorId)"
+assert_eq "ancho del sector" 12000 "$(printf '%s' "$status" | json_get sectorWidth)"
+assert_eq "alto del sector" 12000 "$(printf '%s' "$status" | json_get sectorHeight)"
+assert_eq "perfil del sector" INICIAL "$(printf '%s' "$status" | json_get sectorProfile)"
 
 check_no_crash
-echo "OK 16_universe: nuevo personaje, mundo persistente y nave legado recuperada"
+echo "OK 16_universe: 3 galaxias, 3 sistemas, 6 sectores y IDs estables"

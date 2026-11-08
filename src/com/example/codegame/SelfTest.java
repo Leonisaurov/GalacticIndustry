@@ -2708,6 +2708,90 @@ public class SelfTest {
                         && marketLoaded.sector.station.market.target(Commodity.HIELO) == 250);
         check("el offline respeta el límite", offlineCapped);
 
+        // T-801: jerarquía del universo y datos estables.
+        UniverseState u801 = GameData.newUniverse();
+        check("el universo es coherente", u801.valid()
+                && u801.validate().isEmpty());
+        check("hay varias galaxias, sistemas y sectores",
+                u801.galaxyCount() == 3
+                        && u801.systemCount() == 3
+                        && u801.sectorCount() == 6);
+        boolean u801Bias = true;
+        for (int i = 0; i < u801.galaxies().size(); i++) {
+            GalaxyDef g = u801.galaxies().get(i);
+            if (!g.id.isEmpty() && g.seed != 0L
+                    && g.nebulaColor != 0 && g.starColor != 0) {
+                for (Commodity c : Commodity.values()) {
+                    float bias = g.bias(c);
+                    u801Bias = u801Bias && Float.isFinite(bias) && bias > 0f;
+                }
+            } else {
+                u801Bias = false;
+            }
+        }
+        check("cada galaxia tiene semilla, paleta y sesgos", u801Bias);
+        SectorDef u801Start = u801.defaultSector();
+        check("el sector inicial tiene límites, perfil y estación",
+                u801Start != null
+                        && GameData.START_SECTOR_ID.equals(u801Start.id)
+                        && u801Start.width == 12000f
+                        && u801Start.height == 12000f
+                        && u801Start.profile == SectorDef.Profile.INICIAL
+                        && u801Start.stationCount() >= 1
+                        && u801Start.contains(0f, 0f)
+                        && !u801Start.contains(7000f, 0f));
+        boolean u801Limits = true;
+        for (int i = 0; i < u801.galaxies().size(); i++) {
+            GalaxyDef g = u801.galaxies().get(i);
+            for (int k = 0; k < g.systems.size(); k++) {
+                SystemDef sys = g.systems.get(k);
+                u801Limits = u801Limits
+                        && sys.sectorCount() >= SystemDef.MIN_SECTORS
+                        && sys.sectorCount() <= SystemDef.MAX_SECTORS
+                        && g.id.equals(sys.galaxyId);
+                for (int j = 0; j < sys.sectors.size(); j++) {
+                    SectorDef sec = sys.sectors.get(j);
+                    u801Limits = u801Limits
+                            && sys.id.equals(sec.systemId)
+                            && sec.width > 0f && sec.height > 0f
+                            && sec.profile != null
+                            && sec.stationCount() > 0;
+                }
+            }
+        }
+        check("todos los sectores tienen límites, perfil y estaciones", u801Limits);
+        UniverseState u801Copy = GameData.newUniverse();
+        check("los IDs y semillas son estables",
+                u801Copy.sector(GameData.START_SECTOR_ID) != null
+                        && u801Copy.sector(GameData.START_SECTOR_ID).seed
+                        == u801Start.seed
+                        && u801Copy.galaxy(GameData.START_GALAXY_ID).seed
+                        == u801.galaxy(GameData.START_GALAXY_ID).seed
+                        && u801Copy.sector("sol-belt").id.equals("sol-belt")
+                        && u801Copy.sector("sol-belt").seed
+                        == u801.sector("sol-belt").seed);
+        check("las galaxias se diferencian por sesgos",
+                u801.galaxy(GameData.ANDROMEDA_GALAXY_ID).bias(Commodity.HIERRO) > 1f
+                        && u801.galaxy(GameData.DRACO_GALAXY_ID).bias(Commodity.HIELO) > 1f);
+        check("las búsquedas por ID devuelven el mismo objeto",
+                u801.sector("sol-prime") == u801Start
+                        && u801.system("sol") == u801.defaultSystem()
+                        && u801.galaxy("milky-way") == u801.defaultGalaxy());
+        check("la validación detecta datos incompletos",
+                !new UniverseState().valid()
+                        && !GameData.newUniverse().validate().contains("sin limites")
+                        && new UniverseState().validate().size() == 1);
+        SectorDef u801NoStation = new SectorDef("vacio", "VACIO", "s",
+                1L, 1000f, 1000f, SectorDef.Profile.INICIAL, 10f);
+        UniverseState u801Bad = new UniverseState();
+        GalaxyDef u801BadGalaxy = new GalaxyDef("g", "G", "", 1L,
+                0xFFFFFF, 0xFFFFFF, null);
+        SystemDef u801BadSystem = new SystemDef("s", "S", "g", 1L);
+        u801BadSystem.addSector(u801NoStation);
+        u801BadGalaxy.addSystem(u801BadSystem);
+        u801Bad.addGalaxy(u801BadGalaxy);
+        check("la validación exige estaciones", !u801Bad.valid());
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

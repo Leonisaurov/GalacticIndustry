@@ -45,7 +45,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `13_tractor` — rayo tractor: atracción, energía, captura de fragmentos y HUD.
 - `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios, persistencia, rescate y despegue.
 - `14_market` — mercado: stock, objetivo, spread, cantidades, venta parcial/total, `NADA`, compra, confirmación y persistencia tras reiniciar. Anti-abuso y 30 min simulados en `01_logic`.
-- `15_agents` — 8 pilotos, tick de 2 s, venta con créditos y 3 naves de tráfico cerca de la estación (captura `30_traffic`). Ciclo, LOD, transacciones, bench y offline 12 h se prueban en `01_logic`.
+- `15_agents` — 8 pilotos, tick de 2 s, venta con créditos y 3 naves de tráfico cerca de la estación (captura `30_traffic`). Ciclo, LOD, transacciones, bench y offline 12 h se prueban en `01_logic`.\n- `16_universe` — 3 galaxias, 3 sistemas, 6 sectores, IDs estables y sector inicial de 12.000 × 12.000. La validación de datos se cubre en `01_logic`.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh

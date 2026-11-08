@@ -906,7 +906,11 @@ public class MyGame implements ApplicationListener {
                         + "\"marketQty\":%d,\"marketPending\":%s,"
                         + "\"agents\":%d,\"agentsMax\":%d,\"agentsDocked\":%d,"
                         + "\"agent0State\":\"%s\",\"agent0Credits\":%d,"
-                        + "\"traffic\":%d,\"trafficActive\":%s}",
+                        + "\"traffic\":%d,\"trafficActive\":%s,"
+                        + "\"galaxyCount\":%d,\"systemCount\":%d,\"sectorCount\":%d,"
+                        + "\"galaxyId\":\"%s\",\"sectorId\":\"%s\","
+                        + "\"sectorWidth\":%.0f,\"sectorHeight\":%.0f,"
+                        + "\"sectorProfile\":\"%s\"}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -964,7 +968,17 @@ public class MyGame implements ApplicationListener {
                         ? world.agents.get(0).state.name() : "NONE",
                 world.agents.size() > 0 ? world.agents.get(0).credits : 0,
                 StationTraffic.SHIPS,
-                world.traffic.active()));
+                world.traffic.active(),
+                session.universe.galaxyCount(),
+                session.universe.systemCount(),
+                session.universe.sectorCount(),
+                session.universe.defaultGalaxy() == null
+                        ? "" : session.universe.defaultGalaxy().id,
+                session.currentSector == null ? "" : session.currentSector.id,
+                session.currentSector == null ? 0f : session.currentSector.width,
+                session.currentSector == null ? 0f : session.currentSector.height,
+                session.currentSector == null || session.currentSector.profile == null
+                        ? "" : session.currentSector.profile.name()));
     }
 
     void logEvent(String json) {
