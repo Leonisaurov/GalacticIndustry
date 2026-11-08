@@ -3325,6 +3325,62 @@ public class SelfTest {
                         && !unplaced.canDock(new Vector2(0f, 0f), 1f)
                         && !unplaced.install(0, ModuleDef.STORAGE));
 
+        // T-902: compra, colocación y persistencia de la plataforma vacía.
+        Upgrades baseUp = new Upgrades(true);
+        baseUp.setCoins(1000);
+        GameSession baseSession = new GameSession(new PlayerProfile(baseUp));
+        baseSession.startRun();
+        baseSession.ship().pos.set(-1500f, 0f);
+        baseSession.ship().cargo().addExact(Commodity.HIERRO, 30);
+        baseSession.ship().cargo().addExact(Commodity.COBRE, 15);
+        baseSession.ship().cargo().addExact(Commodity.SILICATO, 25);
+        check("la base exige ubicacion y materiales",
+                ConstructionService.canBuild(baseSession, -1500f, 0f).ok
+                        && !ConstructionService.canBuild(baseSession, 0f, 480f).ok
+                        && !ConstructionService.canBuild(baseSession,
+                        9000f, 0f).ok);
+        ConstructionService.Result baseBuild = ConstructionService.buildCore(
+                baseSession, -1500f, 0f);
+        check("construir la base cobra creditos y materiales",
+                baseBuild.ok
+                        && baseSession.playerStation.built()
+                        && Math.abs(baseSession.playerStation.pos.x + 1500f) < 0.01f
+                        && GameData.START_SECTOR_ID.equals(
+                        baseSession.playerStation.sectorId())
+                        && baseUp.coins() == 700
+                        && baseSession.ship().cargo().amount(Commodity.HIERRO) == 5
+                        && baseSession.ship().cargo().amount(Commodity.COBRE) == 5
+                        && baseSession.ship().cargo().amount(Commodity.SILICATO) == 5);
+        check("la base nace vacía y sin servicios",
+                baseSession.playerStation.moduleCount() == 0
+                        && baseSession.playerStation.serviceMask() == 0
+                        && baseSession.sector.playerStation == baseSession.playerStation
+                        && baseSession.playerStation.inSector(GameData.START_SECTOR_ID)
+                        && !baseSession.playerStation.market()
+                        && !baseSession.playerStation.storage());
+        check("no se construye dos veces",
+                !ConstructionService.buildCore(baseSession, -1600f, 0f).ok);
+        Upgrades poorBaseUp = new Upgrades(true);
+        poorBaseUp.setCoins(10);
+        GameSession poorBase = new GameSession(new PlayerProfile(poorBaseUp));
+        poorBase.startRun();
+        poorBase.ship().pos.set(-1500f, 0f);
+        check("sin creditos no se construye",
+                !ConstructionService.buildCore(poorBase, -1500f, 0f).ok
+                        && !poorBase.playerStation.built());
+        SaveService.MemoryStorage baseStore = new SaveService.MemoryStorage();
+        SaveService baseSaves = new SaveService(baseStore);
+        check("la base se guarda", baseSaves.save(baseSession));
+        GameSession baseLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("la base se restaura vacía",
+                baseSaves.load(baseLoaded) == SaveService.LoadStatus.V2
+                        && baseLoaded.playerStation.built()
+                        && Math.abs(baseLoaded.playerStation.pos.x + 1500f) < 0.01f
+                        && baseLoaded.playerStation.moduleCount() == 0
+                        && baseLoaded.playerStation.serviceMask() == 0
+                        && baseLoaded.ship().cargo().amount(Commodity.HIERRO) == 5);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

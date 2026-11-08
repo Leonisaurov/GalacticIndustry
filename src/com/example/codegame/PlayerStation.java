@@ -1,5 +1,8 @@
 package com.example.codegame;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
 /**
@@ -23,18 +26,61 @@ final class PlayerStation {
     final StationDef def = GameData.PLAYER_PLATFORM;
     private final ModuleDef[] slots = new ModuleDef[SLOTS];
     private boolean built;
+    private String sectorId = GameData.START_SECTOR_ID;
 
     PlayerStation() {
     }
 
     /** Plataforma ya colocada en el mundo (para pruebas y T-902). */
     PlayerStation(float x, float y) {
-        place(x, y);
+        place(x, y, GameData.START_SECTOR_ID);
     }
 
-    void place(float x, float y) {
+    void place(float x, float y, String sectorId) {
         pos.set(x, y);
+        this.sectorId = sectorId == null ? GameData.START_SECTOR_ID : sectorId;
         built = true;
+    }
+
+    void restore(boolean built, float x, float y, String sectorId) {
+        this.built = built;
+        this.pos.set(x, y);
+        this.sectorId = sectorId == null ? GameData.START_SECTOR_ID : sectorId;
+    }
+
+    String sectorId() {
+        return sectorId;
+    }
+
+    boolean inSector(String id) {
+        return built && sectorId.equals(id);
+    }
+
+    /** Dibujo de la plataforma vacía: un cuadrado sencillo con luz de borde. */
+    void draw(ShapeRenderer shapes, float time) {
+        if (!built || shapes == null) {
+            return;
+        }
+        float pulse = 0.72f + 0.28f * MathUtils.sin(time * 2.2f);
+        shapes.setColor(0.08f, 0.14f, 0.24f, 0.95f);
+        shapes.rect(pos.x - RADIUS, pos.y - RADIUS, RADIUS * 2f, RADIUS * 2f);
+        shapes.setColor(0.22f, 0.42f, 0.68f, 0.85f);
+        shapes.rect(pos.x - RADIUS + 8f, pos.y - RADIUS + 8f,
+                RADIUS * 2f - 16f, RADIUS * 2f - 16f);
+        shapes.setColor(0.08f, 0.14f, 0.24f, 1f);
+        shapes.rect(pos.x - RADIUS + 14f, pos.y - RADIUS + 14f,
+                RADIUS * 2f - 28f, RADIUS * 2f - 28f);
+        shapes.setColor(0.45f, 0.95f, 1f, 0.35f * pulse);
+        shapes.rectLine(pos.x - RADIUS, pos.y + RADIUS,
+                pos.x + RADIUS, pos.y + RADIUS, 3f);
+        shapes.rectLine(pos.x - RADIUS, pos.y - RADIUS,
+                pos.x - RADIUS, pos.y + RADIUS, 3f);
+        shapes.rectLine(pos.x + RADIUS, pos.y - RADIUS,
+                pos.x + RADIUS, pos.y + RADIUS, 3f);
+        shapes.rectLine(pos.x - RADIUS, pos.y - RADIUS,
+                pos.x + RADIUS, pos.y - RADIUS, 3f);
+        shapes.setColor(0.45f, 0.95f, 1f, 0.20f + 0.15f * pulse);
+        shapes.circle(pos.x, pos.y, 16f + 3f * pulse, 18);
     }
 
     boolean built() {
@@ -141,9 +187,15 @@ final class PlayerStation {
     }
 
     boolean inSafeZone(Vector2 point) {
-        if (!built || point == null) {
+        return point != null && inSafeZone(point.x, point.y);
+    }
+
+    boolean inSafeZone(float x, float y) {
+        if (!built) {
             return false;
         }
-        return point.dst(pos) < SAFE_RADIUS;
+        float dx = x - pos.x;
+        float dy = y - pos.y;
+        return dx * dx + dy * dy < SAFE_RADIUS * SAFE_RADIUS;
     }
 }

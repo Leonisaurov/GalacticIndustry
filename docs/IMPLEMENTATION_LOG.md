@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T06:28:00-06:00  
+**Última actualización:** 2026-11-08T06:44:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,79 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-070 — Construcción de la plataforma vacía
+
+- **Fecha:** 2026-11-08T06:44:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-902
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `ConstructionService` compra y coloca el núcleo:
+  - **300 créditos**;
+  - **25 Hierro + 10 Cobre + 20 Silicato**;
+  - valida límites del sector y distancia a la nodriza;
+  - evita bases duplicadas.
+- La plataforma:
+  - nace vacía, sin módulos ni servicios;
+  - se dibuja como cuadrado con borde luminoso;
+  - tiene zona segura y evita asteroides dentro.
+- La posición/estado se guardan en el v2 (`playerStation`) y se restauran.
+- Botón `CONSTRUIR BASE` contextual y prueba `17_player_station` con captura
+  `33_base`.
+- El acople lógico está disponible; la pantalla modular llega en T-904.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ConstructionService.java` (nuevo)
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/SectorStreamer.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/HudView.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- `PASS la base exige ubicacion y materiales`
+- `PASS construir la base cobra creditos y materiales`
+- `PASS la base nace vacia y sin servicios`
+- `PASS no se construye dos veces`
+- `PASS sin creditos no se construye`
+- `PASS la base se guarda`
+- `PASS la base se restaura vacia`
+- `17_player_station`: construcción, `33_base` y persistencia.
+
+### Decisiones tomadas
+
+- Los materiales del núcleo caben en la bodega base.
+- La plataforma se coloca en la posición de la nave.
+- Se prohíbe construir dentro de la zona de la nodriza.
+- Los módulos y servicios se añaden en T-903.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-903 — Implementar sistema modular genérico de estación**.
 
 ---
 

@@ -52,12 +52,12 @@ class GameSession {
         this.lifeSupport = new LifeSupport();
         this.universe = GameData.newUniverse();
         this.currentSector = universe.defaultSector();
-        this.streamer = new SectorStreamer(universe);
+        this.streamer = new SectorStreamer(universe, playerStation);
         this.streamer.switchTo(currentSector == null ? null : currentSector.id, null);
         this.universe.discoverInitial(currentSector == null ? null : currentSector.id);
         this.sector = new GameWorld(profile.upgrades, currentSector,
                 universe.galaxyOfSector(currentSector == null ? null
-                        : currentSector.id));
+                        : currentSector.id), playerStation);
         this.sector.attachLifeSupport(lifeSupport);
     }
 

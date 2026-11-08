@@ -17,11 +17,17 @@ final class SectorStreamer {
     static final float LOAD_RADIUS = 2.5f;
 
     private final UniverseState universe;
+    private final PlayerStation playerStation;
     private final Set<String> loaded = new LinkedHashSet<>();
     private String activeId;
 
     SectorStreamer(UniverseState universe) {
+        this(universe, new PlayerStation());
+    }
+
+    SectorStreamer(UniverseState universe, PlayerStation playerStation) {
         this.universe = universe;
+        this.playerStation = playerStation != null ? playerStation : new PlayerStation();
     }
 
     String activeId() {
@@ -89,7 +95,7 @@ final class SectorStreamer {
             return null;
         }
         GameWorld world = new GameWorld(upgrades, def,
-                universe.galaxyOfSector(def.id));
+                universe.galaxyOfSector(def.id), playerStation);
         world.start();
         SectorRuntime.Snapshot snapshot = universe.snapshot(sectorId);
         if (snapshot != null) {

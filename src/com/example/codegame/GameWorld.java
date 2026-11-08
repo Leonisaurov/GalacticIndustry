@@ -41,6 +41,8 @@ class GameWorld {
     final Ship ship = new Ship();
     /** Definición del sector activo: límites, semilla y perfil. */
     final SectorDef sector;
+    /** Estación personal; puede estar en otro sector y no dibujarse aquí. */
+    final PlayerStation playerStation;
     /** Estación principal del sector; su posición es fija por ahora. */
     final Station station;
     /** Simulación de mercados; tickea cada 10 s, no por frame. */
@@ -101,15 +103,22 @@ class GameWorld {
     }
 
     GameWorld(Upgrades up) {
-        this(up, GameData.newUniverse().defaultSector(), null);
+        this(up, GameData.newUniverse().defaultSector(), null, new PlayerStation());
     }
 
     GameWorld(Upgrades up, SectorDef sector) {
-        this(up, sector, null);
+        this(up, sector, null, new PlayerStation());
     }
 
     GameWorld(Upgrades up, SectorDef sector, GalaxyDef galaxy) {
+        this(up, sector, galaxy, new PlayerStation());
+    }
+
+    GameWorld(Upgrades up, SectorDef sector, GalaxyDef galaxy,
+              PlayerStation playerStation) {
         this.up = up;
+        this.playerStation = playerStation != null ? playerStation
+                : new PlayerStation();
         this.sector = sector != null ? sector
                 : GameData.newUniverse().defaultSector();
         GalaxyDef owner = galaxy != null ? galaxy
@@ -880,7 +889,8 @@ class GameWorld {
             if (x * x + y * y < safe * safe) {
                 continue;
             }
-            if (station.inSafeZone(x, y)) {
+            if (station.inSafeZone(x, y)
+                    || playerStation.inSafeZone(x, y)) {
                 continue;
             }
             int roll = rnd.nextInt(100);
@@ -916,6 +926,9 @@ class GameWorld {
     void draw(ShapeRenderer shapes) {
         drawSectorBounds(shapes);
         station.draw(shapes, elapsed);
+        if (playerStation.inSector(sector.id)) {
+            playerStation.draw(shapes, elapsed);
+        }
         traffic.draw(shapes, station, elapsed);
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).draw(shapes);

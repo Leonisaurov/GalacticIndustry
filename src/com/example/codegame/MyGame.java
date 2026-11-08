@@ -113,6 +113,8 @@ public class MyGame implements ApplicationListener {
     private final boolean boundsTest;
     /** Arranca con motor warp para probar viaje y regreso. */
     private final boolean warpTest;
+    /** Arranca con creditos/materiales y espacio para construir la base. */
+    private final boolean baseTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -131,6 +133,8 @@ public class MyGame implements ApplicationListener {
     Button btnRescue;
     /** Abrir el mapa de sectores. */
     Button btnMap;
+    /** Construir la plataforma personal en la posición actual. */
+    Button btnBuildBase;
     /** Zonas invisibles solo para pruebas de warp. */
     private Button btnWarpDebug, btnWarpBackDebug;
     private final RescueService rescue = new RescueService();
@@ -324,6 +328,22 @@ public class MyGame implements ApplicationListener {
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest, boolean boundsTest, boolean warpTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, boundsTest, warpTest, false);
+    }
+
+    /**
+     * @param baseTest arranca con creditos/materiales para construir la base.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest, boolean warpTest,
+                  boolean baseTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -342,11 +362,12 @@ public class MyGame implements ApplicationListener {
         this.marketTest = marketTest;
         this.boundsTest = boundsTest;
         this.warpTest = warpTest;
+        this.baseTest = baseTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
                 || dockingTest || stationServiceTest || rescueTest || marketTest
-                || boundsTest || warpTest;
+                || boundsTest || warpTest || baseTest;
     }
 
     @Override
@@ -558,6 +579,18 @@ public class MyGame implements ApplicationListener {
             upgrades.buy(Upgrades.MOTOR);
             world.ship.fuel = world.ship.maxFuel;
             world.ship.capacitor.reset();
+        } else if (baseTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(-1500f, 0f);
+            world.ship.vel.set(0f, 0f);
+            upgrades.setCoins(1000);
+            world.ship.cargo().addExact(Commodity.HIERRO, 30);
+            world.ship.cargo().addExact(Commodity.COBRE, 15);
+            world.ship.cargo().addExact(Commodity.SILICATO, 25);
         }
     }
 
@@ -704,6 +737,8 @@ public class MyGame implements ApplicationListener {
         btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
                 bw * 0.9f, 46f * u);
         btnMap = new Button("MAPA", w * 0.5f - 70f * u, pad, 140f * u, 44f * u);
+        btnBuildBase = new Button("CONSTRUIR BASE", cx + bw * 0.05f, h * 0.54f,
+                bw * 0.9f, 46f * u);
         if (warpTest) {
             btnWarpDebug = new Button("", w * 0.30f, h * 0.05f, w * 0.18f, h * 0.08f);
             btnWarpBackDebug = new Button("", w * 0.52f, h * 0.05f, w * 0.18f, h * 0.08f);
@@ -773,6 +808,12 @@ public class MyGame implements ApplicationListener {
     private boolean canRescue() {
         return state == PLAYING && runActive && !rescue.active()
                 && RescueService.canRequest(world, session.pilot);
+    }
+
+    private boolean canBuildBase() {
+        return state == PLAYING && runActive && !world.ship.docked
+                && ConstructionService.canBuild(session,
+                world.ship.pos.x, world.ship.pos.y).ok;
     }
 
     /** Coste de reparar una parte: proporcional a la integridad que le falta. */
@@ -997,7 +1038,8 @@ public class MyGame implements ApplicationListener {
                         + "\"playerStationBuilt\":%s,\"playerStationSlots\":%d,"
                         + "\"playerStationModules\":%d,\"playerStationServices\":%d,"
                         + "\"moduleDefs\":%d,\"playerStationX\":%.1f,"
-                        + "\"playerStationY\":%.1f}",
+                        + "\"playerStationY\":%.1f,\"canBuildBase\":%s,"
+                        + "\"baseWhileDocked\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1086,7 +1128,9 @@ public class MyGame implements ApplicationListener {
                 session.playerStation.serviceMask(),
                 ModuleDef.values().length,
                 session.playerStation.pos.x,
-                session.playerStation.pos.y));
+                session.playerStation.pos.y,
+                canBuildBase(),
+                session.playerStation.built()));
     }
 
     void logEvent(String json) {
@@ -1225,6 +1269,20 @@ public class MyGame implements ApplicationListener {
     }
 
     private void updatePlaying(float dt) {
+        if (canBuildBase() && tapped(btnBuildBase)) {
+            ConstructionService.Result built = ConstructionService.buildCore(
+                    session, world.ship.pos.x, world.ship.pos.y);
+            if (built.ok) {
+                resetControls();
+                saveRun();
+                logEvent("{\"event\":\"base_build\",\"sector\":\""
+                        + session.currentSector.id + "\"}");
+            } else {
+                logEvent("{\"event\":\"base_fail\",\"error\":\""
+                        + built.error + "\"}");
+            }
+            return;
+        }
         if (tapped(btnMap)) {
             resetControls();
             openMap();
@@ -1712,6 +1770,8 @@ public class MyGame implements ApplicationListener {
             hud.canRescue = canRescue();
             hud.map = btnMap;
             hud.canOpenMap = state == PLAYING && runActive && !rescue.active();
+            hud.buildBase = btnBuildBase;
+            hud.canBuildBase = canBuildBase();
             hud.rescueActive = rescue.active();
             hud.rescueSeconds = rescue.remaining();
             playHud.draw(w, h);

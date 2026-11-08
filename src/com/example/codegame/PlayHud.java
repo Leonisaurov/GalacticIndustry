@@ -99,6 +99,9 @@ final class PlayHud {
         if (hud.canOpenMap) {
             ui.drawButton(hud.map, Visuals.BTN_SECONDARY, true);
         }
+        if (hud.canBuildBase) {
+            ui.drawButton(hud.buildBase, Visuals.BTN_PRIMARY, true);
+        }
         drawIconButton(hud.pause);
         ui.drawCoinIcon(pad + 18f * u, h - 54f * u, 13f * u);
         if (hud.state == MyGame.PLAYING) {
@@ -180,6 +183,13 @@ final class PlayHud {
         }
         if (hud.canOpenMap) {
             ui.drawButtonText(hud.map, true);
+        }
+        if (hud.canBuildBase) {
+            ui.drawButtonText(hud.buildBase, true);
+            ui.textCentered("BASE: 300 CR + 25 HIERRO + 10 COBRE + 20 SILICATO",
+                    hud.buildBase.bounds.x + hud.buildBase.bounds.width * 0.5f,
+                    hud.buildBase.bounds.y + hud.buildBase.bounds.height + 22f * u,
+                    0.62f * u, Visuals.ACCENT);
         }
         if (hud.canRescue) {
             ui.drawButtonText(hud.rescue, true);

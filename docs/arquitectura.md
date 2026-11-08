@@ -289,8 +289,16 @@ estáticos se reutilizan.
   plataforma vacía devuelve **0**.
 - `install()` valida ranura, plaza libre, plataforma colocada y requisito. La
   compra/construcción con créditos y materiales llega en T-903.
-- La colocación y compra de la plataforma llegan en T-902; la estación está
-  separada de la nodriza en todo momento.
+- `ConstructionService` compra y coloca el núcleo:
+  - **300 créditos** y **25 Hierro + 10 Cobre + 20 Silicato**;
+  - rechaza fuera del sector, a menos de `dockRadius + 200` de la nodriza o si
+    ya existe una base;
+  - la plataforma nace vacía, sin servicios.
+- La plataforma se dibuja como un cuadrado con borde luminoso y zona segura
+  propia; los asteroides no se generan dentro.
+- La posición y el estado de la base se guardan en el v2 (`playerStation`).
+- El acople lógico está disponible (`PlayerStation.canDock`); la pantalla de
+  gestión modular llega en T-904.
 
 ## Pilotos autónomos (datos)
 

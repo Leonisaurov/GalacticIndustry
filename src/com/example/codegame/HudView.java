@@ -28,6 +28,8 @@ final class HudView {
     boolean canRescue;
     Button map;
     boolean canOpenMap;
+    Button buildBase;
+    boolean canBuildBase;
     boolean rescueActive;
     float rescueSeconds;
 }

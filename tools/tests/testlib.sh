@@ -59,6 +59,8 @@ MAP_BTN_X=0
 MAP_BTN_Y=0
 MAP_TRAVEL_X=0
 MAP_TRAVEL_Y=0
+BASE_X=0
+BASE_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -148,6 +150,9 @@ device_geometry() {
     local map_half=$(( (W - 64 * U) / 2 ))
     MAP_TRAVEL_X=$((28 * U + map_half / 2))
     MAP_TRAVEL_Y=$((H - 118 * U))
+    # Botón CONSTRUIR BASE (centro, 54 % de altura + 23 u).
+    BASE_X=$((W / 2))
+    BASE_Y=$((H - (H * 54 / 100 + 23 * U)))
 }
 
 # ---------- build y SelfTest ----------

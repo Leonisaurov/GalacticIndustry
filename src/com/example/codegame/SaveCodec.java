@@ -226,6 +226,12 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            w.name("playerStation").object();
+            w.set("built", session.playerStation.built());
+            w.set("x", session.playerStation.pos.x);
+            w.set("y", session.playerStation.pos.y);
+            w.set("sectorId", session.playerStation.sectorId());
+            w.pop();
             w.name("sectorSnapshots").array();
             for (SectorRuntime.Snapshot snapshot : session.universe.snapshots()) {
                 writeSnapshot(w, snapshot);
@@ -503,6 +509,15 @@ final class SaveCodec {
                     d.marketConsumption = intArray(market.get("consumption"));
                 }
             }
+            JsonValue playerStation = sector.get("playerStation");
+            if (playerStation != null) {
+                d.hasPlayerStation = true;
+                d.playerStationBuilt = playerStation.getBoolean("built", false);
+                d.playerStationX = playerStation.getFloat("x", 0f);
+                d.playerStationY = playerStation.getFloat("y", 0f);
+                d.playerStationSector = playerStation.getString("sectorId",
+                        GameData.START_SECTOR_ID);
+            }
             JsonValue snapList = sector.get("sectorSnapshots");
             if (snapList != null && snapList.isArray()) {
                 for (int i = 0; i < snapList.size; i++) {
@@ -770,6 +785,10 @@ final class SaveCodec {
         world.fx.clear();
         world.pilot.cancel();
         world.shake = 0f;
+        if (d.hasPlayerStation) {
+            session.playerStation.restore(d.playerStationBuilt,
+                    d.playerStationX, d.playerStationY, d.playerStationSector);
+        }
         session.universe.clearSnapshots();
         for (int i = 0; i < d.snapshots.size(); i++) {
             session.universe.putSnapshot(d.snapshots.get(i));
@@ -827,6 +846,11 @@ final class SaveCodec {
         boolean hasAgents;
         final List<AgentData> agents = new ArrayList<>();
         final List<SectorRuntime.Snapshot> snapshots = new ArrayList<>();
+        boolean hasPlayerStation;
+        boolean playerStationBuilt;
+        float playerStationX;
+        float playerStationY;
+        String playerStationSector = GameData.START_SECTOR_ID;
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;
