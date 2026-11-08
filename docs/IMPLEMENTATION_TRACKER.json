@@ -1,19 +1,22 @@
 {
   "meta": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T10:45:00-06:00",
-    "lastSessionId": "S-091",
+    "lastUpdated": "2026-11-08T12:00:00-06:00",
+    "lastSessionId": "S-092",
     "lastVerification": {
-      "date": "2026-11-08T10:45:00-06:00",
+      "date": "2026-11-08T12:00:00-06:00",
       "result": "OK",
       "checks": [
-        "01_logic: SelfTest TODO OK",
-        "02_navigation, 03_controls, 05_death, 09_wing_damage, 10_survival, 11_cargo, 12_mining, 13_station, 13_tractor, 14_market, 15_agents, 16_universe, 17_player_station, 17_warp, 18_interiors, 18_map, 19_audio, 20_accessibility, 21_music y 22_ui_polish: OK",
-        "06_visual_menu actualizado al menú actual",
-        "Panel sincronizado con el estado final"
+        "python3 tools/sync-dashboard.py --check: OK",
+        "Validador probado con propuesta no aprobada con tarea completada: rechazada",
+        "Validador probado con ID de tarea duplicado: rechazado",
+        "Validador probado con documento de actualización inexistente: rechazado",
+        "Panel abierto con file:// y secciones previas conservadas",
+        "Descarga de propuesta y expediente en .md y .txt",
+        "No se modificó código del juego"
       ]
     },
     "currentStageId": "S11",
@@ -31,8 +34,16 @@
       "No eliminar tareas o etapas silenciosamente.",
       "Actualizar JSON, log, decisiones y HTML al terminar.",
       "Si una tarea queda EN_PROGRESO, la siguiente sesión debe recuperarla antes de empezar otra.",
-      "Al añadir tareas, actualizar taskCount e implementationTaskCount de la etapa."
-    ]
+      "Al añadir tareas, actualizar taskCount e implementationTaskCount de la etapa.",
+      "El plan maestro es histórico: los cambios posteriores se registran como actualizaciones UPD-XXX.",
+      "Una actualización no aprobada no puede tener tareas EN_PROGRESO ni COMPLETADO.",
+      "Las tareas de actualización usan IDs UPD-XXX-TNN y viven en updates[].tasks.",
+      "No se reutilizan ni renumeran IDs históricos."
+    ],
+    "currentUpdateId": "UPD-001",
+    "nextUpdateId": null,
+    "updatesSchemaVersion": 1,
+    "updateProgressDefinition": "El progreso del plan base solo cuenta tracker.tasks con category=implementation y countsForProgress=true. Cada actualización calcula su propio progreso con updates[].tasks y no altera el progreso base."
   },
   "statusDefinitions": {
     "PENDIENTE": {
@@ -5373,6 +5384,13 @@
         "CombatSystem.java",
         "docs/DECISIONS.md"
       ],
+      "contextFiles": [],
+      "contextDocs": [
+        "docs/DECISIONS.md",
+        "docs/MASTER_PLAN.md",
+        "docs/arquitectura.md"
+      ],
+      "artifacts": [],
       "acceptanceCriteria": [
         "No se implementa IA hostil ni combate en las etapas iniciales.",
         "La arquitectura no cierra la posibilidad de facciones u online.",
@@ -6242,6 +6260,19 @@
         "InteriorRenderer.java",
         "MyGame.java"
       ],
+      "contextFiles": [
+        "src/com/example/codegame/InteriorScene.java",
+        "src/com/example/codegame/InteriorRenderer.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/PlayerStation.java"
+      ],
+      "contextDocs": [
+        "docs/MASTER_PLAN.md",
+        "docs/arquitectura.md",
+        "docs/DECISIONS.md",
+        "docs/pruebas.md"
+      ],
+      "artifacts": [],
       "acceptanceCriteria": [
         "El sistema de interiores puede cargar una nave o estación no propia.",
         "No se implementa en la primera versión de la Etapa 10.",
@@ -6760,6 +6791,27 @@
       "decision": "Mantener la prioridad en minería, exploración, supervivencia, economía y desarrollo de naves/estaciones. No implementar ahora IA hostil ni un sistema completo de facciones. A futuro: atacar/saquear naves, piratas, NPC hostiles y pacíficos, facciones de pilotos/jugadores, expediciones conjuntas, relaciones y cooperación. La arquitectura no debe cerrar la posibilidad de una modalidad online, pero no se implementa multijugador, servidores ni combate avanzado en esta etapa. La simulación económica actual se centra en minería, transporte y comercio.",
       "createdAt": "2026-11-07",
       "updatedAt": "2026-11-07T22:30:00-06:00"
+    },
+    {
+      "id": "D-013",
+      "title": "Sistema de actualizaciones y revisiones",
+      "status": "APROBADA",
+      "context": "El plan base está terminado y el usuario quiere seguir evolucionando el juego sin reabrir etapas ni reescribir tareas históricas.",
+      "options": [
+        "Reabrir el plan maestro y añadir tareas a las etapas existentes.",
+        "Crear un segundo tracker independiente para las actualizaciones.",
+        "Ampliar el tracker con updates y mantener el plan base intacto."
+      ],
+      "recommendation": "Ampliar el tracker con updates y reviewCatalog, mantener una sola fuente de verdad y documentar el flujo en AGENTS.md y docs/updates/.",
+      "impact": "Afecta al tracker, al validador, al panel y a la documentación de continuidad. No afecta al código del juego.",
+      "affectedTasks": [],
+      "affectedUpdates": [
+        "UPD-001"
+      ],
+      "decidedBy": "Usuario",
+      "decision": "Mantener docs/MASTER_PLAN.md como plan histórico y registrar los cambios posteriores como actualizaciones UPD-XXX. Las tareas de actualización viven en updates[].tasks con IDs UPD-XXX-TNN y no alteran el progreso base. Una actualización requiere aprobación explícita antes de implementarse. El panel ofrece propuesta y expediente de revisión descargables, pero la persistencia sigue en los archivos del proyecto.",
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T12:00:00-06:00"
     }
   ],
   "sessions": [
@@ -9047,6 +9099,46 @@
       ],
       "outcome": "Completado",
       "notes": "La flakiness de SelfTest queda registrada como problema abierto."
+    },
+    {
+      "id": "S-092",
+      "date": "2026-11-08T12:00:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Sistema de actualizaciones, revisiones y planes complementarios",
+      "summary": "Se amplió el tracker con estados y actualizaciones, se añadió el validador, la sección ACTUALIZACIONES del panel, los generadores de propuesta/expediente y la documentación del flujo. No se modificó el videojuego.",
+      "tasks": [
+        "UPD-001-T01",
+        "UPD-001-T02",
+        "UPD-001-T03",
+        "UPD-001-T04",
+        "UPD-001-T05",
+        "UPD-001-T06"
+      ],
+      "files": [
+        "AGENTS.md",
+        "docs/DECISIONS.md",
+        "docs/IMPLEMENTATION_LOG.md",
+        "docs/IMPLEMENTATION_TRACKER.json",
+        "docs/INDEX.md",
+        "docs/MASTER_PLAN.md",
+        "docs/PENDING_DECISIONS.md",
+        "docs/STATUS.md",
+        "docs/dashboard/dashboard.css",
+        "docs/dashboard/dashboard.js",
+        "docs/dashboard/index.html",
+        "docs/dashboard/README.md",
+        "docs/updates/README.md",
+        "docs/updates/UPD-001.md",
+        "tools/sync-dashboard.py"
+      ],
+      "tests": [
+        "python3 tools/sync-dashboard.py --check",
+        "Casos inválidos del validador",
+        "Revisión del panel con file://",
+        "Descargas .md/.txt"
+      ],
+      "outcome": "Completado",
+      "notes": "Las tareas UPD-001-T01…T06 no cuentan para el progreso del plan base. docs/STATUS.md es derivado y lo genera tools/sync-dashboard.py; docs/INDEX.md se actualizó para enlazar UPD-001 y D-013."
     }
   ],
   "issues": [
@@ -9088,5 +9180,1071 @@
       "createdAt": "2026-11-07"
     }
   ],
-  "status": null
+  "status": null,
+  "updateStatusDefinitions": {
+    "PROPUESTA": {
+      "label": "Propuesta",
+      "description": "Idea registrada. No hay autorización para implementar ni tareas activas."
+    },
+    "EN_REVISION": {
+      "label": "En revisión",
+      "description": "Se está contrastando el alcance, el código y las observaciones del usuario."
+    },
+    "PENDIENTE_APROBACION": {
+      "label": "Pendiente de aprobación",
+      "description": "El plan está listo, pero requiere una decisión explícita del usuario."
+    },
+    "APROBADA": {
+      "label": "Aprobada",
+      "description": "El usuario autorizó el desarrollo. Todavía no hay tareas activas."
+    },
+    "EN_PROGRESO": {
+      "label": "En progreso",
+      "description": "Existe al menos una tarea de implementación activa."
+    },
+    "BLOQUEADA": {
+      "label": "Bloqueada",
+      "description": "Existe un impedimento documentado que impide continuar."
+    },
+    "COMPLETADA": {
+      "label": "Completada",
+      "description": "Sus tareas de progreso están implementadas y verificadas."
+    },
+    "RECHAZADA": {
+      "label": "Rechazada",
+      "description": "Se decidió no continuar. Se conserva como antecedente."
+    },
+    "ARCHIVADA": {
+      "label": "Archivada",
+      "description": "Se conserva como antecedente, sin trabajo previsto."
+    }
+  },
+  "updates": [
+    {
+      "id": "UPD-001",
+      "name": "Sistema de actualizaciones, revisiones y planes complementarios",
+      "status": "COMPLETADA",
+      "changeType": "TECNICA",
+      "priority": "P1",
+      "createdAt": "2026-11-08T12:00:00-06:00",
+      "updatedAt": "2026-11-08T12:00:00-06:00",
+      "description": "Ampliar la continuidad con actualizaciones versionadas, estados de aprobación, tareas UPD-XXX-TNN, catálogo de revisión, creación de propuestas y expedientes de revisión descargables.",
+      "motivation": "El plan base está completado. Las correcciones y mejoras posteriores deben registrarse sin reabrir etapas ni alterar tareas históricas, y deben poder revisarse y aprobarse antes de implementarse.",
+      "affectedSystems": [
+        "SYS-CONTINUIDAD"
+      ],
+      "affectedFeatures": [
+        "F-CONTINUIDAD"
+      ],
+      "relatedStages": [
+        "S0"
+      ],
+      "relatedTasks": [
+        "T-003",
+        "T-006",
+        "T-007"
+      ],
+      "relatedUpdates": [],
+      "dependencies": [],
+      "document": "docs/updates/UPD-001.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T12:00:00-06:00",
+        "basis": "Solicitud directa del usuario para ampliar el dashboard y el sistema de continuidad con actualizaciones, revisiones y planes complementarios."
+      },
+      "acceptanceCriteria": [
+        "Existe una sección independiente ACTUALIZACIONES en el panel.",
+        "El plan base se muestra como historial y no se reescribe.",
+        "Las actualizaciones tienen IDs únicos y estados diferenciados.",
+        "Se pueden registrar varias actualizaciones sin conflicto.",
+        "Las anteriores permanecen en el historial y se pueden expandir.",
+        "La actualización actual aparece expandida automáticamente.",
+        "Una propuesta no se aprueba ni se implementa automáticamente.",
+        "Se pueden seleccionar etapas, tareas, funcionalidades, sistemas y actualizaciones para revisión.",
+        "Se generan expedientes .md y .txt descargables.",
+        "El expediente contiene información verificable y marca lo no documentado.",
+        "Las tareas nuevas se integran en el tracker con IDs UPD-XXX-TNN.",
+        "No hay una segunda fuente de verdad para el estado.",
+        "El panel sigue funcionando con file:// sin red."
+      ],
+      "tasks": [
+        {
+          "id": "UPD-001-T01",
+          "updateId": "UPD-001",
+          "title": "Extender el tracker con actualizaciones y catálogo de revisión",
+          "description": "Añadir updateStatusDefinitions, updates y reviewCatalog al tracker sin alterar stages ni las tareas históricas.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [
+            "T-003"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/updates/README.md"
+          ],
+          "acceptanceCriteria": [
+            "Existen los nueve estados de actualización con descripción.",
+            "Existe la lista updates y el catálogo reviewCatalog.",
+            "UPD-001 contiene las tareas UPD-001-T01 a UPD-001-T06.",
+            "Ningún ID, estado ni dependencia histórica cambia."
+          ],
+          "tests": [
+            "Validación de esquema con tools/sync-dashboard.py"
+          ],
+          "technicalNotes": "Las tareas de actualización se anidan en updates[].tasks para que el progreso del plan base no cambie.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Tracker ampliado con estados, actualización UPD-001 y catálogo de sistemas/funcionalidades."
+            }
+          ],
+          "evidence": [
+            "updateStatusDefinitions contiene 9 estados",
+            "updates contiene UPD-001 con 6 tareas",
+            "reviewCatalog contiene sistemas y funcionalidades",
+            "git diff no cambia IDs históricos"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/updates/README.md",
+            "docs/STATUS.md",
+            "docs/INDEX.md"
+          ],
+          "contextFiles": [
+            "docs/updates/README.md"
+          ],
+          "artifacts": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/updates/README.md"
+          ]
+        },
+        {
+          "id": "UPD-001-T02",
+          "updateId": "UPD-001",
+          "title": "Ampliar el validador y el sincronizador",
+          "description": "Validar actualizaciones, aprobaciones, tareas anidadas, referencias, documentos y ciclos; mantener --check y el resumen.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-001-T01"
+          ],
+          "relatedTaskIds": [
+            "T-006"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "tools/sync-dashboard.py"
+          ],
+          "acceptanceCriteria": [
+            "Valida IDs únicos de actualización y de tareas de actualización.",
+            "Valida estados, tipos, prioridades y existencia del documento.",
+            "Valida referencias a etapas, tareas, actualizaciones y decisiones.",
+            "Impide tareas activas o completadas en propuestas no aprobadas.",
+            "Detecta ciclos entre actualizaciones y entre sus tareas.",
+            "Conserva el modo --check y el resumen por consola."
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "Caso temporal: propuesta no aprobada con tarea COMPLETADO",
+            "Caso temporal: UPD-001-T01 duplicada",
+            "Caso temporal: document inexistente"
+          ],
+          "technicalNotes": "La validación base sigue usando solo tracker.tasks; las dependencias de actualización pueden apuntar a tareas históricas o a otras tareas UPD.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Validador ampliado y probado con casos válidos e inválidos."
+            }
+          ],
+          "evidence": [
+            "--check termina en OK",
+            "Los tres casos inválidos se rechazan con error",
+            "El resumen muestra actualizaciones y progreso base sin cambios"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "docs/updates/README.md",
+            "tools/sync-dashboard.py"
+          ],
+          "contextFiles": [
+            "tools/sync-dashboard.py",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "artifacts": [
+            "tools/sync-dashboard.py"
+          ]
+        },
+        {
+          "id": "UPD-001-T03",
+          "updateId": "UPD-001",
+          "title": "Añadir la sección ACTUALIZACIONES al panel",
+          "description": "Renderizar el plan base como historial contraíble y las actualizaciones como tarjetas cronológicas con la actual expandida.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-001-T01"
+          ],
+          "relatedTaskIds": [
+            "T-006"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ],
+          "acceptanceCriteria": [
+            "Existe una sección independiente ACTUALIZACIONES y un enlace en la navegación.",
+            "El plan original aparece contraído como historial.",
+            "Las actualizaciones anteriores aparecen contraídas y la actual expandida.",
+            "Cualquier actualización histórica se puede expandir manualmente.",
+            "Se muestran estado, tipo, prioridad, progreso, tareas, criterios y pruebas."
+          ],
+          "tests": [
+            "Apertura con file://",
+            "Revisión visual en tema oscuro y claro",
+            "Comprobación de que las secciones previas siguen presentes"
+          ],
+          "technicalNotes": "El estado de apertura se guarda en sessionStorage; no es información canónica.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Sección ACTUALIZACIONES, tarjetas, badges y estilos añadidos al panel."
+            }
+          ],
+          "evidence": [
+            "Enlace Actualizaciones visible en la navegación",
+            "Plan base y UPD-001 renderizados",
+            "UPD-001 expandida por ser meta.currentUpdateId"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "docs/updates/README.md",
+            "docs/dashboard/README.md"
+          ],
+          "contextFiles": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ],
+          "artifacts": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ]
+        },
+        {
+          "id": "UPD-001-T04",
+          "updateId": "UPD-001",
+          "title": "Crear el generador de propuestas y el expediente de revisión",
+          "description": "Añadir ventanas modales para redactar propuestas y seleccionar elementos; generar documentos .md/.txt descargables sin inventar datos.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-001-T03"
+          ],
+          "relatedTaskIds": [
+            "T-006"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ],
+          "acceptanceCriteria": [
+            "La propuesta registra nombre, descripción, motivo, tipo, sistemas, funcionalidades, prioridad y observaciones.",
+            "Genera .md, .txt y un bloque JSON para el tracker.",
+            "El expediente permite seleccionar etapas, tareas, funcionalidades, sistemas, tareas de actualización y actualizaciones.",
+            "El documento contiene las once secciones solicitadas y termina con OBSERVACIONES DEL USUARIO.",
+            "Los datos ausentes se marcan como no documentados."
+          ],
+          "tests": [
+            "Descarga de propuesta .md",
+            "Descarga de propuesta .txt",
+            "Descarga de expediente .md con etapas y tareas",
+            "Descarga de expediente .txt con una actualización"
+          ],
+          "technicalNotes": "Las descargas usan Blob y URL.createObjectURL; los borradores de localStorage son solo una comodidad.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Generadores de propuesta y expediente implementados con descarga local."
+            }
+          ],
+          "evidence": [
+            "Documento de propuesta incluye identificación, motivo, alcance y aprobación pendiente",
+            "Expediente incluye estado, implementación real, archivos, pruebas, criterios, problemas, limitaciones, dependencias y decisiones",
+            "Sección OBSERVACIONES DEL USUARIO presente y vacía"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "docs/updates/README.md",
+            "docs/dashboard/README.md"
+          ],
+          "contextFiles": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ],
+          "artifacts": [
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js"
+          ]
+        },
+        {
+          "id": "UPD-001-T05",
+          "updateId": "UPD-001",
+          "title": "Documentar el protocolo para agentes",
+          "description": "Documentar el flujo de crítica, propuesta, aprobación y tareas en AGENTS.md y docs/updates, sin reescribir el plan histórico.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-001-T04"
+          ],
+          "relatedTaskIds": [
+            "T-003"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "AGENTS.md",
+            "docs/MASTER_PLAN.md",
+            "docs/DECISIONS.md",
+            "docs/updates/README.md",
+            "docs/updates/UPD-001.md",
+            "docs/dashboard/README.md"
+          ],
+          "acceptanceCriteria": [
+            "AGENTS.md explica los diez pasos del flujo y los estados.",
+            "Queda claro que el plan base no se modifica retrospectivamente.",
+            "Se documentan IDs, archivos, esquema del tracker y comandos.",
+            "El plan maestro solo recibe una nota de separación."
+          ],
+          "tests": [
+            "Revisión documental y comprobación de enlaces relativos"
+          ],
+          "technicalNotes": "La documentación distingue explícitamente entre propuesta de agente y aprobación del usuario.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Protocolo de actualizaciones y revisión documentado en AGENTS.md y docs/updates."
+            }
+          ],
+          "evidence": [
+            "AGENTS.md contiene el flujo obligatorio y la tabla de estados",
+            "docs/updates/README.md describe esquema, flujo y límites de file://",
+            "MASTER_PLAN.md conserva sus etapas y solo añade la nota de separación"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "AGENTS.md",
+            "docs/MASTER_PLAN.md",
+            "docs/DECISIONS.md",
+            "docs/updates/README.md",
+            "docs/dashboard/README.md"
+          ],
+          "contextFiles": [
+            "AGENTS.md",
+            "docs/MASTER_PLAN.md",
+            "docs/DECISIONS.md"
+          ],
+          "artifacts": [
+            "AGENTS.md",
+            "docs/MASTER_PLAN.md",
+            "docs/DECISIONS.md",
+            "docs/updates/README.md",
+            "docs/updates/UPD-001.md",
+            "docs/dashboard/README.md"
+          ]
+        },
+        {
+          "id": "UPD-001-T06",
+          "updateId": "UPD-001",
+          "title": "Verificar compatibilidad, referencias y sincronización",
+          "description": "Comprobar que el panel conserva sus funciones, que el tracker valida, que no hay IDs duplicados y que todo funciona con file://.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [
+            "UPD-001-T05"
+          ],
+          "relatedTaskIds": [
+            "T-006"
+          ],
+          "decisionIds": [
+            "D-013"
+          ],
+          "files": [
+            "tools/sync-dashboard.py",
+            "docs/dashboard/index.html",
+            "docs/IMPLEMENTATION_TRACKER.json"
+          ],
+          "acceptanceCriteria": [
+            "sync-dashboard.py --check termina en OK.",
+            "El bloque tracker-data coincide con el JSON canónico.",
+            "El panel conserva resumen, etapas, tareas, historial, decisiones y reglas.",
+            "No hay referencias rotas, IDs duplicados ni fuentes de verdad duplicadas.",
+            "El panel funciona sin red y sin servidor."
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "Comprobación de enlaces internos y recursos locales",
+            "Apertura directa con file://"
+          ],
+          "technicalNotes": "No se ejecutaron pruebas del juego porque no se modificó src/ ni assets/.",
+          "executionLog": [
+            {
+              "sessionId": "S-092",
+              "date": "2026-11-08T12:00:00-06:00",
+              "agent": "OpenCode / DeepSeek V4.1 Flash",
+              "status": "COMPLETADO",
+              "summary": "Verificación final de tracker, panel y compatibilidad file://."
+            }
+          ],
+          "evidence": [
+            "sync-dashboard.py --check: OK",
+            "Panel abierto con file:// sin errores de recursos",
+            "Secciones previas conservadas"
+          ],
+          "createdAt": "2026-11-08T12:00:00-06:00",
+          "updatedAt": "2026-11-08T12:00:00-06:00",
+          "contextDocs": [
+            "tools/sync-dashboard.py",
+            "docs/STATUS.md",
+            "docs/INDEX.md"
+          ],
+          "contextFiles": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/dashboard/index.html",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/dashboard.css"
+          ],
+          "artifacts": [
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/dashboard/index.html",
+            "docs/STATUS.md"
+          ]
+        }
+      ],
+      "observations": [
+        "El navegador no puede escribir en docs/ desde file://; la persistencia sigue siendo responsabilidad del agente que actualiza los archivos.",
+        "Los borradores de localStorage son temporales y no se consideran estado canónico.",
+        "No se persisten expedientes de revisión: se descargan y el usuario los entrega al agente."
+      ],
+      "implementationLog": [
+        {
+          "sessionId": "S-092",
+          "date": "2026-11-08T12:00:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Tracker, validador, panel, generadores y documentación del sistema de actualizaciones completados y verificados.",
+          "files": [
+            "AGENTS.md",
+            "docs/DECISIONS.md",
+            "docs/IMPLEMENTATION_LOG.md",
+            "docs/IMPLEMENTATION_TRACKER.json",
+            "docs/INDEX.md",
+            "docs/MASTER_PLAN.md",
+            "docs/PENDING_DECISIONS.md",
+            "docs/STATUS.md",
+            "docs/dashboard/dashboard.css",
+            "docs/dashboard/dashboard.js",
+            "docs/dashboard/index.html",
+            "docs/dashboard/README.md",
+            "docs/updates/README.md",
+            "docs/updates/UPD-001.md",
+            "tools/sync-dashboard.py"
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "Casos inválidos del validador",
+            "Revisión del panel con file://",
+            "Descargas .md/.txt"
+          ]
+        }
+      ],
+      "reviewExports": []
+    }
+  ],
+  "reviewCatalog": {
+    "note": "Catálogo de apoyo para el expediente de revisión. No sustituye al tracker: solo agrupa etapas y tareas ya documentadas.",
+    "systems": [
+      {
+        "id": "SYS-CONTINUIDAD",
+        "name": "Continuidad, tracker y panel",
+        "description": "Plan maestro, tracker canónico, log, decisiones, panel estático y protocolo para agentes.",
+        "stageIds": [
+          "S0"
+        ],
+        "taskIds": [
+          "T-001",
+          "T-002",
+          "T-003",
+          "T-004",
+          "T-005",
+          "T-006",
+          "T-007"
+        ],
+        "updateIds": [
+          "UPD-001"
+        ]
+      },
+      {
+        "id": "SYS-PILOTO-NAVE",
+        "name": "Piloto, nave y vuelo",
+        "description": "GameSession, PlayerProfile, Pilot, ShipLoadout, controles, guardado versionado, modelos de nave y ranuras.",
+        "stageIds": [
+          "S1"
+        ],
+        "taskIds": [
+          "T-101",
+          "T-102",
+          "T-103",
+          "T-104",
+          "T-105",
+          "T-106",
+          "T-107",
+          "T-1101",
+          "T-1109"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-SUPERVIVENCIA",
+        "name": "Soporte vital y supervivencia",
+        "description": "Oxígeno, soporte vital, fugas, salud del piloto y consecuencias de la muerte.",
+        "stageIds": [
+          "S2"
+        ],
+        "taskIds": [
+          "T-201",
+          "T-202",
+          "T-203",
+          "T-204",
+          "T-205",
+          "T-206",
+          "T-207",
+          "T-208",
+          "T-209",
+          "T-210"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-CARGA",
+        "name": "Inventario, carga y masa",
+        "description": "Bodega, minerales, capacidad, masa y su efecto en movimiento y combustible.",
+        "stageIds": [
+          "S3"
+        ],
+        "taskIds": [
+          "T-301",
+          "T-302",
+          "T-303",
+          "T-304",
+          "T-305",
+          "T-306"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-MINERIA",
+        "name": "Minería y recursos",
+        "description": "Láser minero, tipos de asteroides, minerales, misiles, rayo tractor y recuperación de fragmentos.",
+        "stageIds": [
+          "S4"
+        ],
+        "taskIds": [
+          "T-401",
+          "T-402",
+          "T-403",
+          "T-404",
+          "T-405",
+          "T-406",
+          "T-407",
+          "T-408",
+          "T-409",
+          "T-410"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-ESTACIONES",
+        "name": "Estaciones y acoplamiento",
+        "description": "Nave nodriza, acoplamiento, almacén, servicios, estación personal modular y contratos.",
+        "stageIds": [
+          "S5",
+          "S9"
+        ],
+        "taskIds": [
+          "T-501",
+          "T-502",
+          "T-503",
+          "T-504",
+          "T-505",
+          "T-506",
+          "T-507",
+          "T-901",
+          "T-902",
+          "T-903",
+          "T-904",
+          "T-905",
+          "T-906",
+          "T-907",
+          "T-908",
+          "T-1102"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-ECONOMIA",
+        "name": "Economía y mercado",
+        "description": "Mercado, stock, precios, spread, compraventa de minerales y sumideros económicos.",
+        "stageIds": [
+          "S6"
+        ],
+        "taskIds": [
+          "T-601",
+          "T-602",
+          "T-603",
+          "T-604",
+          "T-605",
+          "T-606"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-AGENTES",
+        "name": "Pilotos autónomos",
+        "description": "Simulación limitada de pilotos que minan, transportan y comercian, con impacto en los mercados.",
+        "stageIds": [
+          "S7"
+        ],
+        "taskIds": [
+          "T-701",
+          "T-702",
+          "T-703",
+          "T-704",
+          "T-705",
+          "T-706",
+          "T-707"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-UNIVERSO",
+        "name": "Universo y viaje",
+        "description": "Galaxias, sistemas, sectores finitos, puertas de salto, warp y streaming del universo.",
+        "stageIds": [
+          "S8"
+        ],
+        "taskIds": [
+          "T-801",
+          "T-802",
+          "T-803",
+          "T-804",
+          "T-805",
+          "T-806",
+          "T-807",
+          "T-808"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-INTERIORES",
+        "name": "Interiores y módulos",
+        "description": "Avatar, movimiento, colisión, cámara, interacción con módulos y entrada/salida de interiores.",
+        "stageIds": [
+          "S10"
+        ],
+        "taskIds": [
+          "T-1001",
+          "T-1002",
+          "T-1003",
+          "T-1004",
+          "T-1005",
+          "T-1006",
+          "T-1007"
+        ],
+        "updateIds": []
+      },
+      {
+        "id": "SYS-EXPERIENCIA",
+        "name": "Experiencia, audio y rendimiento",
+        "description": "Contenido, balance, telemetría, rendimiento, audio, música, accesibilidad, localización y pulido de UI.",
+        "stageIds": [
+          "S11"
+        ],
+        "taskIds": [
+          "T-1101",
+          "T-1102",
+          "T-1103",
+          "T-1104",
+          "T-1105",
+          "T-1106",
+          "T-1107",
+          "T-1109",
+          "T-1108",
+          "T-1110"
+        ],
+        "updateIds": []
+      }
+    ],
+    "features": [
+      {
+        "id": "F-CONTINUIDAD",
+        "name": "Continuidad y panel",
+        "description": "Plan maestro, tracker canónico, log, decisiones, panel estático y protocolo de sesiones.",
+        "stageIds": [
+          "S0"
+        ],
+        "taskIds": [
+          "T-001",
+          "T-002",
+          "T-003",
+          "T-004",
+          "T-005",
+          "T-006",
+          "T-007"
+        ],
+        "systemIds": [
+          "SYS-CONTINUIDAD"
+        ]
+      },
+      {
+        "id": "F-VUELO",
+        "name": "Vuelo, controles y nave",
+        "description": "Separación de piloto y nave, controles, movimiento, combustible y acoplamiento básico.",
+        "stageIds": [
+          "S1"
+        ],
+        "taskIds": [
+          "T-101",
+          "T-102",
+          "T-103",
+          "T-104",
+          "T-105",
+          "T-106",
+          "T-107"
+        ],
+        "systemIds": [
+          "SYS-PILOTO-NAVE"
+        ]
+      },
+      {
+        "id": "F-GUARDADO",
+        "name": "Guardado versionado",
+        "description": "Formato JSON local, escritura atómica, backup y migración del guardado.",
+        "stageIds": [
+          "S1",
+          "S6",
+          "S8"
+        ],
+        "taskIds": [
+          "T-104",
+          "T-605",
+          "T-803"
+        ],
+        "systemIds": [
+          "SYS-PILOTO-NAVE",
+          "SYS-ECONOMIA",
+          "SYS-UNIVERSO"
+        ]
+      },
+      {
+        "id": "F-SUPERVIVENCIA",
+        "name": "Oxígeno, fugas y muerte",
+        "description": "Soporte vital, consumo de oxígeno, fugas, salud del piloto y consecuencias de la muerte.",
+        "stageIds": [
+          "S2"
+        ],
+        "taskIds": [
+          "T-201",
+          "T-202",
+          "T-203",
+          "T-204",
+          "T-205",
+          "T-206",
+          "T-207",
+          "T-208",
+          "T-209",
+          "T-210"
+        ],
+        "systemIds": [
+          "SYS-SUPERVIVENCIA"
+        ]
+      },
+      {
+        "id": "F-CARGA",
+        "name": "Carga, masa e inventario",
+        "description": "Bodega, minerales, capacidad, masa y penalizaciones de movimiento y combustible.",
+        "stageIds": [
+          "S3"
+        ],
+        "taskIds": [
+          "T-301",
+          "T-302",
+          "T-303",
+          "T-304",
+          "T-305",
+          "T-306"
+        ],
+        "systemIds": [
+          "SYS-CARGA"
+        ]
+      },
+      {
+        "id": "F-MINERIA",
+        "name": "Láser, tractor y minerales",
+        "description": "Minería láser, asteroides, minerales, misiles, rayo tractor y recuperación de fragmentos.",
+        "stageIds": [
+          "S4"
+        ],
+        "taskIds": [
+          "T-401",
+          "T-402",
+          "T-403",
+          "T-404",
+          "T-405",
+          "T-406",
+          "T-407",
+          "T-408",
+          "T-409",
+          "T-410"
+        ],
+        "systemIds": [
+          "SYS-MINERIA"
+        ]
+      },
+      {
+        "id": "F-ACOPLAMIENTO",
+        "name": "Nave nodriza y acoplamiento",
+        "description": "Estación física acoplable, almacén, servicios y flujo de atraque.",
+        "stageIds": [
+          "S5"
+        ],
+        "taskIds": [
+          "T-501",
+          "T-502",
+          "T-503",
+          "T-504",
+          "T-505",
+          "T-506",
+          "T-507"
+        ],
+        "systemIds": [
+          "SYS-ESTACIONES"
+        ]
+      },
+      {
+        "id": "F-MERCADO",
+        "name": "Mercado y economía",
+        "description": "Mercado, stock, precios, spread, compraventa y sumideros.",
+        "stageIds": [
+          "S6"
+        ],
+        "taskIds": [
+          "T-601",
+          "T-602",
+          "T-603",
+          "T-604",
+          "T-605",
+          "T-606"
+        ],
+        "systemIds": [
+          "SYS-ECONOMIA"
+        ]
+      },
+      {
+        "id": "F-AUTOPILOTOS",
+        "name": "Pilotos autónomos",
+        "description": "Agentes limitados que minan, transportan y comercian, con simulación offline.",
+        "stageIds": [
+          "S7"
+        ],
+        "taskIds": [
+          "T-701",
+          "T-702",
+          "T-703",
+          "T-704",
+          "T-705",
+          "T-706",
+          "T-707"
+        ],
+        "systemIds": [
+          "SYS-AGENTES"
+        ]
+      },
+      {
+        "id": "F-UNIVERSO",
+        "name": "Galaxias, sectores y warp",
+        "description": "Jerarquía de universo, sectores finitos, puertas de salto, warp y streaming.",
+        "stageIds": [
+          "S8"
+        ],
+        "taskIds": [
+          "T-801",
+          "T-802",
+          "T-803",
+          "T-804",
+          "T-805",
+          "T-806",
+          "T-807",
+          "T-808"
+        ],
+        "systemIds": [
+          "SYS-UNIVERSO"
+        ]
+      },
+      {
+        "id": "F-ESTACION-PERSONAL",
+        "name": "Estación personal",
+        "description": "Plataforma vacía y modular, construcción, ampliación, almacén y servicios.",
+        "stageIds": [
+          "S9"
+        ],
+        "taskIds": [
+          "T-901",
+          "T-902",
+          "T-903",
+          "T-904",
+          "T-905",
+          "T-906",
+          "T-907",
+          "T-908"
+        ],
+        "systemIds": [
+          "SYS-ESTACIONES"
+        ]
+      },
+      {
+        "id": "F-INTERIORES",
+        "name": "Interiores y módulos",
+        "description": "Movimiento a pie, colisión, cámara, interacción con módulos y guardado del interior.",
+        "stageIds": [
+          "S10"
+        ],
+        "taskIds": [
+          "T-1001",
+          "T-1002",
+          "T-1003",
+          "T-1004",
+          "T-1005",
+          "T-1006",
+          "T-1007"
+        ],
+        "systemIds": [
+          "SYS-INTERIORES"
+        ]
+      },
+      {
+        "id": "F-NAVES-CONTENIDO",
+        "name": "Naves y contenido",
+        "description": "Modelos de nave, especializaciones, catálogo de módulos y ranuras.",
+        "stageIds": [
+          "S11"
+        ],
+        "taskIds": [
+          "T-1101",
+          "T-1109"
+        ],
+        "systemIds": [
+          "SYS-PILOTO-NAVE"
+        ]
+      },
+      {
+        "id": "F-CONTRATOS",
+        "name": "Contratos y misiones",
+        "description": "Contratos y misiones de estación.",
+        "stageIds": [
+          "S11"
+        ],
+        "taskIds": [
+          "T-1102"
+        ],
+        "systemIds": [
+          "SYS-ESTACIONES"
+        ]
+      },
+      {
+        "id": "F-AUDIO-ACCESIBILIDAD",
+        "name": "Audio, accesibilidad y UI",
+        "description": "Audio, música, ambientes, accesibilidad, localización y pulido de interacción/HUD.",
+        "stageIds": [
+          "S11"
+        ],
+        "taskIds": [
+          "T-1104",
+          "T-1106",
+          "T-1108",
+          "T-1110"
+        ],
+        "systemIds": [
+          "SYS-EXPERIENCIA"
+        ]
+      },
+      {
+        "id": "F-BALANCE-RENDIMIENTO",
+        "name": "Balance, telemetría y regresión",
+        "description": "Balance, telemetría, rendimiento y regresión final.",
+        "stageIds": [
+          "S11"
+        ],
+        "taskIds": [
+          "T-1105",
+          "T-1107"
+        ],
+        "systemIds": [
+          "SYS-EXPERIENCIA"
+        ]
+      }
+    ]
+  }
 }

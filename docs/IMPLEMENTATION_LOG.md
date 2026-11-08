@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T10:45:00-06:00  
+**Última actualización:** 2026-11-08T12:00:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,83 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-092 — Sistema de actualizaciones, revisiones y planes complementarios
+
+- **Fecha:** 2026-11-08T12:00:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** UPD-001-T01…T06 (actualización, no plan base)
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El tracker incorpora `updates`, `updateStatusDefinitions` y
+  `reviewCatalog`. El plan base conserva sus 93 tareas y su progreso 82/82.
+- `UPD-001` documenta y registra el propio sistema de actualizaciones con seis
+  tareas completadas.
+- `tools/sync-dashboard.py` valida IDs, estados, aprobaciones, documentos,
+  referencias, ciclos y el catálogo; mantiene `--check` y genera `STATUS.md`.
+- El panel añade la sección **Actualizaciones**: plan original histórico
+  contraído, actualizaciones cronológicas, actual expandida y expansión manual
+  del historial.
+- Se añadieron ventanas modales para **Nueva propuesta** y **Preparar
+  expediente de revisión**, con descarga `.md`/`.txt` y bloque JSON para el
+  tracker.
+- El expediente incluye identificación, funcionamiento previsto, estado,
+  implementación real, archivos, pruebas, criterios, problemas, limitaciones,
+  dependencias, decisiones y `OBSERVACIONES DEL USUARIO`.
+- `AGENTS.md`, `docs/updates/README.md` y `UPD-001.md` documentan el flujo de
+  crítica → propuesta → aprobación → tareas.
+
+### Archivos modificados
+
+- `AGENTS.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_LOG.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/INDEX.md`
+- `docs/MASTER_PLAN.md`
+- `docs/PENDING_DECISIONS.md`
+- `docs/STATUS.md` (generado)
+- `docs/dashboard/dashboard.css`
+- `docs/dashboard/dashboard.js`
+- `docs/dashboard/index.html`
+- `docs/dashboard/README.md`
+- `docs/updates/README.md`
+- `docs/updates/UPD-001.md`
+- `tools/sync-dashboard.py`
+
+### Pruebas ejecutadas
+
+- `python3 tools/sync-dashboard.py --check`: **OK**.
+- Caso inválido: actualización no aprobada con tarea `COMPLETADO` → rechazado.
+- Caso inválido: ID de tarea de actualización duplicado → rechazado.
+- Caso inválido: documento de actualización inexistente → rechazado.
+- Panel abierto con Firefox headless y `file://`: secciones previas conservadas.
+- Propuesta y expediente generados en `.md` y `.txt`.
+- El expediente contiene las once secciones y `OBSERVACIONES DEL USUARIO`.
+- No se ejecutaron pruebas del juego: no se modificó `src/` ni `assets/`.
+
+### Evidencias
+
+- `docs/STATUS.md` muestra `UPD-001` y el progreso base 82/82.
+- `UPD-001` tiene 6/6 tareas `COMPLETADO` con criterios, pruebas y evidencias.
+- El bloque `tracker-data` coincide con el JSON canónico.
+- No hay IDs duplicados ni referencias rotas.
+
+### Decisiones tomadas
+
+- `D-013`: separar plan base y actualizaciones; tracker único; aprobación
+  explícita; tareas `UPD-XXX-TNN` anidadas en `updates[].tasks`.
+- Los borradores de `localStorage` no son estado canónico.
+- El panel no escribe en el proyecto desde `file://`; descarga documentos y el
+  agente actualiza los archivos.
+
+### Pendiente / siguiente paso
+
+- Ninguno. No hay actualización en progreso ni tarea de actualización pendiente.
 
 ---
 

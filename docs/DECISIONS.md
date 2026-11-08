@@ -460,6 +460,53 @@ Afecta a Etapa 11 y al alcance.
 
 ---
 
+## D-013 — Sistema de actualizaciones y revisiones
+
+**Estado:** `APROBADA`  
+**Decidido por:** Usuario  
+**Fecha:** 2026-11-08T12:00:00-06:00  
+**Tareas afectadas:** ninguna del plan base  
+**Actualizaciones afectadas:** UPD-001
+
+### Respuesta
+
+Mantener `docs/MASTER_PLAN.md` como plan histórico y crear actualizaciones
+complementarias versionadas (`UPD-XXX`) para correcciones, mejoras, cambios de
+diseño, nuevas características, reequilibrios y refactorizaciones posteriores.
+El tracker sigue siendo la fuente canónica del estado; las tareas de
+actualización se guardan dentro de `updates[].tasks` con IDs `UPD-XXX-TNN` y no
+alteran el progreso del plan base.
+
+Una actualización debe pasar por propuesta, revisión y aprobación explícita antes
+de implementarse. El panel ofrece un expediente de revisión descargable y un
+formulario de propuesta; ninguno escribe directamente en el proyecto. El
+navegador solo genera descargas y borradores temporales.
+
+### Contexto
+
+El plan base está terminado. El usuario quiere seguir evolucionando el juego sin
+reabrir etapas ni reescribir tareas completadas, y necesita un flujo repetible
+para revisar lo implementado, criticarlo y convertirlo en un plan nuevo.
+
+### Opciones consideradas
+
+- Reabrir el plan maestro y añadir tareas nuevas a las etapas existentes.
+- Crear un segundo tracker independiente para las actualizaciones.
+- Ampliar el tracker con una clave `updates` y mantener el plan base intacto.
+
+### Recomendación inicial (histórica; prevalece la respuesta)
+
+Ampliar el tracker con `updates` y `reviewCatalog`, mantener una sola fuente de
+verdad y documentar el flujo en `AGENTS.md` y `docs/updates/`.
+
+### Impacto
+
+Afecta al tracker, al validador, al panel y a la documentación de continuidad. No
+afecta al código del juego ni al comportamiento jugable. No se modifican IDs ni
+estados históricos.
+
+---
+
 ## Decisiones técnicas durante una tarea
 
 Si un agente necesita resolver una decisión técnica no listada:

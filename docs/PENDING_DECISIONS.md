@@ -23,6 +23,7 @@ Este archivo se usó para conversar las decisiones con otro agente. Las respuest
 | D-010 | Naves y personalización | Aprobada | Varios modelos de nave con formas, características y capacidades distintas. Personalización por piezas, componentes, herramientas, propulsión, radares, navegación, minería y módulos. El piloto automático puede ser un módulo instalable. |
 | D-011 | Galaxias | Aprobada | Galaxias reales empezando por la Vía Láctea, más otras galaxias reales y ficticias cuando convenga. Sin exactitud astronómica; prioridad a un universo jugable. |
 | D-012 | Facciones, combate y online | Aplazada | No se implementa ahora IA hostil, combate avanzado, facciones completas, multijugador ni servidores. La arquitectura no debe cerrar la posibilidad futura de facciones, PvP, saqueo, cooperación y online. La economía actual se centra en minería, transporte y comercio. |
+| D-013 | Actualizaciones y revisiones | Aprobada | El plan maestro queda como histórico. Los cambios posteriores se registran como actualizaciones `UPD-XXX` en `docs/updates/` y en la clave `updates` del tracker. Cada actualización requiere aprobación explícita antes de implementarse. Las tareas `UPD-XXX-TNN` no alteran el progreso base. |
 
 ## Tareas de decisión
 

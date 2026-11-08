@@ -22,6 +22,28 @@
   fuente vive en `assets/fonts/`.
 - No documentes aquí: `AGENTS.md` es el índice; el detalle va en `docs/`.
 
+## Tracker: contexto y artefactos
+
+Los registros de tareas pueden separar lo que hay que leer de lo que se
+modificó. Todos los campos son opcionales y compatibles con el formato anterior:
+
+| Campo | Uso |
+|---|---|
+| `files` | Lista histórica/general de archivos y sistemas relacionados. Se conserva por compatibilidad. |
+| `contextFiles` | Archivos de código que conviene leer **antes** de empezar la tarea. |
+| `contextDocs` | Documentos de diseño, decisiones o pruebas que hay que consultar. |
+| `artifacts` | Archivos que se crearon o modificaron **al completar** la tarea. |
+| `tests` | Pruebas necesarias o ejecutadas. |
+
+- En tareas nuevas, pendientes o reabiertas, rellena `contextFiles`,
+  `contextDocs` y `artifacts`; no inventes rutas.
+- En tareas históricas no es obligatorio rellenarlos de golpe. Si se revisa una
+  tarea, se pueden añadir sin cambiar su estado.
+- `artifacts` no es lo mismo que `contextFiles`: uno es lo que se leyó, el otro
+  lo que se tocó.
+- El panel muestra estos campos en el detalle de la tarea y los incluye en la
+  búsqueda.
+
 ## Accesibilidad (T-1106)
 
 - Botones táctiles de al menos **44 u** de alto; los botones pequenos de mapa,

@@ -3,14 +3,17 @@
 **Proyecto:** GalacticIndustry / *Asteroides*  
 **Motor:** Java + LibGDX 1.14.2 · Android  
 **Documento:** visión, arquitectura y plan de transformación  
-**Estado:** implementación completada; 81/81 tareas de progreso (2 pospuestas)  
-**Última actualización:** 2026-11-07  
+**Estado:** plan base completado; 82/82 tareas de progreso (2 pospuestas)  
+**Última actualización del plan base:** 2026-11-07  
 **Fuente canónica de ejecución:** [`docs/IMPLEMENTATION_TRACKER.json`](IMPLEMENTATION_TRACKER.json)  
+**Resumen generado:** [`docs/STATUS.md`](STATUS.md)  
+**Índice de sistemas:** [`docs/INDEX.md`](INDEX.md)  
+**Actualizaciones complementarias:** [`docs/updates/`](updates/README.md)  
 **Panel:** [`docs/dashboard/index.html`](dashboard/index.html)  
 **Registro cronológico:** [`docs/IMPLEMENTATION_LOG.md`](IMPLEMENTATION_LOG.md)  
 **Decisiones:** [`docs/DECISIONS.md`](DECISIONS.md)
 
-> Este documento describe **qué** se quiere construir y **por qué**. El tracker describe **qué tarea concreta toca ahora**, con dependencias, criterios y evidencias. AGENTS.md describe **cómo** debe trabajar un agente. Ningún agente debe deducir el estado de implementación a partir de este documento: debe consultar el tracker y contrastarlo con el código.
+> Este documento describe **qué** se quiere construir y **por qué**. El tracker describe **qué tarea concreta toca ahora**, con dependencias, criterios y evidencias. `docs/STATUS.md` resume ese estado y `docs/INDEX.md` indica dónde está cada sistema. AGENTS.md describe **cómo** debe trabajar un agente. Ningún agente debe deducir el estado de implementación a partir de este documento: debe consultar el tracker y contrastarlo con el código.
 
 ---
 
@@ -26,6 +29,8 @@
 8. Detenerse.
 
 Las etapas de este plan son grandes. **La unidad de trabajo es la tarea del tracker, no la etapa.** Una sesión no debe implementar una etapa completa salvo instrucción explícita del usuario.
+
+> **Plan base y actualizaciones.** Este documento es histórico. Las correcciones, mejoras, reequilibrios y características posteriores se registran como actualizaciones complementarias en `docs/updates/` y en la clave `updates` del tracker; no se reabren etapas ni tareas de este plan. Si una actualización afecta a un sistema antiguo, referencia la tarea histórica correspondiente. Consulta `docs/updates/README.md` y la sección ACTUALIZACIONES del panel.
 
 ---
 
