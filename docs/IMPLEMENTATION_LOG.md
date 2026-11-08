@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:33:00-06:00  
+**Última actualización:** 2026-11-08T00:36:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,61 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-023 — Commodities y bodega por masa
+
+- **Fecha:** 2026-11-08T00:36:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-301
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `Commodity` define Hielo, Silicato, Hierro, Cobre, Titanio y Oro con masa y
+  precio base del plan maestro.
+- `Cargo` es una entrada inmutable con masa y valor.
+- `CargoHold` usa capacidad en UM, no en unidades; suma la masa real, rechaza
+  el exceso y permite añadir/quitar/consultar.
+- `GameData` crea la bodega inicial de 100 UM.
+- No se conectó minería ni la nave; la carga se prueba inyectada.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Commodity.java` (nuevo)
+- `src/com/example/codegame/Cargo.java` (nuevo)
+- `src/com/example/codegame/CargoHold.java` (nuevo)
+- `src/com/example/codegame/GameData.java` (nuevo)
+- `src/com/example/codegame/SelfTest.java`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+
+### Evidencias
+
+- `PASS existen seis minerales`
+- `PASS bodega inicial vacia`
+- `PASS anadir hielo suma masa`
+- `PASS anadir hierro suma masa`
+- `PASS rechaza el exceso exacto`
+- `PASS acepta lo que cabe y rechaza el resto`
+- `PASS quitar carga resta masa`
+- `PASS no se puede quitar de mas`
+- `PASS valor base de la bodega`
+
+### Decisiones tomadas
+
+- La capacidad se mide en masa (UM); 100 UM iniciales.
+- `add` acepta lo que quepa; `addExact` exige que quepa todo.
+- `Cargo` es inmutable y `CargoHold` es el contenedor mutable.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-302 — Integrar la bodega en Ship/GameSession y el guardado**.
 
 ---
 

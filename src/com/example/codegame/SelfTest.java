@@ -865,6 +865,52 @@ public class SelfTest {
         check("la nave legado se recupera al acercarse",
                 salvage >= 10 && !rebornLoaded.sector.legacyWreck);
 
+        // T-301: minerales, carga y bodega.
+        check("existen seis minerales", Commodity.values().length == 6);
+        check("Hielo tiene masa y precio",
+                Math.abs(Commodity.HIELO.massPerUnit - 0.80f) < 0.001f
+                        && Math.abs(Commodity.HIELO.basePrice - 1.5f) < 0.001f);
+        check("Oro tiene masa y precio",
+                Math.abs(Commodity.ORO.massPerUnit - 2.50f) < 0.001f
+                        && Math.abs(Commodity.ORO.basePrice - 30f) < 0.001f);
+        check("GameData busca un mineral",
+                GameData.commodity("Oro") == Commodity.ORO
+                        && GameData.BASE_CARGO_CAPACITY == 100f);
+        Cargo sampleCargo = new Cargo(Commodity.HIELO, 10);
+        check("Cargo calcula masa y valor",
+                Math.abs(sampleCargo.mass() - 8f) < 0.001f
+                        && Math.abs(sampleCargo.value() - 15f) < 0.001f);
+        CargoHold cargo = GameData.newCargoHold();
+        check("bodega inicial vacia",
+                cargo.isEmpty() && cargo.usedMass() == 0f
+                        && cargo.capacity() == 100f);
+        check("anadir hielo suma masa",
+                cargo.add(Commodity.HIELO, 10) == 10
+                        && Math.abs(cargo.usedMass() - 8f) < 0.001f);
+        check("anadir hierro suma masa",
+                cargo.add(Commodity.HIERRO, 50) == 50
+                        && Math.abs(cargo.usedMass() - 68f) < 0.001f);
+        check("rechaza el exceso exacto",
+                !cargo.addExact(Commodity.ORO, 100)
+                        && cargo.amount(Commodity.ORO) == 0);
+        int acceptedOro = cargo.add(Commodity.ORO, 100);
+        check("acepta lo que cabe y rechaza el resto",
+                acceptedOro == 12
+                        && Math.abs(cargo.usedMass() - 98f) < 0.001f);
+        check("las entradas conservan el orden",
+                cargo.entries().size() == 3
+                        && cargo.entries().get(0).commodity == Commodity.HIELO);
+        check("quitar carga resta masa",
+                cargo.remove(Commodity.HIERRO, 5) == 5
+                        && cargo.amount(Commodity.HIERRO) == 45);
+        check("no se puede quitar de mas",
+                cargo.remove(Commodity.HIERRO, 1000) == 45
+                        && cargo.amount(Commodity.HIERRO) == 0);
+        check("valor base de la bodega",
+                Math.abs(cargo.totalValue() - 375f) < 0.001f);
+        cargo.clear();
+        check("clear vacia la bodega", cargo.isEmpty() && cargo.usedMass() == 0f);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

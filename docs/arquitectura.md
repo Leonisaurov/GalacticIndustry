@@ -195,6 +195,16 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - `recovery_test` es una herramienta de desarrollo, no una mecánica normal:
   guarda un punto seguro cada 10 s y permite `RECUPERAR (DEBUG)` tras morir.
   Sin el flag, la muerte es permanente.
+
+## Carga y bodega
+
+- `Commodity`: Hielo (0.80 UM, 1.5), Silicato (1.00, 2.0), Hierro (1.20, 3.0),
+  Cobre (1.50, 5.0), Titanio (1.80, 12.0) y Oro (2.50, 30.0).
+- `Cargo` es una entrada inmutable (mineral + cantidad) y calcula masa/valor.
+- `CargoHold` mide la capacidad en UM (100 iniciales), suma la masa real,
+  rechaza el exceso y expone añadir/quitar/consultar y entradas ordenadas.
+- `GameData` crea la bodega inicial. La conexión con la nave y el guardado
+  llega en T-302; la minería, en S4.
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

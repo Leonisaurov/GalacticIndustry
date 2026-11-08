@@ -611,24 +611,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:33:00-06:00",
-    "lastSessionId": "S-022",
+    "lastUpdated": "2026-11-08T00:36:00-06:00",
+    "lastSessionId": "S-023",
     "lastVerification": {
-      "date": "2026-11-08T00:33:00-06:00",
+      "date": "2026-11-08T00:36:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "recovery_test recupera el punto seguro y vuelve a PLAYING",
-        "El modo normal sigue usando NUEVO PERSONAJE y muerte permanente",
-        "05_death: casco, piloto 0 HP, NUEVO PERSONAJE y RECUPERAR (DEBUG)",
-        "08_visual_death: OK",
-        "Etapa S2 cerrada; siguiente S3/T-301",
+        "Seis minerales con masa y precio base",
+        "CargoHold: capacidad 100 UM, suma de masa, añadir/quitar y rechazo de exceso",
+        "GameData y Cargo verificados",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-301",
+    "nextTaskId": "T-302",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -712,7 +710,7 @@
       "id": "S3",
       "order": 3,
       "name": "Inventario, almacenamiento y peso",
-      "status": "LISTO",
+      "status": "EN_PROGRESO",
       "type": "implementation",
       "objective": "Añadir bodega, minerales, capacidad, masa y su efecto en el movimiento y el combustible.",
       "gate": "Una bodega llena sigue siendo viable y el consumo de combustible está rebalanceado.",
@@ -2119,7 +2117,7 @@
       "description": "Crear la tabla de minerales/materiales y el contenedor de bodega con masa por unidad y capacidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-103"
@@ -2143,10 +2141,36 @@
         "Test de capacidad y masa"
       ],
       "technicalNotes": "No conectar todavía la minería; se puede probar con carga inyectada.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-023",
+          "date": "2026-11-08T00:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Commodity con seis minerales (masa/precio), Cargo inmutable, CargoHold con capacidad en UM y API de añadir/quitar/consultar, y GameData con bodega inicial. Pruebas de masa, capacidad y exceso en SelfTest.",
+          "files": [
+            "src/com/example/codegame/Commodity.java",
+            "src/com/example/codegame/Cargo.java",
+            "src/com/example/codegame/CargoHold.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "Test de capacidad y masa"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS existen seis minerales",
+        "PASS bodega inicial vacia; PASS anadir hielo suma masa; PASS anadir hierro suma masa",
+        "PASS rechaza el exceso exacto; PASS acepta lo que cabe y rechaza el resto",
+        "PASS quitar carga resta masa; PASS no se puede quitar de mas",
+        "PASS valor base de la bodega; PASS clear vacia la bodega"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:36:00-06:00"
     },
     {
       "id": "T-302",
@@ -2155,7 +2179,7 @@
       "description": "Hacer que la nave tenga una bodega persistente y que el guardado v2 la conserve.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-301",
@@ -5167,6 +5191,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-023",
+      "date": "2026-11-08T00:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Commodities y bodega por masa",
+      "summary": "Se definieron seis minerales con masa y precio, Cargo inmutable, CargoHold con capacidad en UM y GameData. La bodega suma masa, rechaza exceso y permite añadir/quitar/consultar. Sin minería todavía.",
+      "tasks": [
+        "T-301"
+      ],
+      "files": [
+        "src/com/example/codegame/Commodity.java",
+        "src/com/example/codegame/Cargo.java",
+        "src/com/example/codegame/CargoHold.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Test de capacidad y masa"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-302 (integrar bodega en Ship/GameSession y guardado)."
+    },
     {
       "id": "S-022",
       "date": "2026-11-08T00:33:00-06:00",
