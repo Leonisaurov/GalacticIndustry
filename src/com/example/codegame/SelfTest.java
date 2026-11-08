@@ -1999,6 +1999,71 @@ public class SelfTest {
                         && !noDockedLoaded.ship().docked
                         && noDockedLoaded.sector.station.storage.amount(Commodity.HIERRO) == 25);
 
+        // T-506: rescate por combustible agotado.
+        GameWorld rescueWorld = new GameWorld(new Upgrades(true));
+        rescueWorld.start();
+        rescueWorld.immortal = true;
+        rescueWorld.asteroids.clear();
+        rescueWorld.fuel.clear();
+        rescueWorld.ship.pos.set(0f, -520f);
+        rescueWorld.ship.fuel = 0f;
+        rescueWorld.ship.cargo().addExact(Commodity.SILICATO, 100);
+        Upgrades rescueUp = new Upgrades(true);
+        rescueUp.setCoins(200);
+        Pilot rescuePilot = new Pilot();
+        RescueService rescue = new RescueService();
+        check("sin combustible se puede pedir rescate",
+                RescueService.needsRescue(rescueWorld)
+                        && RescueService.canRequest(rescueWorld, rescuePilot));
+        check("el rescate se solicita con espera",
+                rescue.request(rescueWorld, rescuePilot)
+                        && rescue.active()
+                        && !rescue.update(1.5f, rescueWorld, rescueUp, rescuePilot)
+                        && rescue.active());
+        check("el rescate cobra, pierde carga y remolca",
+                rescue.update(1.6f, rescueWorld, rescueUp, rescuePilot)
+                        && !rescue.active()
+                        && rescue.paid() == 100
+                        && rescue.lost() == 25
+                        && rescueUp.coins() == 100
+                        && rescueWorld.ship.cargo().totalUnits() == 75
+                        && Math.abs(rescueWorld.ship.fuel - RescueService.RESCUE_FUEL) < 0.01f
+                        && Math.abs(rescueWorld.ship.pos.dst(rescueWorld.station.pos)
+                        - (rescueWorld.station.def.dockRadius + RescueService.TOW_GAP)) < 0.01f);
+        GameWorld poorWorld = new GameWorld(new Upgrades(true));
+        poorWorld.start();
+        poorWorld.immortal = true;
+        poorWorld.asteroids.clear();
+        poorWorld.fuel.clear();
+        poorWorld.ship.pos.set(0f, -520f);
+        poorWorld.ship.fuel = 0f;
+        poorWorld.ship.cargo().addExact(Commodity.SILICATO, 100);
+        Upgrades poorUp = new Upgrades(true);
+        poorUp.setCoins(50);
+        RescueService poorRescue = new RescueService();
+        poorRescue.request(poorWorld, new Pilot());
+        poorRescue.update(3.1f, poorWorld, poorUp, new Pilot());
+        check("sin saldo el rescate cuesta toda la cuenta y más carga",
+                poorRescue.paid() == 50
+                        && poorRescue.lost() == 50
+                        && poorUp.coins() == 0
+                        && poorWorld.ship.cargo().totalUnits() == 50);
+        RescueService cancelRescue = new RescueService();
+        cancelRescue.request(rescueWorld, rescuePilot);
+        rescueWorld.ship.fuel = 40f;
+        check("el rescate se cancela si llega combustible",
+                !cancelRescue.update(0.1f, rescueWorld, rescueUp, rescuePilot)
+                        && !cancelRescue.active());
+        rescueWorld.ship.docked = true;
+        check("no se pide rescate acoplado",
+                !RescueService.canRequest(rescueWorld, rescuePilot));
+        rescueWorld.ship.docked = false;
+        Pilot deadPilot = new Pilot();
+        deadPilot.health = 0f;
+        deadPilot.status = Pilot.Status.DEAD;
+        check("no se pide rescate con el piloto muerto",
+                !RescueService.canRequest(rescueWorld, deadPilot));
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

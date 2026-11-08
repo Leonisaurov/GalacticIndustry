@@ -24,4 +24,8 @@ final class HudView {
     Button recover;
     Button dock;
     boolean canDock;
+    Button rescue;
+    boolean canRescue;
+    boolean rescueActive;
+    float rescueSeconds;
 }

@@ -74,6 +74,9 @@ Afecta a la Etapa 2 (asfixia) y a la Etapa 5 (rescate). No bloquea la Etapa 1.
 - No hay reaparición automática en la nave nodriza.
 - El modo de recuperación de desarrollo se separa en T-210 y no afecta al juego
   normal.
+- **Rescate de combustible (T-506):** no revive al piloto. Cuesta 100 créditos
+  (o todo el saldo) y 25 % de la carga (50 % si no se pudo pagar), tarda 3 s y
+  deja la nave junto a la estación con 20 de combustible.
 
 ---
 

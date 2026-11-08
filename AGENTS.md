@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S5` — Nave nodriza y acoplamiento.
 - No hay tarea en progreso.
-- Última tarea completada: `T-505` — Persistir estación, almacén y estado acoplado.
-- Primera tarea disponible: `T-506` — Añadir rescate para combustible agotado.
+- Última tarea completada: `T-506` — Añadir rescate para combustible agotado.
+- Primera tarea disponible: `T-507` — Verificación de estación y ciclo económico.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **44 %** (36 de 81 tareas de progreso).
+- La implementación del juego está al **46 %** (37 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

@@ -101,6 +101,8 @@ public class MyGame implements ApplicationListener {
     private final boolean dockingTest;
     /** Arranca acoplado con carga y daños para probar los servicios de estación. */
     private final boolean stationServiceTest;
+    /** Arranca sin combustible y con carga para probar el rescate. */
+    private final boolean rescueTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -115,6 +117,9 @@ public class MyGame implements ApplicationListener {
     private Button btnRecover;
     /** Acoplar a la nodriza y despegar de ella. */
     Button btnDock, btnUndock;
+    /** Rescate por falta de combustible. */
+    Button btnRescue;
+    private final RescueService rescue = new RescueService();
 
     // Joystick (izquierda) y barra de aceleración (derecha), en coordenadas de pantalla.
     private float joyCx, joyCy, joyR;
@@ -248,6 +253,19 @@ public class MyGame implements ApplicationListener {
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest, boolean stationServiceTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, false);
+    }
+
+    /**
+     * @param rescueTest arranca sin combustible y con carga para probar el rescate.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -262,10 +280,11 @@ public class MyGame implements ApplicationListener {
         this.stationTest = stationTest;
         this.dockingTest = dockingTest;
         this.stationServiceTest = stationServiceTest;
+        this.rescueTest = rescueTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
-                || dockingTest || stationServiceTest;
+                || dockingTest || stationServiceTest || rescueTest;
     }
 
     @Override
@@ -430,6 +449,17 @@ public class MyGame implements ApplicationListener {
             upgrades.setCoins(200);
             state = DOCKED;
             stationScreen.enter();
+        } else if (rescueTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(0f, -520f);
+            world.ship.vel.set(0f, 0f);
+            world.ship.fuel = 0f;
+            world.ship.cargo().addExact(Commodity.SILICATO, 100);
+            upgrades.setCoins(200);
         }
     }
 
@@ -573,6 +603,8 @@ public class MyGame implements ApplicationListener {
                 bw * 0.9f, 46f * u);
         btnUndock = new Button("DESPEGAR", cx + bw * 0.05f, h * 0.30f,
                 bw * 0.9f, 46f * u);
+        btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
+                bw * 0.9f, 46f * u);
 
         if (stationScreen != null) {
             stationScreen.layout(w, h);
@@ -626,6 +658,12 @@ public class MyGame implements ApplicationListener {
     /** La nave está dentro de la zona de acople y a baja velocidad. */
     private boolean canDock() {
         return state == PLAYING && runActive && DockingSystem.canDock(world);
+    }
+
+    /** Falta combustible y no se está ya en la zona de acople. */
+    private boolean canRescue() {
+        return state == PLAYING && runActive && !rescue.active()
+                && RescueService.canRequest(world, session.pilot);
     }
 
     /** Coste de reparar una parte: proporcional a la integridad que le falta. */
@@ -822,7 +860,9 @@ public class MyGame implements ApplicationListener {
                         + "\"stationDistance\":%.1f,\"stationAsteroids\":%d,"
                         + "\"docked\":%s,\"canDock\":%s,"
                         + "\"stationStorageMass\":%.1f,\"stationStorageUnits\":%d,"
-                        + "\"motorLevel\":%d}",
+                        + "\"motorLevel\":%d,"
+                        + "\"rescueActive\":%s,\"rescueSeconds\":%.1f,"
+                        + "\"canRescue\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -863,7 +903,8 @@ public class MyGame implements ApplicationListener {
                 canDock(),
                 world.station.storage.usedMass(),
                 world.station.storage.totalUnits(),
-                upgrades.level(Upgrades.MOTOR)));
+                upgrades.level(Upgrades.MOTOR),
+                rescue.active(), rescue.remaining(), canRescue()));
     }
 
     void logEvent(String json) {
@@ -1006,6 +1047,35 @@ public class MyGame implements ApplicationListener {
             resetControls();
             state = PAUSED;
             saveRun();
+            return;
+        }
+        if (canRescue() && tapped(btnRescue)) {
+            bankCoins();
+            if (rescue.request(world, session.pilot)) {
+                resetControls();
+                saveRun();
+                logEvent("{\"event\":\"rescue_request\"}");
+            }
+            return;
+        }
+        if (rescue.active()) {
+            if (rescue.update(dt, world, upgrades, session.pilot)) {
+                saveRun();
+                logEvent(String.format(Locale.US,
+                        "{\"event\":\"rescue\",\"paid\":%d,\"cargoLost\":%d,"
+                                + "\"fullPayment\":%s,\"coins\":%d}",
+                        rescue.paid(), rescue.lost(), rescue.fullPayment(),
+                        upgrades.coins()));
+            }
+            Controls idle = new Controls();
+            session.update(dt, idle);
+            throttle = 0f;
+            thrustLevel = 0f;
+            if (world.isOver()) {
+                triggerDeath();
+            } else if (!session.pilot.alive()) {
+                triggerPilotDeath();
+            }
             return;
         }
         if (canRecoverLegacy() && tapped(btnRecover)) {
@@ -1225,7 +1295,8 @@ public class MyGame implements ApplicationListener {
                 || pointerIn(sliderZone, pointer)
                 || hit(btnPause, pointer)
                 || (canRecoverLegacy() && hit(btnRecover, pointer))
-                || (canDock() && hit(btnDock, pointer));
+                || (canDock() && hit(btnDock, pointer))
+                || (canRescue() && hit(btnRescue, pointer));
     }
 
     private void handlePause() {
@@ -1369,6 +1440,10 @@ public class MyGame implements ApplicationListener {
             hud.recover = btnRecover;
             hud.dock = btnDock;
             hud.canDock = canDock();
+            hud.rescue = btnRescue;
+            hud.canRescue = canRescue();
+            hud.rescueActive = rescue.active();
+            hud.rescueSeconds = rescue.remaining();
             playHud.draw(w, h);
             if (state == PAUSED) {
                 overlay.drawPause(w, h);

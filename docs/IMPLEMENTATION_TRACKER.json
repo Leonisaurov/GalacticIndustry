@@ -4,24 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:52:00-06:00",
-    "lastSessionId": "S-045",
+    "lastUpdated": "2026-11-08T03:00:00-06:00",
+    "lastSessionId": "S-046",
     "lastVerification": {
-      "date": "2026-11-08T02:52:00-06:00",
+      "date": "2026-11-08T03:00:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "El guardado v2 incluye estación, almacén y docked",
-        "El almacén y el acople se restauran sin duplicar mineral",
-        "Un guardado sin docked carga desacoplado",
-        "13_station: persistencia tras reiniciar y despegar",
-        "02_navigation y 03_controls: OK",
+        "RescueService: espera 3 s, coste 100 cr/todo el saldo y pérdida de carga",
+        "Remolque a dockRadius+40 con 20 de combustible; no revive al piloto",
+        "El rescate se cancela si llega combustible, se acopla o muere el piloto",
+        "13_station: rescate completo y evento de log",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S5",
     "currentTaskId": null,
-    "nextTaskId": "T-506",
+    "nextTaskId": "T-507",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2908,7 +2907,7 @@
       "description": "Evitar el softlock cuando el jugador no puede volver a la estación, sin convertir el rescate en una resurrección automática ni en un punto de reaparición.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-502"
@@ -2933,10 +2932,42 @@
         "01_logic"
       ],
       "technicalNotes": "D-001 aprobada: la muerte es permanente; este rescate es solo para combustible/estado, no para revivir personajes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-046",
+          "date": "2026-11-08T03:00:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "RescueService evita el softlock: espera 3 s, cobra 100 créditos (o todo el saldo), pierde 25 %/50 % de carga y remolca a la nave a 40 u fuera del acople con 20 de combustible. HUD contextual, log rescue_request/rescue y telemetría. No revive personajes.",
+          "files": [
+            "src/com/example/codegame/RescueService.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh",
+            "tools/tests/testlib.sh",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS sin combustible se puede pedir rescate",
+        "PASS el rescate se solicita con espera",
+        "PASS el rescate cobra, pierde carga y remolca",
+        "PASS sin saldo el rescate cuesta toda la cuenta y más carga",
+        "PASS el rescate se cancela si llega combustible",
+        "PASS no se pide rescate acoplado/muerto",
+        "13_station: fuel 20, 75 UM, 100 cr, distancia 300 y evento rescue"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T03:00:00-06:00"
     },
     {
       "id": "T-507",
@@ -2945,7 +2976,7 @@
       "description": "Cerrar la etapa comprobando acople, servicios, persistencia, rescate y retirada de la tienda de pausa.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-503",
@@ -5306,6 +5337,33 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-046",
+      "date": "2026-11-08T03:00:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Rescate por combustible agotado",
+      "summary": "Rescate con espera, coste en créditos, pérdida de carga y remolque a la estación. Evita el softlock sin resucitar al piloto; HUD, log y telemetría verificados en 13_station.",
+      "tasks": [
+        "T-506"
+      ],
+      "files": [
+        "src/com/example/codegame/RescueService.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh",
+        "tools/tests/testlib.sh",
+        "docs/DECISIONS.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-507 (verificación y cierre de S5)."
+    },
     {
       "id": "S-045",
       "date": "2026-11-08T02:52:00-06:00",

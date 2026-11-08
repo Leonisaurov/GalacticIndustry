@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:52:00-06:00  
+**Última actualización:** 2026-11-08T03:00:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,74 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-046 — Rescate por combustible agotado
+
+- **Fecha:** 2026-11-08T03:00:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-506
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `RescueService` se ofrece cuando la nave no está acoplada, el piloto vive y
+  queda ≤0,5 de combustible (y no se está ya en la zona de acople).
+- El rescate tarda **3 s** y después:
+  - cobra **100 créditos** o todo el saldo si no llega;
+  - descarta **25 %** de la carga (50 % si no pudo pagar);
+  - remolca a `dockRadius + 40` con **20 de combustible**;
+  - cancela piloto, láser y tractor.
+- No revive al piloto: si muere durante la espera, se cancela.
+- HUD contextual `PEDIR RESCATE` y cuenta atrás.
+- Log `rescue_request` / `rescue`; telemetría `canRescue`, `rescueActive`,
+  `rescueSeconds`.
+- Nuevo `rescue_test`; `13_station` cubre coste, espera, pérdida y remolque.
+
+### Archivos modificados
+
+- `src/com/example/codegame/RescueService.java` (nuevo)
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/HudView.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/DECISIONS.md`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 13_station`: **OK**.
+
+### Evidencias
+
+- `PASS sin combustible se puede pedir rescate`
+- `PASS el rescate se solicita con espera`
+- `PASS el rescate cobra, pierde carga y remolca`
+- `PASS sin saldo el rescate cuesta toda la cuenta y más carga`
+- `PASS el rescate se cancela si llega combustible`
+- `PASS no se pide rescate acoplado`
+- `PASS no se pide rescate con el piloto muerto`
+- `13_station`: 20 de combustible, 75 UM, 100 créditos, distancia 300 y evento
+  `rescue` en el log.
+
+### Decisiones tomadas
+
+- El rescate es una herramienta contra el softlock, no una resurrección.
+- El pago parcial aumenta la pérdida de carga al 50 %.
+- La nave queda fuera del acople para que el jugador entre manualmente.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-507 — Verificación de estación y ciclo económico** para
+  cerrar S5.
 
 ---
 

@@ -140,6 +140,21 @@ estáticos se reutilizan.
   esos campos cargan con la nodriza por defecto, almacén vacío y sin acople.
 - Al reanudar una partida acoplada, `CONTINUAR` abre directamente la estación.
 
+## Rescate por combustible
+
+- `RescueService` se activa cuando la nave no está acoplada, el piloto vive y
+  queda combustible (≤0,5). No se ofrece dentro de la zona de acople: allí se
+  puede entrar gratis.
+- El jugador pide el rescate desde el HUD. Tarda **3 s** y después:
+  - cobra **100 créditos** o todo el saldo si no llega;
+  - descarta **25 %** de la carga (50 % si no pudo pagar);
+  - remolca la nave a `dockRadius + 40` de la estación con **20 de combustible**;
+  - cancela piloto, láser y tractor.
+- No revive al piloto ni reinicia el mundo: si el piloto muere durante la
+  espera, el rescate se cancela y la muerte sigue su curso.
+- Se registran `rescue_request` y `rescue` en el log; telemetría
+  `canRescue`, `rescueActive` y `rescueSeconds`.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de

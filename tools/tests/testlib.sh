@@ -39,6 +39,8 @@ ST_ROW4_Y=0
 ST_ROW5_Y=0
 ST_UPG1_Y=0
 ST_UNDOCK_Y=0
+RESCUE_X=0
+RESCUE_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -101,6 +103,8 @@ device_geometry() {
     [ "$st_row_h8" -gt $((86 * U)) ] && st_row_h8=$((86 * U))
     ST_UPG1_Y=$((H - (st_list_top - st_row_h8 / 2)))
     ST_UNDOCK_Y=$((H - (8 * U + 60 * U)))
+    RESCUE_X=$((W / 2))
+    RESCUE_Y=$((H - (H * 46 / 100 + 23 * U)))
 }
 
 # ---------- build y SelfTest ----------

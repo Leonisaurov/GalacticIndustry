@@ -87,6 +87,9 @@ final class PlayHud {
         if (hud.canDock) {
             ui.drawButton(hud.dock, Visuals.BTN_PRIMARY, true);
         }
+        if (hud.canRescue) {
+            ui.drawButton(hud.rescue, Visuals.BTN_WARM, true);
+        }
         drawIconButton(hud.pause);
         ui.drawCoinIcon(pad + 18f * u, h - 54f * u, 13f * u);
         if (hud.state == MyGame.PLAYING) {
@@ -165,6 +168,18 @@ final class PlayHud {
                     hud.dock.bounds.x + hud.dock.bounds.width * 0.5f,
                     hud.dock.bounds.y + hud.dock.bounds.height + 22f * u,
                     0.72f * u, Visuals.ACCENT);
+        }
+        if (hud.canRescue) {
+            ui.drawButtonText(hud.rescue, true);
+            ui.textCentered("SIN COMBUSTIBLE - EL RESCATE CUESTA 100 CR Y CARGA",
+                    hud.rescue.bounds.x + hud.rescue.bounds.width * 0.5f,
+                    hud.rescue.bounds.y + hud.rescue.bounds.height + 22f * u,
+                    0.68f * u, Visuals.WARN);
+        }
+        if (hud.rescueActive) {
+            ui.textCentered(String.format(java.util.Locale.US,
+                            "RESCATE EN %.1f s", hud.rescueSeconds),
+                    w * 0.5f, h * 0.55f, 1.10f * u, Visuals.WARN);
         }
         if (hud.state == MyGame.PLAYING) {
             ui.textCenteredMiddle("GIRO", hud.joyCx, hud.joyCy + hud.joyR + 28f * u, 0.68f * u, Visuals.TEXT_DIM);

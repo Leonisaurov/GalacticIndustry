@@ -125,5 +125,33 @@ status=$(latest_status)
 assert_eq "acople no persiste tras despegar" false "$(printf '%s' "$status" | json_get docked)"
 assert_eq "almacén persiste tras despegar" 100 "$(printf '%s' "$status" | json_get stationStorageUnits)"
 
+# T-506: rescate por falta de combustible.
+reset_app
+launch_app "--ez test_mode true --ez rescue_test true"
+wait_current_state PLAYING 10 || fail "no arrancó la prueba de rescate"
+wait_status_field canRescue true 5 || fail "el rescate no está disponible"
+sleep 0.4
+status=$(latest_status)
+assert_eq "sin combustible" 0.0 "$(printf '%s' "$status" | json_get fuel)"
+assert_eq "carga antes del rescate" 100 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "créditos antes del rescate" 200 "$(printf '%s' "$status" | json_get coins)"
+shot "$OUT" 28_rescue
+
+tap "$RESCUE_X" "$RESCUE_Y" 0.3
+wait_status_field rescueActive true 5 || fail "el rescate no se activó"
+sleep 0.5
+status=$(latest_status)
+assert_eq "el rescate no es instantáneo" true "$(printf '%s' "$status" | json_get rescueActive)"
+wait_status_field rescueActive false 6 || fail "el rescate no terminó"
+sleep 0.4
+status=$(latest_status)
+assert_eq "combustible de emergencia" 20.0 "$(printf '%s' "$status" | json_get fuel)"
+assert_eq "carga perdida por el rescate" 75 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "coste del rescate" 100 "$(printf '%s' "$status" | json_get coins)"
+assert_ge "distancia tras el remolque" 261 "$(printf '%s' "$status" | json_get stationDistance)"
+assert_eq "rescate registrado en el log" 1 "$(
+    adb logcat -d -s AsteroidsTelemetry:D | grep -c '"event":"rescue"'
+)"
+
 check_no_crash
-echo "OK 13_station: nodriza, zona segura, Autopilot.STATION, acople, servicios, persistencia y despegue"
+echo "OK 13_station: nodriza, acople, servicios, persistencia, rescate y despegue"
