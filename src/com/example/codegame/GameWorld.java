@@ -419,12 +419,20 @@ class GameWorld {
             }
         }
         ship.update(dt, up, c);
-        if (ship.laser.active) {
+        boolean laserMining = ship.laser.active && ship.laser.canMine(ship, ship.capacitor);
+        if (laserMining) {
             minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor, ship.cargo);
             emitMiningSparks();
         } else {
             minedThisFrame = 0;
-            ship.capacitor.update(dt, false);
+        }
+        boolean tractorPulling = ship.tractor.update(dt, ship, fragments);
+        if (!laserMining) {
+            if (tractorPulling) {
+                ship.capacitor.drain(TractorBeam.DRAIN_PER_SEC * dt);
+            } else {
+                ship.capacitor.update(dt, false);
+            }
         }
         if (lifeSupport != null) {
             lifeSupport.updateLeak(ship);
@@ -823,6 +831,7 @@ class GameWorld {
             asteroids.get(i).draw(shapes);
         }
         drawMiningBeam(shapes);
+        drawTractorBeams(shapes);
         for (int i = 0; i < missiles.size; i++) {
             missiles.get(i).draw(shapes);
         }
@@ -860,6 +869,24 @@ class GameWorld {
         shapes.circle(ex, ey, 2.6f + 1.2f * pulse, 10);
     }
 
+    /** Haces del rayo tractor hacia los fragmentos atraídos. */
+    private void drawTractorBeams(ShapeRenderer shapes) {
+        if (!ship.tractor.active()) {
+            return;
+        }
+        Color c = Visuals.TRACTOR;
+        float pulse = 0.7f + 0.3f * MathUtils.sin(elapsed * 14f);
+        for (int i = 0; i < ship.tractor.targets.size; i++) {
+            OreFragment f = ship.tractor.targets.get(i);
+            shapes.setColor(c.r, c.g, c.b, 0.14f);
+            shapes.rectLine(ship.pos.x, ship.pos.y, f.pos.x, f.pos.y, 5f);
+            shapes.setColor(c.r, c.g, c.b, 0.42f);
+            shapes.rectLine(ship.pos.x, ship.pos.y, f.pos.x, f.pos.y, 1.8f);
+            shapes.setColor(1f, 1f, 1f, 0.55f);
+            shapes.circle(f.pos.x, f.pos.y, 2.2f + pulse, 8);
+        }
+    }
+
     private void drawLegacyWreck(ShapeRenderer shapes) {
         if (!legacyWreck) {
             return;
@@ -892,6 +919,13 @@ class GameWorld {
             art.glow(batch, ship.pos.x + ship.dir.x * Ship.RADIUS,
                     ship.pos.y + ship.dir.y * Ship.RADIUS,
                     26f, beam, 0.18f * pulse);
+        }
+        if (ship.tractor.active()) {
+            for (int i = 0; i < ship.tractor.targets.size; i++) {
+                OreFragment f = ship.tractor.targets.get(i);
+                art.glow(batch, f.pos.x, f.pos.y, OreFragment.RADIUS * 4.5f,
+                        Visuals.TRACTOR, 0.20f);
+            }
         }
         for (int i = 0; i < missiles.size; i++) {
             missiles.get(i).drawGlow(batch, art);

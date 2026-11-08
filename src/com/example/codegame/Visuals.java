@@ -52,6 +52,8 @@ class Visuals {
     static final Color LASER_C = new Color(0.45f, 0.95f, 1f, 1f);
     static final Color LASER_S = new Color(0.86f, 0.92f, 1f, 1f);
     static final Color LASER_M = new Color(1f, 0.76f, 0.36f, 1f);
+    /** Rayo tractor: verde-cian para distinguirlo del láser. */
+    static final Color TRACTOR = new Color(0.35f, 1f, 0.78f, 1f);
 
     static Color laserColor(AsteroidType type) {
         if (type == AsteroidType.M) {

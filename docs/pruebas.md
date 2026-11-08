@@ -42,6 +42,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
 - `11_cargo` — bodega, masa, HUD de carga y persistencia al pausar.
 - `12_mining` — piloto MINE, haz y energía contextual, extracción a bodega y roca agotada.
+- `13_tractor` — rayo tractor: atracción, energía, captura de fragmentos y HUD.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 - `19_melt` — fundición temporal: 100 Silicato → 200 créditos y bodega vacía.
 
@@ -127,6 +128,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
   `energy` baja de `energyMax` y que `mining=true`.
 - Los fragmentos minerales se guardan en v2 y en el formato legacy; el SelfTest
   cubre persistencia, migración sin `fragments` y pérdida configurable.
+- `tractor_test`: arranca con tres fragmentos en alcance del tractor. Lo usa
+  `13_tractor`, que comprueba `tractorActive`, consumo de energía, captura de
+  las 12 UM y la captura `24_tractor`.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

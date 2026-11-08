@@ -205,6 +205,7 @@ final class PlayHud {
     /** El capacitor solo se muestra cuando el láser está en uso o acaba de minar. */
     boolean energyVisible() {
         return hud.runActive && (world.ship.laser.active
+                || world.ship.tractor.active()
                 || world.ship.capacitor.fraction() < 0.999f);
     }
 
@@ -259,7 +260,10 @@ final class PlayHud {
             return;
         }
         int pct = Math.round(world.ship.capacitor.fraction() * 100f);
-        ui.textLeft("ENERGIA " + pct + "%",
+        String label = world.ship.tractor.active()
+                ? "ENERGIA " + pct + "%  TRACTOR " + world.ship.tractor.targets.size
+                : "ENERGIA " + pct + "%";
+        ui.textLeft(label,
                 energyBarX() + energyBarW() + 8f * u, energyBarY(h) + 6f * u,
                 0.56f * u, energyColor());
     }

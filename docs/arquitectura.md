@@ -283,7 +283,22 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - `fragmentShare` y `fragmentLoss` son ajustables por mundo para balance.
 - Los fragmentos se guardan en v2 y en el formato legacy con posición,
   velocidad, mineral, cantidad y vida restante; un guardado sin ellos carga
-  vacío. El rayo tractor llega en T-410.
+  vacío.
+
+## Rayo tractor
+
+- `TractorBeam` atrae automáticamente hasta `2 + nivel` fragmentos dentro de su
+  alcance; no necesita botón.
+- Alcance `140 + 25·nivel`, velocidad `120 + 30·nivel` y tope de arrastre 260.
+- Consume **1,5 energía/s** del capacitor mientras atrae al menos un fragmento.
+  Comparte capacitor con el láser, pero solo uno de los dos drena a la vez: si
+  el láser está minando, tiene prioridad.
+- La captura final la hace la nave al tocar el fragmento; el tractor solo lo
+  acerca. Si no se recupera, sigue perdiéndose por tiempo.
+- Mejora `TRACTOR`: alcance, velocidad y fragmentos simultáneos.
+- HUD: `ENERGIA xx%  TRACTOR n` mientras hay fragmentos atraídos; haces
+  verde-cian distintos del láser.
+- Telemetría: `tractorActive`, `tractorTargets` y `tractorLevel`.
 
 ## Economía temporal: fundición
 

@@ -4,22 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:00:00-06:00",
-    "lastSessionId": "S-037",
+    "lastUpdated": "2026-11-08T02:12:00-06:00",
+    "lastSessionId": "S-038",
     "lastVerification": {
-      "date": "2026-11-08T02:00:00-06:00",
+      "date": "2026-11-08T02:12:00-06:00",
       "result": "OK",
       "checks": [
-        "MyGame reducido de 2.623 a ~1.460 líneas",
-        "UiKit, PlayHud, ShopRenderer, OverlayRenderer y SpaceBackground extraídos",
-        "01_logic y 8 pruebas de captura en verde",
-        "03_controls, 04_autopilot, 05_death y 16_universe OK",
+        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
+        "TRACTOR: alcance, velocidad y capacidad mejorables",
+        "El rayo atrae fragmentos, consume energía y los captura",
+        "HUD muestra ENERGIA y TRACTOR n",
+        "13_tractor: 3 fragmentos capturados y bodega 12 UM",
+        "12_mining, 04_autopilot, 03_controls, 09_wing_damage, 19_melt y 07_visual_play: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-410",
+    "nextTaskId": "T-408",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2472,7 +2474,7 @@
       "description": "Cerrar la etapa con pruebas de tipos, tiempos, energía, bodega, autopiloto y persistencia.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-403",
@@ -4523,7 +4525,7 @@
       "description": "Añadir un sistema de recuperación que atraiga fragmentos minerales hacia la nave, con alcance, velocidad y capacidad mejorables.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-409",
@@ -4549,11 +4551,48 @@
         "12_mining",
         "04_autopilot"
       ],
-      "technicalNotes": "No fijar eficiencias definitivas; usar valores iniciales y ajustar con telemetría.",
-      "executionLog": [],
-      "evidence": [],
+      "technicalNotes": "No fijar eficiencias definitivas; usar valores iniciales y ajustar con telemetría. El tractor se activa automáticamente al haber fragmentos en alcance y solo consume energía mientras atrae; comparte capacitor con el láser.",
+      "executionLog": [
+        {
+          "sessionId": "S-038",
+          "date": "2026-11-08T02:12:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "TractorBeam integrado: mejora TRACTOR (alcance +25, velocidad +30 y +1 fragmento simultáneo por nivel), atracción automática, consumo de 1,5 energía/s mientras atrae, haces y HUD, telemetría y guardado. Nuevo modo tractor_test y prueba 13_tractor.",
+          "files": [
+            "src/com/example/codegame/TractorBeam.java",
+            "src/com/example/codegame/EnergyCapacitor.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/Visuals.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_tractor.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "12_mining",
+            "04_autopilot",
+            "13_tractor",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS tractor base sin mejora; PASS la mejora Tractor se compra",
+        "PASS la nave aplica alcance y velocidad del tractor",
+        "PASS el tractor atrae el fragmento; PASS consume energia",
+        "PASS fuera de alcance no se atrae; PASS respeta su capacidad",
+        "PASS el nivel de tractor se guarda/restaura; PASS un v2 con 7 niveles carga con Tractor 0",
+        "13_tractor: 3 fragmentos capturados, bodega 12 UM, sin monedas"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T02:12:00-06:00"
     },
     {
       "id": "T-808",
@@ -5065,6 +5104,37 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-038",
+      "date": "2026-11-08T02:12:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Rayo tractor y captura de fragmentos",
+      "summary": "TractorBeam integrado con mejora TRACTOR, consumo de energía, atracción/captura de fragmentos, haces, HUD y guardado. tractor_test y 13_tractor verifican 3 fragmentos capturados. T-408 queda desbloqueada.",
+      "tasks": [
+        "T-410"
+      ],
+      "files": [
+        "src/com/example/codegame/TractorBeam.java",
+        "src/com/example/codegame/EnergyCapacitor.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/Visuals.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_tractor.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 13_tractor",
+        "tools/run-tests.sh --no-build 12_mining 04_autopilot 03_controls 09_wing_damage 19_melt 07_visual_play"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-408 (verificación y cierre de S4)."
+    },
     {
       "id": "S-037",
       "date": "2026-11-08T02:00:00-06:00",

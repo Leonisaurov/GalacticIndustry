@@ -28,7 +28,9 @@ class ShipLoadout {
     static final int BODEGA = 5;
     /** Láser minero: potencia, penetración y capacidad del capacitor. */
     static final int LASER = 6;
-    static final int COUNT = 7;
+    /** Rayo tractor: alcance, velocidad y fragmentos simultáneos. */
+    static final int TRACTOR = 7;
+    static final int COUNT = 8;
     static final int MAX_LEVEL = 5;
 
     static final int MODULE_SLOTS = 4;

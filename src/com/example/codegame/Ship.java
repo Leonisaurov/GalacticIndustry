@@ -40,6 +40,7 @@ class Ship {
     final CargoHold cargo = GameData.newCargoHold();
     final EnergyCapacitor capacitor = new EnergyCapacitor();
     final MiningLaser laser = new MiningLaser();
+    final TractorBeam tractor = new TractorBeam();
     final Vector2 pos = new Vector2();
     final Vector2 vel = new Vector2();
     final Vector2 dir = new Vector2(0f, 1f);
@@ -76,6 +77,8 @@ class Ship {
         capacitor.setMaxEnergy(up.capacitorMax());
         capacitor.reset();
         laser.stop();
+        tractor.setLevel(up.tractorLevel());
+        tractor.stop();
         cooldown = 0f;
         invulnerable = 0f;
         lastDamaged = -1;
@@ -211,6 +214,11 @@ class Ship {
         float fraction = oldMax > 0f ? capacitor.energy / oldMax : 1f;
         capacitor.setMaxEnergy(up.capacitorMax());
         capacitor.energy = capacitor.maxEnergy * MathUtils.clamp(fraction, 0f, 1f);
+    }
+
+    /** Aplica la mejora del rayo tractor. */
+    void syncTractor(Upgrades up) {
+        tractor.setLevel(up.tractorLevel());
     }
 
     /** Ángulo normalizado al intervalo [-180, 180). */

@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S4` — Minería láser y recursos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-409` — Generar fragmentos de mineral y dispersión por misiles (persistencia).
-- Primera tarea disponible: `T-410` — Implementar rayo tractor y captura de fragmentos.
+- Última tarea completada: `T-410` — Implementar rayo tractor y captura de fragmentos.
+- Primera tarea disponible: `T-408` — Verificación de minería y recursos.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **36 %** (29 de 81 tareas de progreso).
+- La implementación del juego está al **37 %** (30 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `ShopRenderer`, `OverlayRenderer` y `SpaceBackground` (T-007).
 

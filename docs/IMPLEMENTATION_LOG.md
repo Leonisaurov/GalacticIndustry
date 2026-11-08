@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:00:00-06:00  
+**Última actualización:** 2026-11-08T02:12:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,81 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-038 — Rayo tractor y captura de fragmentos
+
+- **Fecha:** 2026-11-08T02:12:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-410
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `TractorBeam` atrae automáticamente fragmentos dentro de su alcance:
+  - alcance `140 + 25·nivel`;
+  - velocidad `120 + 30·nivel`;
+  - hasta `2 + nivel` fragmentos simultáneos.
+- Consume **1,5 energía/s** mientras atrae; comparte capacitor con el láser y
+  el láser tiene prioridad si está minando.
+- La nave captura el fragmento al tocarlo; el tractor solo lo acerca.
+- Mejora `TRACTOR` en la tienda (alcance, velocidad y capacidad), aplicada con
+  `Ship.syncTractor()` y persistida en el loadout.
+- Haces verde-cian y HUD `ENERGIA xx%  TRACTOR n`.
+- Telemetría: `tractorActive`, `tractorTargets`, `tractorLevel`.
+- Nuevo `tractor_test` y prueba `13_tractor`.
+- Migración: guardados con 7 niveles cargan con Tractor 0.
+
+### Archivos modificados
+
+- `src/com/example/codegame/TractorBeam.java`
+- `src/com/example/codegame/EnergyCapacitor.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/ShipLoadout.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/Visuals.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_tractor.sh` (nuevo)
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 13_tractor`: **OK**.
+- `12_mining 04_autopilot 03_controls 09_wing_damage 19_melt 07_visual_play`: **6/6 OK**.
+
+### Evidencias
+
+- `PASS tractor base sin mejora`
+- `PASS la mejora Tractor se compra`
+- `PASS la nave aplica alcance y velocidad del tractor`
+- `PASS el tractor atrae el fragmento`
+- `PASS el tractor consume energia`
+- `PASS fuera de alcance no se atrae`
+- `PASS el tractor respeta su capacidad`
+- `PASS el nivel de tractor se guarda/restaura`
+- `PASS un v2 con 7 niveles carga con Tractor 0`
+- `13_tractor`: 3 fragmentos capturados, bodega 12 UM, sin monedas.
+- Captura `24_tractor`: haz verde-cian y `ENERGIA 98% TRACTOR 1`.
+
+### Decisiones tomadas
+
+- El tractor es automático: no añade un botón ni compite con el joystick.
+- Solo drena energía mientras hay un fragmento atraído.
+- El láser tiene prioridad de drenaje si ambos sistemas están activos.
+- La capacidad mejorable se interpreta como fragmentos simultáneos.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-408 — Verificación de minería y recursos** para cerrar S4.
 
 ---
 

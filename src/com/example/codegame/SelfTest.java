@@ -7,6 +7,25 @@ public class SelfTest {
 
     private static int failures = 0;
 
+    /** Recorta el array levels de un guardado para probar la migración. */
+    private static String trimLevels(String save, int keep) {
+        int start = save.indexOf("\"levels\":[");
+        if (start < 0) {
+            return save;
+        }
+        int end = save.indexOf(']', start);
+        String body = save.substring(start + 10, end);
+        String[] parts = body.split(",");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < keep && i < parts.length; i++) {
+            if (i > 0) {
+                sb.append(',');
+            }
+            sb.append(parts[i]);
+        }
+        return save.substring(0, start + 10) + sb + save.substring(end);
+    }
+
     private static void check(String name, boolean ok) {
         System.out.println((ok ? "PASS " : "FAIL ") + name);
         if (!ok) {
@@ -1102,20 +1121,18 @@ public class SelfTest {
         SaveService.MemoryStorage oldLevelStorage = new SaveService.MemoryStorage();
         SaveService oldLevelService = new SaveService(oldLevelStorage);
         oldLevelService.save(oldLevelsSession);
-        String sevenLevels = oldLevelStorage.read(SaveService.SAVE_NAME);
-        String sixLevels = sevenLevels.replace(
-                "\"levels\":[0,0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0,0]");
+        String eightLevelsBase = oldLevelStorage.read(SaveService.SAVE_NAME);
+        String sixLevels = trimLevels(eightLevelsBase, 6);
         GameSession sixLevelsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
         check("un v2 con 6 niveles carga con Laser 0",
-                !sevenLevels.equals(sixLevels)
+                !eightLevelsBase.equals(sixLevels)
                         && SaveCodec.decode(sixLevels, sixLevelsLoaded)
                         && sixLevelsLoaded.cargo().capacity() == 100f
                         && sixLevelsLoaded.upgrades().level(Upgrades.LASER) == 0);
-        String fiveLevels = sevenLevels.replace(
-                "\"levels\":[0,0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0]");
+        String fiveLevels = trimLevels(eightLevelsBase, 5);
         GameSession oldLevelsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
         check("un v2 con 5 niveles carga con Bodega 0",
-                !sevenLevels.equals(fiveLevels)
+                !eightLevelsBase.equals(fiveLevels)
                         && SaveCodec.decode(fiveLevels, oldLevelsLoaded)
                         && oldLevelsLoaded.cargo().capacity() == 100f
                         && oldLevelsLoaded.upgrades().level(Upgrades.LASER) == 0);
@@ -1506,6 +1523,89 @@ public class SelfTest {
         loadedShip.reset(laserLoaded.upgrades(), 0f, 0f);
         check("la nave cargada usa el capacitor mejorado",
                 Math.abs(loadedShip.capacitor.maxEnergy - 150f) < 0.001f);
+
+        // T-410: rayo tractor, atracción, energía y mejora.
+        Upgrades tractorUp = new Upgrades(true);
+        check("tractor base sin mejora",
+                tractorUp.tractorLevel() == 0
+                        && tractorUp.tractorRange() == 140f
+                        && tractorUp.tractorSpeed() == 120f
+                        && tractorUp.tractorTargets() == 2);
+        tractorUp.addCoins(1000);
+        check("la mejora Tractor se compra",
+                tractorUp.buy(Upgrades.TRACTOR) && tractorUp.tractorLevel() == 1);
+        Ship tractorShip = new Ship();
+        tractorShip.reset(tractorUp, 0f, 0f);
+        check("la nave aplica alcance y velocidad del tractor",
+                tractorShip.tractor.level() == 1
+                        && Math.abs(tractorShip.tractor.range() - 165f) < 0.001f
+                        && Math.abs(tractorShip.tractor.speed() - 150f) < 0.001f
+                        && tractorShip.tractor.capacity() == 3);
+        GameWorld tractorWorld = new GameWorld(new Upgrades(true));
+        tractorWorld.start();
+        tractorWorld.immortal = true;
+        tractorWorld.asteroids.clear();
+        tractorWorld.fuel.clear();
+        OreFragment nearOre = new OreFragment(100f, 0f, Commodity.HIERRO, 5, 0f, 0f);
+        tractorWorld.fragments.add(nearOre);
+        float tractorEnergy0 = tractorWorld.ship.capacitor.energy;
+        float nearStart = nearOre.pos.dst(tractorWorld.ship.pos);
+        for (int i = 0; i < 60; i++) {
+            tractorWorld.asteroids.clear();
+            tractorWorld.fuel.clear();
+            tractorWorld.update(dt, new Controls());
+        }
+        check("el tractor atrae el fragmento",
+                nearOre.pos.dst(tractorWorld.ship.pos) < nearStart - 40f
+                        || tractorWorld.ship.cargo().amount(Commodity.HIERRO) == 5);
+        check("el tractor consume energia",
+                tractorWorld.ship.capacitor.energy < tractorEnergy0 - 0.5f);
+        GameWorld tractorRange = new GameWorld(new Upgrades(true));
+        tractorRange.start();
+        tractorRange.immortal = true;
+        tractorRange.asteroids.clear();
+        tractorRange.fuel.clear();
+        OreFragment farOre = new OreFragment(400f, 0f, Commodity.ORO, 3, 0f, 0f);
+        tractorRange.fragments.add(farOre);
+        for (int i = 0; i < 30; i++) {
+            tractorRange.asteroids.clear();
+            tractorRange.fuel.clear();
+            tractorRange.update(dt, new Controls());
+        }
+        check("fuera de alcance no se atrae",
+                !tractorRange.ship.tractor.active()
+                        && Math.abs(farOre.pos.x - 400f) < 0.01f);
+        GameWorld tractorCapacity = new GameWorld(new Upgrades(true));
+        tractorCapacity.start();
+        tractorCapacity.immortal = true;
+        tractorCapacity.asteroids.clear();
+        tractorCapacity.fuel.clear();
+        tractorCapacity.fragments.add(new OreFragment(120f, 0f, Commodity.HIELO, 2, 0f, 0f));
+        tractorCapacity.fragments.add(new OreFragment(130f, 0f, Commodity.SILICATO, 2, 0f, 0f));
+        tractorCapacity.fragments.add(new OreFragment(135f, 0f, Commodity.HIERRO, 2, 0f, 0f));
+        tractorCapacity.update(dt, new Controls());
+        check("el tractor respeta su capacidad",
+                tractorCapacity.ship.tractor.targets.size == 2);
+        GameSession tractorSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        tractorSession.startRun();
+        tractorSession.upgrades().addCoins(1000);
+        tractorSession.upgrades().buy(Upgrades.TRACTOR);
+        tractorSession.upgrades().buy(Upgrades.TRACTOR);
+        tractorSession.ship().syncTractor(tractorSession.upgrades());
+        SaveService.MemoryStorage tractorStorage = new SaveService.MemoryStorage();
+        SaveService tractorService = new SaveService(tractorStorage);
+        check("el nivel de tractor se guarda", tractorService.save(tractorSession));
+        GameSession tractorLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("el nivel de tractor se restaura",
+                tractorService.load(tractorLoaded) == SaveService.LoadStatus.V2
+                        && tractorLoaded.upgrades().tractorLevel() == 2);
+        String eightLevels = tractorStorage.read(SaveService.SAVE_NAME);
+        String tractorSeven = trimLevels(eightLevels, 7);
+        GameSession tractorSevenLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un v2 con 7 niveles carga con Tractor 0",
+                !eightLevels.equals(tractorSeven)
+                        && SaveCodec.decode(tractorSeven, tractorSevenLoaded)
+                        && tractorSevenLoaded.upgrades().tractorLevel() == 0);
 
         // T-409: persistencia de fragmentos y pérdida configurable.
         GameSession oreSession = new GameSession(new PlayerProfile(new Upgrades(true)));

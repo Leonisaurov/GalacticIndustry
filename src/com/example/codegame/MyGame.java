@@ -94,6 +94,8 @@ public class MyGame implements ApplicationListener {
     private final boolean cargoTest;
     /** Arranca con una roca cercana y el piloto en modo MINE. */
     private final boolean miningTest;
+    /** Arranca con fragmentos cercanos para probar el rayo tractor. */
+    private final boolean tractorTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -210,6 +212,17 @@ public class MyGame implements ApplicationListener {
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, false);
+    }
+
+    /**
+     * @param tractorTest arranca con fragmentos cercanos para probar el tractor.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -220,9 +233,10 @@ public class MyGame implements ApplicationListener {
         this.recoveryTest = recoveryTest;
         this.cargoTest = cargoTest;
         this.miningTest = miningTest;
+        this.tractorTest = tractorTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
-                || cargoTest || miningTest;
+                || cargoTest || miningTest || tractorTest;
     }
 
     @Override
@@ -343,6 +357,15 @@ public class MyGame implements ApplicationListener {
             target.vel.set(0f, 0f);
             world.asteroids.add(target);
             world.pilot.mine(target);
+        } else if (tractorTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.fragments.add(new OreFragment(95f, 0f, Commodity.HIELO, 4, 0f, 0f));
+            world.fragments.add(new OreFragment(-85f, 40f, Commodity.SILICATO, 4, 0f, 0f));
+            world.fragments.add(new OreFragment(40f, -95f, Commodity.HIERRO, 4, 0f, 0f));
         }
     }
 
@@ -678,6 +701,8 @@ public class MyGame implements ApplicationListener {
             world.ship.syncCargo(upgrades);
         } else if (index == Upgrades.LASER) {
             world.ship.syncLaser(upgrades);
+        } else if (index == Upgrades.TRACTOR) {
+            world.ship.syncTractor(upgrades);
         }
         saveRun();
     }
@@ -821,7 +846,8 @@ public class MyGame implements ApplicationListener {
                         + "\"cargoMass\":%.1f,\"cargoCapacity\":%.1f,\"cargoUnits\":%d,"
                         + "\"fragments\":%d,\"fragmentUnits\":%d,"
                         + "\"energy\":%.1f,\"energyMax\":%.1f,\"mining\":%s,"
-                        + "\"laserLevel\":%d}",
+                        + "\"laserLevel\":%d,\"tractorActive\":%s,\"tractorTargets\":%d,"
+                        + "\"tractorLevel\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -849,7 +875,10 @@ public class MyGame implements ApplicationListener {
                 world.ship.capacitor.energy,
                 world.ship.capacitor.maxEnergy,
                 world.ship.laser.active,
-                upgrades.laserLevel()));
+                upgrades.laserLevel(),
+                world.ship.tractor.active(),
+                world.ship.tractor.targets.size,
+                upgrades.tractorLevel()));
     }
 
     private void logEvent(String json) {

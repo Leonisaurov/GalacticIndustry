@@ -16,6 +16,7 @@ class Upgrades {
     static final int GASOLINA = ShipLoadout.GASOLINA;
     static final int BODEGA = ShipLoadout.BODEGA;
     static final int LASER = ShipLoadout.LASER;
+    static final int TRACTOR = ShipLoadout.TRACTOR;
     static final int COUNT = ShipLoadout.COUNT;
     static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
     /** Precio del combustible en la tienda temporal: 1 crédito por unidad. */
@@ -30,7 +31,8 @@ class Upgrades {
     static final int O2_REFILL_MIN = 5;
 
     static final String[] NAMES = {
-            "Motor", "Deposito", "Canon", "Blindaje", "Gasolina", "Bodega", "Laser"
+            "Motor", "Deposito", "Canon", "Blindaje", "Gasolina", "Bodega", "Laser",
+            "Tractor"
     };
     static final String[] DESCS = {
             "Mas aceleracion y velocidad",
@@ -39,7 +41,8 @@ class Upgrades {
             "Refuerza la integridad del casco",
             "Menos consumo de combustible",
             "Mas capacidad de carga",
-            "Mas potencia, penetracion y energia"
+            "Mas potencia, penetracion y energia",
+            "Atrae fragmentos de mas lejos"
     };
 
     /** Preferencias de Android; null cuando se usa el almacén en memoria (tests). */
@@ -269,6 +272,22 @@ class Upgrades {
     /** Capacidad del capacitor: 100 base y +25 por nivel de Láser. */
     float capacitorMax() {
         return EnergyCapacitor.BASE_MAX + 25f * level(LASER);
+    }
+
+    int tractorLevel() {
+        return level(TRACTOR);
+    }
+
+    float tractorRange() {
+        return TractorBeam.BASE_RANGE + TractorBeam.RANGE_PER_LEVEL * level(TRACTOR);
+    }
+
+    float tractorSpeed() {
+        return TractorBeam.BASE_SPEED + TractorBeam.SPEED_PER_LEVEL * level(TRACTOR);
+    }
+
+    int tractorTargets() {
+        return TractorBeam.BASE_TARGETS + level(TRACTOR);
     }
 
     /** Conversión temporal de una entrada de carga a créditos a precio base. */
