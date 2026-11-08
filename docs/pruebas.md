@@ -265,6 +265,18 @@ Verificación de T-906:
 | La estación persiste | `PASS S9: todo persiste ...`; `17_player_station` |
 | Sin movimiento a pie | Comprobación estructural de ausencia de interiores |
 
+## Gate de la Etapa 10 — interiores
+
+Verificación de T-1006:
+
+| Criterio | Evidencia |
+|---|---|
+| Se camina y se colisiona | `PASS S10: se camina y las paredes colisionan` |
+| Se interactúa con módulos | `PASS S10: se interactua con un modulo`; `37_interaction` |
+| Se vuelve a la nave | `PASS S10: se vuelve a la nave`; `39_exit` |
+| El estado se guarda | `PASS S10: el interior se restaura`; `38_entry` |
+| Sin regresiones en vuelo/minería/comercio | `03_controls`, `12_mining`, `13_station` |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

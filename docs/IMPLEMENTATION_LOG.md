@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T10:18:00-06:00  
+**Última actualización:** 2026-11-08T10:38:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,58 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-082 — Verificación y cierre de interiores
+
+- **Fecha:** 2026-11-08T10:38:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1006
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Gate S10** integrado en `SelfTest`:
+  - caminar y colisionar;
+  - interactuar con un módulo;
+  - guardar/restaurar el estado del interior;
+  - volver a la nave.
+- Regresión: `03_controls`, `12_mining`, `13_station` sin fallos.
+- Matriz del gate documentada en `docs/pruebas.md`.
+- **S10 cerrada**; **S11 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `18_interiors 03_controls 12_mining 13_station`: **4/4 OK**.
+
+### Evidencias
+
+- `PASS S10: se camina y las paredes colisionan`
+- `PASS S10: se interactua con un modulo`
+- `PASS S10: el estado del interior se guarda`
+- `PASS S10: el interior se restaura`
+- `PASS S10: se vuelve a la nave`
+- `PASS S10: no hay regresion en vuelo/comercio`
+
+### Decisiones tomadas
+
+- El gate cubre interiores y regresión de los sistemas previos.
+- Los interiores de naves/estaciones no propias quedan en T-1007 (POSPUESTO).
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 11 con **T-1101 — Modelos de nave, especializaciones y
+  contenido**.
 
 ---
 

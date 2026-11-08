@@ -150,12 +150,12 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S10` — Interiores.
+- Etapa actual: `S11` — Expansión.
 - No hay tarea en progreso.
-- Última tarea completada: `T-1005` — Implementar entrada, salida y guardado del interior.
-- Primera tarea disponible: `T-1006` — Verificación de interiores.
+- Última tarea completada: `T-1006` — Verificación de interiores.
+- Primera tarea disponible: `T-1101` — Modelos de nave, especializaciones y contenido.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **89 %** (72 de 81 tareas de progreso).
+- La implementación del juego está al **90 %** (73 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

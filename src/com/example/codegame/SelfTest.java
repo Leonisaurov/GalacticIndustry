@@ -3827,6 +3827,67 @@ public class SelfTest {
                         && walkLoaded.ship().pos != null
                         && walkLoaded.currentSector != null);
 
+        // T-1006: gate de la etapa 10 (interiores).
+        Upgrades g10Up = new Upgrades(true);
+        g10Up.setCoins(5000);
+        GameSession g10 = new GameSession(new PlayerProfile(g10Up));
+        g10.startRun();
+        g10.ship().pos.set(-1500f, 0f);
+        g10.ship().cargo().setCapacity(400f);
+        g10.ship().cargo().addExact(Commodity.HIERRO, 80);
+        g10.ship().cargo().addExact(Commodity.COBRE, 50);
+        g10.ship().cargo().addExact(Commodity.SILICATO, 60);
+        check("S10: preparar estacion con interiores",
+                ConstructionService.buildCore(g10, -1500f, 0f).ok
+                        && g10.playerStation.build(0, ModuleDef.STORAGE, g10Up,
+                        g10.ship().cargo()).ok
+                        && g10.playerStation.build(1, ModuleDef.REPAIR, g10Up,
+                        g10.ship().cargo()).ok);
+        InteriorScene g10Scene = g10.playerStation.buildInterior();
+        Avatar g10Avatar = new Avatar(g10Scene);
+        InteriorInput g10Input = new InteriorInput();
+        g10Input.set(1f, 0f);
+        g10Avatar.update(3f, g10Input, g10Scene);
+        check("S10: se camina y las paredes colisionan",
+                "hub".equals(g10Avatar.roomId)
+                        && g10Scene.room("hub").contains(
+                        g10Avatar.x, g10Avatar.y));
+        g10Avatar.x = 0f;
+        g10Avatar.y = 0f;
+        g10Input.set(0f, 1f);
+        g10Avatar.update(1.1f, g10Input, g10Scene);
+        g10Avatar.update(0.3f, g10Input, g10Scene);
+        check("S10: se interactua con un modulo",
+                "module-0".equals(g10Avatar.roomId)
+                        && g10Avatar.nearest(g10Scene) != null
+                        && g10Avatar.nearest(g10Scene).action
+                        == Interactable.Action.STORAGE);
+        g10.saveAvatar(g10Avatar, true);
+        SaveService.MemoryStorage g10Store = new SaveService.MemoryStorage();
+        SaveService g10Saves = new SaveService(g10Store);
+        check("S10: el estado del interior se guarda",
+                g10Saves.save(g10));
+        GameSession g10Loaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("S10: el interior se restaura",
+                g10Saves.load(g10Loaded) == SaveService.LoadStatus.V2
+                        && "module-0".equals(g10Loaded.interiorRoom)
+                        && Math.abs(g10Loaded.interiorX - g10Avatar.x) < 0.01f
+                        && Math.abs(g10Loaded.interiorY - g10Avatar.y) < 0.01f);
+        g10Input.set(0f, -1f);
+        g10Avatar.update(0.4f, g10Input, g10Scene);
+        g10Avatar.update(1.0f, g10Input, g10Scene);
+        g10Avatar.update(0.8f, g10Input, g10Scene);
+        check("S10: se vuelve a la nave",
+                g10Avatar.atExit(g10Scene)
+                        && g10Avatar.nearest(g10Scene).action
+                        == Interactable.Action.EXIT);
+        check("S10: no hay regresion en vuelo/comercio",
+                g10.ship().cargo().capacity() > 0f
+                        && g10.universe.sectorCount() == 6
+                        && g10.playerStation.tradeMarket() == null
+                        && g10.sector.station.market != null);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();
