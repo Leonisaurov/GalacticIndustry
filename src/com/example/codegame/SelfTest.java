@@ -19,6 +19,18 @@ public class SelfTest {
         return count;
     }
 
+    /** Registra transacciones para comprobar el listener. */
+    private static final class TradeRecorder implements TradeService.Listener {
+        int count;
+        TradeService.Trade last;
+
+        @Override
+        public void onTrade(TradeService.Trade trade) {
+            count++;
+            last = trade;
+        }
+    }
+
     /** Recorta el array levels de un guardado para probar la migración. */
     private static String trimLevels(String save, int keep) {
         int start = save.indexOf("\"levels\":[");
@@ -2144,6 +2156,54 @@ public class SelfTest {
         check("la estación tiene mercado",
                 stationWorld.station.market != null
                         && stationWorld.station.market.target(Commodity.ORO) == 40);
+
+        // T-602: TradeService, validación y reacción de precios.
+        GameWorld tradeWorld = new GameWorld(new Upgrades(true));
+        tradeWorld.start();
+        tradeWorld.immortal = true;
+        tradeWorld.asteroids.clear();
+        tradeWorld.fuel.clear();
+        Upgrades tradeUp = new Upgrades(true);
+        tradeUp.setCoins(1000);
+        Market tradeMarket = tradeWorld.station.market;
+        TradeRecorder recorder = new TradeRecorder();
+        float ironBuyBefore = tradeMarket.buyPrice(Commodity.HIERRO);
+        TradeService.Result buy = TradeService.buy(tradeWorld, tradeUp,
+                Commodity.HIERRO, 10, recorder);
+        check("comprar mueve carga, créditos y stock",
+                buy.ok
+                        && tradeWorld.ship.cargo().amount(Commodity.HIERRO) == 10
+                        && tradeUp.coins() == 1000 - buy.trade.total
+                        && tradeMarket.stock(Commodity.HIERRO) == 110
+                        && recorder.count == 1);
+        check("comprar sube el precio",
+                tradeMarket.buyPrice(Commodity.HIERRO) > ironBuyBefore);
+        float ironSellBefore = tradeMarket.sellPrice(Commodity.HIERRO);
+        int sellStockBefore = tradeMarket.stock(Commodity.HIERRO);
+        TradeService.Result sell = TradeService.sell(tradeWorld, tradeUp,
+                Commodity.HIERRO, 10, recorder);
+        check("vender mueve carga, créditos y stock",
+                sell.ok
+                        && tradeWorld.ship.cargo().amount(Commodity.HIERRO) == 0
+                        && tradeUp.coins() == 1000 - buy.trade.total + sell.trade.total
+                        && tradeMarket.stock(Commodity.HIERRO) == sellStockBefore + 10
+                        && recorder.count == 2);
+        check("vender baja el precio",
+                tradeMarket.sellPrice(Commodity.HIERRO) < ironSellBefore);
+        check("no se vende lo que no se tiene",
+                !TradeService.sell(tradeWorld, tradeUp, Commodity.ORO, 1, recorder).ok
+                        && recorder.count == 2);
+        check("no se compra sin créditos",
+                !TradeService.buy(tradeWorld, new Upgrades(true),
+                        Commodity.HIERRO, 1, recorder).ok);
+        check("no se compra más stock del disponible",
+                !TradeService.buy(tradeWorld, tradeUp, Commodity.ORO, 999, recorder).ok);
+        tradeWorld.ship.cargo().addExact(Commodity.SILICATO, 100);
+        check("no se compra sin capacidad",
+                !TradeService.buy(tradeWorld, tradeUp, Commodity.HIERRO, 1, recorder).ok);
+        check("no se compra una cantidad inválida",
+                !TradeService.buy(tradeWorld, tradeUp, Commodity.HIERRO, 0, recorder).ok
+                        && !TradeService.sell(tradeWorld, tradeUp, Commodity.HIERRO, -1, recorder).ok);
 
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();

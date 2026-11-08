@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:12:00-06:00  
+**Última actualización:** 2026-11-08T03:16:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,67 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-049 — TradeService y transacciones
+
+- **Fecha:** 2026-11-08T03:16:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-602
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `TradeService.buy()`:
+  - valida cantidad, stock, créditos y capacidad;
+  - cobra créditos, añade carga y baja stock (sube precio).
+- `TradeService.sell()`:
+  - exige la cantidad en bodega;
+  - retira carga, paga créditos y sube stock (baja precio).
+- Cada operación devuelve un `Trade` con lado, mineral, cantidad, precio unitario
+  y total; `Listener` permite registrarlo (`Trade.toJson()`).
+- Sin UI todavía: `MarketScreen` llega en T-603.
+
+### Archivos modificados
+
+- `src/com/example/codegame/TradeService.java` (nuevo)
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/Cargo.java`
+- `src/com/example/codegame/StationStorage.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 14_market`: **OK**.
+
+### Evidencias
+
+- `PASS comprar mueve carga, créditos y stock`
+- `PASS comprar sube el precio`
+- `PASS vender mueve carga, créditos y stock`
+- `PASS vender baja el precio`
+- `PASS no se vende lo que no se tiene`
+- `PASS no se compra sin créditos`
+- `PASS no se compra más stock del disponible`
+- `PASS no se compra sin capacidad`
+- `PASS no se compra una cantidad inválida`
+
+### Decisiones tomadas
+
+- El precio se calcula con el stock antes de la operación; el nuevo stock
+  afecta a la siguiente.
+- La compra está limitada por el stock de la estación.
+- El registro es responsabilidad del llamador mediante `Listener`.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-603 — Crear MarketScreen y flujo de compraventa**.
 
 ---
 

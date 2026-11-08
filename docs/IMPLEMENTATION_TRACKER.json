@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:12:00-06:00",
-    "lastSessionId": "S-048",
+    "lastUpdated": "2026-11-08T03:16:00-06:00",
+    "lastSessionId": "S-049",
     "lastVerification": {
-      "date": "2026-11-08T03:12:00-06:00",
+      "date": "2026-11-08T03:16:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "PriceModel: factor con límites 0,5–2,0 y spread 8 %",
-        "Market: stock/objetivo por mineral y datos configurables",
-        "Cada estación tiene su mercado; stock inicial 80 % del objetivo",
-        "14_market: hierro 120/150 y oro 32/40 con compra > venta",
+        "TradeService compra/vende con validación de stock, créditos y capacidad",
+        "Comprar baja stock y sube precio; vender sube stock y baja precio",
+        "Transacciones registradas con Trade/Listener",
+        "14_market sigue en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S6",
     "currentTaskId": null,
-    "nextTaskId": "T-602",
+    "nextTaskId": "T-603",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3114,7 +3114,7 @@
       "description": "Permitir comprar y vender con validación de créditos, capacidad y stock.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -3139,10 +3139,41 @@
         "Test de abuso"
       ],
       "technicalNotes": "No permitir beneficio en la misma estación por el spread.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-049",
+          "date": "2026-11-08T03:16:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "TradeService con compra/venta atómicas: valida cantidad, stock, créditos y capacidad; actualiza stock y precios; devuelve Trade con precio unitario/total y listener para registrar. Tests de reacción de precios y abuso en SelfTest.",
+          "files": [
+            "src/com/example/codegame/TradeService.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/Cargo.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "Test de abuso"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS comprar mueve carga, créditos y stock",
+        "PASS comprar sube el precio",
+        "PASS vender mueve carga, créditos y stock",
+        "PASS vender baja el precio",
+        "PASS no se vende lo que no se tiene",
+        "PASS no se compra sin créditos",
+        "PASS no se compra más stock del disponible",
+        "PASS no se compra sin capacidad",
+        "PASS no se compra una cantidad inválida"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:16:00-06:00"
     },
     {
       "id": "T-603",
@@ -3151,7 +3182,7 @@
       "description": "Añadir la pantalla de mercado con precios, stock, cantidades y confirmación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-602"
@@ -5399,6 +5430,29 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-049",
+      "date": "2026-11-08T03:16:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "TradeService y transacciones",
+      "summary": "Compra y venta atómicas contra el mercado, con validación de stock/créditos/capacidad, reacción de precios y datos de transacción registrables. UI de mercado pendiente para T-603.",
+      "tasks": [
+        "T-602"
+      ],
+      "files": [
+        "src/com/example/codegame/TradeService.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/Cargo.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-603 (MarketScreen y flujo de compraventa)."
+    },
     {
       "id": "S-048",
       "date": "2026-11-08T03:12:00-06:00",

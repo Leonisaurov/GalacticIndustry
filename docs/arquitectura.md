@@ -372,6 +372,19 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   y la reacción de precios llegan en T-602.
 - No hay producción/consumo ni NPC todavía (T-604/T-7xx).
 
+## Comercio
+
+- `TradeService.buy()` compra del mercado a `market.buyPrice()`:
+  - valida cantidad, stock, créditos y capacidad de bodega;
+  - cobra al jugador, mete la carga y **baja el stock** (sube el precio).
+- `TradeService.sell()` vende carga a `market.sellPrice()`:
+  - exige tener la cantidad;
+  - retira la carga, paga créditos y **sube el stock** (baja el precio).
+- Cada operación devuelve un `Trade` con lado, mineral, cantidad, precio unitario
+  y total; el llamador puede registrarlo con `Listener` (`Trade.toJson()`).
+- No hay UI de mercado todavía; `MarketScreen` y el flujo de compraventa llegan
+  en T-603.
+
 ## Venta en estación
 
 - Destruir o minar no concede monedas; el valor está en el mineral de la bodega.
