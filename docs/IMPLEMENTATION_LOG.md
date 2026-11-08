@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:16:00-06:00  
+**Última actualización:** 2026-11-08T03:24:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,65 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-050 — MarketScreen y compraventa
+
+- **Fecha:** 2026-11-08T03:24:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-603
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `MarketScreen` muestra los seis minerales con stock/objetivo y precios de
+  compra/venta.
+- Selección de mineral y cantidad con `-10`, `-1`, `0`, `+1`, `+10`.
+- `TODO` vende toda la carga disponible; `NADA` deja la cantidad a cero.
+- `COMPRAR`/`VENDER` piden confirmación antes de ejecutar `TradeService`.
+- La cabecera refleja créditos y masa de bodega.
+- Se abre desde la pestaña `MERCADO` de la estación; `VOLVER` regresa a
+  `DOCKED`.
+- `market_test` y `14_market` cubren el flujo completo.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MarketScreen.java` (nuevo)
+- `src/com/example/codegame/StationScreen.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/UiKit.java`
+- `tools/tests/14_market.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `14_market 13_station 09_wing_damage 02_navigation 03_controls`: **5/5 OK**.
+
+### Evidencias
+
+- `14_market`: stock 120 → 130 (venta 10) → 170 (venta total) → 169 (compra 1).
+- `NADA` no altera créditos.
+- `VOLVER` devuelve a `DOCKED`.
+- Captura `29_market` con precios, stock y controles en vertical.
+
+### Decisiones tomadas
+
+- La confirmación reutiliza los mismos botones: pulsar de nuevo el mismo lado
+  confirma; el otro cancela.
+- El mercado se abre como estado propio (`MARKET`) para no saturar la pantalla
+  de estación.
+- El mercado aún no se persiste; T-605 lo guardará.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-604 — Añadir consumo, producción y deriva de precios**.
 
 ---
 

@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:16:00-06:00",
-    "lastSessionId": "S-049",
+    "lastUpdated": "2026-11-08T03:24:00-06:00",
+    "lastSessionId": "S-050",
     "lastVerification": {
-      "date": "2026-11-08T03:16:00-06:00",
+      "date": "2026-11-08T03:24:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "TradeService compra/vende con validación de stock, créditos y capacidad",
-        "Comprar baja stock y sube precio; vender sube stock y baja precio",
-        "Transacciones registradas con Trade/Listener",
-        "14_market sigue en verde",
+        "MarketScreen: precios de compra/venta, stock/objetivo y créditos/bodega",
+        "Selección de cantidad -10/-1/+1/+10, TODO/NADA y confirmación",
+        "14_market: venta parcial/total, NADA, compra y vuelta a estación",
+        "13_station, 09_wing_damage, 02_navigation y 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S6",
     "currentTaskId": null,
-    "nextTaskId": "T-603",
+    "nextTaskId": "T-604",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3182,7 +3182,7 @@
       "description": "Añadir la pantalla de mercado con precios, stock, cantidades y confirmación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-602"
@@ -3205,10 +3205,42 @@
         "Revisión visual"
       ],
       "technicalNotes": "Extraer UiKit si MyGame crece demasiado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-050",
+          "date": "2026-11-08T03:24:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MarketScreen con lista de minerales, stock/objetivo, precios, selector de cantidad, TODO/NADA y confirmación de compra/venta. Integrada como pestaña MERCADO de la estación; TradeService registra trades y guarda. market_test y 14_market cubren el flujo completo.",
+          "files": [
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/StationScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/UiKit.java",
+            "tools/tests/14_market.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "14_market",
+            "13_station",
+            "09_wing_damage",
+            "02_navigation",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS S5: descarga y venta (mercado separado)",
+        "14_market: precios visibles, venta 10, venta total, NADA y compra 1",
+        "Stock 120->130->170->169 y créditos/bodega coherentes",
+        "Captura 29_market",
+        "VOLVER devuelve a DOCKED"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:24:00-06:00"
     },
     {
       "id": "T-604",
@@ -3217,7 +3249,7 @@
       "description": "Hacer que las estaciones consuman/produzcan mineral y que los precios tiendan a su base.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-601"
@@ -5430,6 +5462,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-050",
+      "date": "2026-11-08T03:24:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "MarketScreen y compraventa",
+      "summary": "Pantalla de mercado con precios, stock, cantidades y confirmación, integrada como pestaña de la estación. Flujo de compra/venta verificado en 14_market.",
+      "tasks": [
+        "T-603"
+      ],
+      "files": [
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/StationScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/UiKit.java",
+        "tools/tests/14_market.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station 09_wing_damage 02_navigation 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-604 (consumo, producción y deriva de precios)."
+    },
     {
       "id": "S-049",
       "date": "2026-11-08T03:16:00-06:00",

@@ -44,7 +44,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `12_mining` — piloto MINE, haz y energía contextual, extracción a bodega y roca agotada.
 - `13_tractor` — rayo tractor: atracción, energía, captura de fragmentos y HUD.
 - `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios, persistencia, rescate y despegue.
-- `14_market` — mercado: stock, objetivo y spread de hierro/oro. Las transacciones y el anti-abuso se cubren en `01_logic` (`TradeService`).
+- `14_market` — mercado: stock, objetivo, spread, selección de cantidad, venta parcial/total, `NADA`, compra y confirmación. El anti-abuso se cubre en `01_logic` (`TradeService`).
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh
@@ -141,6 +141,8 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `rescue_test`: arranca en el espacio sin combustible, con 100 UM de carga y
   200 créditos. Lo usa `13_station` para probar el rescate, su espera, coste,
   pérdida de carga y remolque.
+- `market_test`: arranca en el mercado con 50 de Hierro y 500 créditos. Lo usa
+  `14_market` para comprar, vender, `TODO`, `NADA` y confirmar.
 - `docking_test`: arranca a 900 u con `Autopilot.STATION`; el piloto frena en
   la zona de acople y `13_station` pulsa `ACOPLAR`, comprueba `DOCKED` y
   después `DESPEGAR`.

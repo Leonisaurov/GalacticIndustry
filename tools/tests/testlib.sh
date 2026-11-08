@@ -31,6 +31,7 @@ UNDOCK_X=0
 UNDOCK_Y=0
 ST_TAB_SERV_X=0
 ST_TAB_UPG_X=0
+ST_TAB_MKT_X=0
 ST_TAB_Y=0
 ST_ROW1_Y=0
 ST_ROW2_Y=0
@@ -41,6 +42,19 @@ ST_UPG1_Y=0
 ST_UNDOCK_Y=0
 RESCUE_X=0
 RESCUE_Y=0
+MC_QTY_MINUS10_X=0
+MC_QTY_MINUS1_X=0
+MC_QTY_PLUS1_X=0
+MC_QTY_PLUS10_X=0
+MC_QTY_Y=0
+MC_TODO_X=0
+MC_NADA_X=0
+MC_TODO_Y=0
+MC_ACTION_Y=0
+MC_BUY_X=0
+MC_SELL_X=0
+MC_BACK_X=0
+MC_BACK_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -85,9 +99,10 @@ device_geometry() {
     # Pantalla de estación: pestañas y filas (5 servicios / 8 mejoras).
     local st_px=$((8 * U))
     local st_pw=$((W - 16 * U))
-    local st_tab_w=$(( (st_pw - 60 * U) / 2 ))
+    local st_tab_w=$(( (st_pw - 60 * U) / 3 ))
     ST_TAB_SERV_X=$(( st_px + 20 * U + st_tab_w / 2 ))
-    ST_TAB_UPG_X=$(( st_px + 40 * U + st_tab_w + st_tab_w / 2 ))
+    ST_TAB_UPG_X=$(( st_px + 30 * U + st_tab_w + st_tab_w / 2 ))
+    ST_TAB_MKT_X=$(( st_px + 40 * U + 2 * st_tab_w + st_tab_w / 2 ))
     ST_TAB_Y=$((76 * U))
     local st_list_top=$((H - 160 * U))
     local st_bottom=$((8 * U + 100 * U))
@@ -105,6 +120,24 @@ device_geometry() {
     ST_UNDOCK_Y=$((H - (8 * U + 60 * U)))
     RESCUE_X=$((W / 2))
     RESCUE_Y=$((H - (H * 46 / 100 + 23 * U)))
+    # Mercado: filas, cantidades y acciones.
+    local mc_py=$((8 * U))
+    local mc_pw=$((W - 16 * U))
+    local mc_qty_w=$(( (mc_pw - 44 * U) / 5 ))
+    MC_QTY_MINUS10_X=$((8 * U + 22 * U + (mc_qty_w - 4 * U) / 2))
+    MC_QTY_MINUS1_X=$((MC_QTY_MINUS10_X + mc_qty_w))
+    MC_QTY_PLUS1_X=$((MC_QTY_MINUS10_X + 3 * mc_qty_w))
+    MC_QTY_PLUS10_X=$((MC_QTY_MINUS10_X + 4 * mc_qty_w))
+    MC_QTY_Y=$((H - (mc_py + 217 * U)))
+    local mc_half=$(( (mc_pw - 52 * U) / 2 ))
+    MC_TODO_X=$((8 * U + 22 * U + mc_half / 2))
+    MC_NADA_X=$((8 * U + 22 * U + mc_half + 8 * U + mc_half / 2))
+    MC_TODO_Y=$((H - (mc_py + 166 * U)))
+    MC_ACTION_Y=$((H - (mc_py + 116 * U)))
+    MC_BUY_X=$((MC_TODO_X))
+    MC_SELL_X=$((MC_NADA_X))
+    MC_BACK_X=$((W - 8 * U - 96 * U + 39 * U))
+    MC_BACK_Y=$((36 * U))
 }
 
 # ---------- build y SelfTest ----------

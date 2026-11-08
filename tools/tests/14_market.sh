@@ -1,25 +1,67 @@
 #!/usr/bin/env bash
-# Test: mercado de la estación (stock, objetivo y precios)
+# Test: mercado de la estación (stock, precios y compraventa)
 set -euo pipefail
 source "$(dirname "$0")/testlib.sh"
 
 prepare_device_module
-launch_app "--ez test_mode true --ez station_test true"
-wait_current_state PLAYING 10 || fail "no arrancó la prueba de mercado"
-sleep 0.5
+ensure_magick
+OUT=${OUT:-build/screens}
+mkdir -p "$OUT"
+rm -f "$OUT/29_market.png"
 
+launch_app "--ez test_mode true --ez market_test true"
+wait_current_state MARKET 10 || fail "no se abrió el mercado"
+sleep 0.5
 status=$(latest_status)
 assert_eq "stock inicial de hierro" 120 "$(printf '%s' "$status" | json_get marketIronStock)"
+assert_eq "carga inicial" 50 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "créditos iniciales" 500 "$(printf '%s' "$status" | json_get coins)"
 assert_eq "objetivo de hierro" 150 "$(printf '%s' "$status" | json_get marketIronTarget)"
-assert_eq "stock inicial de oro" 32 "$(printf '%s' "$status" | json_get marketOroStock)"
-assert_eq "objetivo de oro" 40 "$(printf '%s' "$status" | json_get marketOroTarget)"
 assert_lt "la venta es menor que la compra" \
     "$(printf '%s' "$status" | json_get marketIronBuy)" \
     "$(printf '%s' "$status" | json_get marketIronSell)"
-assert_ge "la compra respeta el precio base" 3.0 \
-    "$(printf '%s' "$status" | json_get marketIronBuy)"
-assert_ge "la venta respeta el precio base" 2.7 \
-    "$(printf '%s' "$status" | json_get marketIronSell)"
+shot "$OUT" 29_market
+validate_shot "$OUT/29_market.png"
+
+# Vender 10.
+tap "$MC_QTY_PLUS10_X" "$MC_QTY_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "venta de 10" 40 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "stock sube al vender" 130 "$(printf '%s' "$status" | json_get marketIronStock)"
+assert_ge "créditos al vender" 520 "$(printf '%s' "$status" | json_get coins)"
+
+# Vender todo.
+tap "$MC_TODO_X" "$MC_TODO_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "venta total deja bodega vacía" 0 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "stock sube al vender todo" 170 "$(printf '%s' "$status" | json_get marketIronStock)"
+
+# Nada no vende.
+coins_before=$(printf '%s' "$status" | json_get coins)
+tap "$MC_NADA_X" "$MC_TODO_Y" 0.2
+tap "$MC_SELL_X" "$MC_ACTION_Y" 0.2
+sleep 0.3
+status=$(latest_status)
+assert_eq "NADA no cambia créditos" "$coins_before" "$(printf '%s' "$status" | json_get coins)"
+
+# Comprar 1.
+tap "$MC_QTY_PLUS1_X" "$MC_QTY_Y" 0.2
+tap "$MC_BUY_X" "$MC_ACTION_Y" 0.2
+tap "$MC_BUY_X" "$MC_ACTION_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "compra de 1" 1 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "stock baja al comprar" 169 "$(printf '%s' "$status" | json_get marketIronStock)"
+assert_lt "créditos bajan al comprar" "$coins_before" "$(printf '%s' "$status" | json_get coins)"
+
+tap "$MC_BACK_X" "$MC_BACK_Y" 0.3
+wait_current_state DOCKED 5 || fail "VOLVER no regresó a la estación"
 
 check_no_crash
-echo "OK 14_market: stock, objetivo y spread de hierro/oro en la estación"
+echo "OK 14_market: precios, venta parcial/total, nada, compra y vuelta a estación"

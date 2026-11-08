@@ -382,8 +382,12 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   - retira la carga, paga créditos y **sube el stock** (baja el precio).
 - Cada operación devuelve un `Trade` con lado, mineral, cantidad, precio unitario
   y total; el llamador puede registrarlo con `Listener` (`Trade.toJson()`).
-- No hay UI de mercado todavía; `MarketScreen` y el flujo de compraventa llegan
-  en T-603.
+- `MarketScreen` (T-603) muestra los seis minerales con stock/objetivo y precios
+  de compra/venta. Se selecciona un mineral, se ajusta la cantidad con
+  `-10/-1/0/+1/+10`, `TODO`/`NADA` y se compra o vende con confirmación.
+- La pantalla se abre desde la pestaña `MERCADO` de la estación y se vuelve con
+  `VOLVER`. Refleja créditos y masa de bodega en la cabecera.
+- El mercado no se persiste todavía; T-605 lo guardará.
 
 ## Venta en estación
 

@@ -66,9 +66,10 @@ final class StationScreen {
         tabButtons.clear();
         float tabH = 40f * u;
         float tabY = h - 96f * u;
-        float tabW = (pw - 60f * u) * 0.5f;
+        float tabW = (pw - 60f * u) / 3f;
         tabButtons.add(new Button("SERVICIOS", px + 20f * u, tabY, tabW, tabH));
-        tabButtons.add(new Button("MEJORAS", px + 40f * u + tabW, tabY, tabW, tabH));
+        tabButtons.add(new Button("MEJORAS", px + 30f * u + tabW, tabY, tabW, tabH));
+        tabButtons.add(new Button("MERCADO", px + 40f * u + 2f * tabW, tabY, tabW, tabH));
 
         rows = tab == 0 ? 5 : Upgrades.COUNT;
         listTop = h - 160f * u;
@@ -108,6 +109,10 @@ final class StationScreen {
                 tab = 1;
                 layout();
             }
+            return true;
+        }
+        if (game.tapped(tabButtons.get(2))) {
+            game.openMarket();
             return true;
         }
         if (game.tapped(btnUndock)) {
@@ -223,6 +228,7 @@ final class StationScreen {
                 tab == 0 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
         ui.drawButton(tabButtons.get(1),
                 tab == 1 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
+        ui.drawButton(tabButtons.get(2), Visuals.BTN_SECONDARY, true);
         for (int i = 0; i < rowButtons.size; i++) {
             boolean enabled = rowEnabled(i);
             ui.panel(rowButtons.get(i).bounds.x - 6f * u,
@@ -253,6 +259,7 @@ final class StationScreen {
     private void drawTabs() {
         ui.drawButtonText(tabButtons.get(0), true);
         ui.drawButtonText(tabButtons.get(1), true);
+        ui.drawButtonText(tabButtons.get(2), true);
     }
 
     private void drawRows() {

@@ -28,6 +28,7 @@ public class MyGame implements ApplicationListener {
     static final int OVER = 4;
     static final int DYING = 5;
     static final int DOCKED = 6;
+    static final int MARKET = 7;
 
     private static final float MIN_W = 480f;
     private static final float MIN_H = 800f;
@@ -49,6 +50,7 @@ public class MyGame implements ApplicationListener {
     private final HudView hud = new HudView();
     private PlayHud playHud;
     private StationScreen stationScreen;
+    private MarketScreen marketScreen;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -103,6 +105,8 @@ public class MyGame implements ApplicationListener {
     private final boolean stationServiceTest;
     /** Arranca sin combustible y con carga para probar el rescate. */
     private final boolean rescueTest;
+    /** Arranca en el mercado para probar compraventa. */
+    private final boolean marketTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -266,6 +270,20 @@ public class MyGame implements ApplicationListener {
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest, false);
+    }
+
+    /**
+     * @param marketTest arranca en el mercado para probar compraventa.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -281,10 +299,11 @@ public class MyGame implements ApplicationListener {
         this.dockingTest = dockingTest;
         this.stationServiceTest = stationServiceTest;
         this.rescueTest = rescueTest;
+        this.marketTest = marketTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
-                || dockingTest || stationServiceTest || rescueTest;
+                || dockingTest || stationServiceTest || rescueTest || marketTest;
     }
 
     @Override
@@ -312,6 +331,7 @@ public class MyGame implements ApplicationListener {
         world = session.sector;
         playHud = new PlayHud(ui, world, session, upgrades, batch, shapes, art, hud);
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
+        marketScreen = new MarketScreen(this, ui, batch, shapes, space);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
         saves = new SaveService(
@@ -460,6 +480,18 @@ public class MyGame implements ApplicationListener {
             world.ship.fuel = 0f;
             world.ship.cargo().addExact(Commodity.SILICATO, 100);
             upgrades.setCoins(200);
+        } else if (marketTest) {
+            session.startRun();
+            runActive = true;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.pos.x, world.station.pos.y - 220f);
+            world.ship.vel.set(0f, 0f);
+            world.ship.docked = true;
+            world.ship.cargo().addExact(Commodity.HIERRO, 50);
+            upgrades.setCoins(500);
+            state = MARKET;
+            marketScreen.enter();
         }
     }
 
@@ -608,6 +640,9 @@ public class MyGame implements ApplicationListener {
 
         if (stationScreen != null) {
             stationScreen.layout(w, h);
+        }
+        if (marketScreen != null) {
+            marketScreen.layout(w, h);
         }
     }
 
@@ -778,6 +813,7 @@ public class MyGame implements ApplicationListener {
             case PLAYING: updatePlaying(dt); break;
             case PAUSED: handlePause(); break;
             case DOCKED: stationScreen.handle(); break;
+            case MARKET: marketScreen.handle(); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
@@ -797,6 +833,7 @@ public class MyGame implements ApplicationListener {
             case PLAYING: return "PLAYING";
             case PAUSED: return "PAUSED";
             case DOCKED: return "DOCKED";
+            case MARKET: return "MARKET";
             case OVER: return "OVER";
             case DYING: return "DYING";
             default: return "MENU";
@@ -865,7 +902,8 @@ public class MyGame implements ApplicationListener {
                         + "\"canRescue\":%s,"
                         + "\"marketIronStock\":%d,\"marketIronTarget\":%d,"
                         + "\"marketIronBuy\":%.2f,\"marketIronSell\":%.2f,"
-                        + "\"marketOroStock\":%d,\"marketOroTarget\":%d}",
+                        + "\"marketOroStock\":%d,\"marketOroTarget\":%d,"
+                        + "\"marketQty\":%d,\"marketPending\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -913,7 +951,9 @@ public class MyGame implements ApplicationListener {
                 world.station.market.buyPrice(Commodity.HIERRO),
                 world.station.market.sellPrice(Commodity.HIERRO),
                 world.station.market.stock(Commodity.ORO),
-                world.station.market.target(Commodity.ORO)));
+                world.station.market.target(Commodity.ORO),
+                marketScreen.quantity(),
+                marketScreen.pending()));
     }
 
     void logEvent(String json) {
@@ -1336,6 +1376,28 @@ public class MyGame implements ApplicationListener {
         }
     }
 
+    /** Abrir el mercado desde la estación. */
+    void openMarket() {
+        marketScreen.enter();
+        state = MARKET;
+        layoutUi();
+        logEvent("{\"event\":\"market_open\"}");
+    }
+
+    /** Volver del mercado a la estación. */
+    void closeMarket() {
+        state = DOCKED;
+        stationScreen.enter();
+        layoutUi();
+    }
+
+    /** Registro de una transacción de mercado. */
+    void logTrade(TradeService.Trade trade) {
+        if (trade != null) {
+            logEvent(trade.toJson());
+        }
+    }
+
     /** DESPEGAR desde la pantalla de estación. */
     void undockFromStation() {
         DockingSystem.undock(world);
@@ -1432,6 +1494,8 @@ public class MyGame implements ApplicationListener {
             overlay.drawDeathFlourish(w, h);
         } else if (state == DOCKED) {
             stationScreen.draw(w, h);
+        } else if (state == MARKET) {
+            marketScreen.draw(w, h);
         } else {
             hud.state = state;
             hud.runActive = runActive;
