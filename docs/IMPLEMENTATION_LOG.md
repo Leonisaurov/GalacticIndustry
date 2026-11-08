@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:17:00-06:00  
+**Última actualización:** 2026-11-08T00:24:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,72 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-020 — Muerte permanente y mundo persistente
+
+- **Fecha:** 2026-11-08T00:24:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-208
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- La partida termina por casco 0 **o** por piloto a 0 HP/asfixiado.
+- Al morir se guarda un snapshot `legacy.json` con el mundo y la nave.
+- La nave del personaje anterior queda como resto en las coordenadas de muerte.
+- `NUEVO PERSONAJE` carga el mismo mundo (asteroides, bidones, chunks y
+  restos) y crea una nave nueva en el origen.
+- El guardado v2 incluye la posición y partes de la nave legado, así que el
+  resto sobrevive a reinicios.
+- Se corrigió el bug reportado: antes, a 0 HP el piloto quedaba
+  `INCAPACITATED` y la partida seguía indefinidamente.
+- No hay reaparición en la nave nodriza; el modo de recuperación de desarrollo
+  queda para T-210.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Pilot.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SaveService.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/05_death.sh`
+- `docs/DECISIONS.md`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 05_death`: **OK**.
+- `tools/run-tests.sh --no-build 08_visual_death 03_controls`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS la muerte guarda el mundo legado`
+- `PASS el mundo legado carga y conserva asteroides`
+- `PASS la nave legado queda en el lugar de la muerte`
+- `PASS el nuevo personaje resetea la nave y conserva el legado`
+- `PASS save v2 conserva la nave legado`
+- `PASS cargar conserva la nave legado`
+- `05_death`: casco → OVER; piloto 0 HP → OVER sin romper casco;
+  `NUEVO PERSONAJE` → PLAYING; `legacyWreck=true`.
+
+### Decisiones tomadas
+
+- La muerte por piloto no destruye el casco: la nave queda intacta como resto.
+- Solo se conserva un mundo legado a la vez; T-209 podrá ampliar la recuperación.
+- El modo de recuperación de desarrollo se separa en T-210.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-209 — Crear flujo de nuevo personaje y nave legado**.
 
 ---
 

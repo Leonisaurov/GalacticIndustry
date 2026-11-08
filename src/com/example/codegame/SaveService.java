@@ -21,6 +21,8 @@ import java.util.Map;
 class SaveService {
 
     static final String DEFAULT_SLOT = "slot1";
+    /** Slot separado con el último mundo/nave de un personaje muerto. */
+    static final String LEGACY_SLOT = "legacy";
     static final String SAVE_NAME = DEFAULT_SLOT + ".json";
     static final String BACKUP_NAME = SAVE_NAME + ".bak";
 

@@ -109,6 +109,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `survival_test`: arranca en `PLAYING` con O2 al 24 %, salud al 70 %, casco al
   50 % y brecha abierta. Sirve para revisar el HUD de supervivencia y el aviso
   de O2 bajo sin esperar minutos. Lo usa `10_survival`.
+- `pilot_death_test`: arranca en `PLAYING` con el piloto a 0 HP e
+  `INCAPACITATED`; `MyGame` debe pasar por `DYING` y `OVER`, marcar la nave
+  legado y permitir `NUEVO PERSONAJE`. Lo usa `05_death`.
 
 ## Telemetría
 

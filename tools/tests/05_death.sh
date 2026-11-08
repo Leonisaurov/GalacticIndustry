@@ -26,5 +26,30 @@ assert_eq "reintento en partida" PLAYING "$(printf '%s' "$status" | json_get sta
 assert_eq "reintento con casco lleno" "$(printf '%s' "$status" | json_get maxHull)" \
     "$(printf '%s' "$status" | json_get hull)"
 
+# Muerte por piloto (0 HP): no debe quedarse vivo ni reiniciar el universo.
+reset_app
+launch_app "--ez pilot_death_test true"
+wait_current_state DYING 6 || fail "no empezó la muerte por piloto"
+wait_current_state OVER 10 || fail "no se llegó al fin por piloto"
+sleep 0.5
+status=$(latest_status)
+assert_eq "muerte por piloto" DEAD "$(printf '%s' "$status" | json_get pilotStatus)"
+assert_eq "la muerte por piloto no rompe el casco" \
+    "$(printf '%s' "$status" | json_get maxHull)" \
+    "$(printf '%s' "$status" | json_get hull)"
+assert_eq "la nave legado queda marcada" true "$(printf '%s' "$status" | json_get legacyWreck)"
+assert_eq "legado en la posición de muerte X" 0.0 "$(printf '%s' "$status" | json_get legacyX)"
+assert_eq "legado en la posición de muerte Y" 0.0 "$(printf '%s' "$status" | json_get legacyY)"
+
+tap "$((W / 2))" "$OVER_RETRY_Y" 0.2
+wait_current_state PLAYING 5 || fail "nuevo personaje no inició partida"
+sleep 0.5
+status=$(latest_status)
+assert_eq "nuevo personaje en partida" PLAYING "$(printf '%s' "$status" | json_get state)"
+assert_eq "nuevo personaje con casco lleno" \
+    "$(printf '%s' "$status" | json_get maxHull)" \
+    "$(printf '%s' "$status" | json_get hull)"
+assert_eq "el legado sigue en el mundo" true "$(printf '%s' "$status" | json_get legacyWreck)"
+
 check_no_crash
-echo "OK 05_death: DYING -> OVER (+7 monedas, casco 0) -> REINTENTAR PLAYING"
+echo "OK 05_death: casco DYING->OVER, piloto 0 HP->OVER sin romper casco, nuevo personaje con legado"

@@ -805,6 +805,56 @@ public class SelfTest {
                 Math.abs(lowFilter - 0.2f) < 0.001f
                         && Math.abs(repairedFilter - 1f) < 0.001f);
 
+        // T-208: muerte permanente y mundo persistente.
+        PlayerProfile oldProfile = new PlayerProfile(new Upgrades(true));
+        String oldCharacterId = oldProfile.id;
+        oldProfile.startNewCharacter("pilot-99", "NOVA");
+        check("el nuevo personaje cambia identidad",
+                !oldCharacterId.equals(oldProfile.id)
+                        && "pilot-99".equals(oldProfile.id)
+                        && "NOVA".equals(oldProfile.name));
+        GameSession deadSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        deadSession.startRun();
+        deadSession.sector.ship.pos.set(1234f, -567f);
+        deadSession.sector.ship.heading = 33f;
+        deadSession.sector.ship.part[Ship.HULL] = 0f;
+        deadSession.pilot.health = 0f;
+        deadSession.pilot.status = Pilot.Status.DEAD;
+        deadSession.sector.markLegacyWreck(deadSession.sector.ship);
+        SaveService.MemoryStorage deathStorage = new SaveService.MemoryStorage();
+        SaveService deathService = new SaveService(
+                deathStorage, null, SaveService.LEGACY_SLOT);
+        check("la muerte guarda el mundo legado",
+                deathService.save(deadSession));
+        GameSession legacyTemp = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("el mundo legado carga",
+                deathService.load(legacyTemp) == SaveService.LoadStatus.V2);
+        check("el mundo legado conserva asteroides",
+                legacyTemp.sector.asteroids.size == deadSession.sector.asteroids.size);
+        GameSession reborn = new GameSession(new PlayerProfile(new Upgrades(true)));
+        reborn.sector.copyWorldFrom(legacyTemp.sector);
+        check("la nave legado queda en el lugar de la muerte",
+                reborn.sector.legacyWreck
+                        && Math.abs(reborn.sector.legacyWreckPos.x - 1234f) < 0.01f
+                        && Math.abs(reborn.sector.legacyWreckPos.y + 567f) < 0.01f);
+        reborn.sector.startNewCharacter(0f, 0f);
+        check("el nuevo personaje resetea la nave",
+                reborn.ship().part[Ship.HULL] == reborn.ship().maxHull
+                        && !reborn.ship().wrecked);
+        check("el nuevo personaje conserva el legado",
+                reborn.sector.legacyWreck
+                        && Math.abs(reborn.sector.legacyWreckPos.x - 1234f) < 0.01f
+                        && Math.abs(reborn.sector.legacyWreckPos.y + 567f) < 0.01f);
+        SaveService.MemoryStorage rebornStorage = new SaveService.MemoryStorage();
+        SaveService rebornService = new SaveService(rebornStorage);
+        check("save v2 conserva la nave legado", rebornService.save(reborn));
+        GameSession rebornLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("cargar conserva la nave legado",
+                rebornService.load(rebornLoaded) == SaveService.LoadStatus.V2
+                        && rebornLoaded.sector.legacyWreck
+                        && Math.abs(rebornLoaded.sector.legacyWreckPos.x - 1234f) < 0.01f
+                        && Math.abs(rebornLoaded.sector.legacyWreckPos.y + 567f) < 0.01f);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

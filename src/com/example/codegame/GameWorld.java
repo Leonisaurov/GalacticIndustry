@@ -29,6 +29,12 @@ class GameWorld {
     final Ship ship = new Ship();
     /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
     LifeSupport lifeSupport;
+    /** Restos de la nave del personaje anterior, en el punto de muerte. */
+    boolean legacyWreck;
+    final Vector2 legacyWreckPos = new Vector2();
+    float legacyWreckHeading;
+    float legacyWreckHull;
+    final float[] legacyWreckParts = new float[Ship.PART_COUNT];
     final Array<Asteroid> asteroids = new Array<>();
     final Array<Missile> missiles = new Array<>();
     final Array<FuelPickup> fuel = new Array<>();
@@ -93,6 +99,60 @@ class GameWorld {
         deathTimer = 0f;
         deathStage = 0;
         ignoredHits = 0;
+        legacyWreck = false;
+        legacyWreckPos.setZero();
+        legacyWreckHeading = 0f;
+        legacyWreckHull = 0f;
+        updateChunks();
+    }
+
+    /** Registra la nave del personaje muerto como resto persistente. */
+    void markLegacyWreck(Ship wreck) {
+        if (wreck == null) {
+            return;
+        }
+        legacyWreck = true;
+        legacyWreckPos.set(wreck.pos);
+        legacyWreckHeading = wreck.heading;
+        legacyWreckHull = wreck.part[Ship.HULL];
+        System.arraycopy(wreck.part, 0, legacyWreckParts, 0, Ship.PART_COUNT);
+    }
+
+    /** Copia el estado persistente del mundo y deja la nave del guardado como resto. */
+    void copyWorldFrom(GameWorld other) {
+        if (other == null) {
+            return;
+        }
+        generated.clear();
+        generated.addAll(other.generated);
+        asteroids.clear();
+        asteroids.addAll(other.asteroids);
+        fuel.clear();
+        fuel.addAll(other.fuel);
+        legacyWreck = true;
+        legacyWreckPos.set(other.ship.pos);
+        legacyWreckHeading = other.ship.heading;
+        legacyWreckHull = other.ship.part[Ship.HULL];
+        System.arraycopy(other.ship.part, 0, legacyWreckParts, 0, Ship.PART_COUNT);
+    }
+
+    /**
+     * Prepara la nave de un personaje nuevo sin reiniciar el mundo: conserva
+     * asteroides, bidones, chunks y restos; solo resetea la nave y los contadores.
+     */
+    void startNewCharacter(float x, float y) {
+        pilot.cancel();
+        ship.reset(up, x, y);
+        missiles.clear();
+        fx.clear();
+        coinsEarned = 0;
+        score = 0;
+        elapsed = 0f;
+        wave = 1;
+        shake = 0f;
+        ignoredHits = 0;
+        deathTimer = 0f;
+        deathStage = 0;
         updateChunks();
     }
 
@@ -567,8 +627,20 @@ class GameWorld {
             missiles.get(i).draw(shapes);
         }
         fx.draw(shapes);
+        drawLegacyWreck(shapes);
         pilot.draw(shapes, ship, elapsed);
         ship.draw(shapes, elapsed);
+    }
+
+    private void drawLegacyWreck(ShapeRenderer shapes) {
+        if (!legacyWreck) {
+            return;
+        }
+        shapes.setColor(0.55f, 0.18f, 0.22f, 0.28f);
+        shapes.circle(legacyWreckPos.x, legacyWreckPos.y, Ship.RADIUS * 2.2f, 20);
+        Ship.drawBody(shapes, legacyWreckPos.x, legacyWreckPos.y, legacyWreckHeading,
+                Ship.RADIUS * 1.15f, false, 0.55f, 0f,
+                legacyWreckParts[Ship.WING_LEFT], legacyWreckParts[Ship.WING_RIGHT]);
     }
 
     /** Brillos aditivos del mundo: motores, impactos, objetivos y partículas. */

@@ -98,6 +98,16 @@ final class SaveCodec {
             w.set("coinsEarned", world.coinsEarned);
             w.set("score", world.score);
             w.set("elapsed", world.elapsed);
+            w.set("legacyWreck", world.legacyWreck);
+            w.set("legacyX", world.legacyWreckPos.x);
+            w.set("legacyY", world.legacyWreckPos.y);
+            w.set("legacyHeading", world.legacyWreckHeading);
+            w.set("legacyHull", world.legacyWreckHull);
+            w.name("legacyParts").array();
+            for (int i = 0; i < Ship.PART_COUNT; i++) {
+                w.value(world.legacyWreckParts[i]);
+            }
+            w.pop();
             w.name("chunks").array();
             for (Long key : world.generatedChunks()) {
                 w.value(key);
@@ -226,6 +236,18 @@ final class SaveCodec {
             d.coinsEarned = sector.getInt("coinsEarned", 0);
             d.score = sector.getInt("score", 0);
             d.elapsed = sector.getFloat("elapsed", 0f);
+            d.legacyWreck = sector.getBoolean("legacyWreck", false);
+            d.legacyX = sector.getFloat("legacyX", 0f);
+            d.legacyY = sector.getFloat("legacyY", 0f);
+            d.legacyHeading = sector.getFloat("legacyHeading", 0f);
+            d.legacyHull = sector.getFloat("legacyHull", 0f);
+            JsonValue legacyParts = sector.get("legacyParts");
+            if (legacyParts != null && legacyParts.isArray()) {
+                int count = Math.min(legacyParts.size, Ship.PART_COUNT);
+                for (int i = 0; i < count; i++) {
+                    d.legacyParts[i] = legacyParts.get(i).asFloat();
+                }
+            }
             JsonValue chunks = sector.get("chunks");
             if (chunks == null || !chunks.isArray()) {
                 return null;
@@ -325,6 +347,11 @@ final class SaveCodec {
         world.score = d.score;
         world.elapsed = Math.max(0f, d.elapsed);
         world.wave = 1 + (int) (world.elapsed / 45f);
+        world.legacyWreck = d.legacyWreck;
+        world.legacyWreckPos.set(d.legacyX, d.legacyY);
+        world.legacyWreckHeading = d.legacyHeading;
+        world.legacyWreckHull = d.legacyHull;
+        System.arraycopy(d.legacyParts, 0, world.legacyWreckParts, 0, Ship.PART_COUNT);
         world.generatedChunks().clear();
         for (long chunk : d.chunks) {
             world.generatedChunks().add(chunk);
@@ -389,6 +416,12 @@ final class SaveCodec {
         int coinsEarned;
         int score;
         float elapsed;
+        boolean legacyWreck;
+        float legacyX;
+        float legacyY;
+        float legacyHeading;
+        float legacyHull;
+        final float[] legacyParts = new float[Ship.PART_COUNT];
         long[] chunks;
         final List<AsteroidData> asteroids = new ArrayList<>();
         final List<PickupData> pickups = new ArrayList<>();

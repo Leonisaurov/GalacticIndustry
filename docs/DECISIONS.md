@@ -66,6 +66,15 @@ Cápsula de escape + rescate a la estación más cercana; el piloto sobrevive, s
 
 Afecta a la Etapa 2 (asfixia) y a la Etapa 5 (rescate). No bloquea la Etapa 1.
 
+### Implementación actual (T-208)
+
+- La partida termina por casco 0 o por piloto a 0 HP/asfixiado.
+- Al morir se guarda `legacy.json` con el mundo y la nave; el botón
+  `NUEVO PERSONAJE` carga ese mismo mundo y deja la nave anterior como resto.
+- No hay reaparición automática en la nave nodriza.
+- El modo de recuperación de desarrollo se separa en T-210 y no afecta al juego
+  normal.
+
 ---
 
 ## D-002 — Retirada de la tienda económica de la pausa

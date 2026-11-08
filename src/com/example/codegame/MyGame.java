@@ -54,6 +54,9 @@ public class MyGame implements ApplicationListener {
     private GameWorld world;
     /** Guardado v2 con backup y migracion del formato anterior. */
     private SaveService saves;
+    /** Snapshot del último personaje muerto: mundo y nave legado. */
+    private SaveService legacySaves;
+    private int characterSerial;
     private final Vector2 touch = new Vector2();
 
     private int state = MENU;
@@ -77,6 +80,8 @@ public class MyGame implements ApplicationListener {
     private final boolean wingTest;
     /** Arranca con O2 bajo, salud dañada y fuga para probar el HUD de supervivencia. */
     private final boolean survivalTest;
+    /** Arranca con el piloto incapacitado para probar la muerte por asfixia. */
+    private final boolean pilotDeathTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -157,22 +162,30 @@ public class MyGame implements ApplicationListener {
      */
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
                   boolean autopilotTest, boolean wingTest) {
-        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, false);
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, false, false);
+    }
+
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest, false);
     }
 
     /**
-     * @param survivalTest arranca con O2 bajo, salud dañada y fuga visible.
+     * @param survivalTest   arranca con O2 bajo, salud dañada y fuga visible.
+     * @param pilotDeathTest arranca con el piloto incapacitado para probar la muerte.
      */
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
-                  boolean autopilotTest, boolean wingTest, boolean survivalTest) {
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
         this.autopilotTest = autopilotTest;
         this.wingTest = wingTest;
         this.survivalTest = survivalTest;
+        this.pilotDeathTest = pilotDeathTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
-                || wingTest || survivalTest;
+                || wingTest || survivalTest || pilotDeathTest;
     }
 
     @Override
@@ -198,6 +211,9 @@ public class MyGame implements ApplicationListener {
         world.immortal = testMode;
         saves = new SaveService(
                 new SaveService.FileStorage(Gdx.files.local("save").file()), upgrades);
+        legacySaves = new SaveService(
+                new SaveService.FileStorage(Gdx.files.local("save").file()), upgrades,
+                SaveService.LEGACY_SLOT);
         loadRun();
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         if (debugDeath) {
@@ -247,22 +263,62 @@ public class MyGame implements ApplicationListener {
             session.pilot.health = 70f;
             session.lifeSupport.breach = true;
             session.lifeSupport.updateLeak(world.ship);
+        } else if (pilotDeathTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            session.pilot.oxygen = 0f;
+            session.pilot.health = 0f;
+            session.pilot.oxygenGrace = 0f;
+            session.pilot.status = Pilot.Status.INCAPACITATED;
         }
     }
 
-    /** Congela la partida, lanza la explosión final y deja el diálogo para dentro de un momento. */
+    /** El casco llegó a 0: la nave explota y termina la partida. */
     private void triggerDeath() {
+        finishRun(true, "hull");
+    }
+
+    /** El piloto llegó a 0 HP o murió asfixiado: termina la partida sin explosión. */
+    private void triggerPilotDeath() {
+        finishRun(false, "pilot");
+    }
+
+    /**
+     * Cierra la partida y guarda el mundo/nave legado. El personaje no se
+     * recupera; el siguiente personaje entrará en el mismo mundo.
+     */
+    private void finishRun(boolean shipExploded, String cause) {
         overCoins = world.coinsEarned;
         bankCoins();
         resetControls();
+        if (shipExploded) {
+            world.ship.part[Ship.HULL] = 0f;
+        }
+        session.pilot.health = 0f;
+        session.pilot.status = Pilot.Status.DEAD;
+        world.markLegacyWreck(world.ship);
+        if (legacySaves != null) {
+            legacySaves.save(session);
+        }
         clearRun();
-        world.ship.part[Ship.HULL] = 0f;
-        world.beginDeath();
+        if (shipExploded) {
+            world.beginDeath();
+        } else {
+            world.pilot.cancel();
+            world.fx.clear();
+            world.ship.wrecked = true;
+            world.shake = 0f;
+        }
         deathTimer = 0f;
         state = DYING;
         logEvent(String.format(Locale.US,
-                "{\"event\":\"death\",\"coins\":%d,\"score\":%d,\"wave\":%d}",
-                overCoins, world.score, world.wave));
+                "{\"event\":\"death\",\"cause\":\"%s\",\"coins\":%d,\"score\":%d,"
+                        + "\"wave\":%d,\"legacyX\":%.1f,\"legacyY\":%.1f}",
+                cause, overCoins, world.score, world.wave,
+                world.legacyWreckPos.x, world.legacyWreckPos.y));
     }
 
     /** Si hay una partida guardada, la carga en pausa para que el jugador decida cuándo seguir. */
@@ -327,7 +383,7 @@ public class MyGame implements ApplicationListener {
         btnMenu = stacked("MENU", cx, pauseCy, bw, bh, gap, 2, 3);
 
         float overCy = h * 0.41f;
-        btnRetry = stacked("REINTENTAR", cx, overCy, bw, bh, gap, 0, 2);
+        btnRetry = stacked("NUEVO PERSONAJE", cx, overCy, bw, bh, gap, 0, 2);
         btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
         btnBack = new Button("VOLVER", cx, pad, bw, bh);
 
@@ -613,7 +669,8 @@ public class MyGame implements ApplicationListener {
                         + "\"pilotHealth\":%.1f,\"pilotMaxHealth\":%.1f,"
                         + "\"pilotOxygen\":%.1f,\"pilotO2Max\":%.1f,\"pilotStatus\":\"%s\","
                         + "\"pilotGrace\":%.1f,\"pilotLeak\":%.1f,\"pilotBreach\":%s,"
-                        + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f}",
+                        + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f,"
+                        + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -628,7 +685,8 @@ public class MyGame implements ApplicationListener {
                 session.pilot.oxygenGrace, session.lifeSupport.leak,
                 session.lifeSupport.breach, session.pilot.o2AlertLevel(),
                 Math.min(999999f, session.lifeSupport.estimatedSeconds(
-                        session.pilot, world.ship))));
+                        session.pilot, world.ship)),
+                world.legacyWreck, world.legacyWreckPos.x, world.legacyWreckPos.y));
     }
 
     private void logEvent(String json) {
@@ -661,11 +719,61 @@ public class MyGame implements ApplicationListener {
         overCoins = 0;
         worldCam.zoom = 1f;
         if (!runActive) {
+            if (legacySaves != null && legacySaves.hasSave()) {
+                startNewCharacter();
+                return;
+            }
             session.startRun();
             runActive = true;
         }
         state = PLAYING;
         logEvent("{\"event\":\"run_start\",\"resume\":" + resume + "}");
+    }
+
+    /**
+     * Crea un personaje nuevo. Si hay un mundo legado, lo carga y deja la nave
+     * anterior como resto; si no, empieza un universo nuevo.
+     */
+    private void startNewCharacter() {
+        resetControls();
+        world.pilot.cancel();
+        deathTimer = 0f;
+        overCoins = 0;
+        worldCam.zoom = 1f;
+        boolean legacyLoaded = loadLegacyWorld();
+        session.profile.startNewCharacter(nextCharacterId(), PlayerProfile.DEFAULT_NAME);
+        session.pilot.reset();
+        session.lifeSupport.reset();
+        if (!legacyLoaded) {
+            world.start();
+        }
+        world.startNewCharacter(0f, 0f);
+        runActive = true;
+        state = PLAYING;
+        if (saves.save(session) && legacyLoaded && legacySaves != null) {
+            legacySaves.clear();
+        }
+        logEvent("{\"event\":\"new_character\",\"legacy\":" + legacyLoaded + "}");
+    }
+
+    /** Carga el último mundo de un personaje muerto en una sesión temporal. */
+    private boolean loadLegacyWorld() {
+        if (legacySaves == null || !legacySaves.hasSave()) {
+            return false;
+        }
+        GameSession temp = new GameSession(new PlayerProfile(new Upgrades(true)));
+        SaveService.LoadStatus status = legacySaves.load(temp);
+        if (status == SaveService.LoadStatus.V2
+                || status == SaveService.LoadStatus.BACKUP) {
+            world.copyWorldFrom(temp.sector);
+            return true;
+        }
+        return false;
+    }
+
+    private String nextCharacterId() {
+        characterSerial++;
+        return "pilot-" + System.currentTimeMillis() + "-" + characterSerial;
     }
 
     private void resetControls() {
@@ -722,6 +830,8 @@ public class MyGame implements ApplicationListener {
         }
         if (world.isOver()) {
             triggerDeath();
+        } else if (!session.pilot.alive()) {
+            triggerPilotDeath();
         }
     }
 
@@ -949,7 +1059,7 @@ public class MyGame implements ApplicationListener {
 
     private void handleOver() {
         if (tapped(btnRetry)) {
-            startRun();
+            startNewCharacter();
         } else if (tapped(btnOverMenu)) {
             state = MENU;
         }
@@ -1948,11 +2058,13 @@ public class MyGame implements ApplicationListener {
         shapes.end();
 
         batch.begin();
-        textCenteredMiddle("FIN DE PARTIDA", w * 0.5f, h * 0.5f + 172f * u, 1.75f * u, Color.WHITE);
+        textCenteredMiddle("PERSONAJE PERDIDO", w * 0.5f, h * 0.5f + 172f * u, 1.75f * u, Color.WHITE);
         textCenteredMiddle("MONEDAS GANADAS  +" + overCoins,
                 w * 0.5f, h * 0.5f + 112f * u, 0.95f * u, Visuals.GOLD);
         textCenteredMiddle("PUNTOS " + world.score + "   -   OLEADA " + world.wave,
                 w * 0.5f, h * 0.5f + 78f * u, 0.90f * u, Visuals.TEXT_DIM);
+        textCenteredMiddle("La nave queda en el espacio", w * 0.5f,
+                h * 0.5f + 48f * u, 0.72f * u, Visuals.TEXT_DIM);
         drawButtonText(btnRetry, true);
         drawButtonText(btnOverMenu, true);
         batch.end();

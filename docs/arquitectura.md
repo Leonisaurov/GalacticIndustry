@@ -183,6 +183,14 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - `triggerDeath()` guarda las monedas en `overCoins`, las ingresa en la cuenta,
   borra la partida guardada, pone la integridad del casco a 0, lanza
   `world.beginDeath()` y pasa a `DYING`.
+- `triggerPilotDeath()` se ejecuta cuando el piloto llega a 0 HP o muere
+  asfixiado. Cierra la partida sin explosión, deja el casco intacto y también
+  guarda el mundo/nave legado.
+- Antes de cerrar, `finishRun()` marca la nave como `legacyWreck`, guarda
+  `legacy.json` y limpia la partida del personaje. El botón `NUEVO PERSONAJE`
+  carga ese mundo y deja la nave anterior en el punto de muerte.
+- `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
+  así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y
   ráfagas; `updateDeath()` congela la simulación y solo avanza partículas,
   temblor y explosiones escalonadas.

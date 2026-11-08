@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S2` — Supervivencia.
 - No hay tarea en progreso.
-- Última tarea completada: `T-207` — Integración y balance de supervivencia.
-- Primera tarea disponible: `T-208` — Implementar muerte permanente y mundo persistente.
+- Última tarea completada: `T-208` — Implementar muerte permanente y mundo persistente.
+- Primera tarea disponible: `T-209` — Crear flujo de nuevo personaje y nave legado.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **16 %** (13 de 81 tareas de progreso).
+- La implementación del juego está al **17 %** (14 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

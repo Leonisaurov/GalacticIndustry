@@ -52,4 +52,12 @@ class PlayerProfile {
         }
         name = savedName == null || savedName.isEmpty() ? DEFAULT_NAME : savedName;
     }
+
+    /** Crea una identidad de personaje nueva conservando la cuenta y el progreso. */
+    void startNewCharacter(String newCharacterId, String newName) {
+        if (newCharacterId != null && !newCharacterId.isEmpty()) {
+            id = newCharacterId;
+        }
+        name = newName == null || newName.isEmpty() ? DEFAULT_NAME : newName;
+    }
 }

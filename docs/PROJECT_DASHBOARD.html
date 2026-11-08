@@ -611,22 +611,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:17:00-06:00",
-    "lastSessionId": "S-019",
+    "lastUpdated": "2026-11-08T00:24:00-06:00",
+    "lastSessionId": "S-020",
     "lastVerification": {
-      "date": "2026-11-08T00:17:00-06:00",
+      "date": "2026-11-08T00:24:00-06:00",
       "result": "OK",
       "checks": [
-        "Panel por HTTP: fetch de IMPLEMENTATION_TRACKER.json y render sin recargar; Datos: JSON en vivo",
-        "Panel por file://: datos embebidos; Datos: embebidos (file://); sin fetch roto",
-        "Firefox headless: capturas HTTP y file:// renderizadas",
-        "node --check del script inline del panel: OK",
+        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
+        "Muerte por casco y por piloto 0 HP terminan la partida",
+        "legacy.json guarda mundo/nave; nuevo personaje carga el mismo mundo",
+        "05_death: casco->OVER, piloto->OVER sin romper casco, NUEVO PERSONAJE PLAYING",
+        "08_visual_death y 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S2",
     "currentTaskId": null,
-    "nextTaskId": "T-208",
+    "nextTaskId": "T-209",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2042,7 +2043,7 @@
       "description": "Aplicar la política de muerte permanente del personaje sin reiniciar el universo. La nave anterior queda en el lugar de la muerte y el nuevo personaje entra en el mismo mundo.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-204",
@@ -2072,10 +2073,43 @@
         "Guardado de mundo"
       ],
       "technicalNotes": "La persistencia del mundo es requisito; si el guardado aún no cubre el estado necesario, bloquear la tarea y documentarlo.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-020",
+          "date": "2026-11-08T00:24:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Muerte por casco o por piloto 0 HP cierra la partida y guarda legacy.json con mundo y nave. El botón NUEVO PERSONAJE carga el mismo mundo, conserva asteroides/restos y deja la nave anterior en el punto de muerte. El guardado v2 conserva el legado.",
+          "files": [
+            "src/com/example/codegame/Pilot.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SaveService.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/05_death.sh",
+            "docs/DECISIONS.md"
+          ],
+          "tests": [
+            "01_logic",
+            "05_death",
+            "08_visual_death",
+            "Guardado de mundo"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la muerte guarda el mundo legado; PASS el mundo legado carga y conserva asteroides",
+        "PASS la nave legado queda en el lugar de la muerte",
+        "PASS el nuevo personaje resetea la nave y conserva el legado",
+        "PASS save v2 conserva la nave legado; PASS cargar conserva la nave legado",
+        "05_death: casco->OVER, piloto 0 HP->OVER sin romper casco, NUEVO PERSONAJE->PLAYING",
+        "08_visual_death y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T00:24:00-06:00"
     },
     {
       "id": "T-301",
@@ -4422,7 +4456,7 @@
       "description": "Permitir crear un personaje nuevo tras la muerte y entrar en el mismo mundo persistente, con la nave anterior en el lugar de la muerte y recuperable por el nuevo personaje.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-208",
@@ -4463,7 +4497,7 @@
       "description": "Añadir un modo de pruebas que permita continuar o recuperar al personaje tras la muerte sin alterar el comportamiento normal del juego.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": false,
       "dependencies": [
         "T-208"
@@ -5080,6 +5114,35 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-020",
+      "date": "2026-11-08T00:24:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Muerte permanente y mundo persistente",
+      "summary": "La partida termina por casco 0 o por piloto a 0 HP. Se guarda legacy.json con el mundo y la nave, se deja la nave en el punto de muerte y NUEVO PERSONAJE carga el mismo mundo con una nave nueva. Se corrigió el bug de quedarse a 0 HP sin morir. El guardado v2 conserva la nave legado.",
+      "tasks": [
+        "T-208"
+      ],
+      "files": [
+        "src/com/example/codegame/Pilot.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SaveService.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/05_death.sh",
+        "docs/DECISIONS.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 05_death",
+        "tools/run-tests.sh --no-build 08_visual_death 03_controls",
+        "Guardado de mundo"
+      ],
+      "outcome": "Completado",
+      "notes": "El modo de recuperación de desarrollo queda en T-210. Siguiente tarea: T-209."
+    },
     {
       "id": "S-019",
       "date": "2026-11-08T00:17:00-06:00",
