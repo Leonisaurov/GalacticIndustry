@@ -399,6 +399,16 @@ estáticos se reutilizan.
   pantalla y la entrada/salida formal llega en T-1005.
 - `interior_test` permite revisar el render y medir FPS (captura `36_interior`).
 
+## Interacción por proximidad (T-1004)
+
+- Dentro del interior, `Avatar.nearest()` devuelve el interactuable en rango.
+- El HUD muestra `TOCA PARA ABRIR <módulo>`; un toque abre
+  `StationManagementScreen` **sin salir del interior**.
+- La pantalla de gestión se reutiliza tal cual: `VOLVER` regresa al interior;
+  `DESPEGAR` sigue reservado al acople real.
+- El estado del interior y de la estación se conserva al abrir/cerrar.
+- La salida (`EXIT`) queda para T-1005.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

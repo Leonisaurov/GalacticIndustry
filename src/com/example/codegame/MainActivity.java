@@ -62,10 +62,13 @@ public class MainActivity extends AndroidApplication {
                 && getIntent().getBooleanExtra("module_test", false);
         boolean interiorTest = getIntent() != null
                 && getIntent().getBooleanExtra("interior_test", false);
+        boolean interiorMgmtTest = getIntent() != null
+                && getIntent().getBooleanExtra("interior_mgmt_test", false);
         initialize(new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
                 wingTest, survivalTest, pilotDeathTest, recoveryTest, cargoTest,
                 miningTest, tractorTest, stationTest, dockingTest,
                 stationServiceTest, rescueTest, marketTest, boundsTest,
-                warpTest, baseTest, moduleTest, interiorTest), cfg);
+                warpTest, baseTest, moduleTest, interiorTest,
+                interiorMgmtTest), cfg);
     }
 }

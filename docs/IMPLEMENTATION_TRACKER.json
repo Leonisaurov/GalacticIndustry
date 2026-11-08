@@ -4,22 +4,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T09:36:00-06:00",
-    "lastSessionId": "S-079",
+    "lastUpdated": "2026-11-08T09:56:00-06:00",
+    "lastSessionId": "S-080",
     "lastVerification": {
-      "date": "2026-11-08T09:36:00-06:00",
+      "date": "2026-11-08T09:56:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "InteriorRenderer dibuja salas, puertas, interactuables y avatar",
-        "Camara sigue al avatar y el HUD muestra instrucciones",
-        "18_interiors: captura 36_interior y FPS >= 25",
+        "Interactuable por proximidad abre la gestion desde el interior",
+        "La pantalla reutilizada vuelve al interior sin despegar",
+        "18_interiors: captura 37_interaction y estado conservado",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S10",
     "currentTaskId": null,
-    "nextTaskId": "T-1004",
+    "nextTaskId": "T-1005",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5025,7 +5025,7 @@
       "description": "Permitir abrir almacén, reparación, refinería y mercado desde el interior.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -5051,10 +5051,37 @@
         "17_player_station"
       ],
       "technicalNotes": "No duplicar la lógica de servicios; reutilizar las pantallas existentes.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-080",
+          "date": "2026-11-08T09:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Interaccion por proximidad en interiores: nearest() habilita tocar un modulo y abrir StationManagementScreen reutilizada sin salir del interior. Gestion desde interior muestra VOLVER y conserva estado. interior_mgmt_test y 37_interaction.",
+          "files": [
+            "src/com/example/codegame/Interactable.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "18_interiors",
+            "17_player_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Avatar junto al almacén (module-0)",
+        "Gestión abierta desde el interior (interiorManagement=true)",
+        "Captura 37_interaction con VOLVER",
+        "Gestión cerrada devuelve a INTERIOR sin despegar"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T09:56:00-06:00"
     },
     {
       "id": "T-1005",
@@ -5063,7 +5090,7 @@
       "description": "Permitir entrar/salir de la estación y guardar la posición del personaje.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1002",
@@ -6350,6 +6377,31 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-080",
+      "date": "2026-11-08T09:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Interacción con módulos desde el interior",
+      "summary": "Interacción por proximidad que abre la gestión modular reutilizada; VOLVER regresa al interior y conserva estado. Prueba visual 37_interaction.",
+      "tasks": [
+        "T-1004"
+      ],
+      "files": [
+        "src/com/example/codegame/Interactable.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 18_interiors",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1005 (entrada, salida y guardado del interior)."
+    },
     {
       "id": "S-079",
       "date": "2026-11-08T09:36:00-06:00",

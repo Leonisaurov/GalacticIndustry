@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S10` — Interiores.
 - No hay tarea en progreso.
-- Última tarea completada: `T-1003` — Crear InteriorRenderer y cámara.
-- Primera tarea disponible: `T-1004` — Implementar interacción con módulos.
+- Última tarea completada: `T-1004` — Implementar interacción con módulos.
+- Primera tarea disponible: `T-1005` — Implementar entrada, salida y guardado del interior.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **86 %** (70 de 81 tareas de progreso).
+- La implementación del juego está al **88 %** (71 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

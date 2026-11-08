@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T09:36:00-06:00  
+**Última actualización:** 2026-11-08T09:56:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,63 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-080 — Interacción con módulos desde el interior
+
+- **Fecha:** 2026-11-08T09:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1004
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- En el interior, `Avatar.nearest()` detecta el módulo en rango.
+- El HUD muestra `TOCA PARA ABRIR <módulo>`.
+- Un toque abre `StationManagementScreen` **sin salir del interior**.
+- La pantalla reutiliza la lógica existente; `VOLVER` regresa al interior y
+  `DESPEGAR` sigue reservado al acople real.
+- El estado del interior/estación se conserva.
+- `interior_mgmt_test` y captura `37_interaction`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Interactable.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/18_interiors.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 18_interiors`: **OK**.
+
+### Evidencias
+
+- Avatar junto al almacén (`module-0`).
+- Gestión abierta desde el interior (`interiorManagement=true`).
+- Captura `37_interaction` con botón `VOLVER`.
+- `VOLVER` devuelve a `INTERIOR` sin despegar.
+
+### Decisiones tomadas
+
+- No se duplica la lógica de servicios: se reutiliza la pantalla de gestión.
+- Abrir/cerrar gestión no cambia el estado del mundo.
+- La salida a la nave se implementa en T-1005.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1005 — Implementar entrada, salida y guardado del
+  interior**.
 
 ---
 

@@ -34,6 +34,7 @@ final class StationManagementScreen {
     private Button btnRefine, btnMarket;
     private int selectedSlot;
     private int selectedCatalog;
+    private boolean fromInterior;
     private String message = "";
     private float px, py, pw, ph, listTop, rowH, rowGap;
 
@@ -47,6 +48,11 @@ final class StationManagementScreen {
     }
 
     void enter() {
+        enter(false);
+    }
+
+    void enter(boolean fromInterior) {
+        this.fromInterior = fromInterior;
         selectedSlot = 0;
         selectedCatalog = 0;
         message = "";
@@ -95,8 +101,8 @@ final class StationManagementScreen {
                 halfW, 42f * u);
         btnRepair = new Button("REPARAR", px + 20f * u + halfW + 8f * u,
                 py + 80f * u, halfW, 42f * u);
-        btnUndock = new Button("DESPEGAR", px + 20f * u, py + 28f * u,
-                pw - 40f * u, 44f * u);
+        btnUndock = new Button(fromInterior ? "VOLVER" : "DESPEGAR",
+                px + 20f * u, py + 28f * u, pw - 40f * u, 44f * u);
     }
 
     int selectedSlot() {
@@ -112,7 +118,7 @@ final class StationManagementScreen {
             layout();
         }
         if (game.tapped(btnUndock)) {
-            game.undockFromStation();
+            game.managementBack();
             return true;
         }
         for (int i = 0; i < slotButtons.size; i++) {

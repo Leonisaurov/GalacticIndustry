@@ -60,6 +60,8 @@ public class MyGame implements ApplicationListener {
     private InteriorScene interiorScene;
     private Avatar interiorAvatar;
     private final InteriorInput interiorInput = new InteriorInput();
+    /** La pantalla de gestión se abrió desde el interior (no desde el acople). */
+    private boolean interiorManagement;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -126,6 +128,8 @@ public class MyGame implements ApplicationListener {
     private final boolean moduleTest;
     /** Arranca dentro del interior con el avatar. */
     private final boolean interiorTest;
+    /** Arranca dentro del interior junto a un módulo interactuable. */
+    private final boolean interiorMgmtTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -387,6 +391,24 @@ public class MyGame implements ApplicationListener {
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest, boolean boundsTest, boolean warpTest,
                   boolean baseTest, boolean moduleTest, boolean interiorTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, boundsTest, warpTest, baseTest, moduleTest,
+                interiorTest, false);
+    }
+
+    /**
+     * @param interiorMgmtTest arranca junto a un modulo interactuable.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest, boolean warpTest,
+                  boolean baseTest, boolean moduleTest, boolean interiorTest,
+                  boolean interiorMgmtTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -408,12 +430,13 @@ public class MyGame implements ApplicationListener {
         this.baseTest = baseTest;
         this.moduleTest = moduleTest;
         this.interiorTest = interiorTest;
+        this.interiorMgmtTest = interiorMgmtTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
                 || dockingTest || stationServiceTest || rescueTest || marketTest
                 || boundsTest || warpTest || baseTest || moduleTest
-                || interiorTest;
+                || interiorTest || interiorMgmtTest;
     }
 
     @Override
@@ -663,7 +686,7 @@ public class MyGame implements ApplicationListener {
                     world.ship.cargo());
             session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
                     world.ship.cargo());
-        } else if (interiorTest) {
+        } else if (interiorTest || interiorMgmtTest) {
             session.startRun();
             session.playerStation.restore(false, 0f, 0f, null);
             runActive = true;
@@ -686,6 +709,14 @@ public class MyGame implements ApplicationListener {
             session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
                     world.ship.cargo());
             bindInterior(session.playerStation.buildInterior());
+            if (interiorMgmtTest) {
+                Room moduleRoom = interiorScene.room("module-0");
+                if (moduleRoom != null) {
+                    interiorAvatar.roomId = moduleRoom.id;
+                    interiorAvatar.x = moduleRoom.x;
+                    interiorAvatar.y = moduleRoom.y;
+                }
+            }
             state = INTERIOR;
         }
     }
@@ -1035,7 +1066,13 @@ public class MyGame implements ApplicationListener {
                 break;
             case MARKET: marketScreen.handle(); break;
             case MAP: mapScreen.handle(); break;
-            case INTERIOR: updateInterior(dt); break;
+            case INTERIOR:
+                if (interiorManagement) {
+                    managementScreen.handle();
+                } else {
+                    updateInterior(dt);
+                }
+                break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
@@ -1155,7 +1192,8 @@ public class MyGame implements ApplicationListener {
                         + "\"baseMessage\":\"%s\",\"interiorKind\":\"%s\","
                         + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
                         + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
-                        + "\"avatarX\":%.1f,\"avatarY\":%.1f}",
+                        + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
+                        + "\"interiorManagement\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1261,7 +1299,8 @@ public class MyGame implements ApplicationListener {
                 session.playerStation.buildInterior().interactableCount(),
                 interiorAvatar == null ? "" : interiorAvatar.roomId,
                 interiorAvatar == null ? 0f : interiorAvatar.x,
-                interiorAvatar == null ? 0f : interiorAvatar.y));
+                interiorAvatar == null ? 0f : interiorAvatar.y,
+                interiorManagement));
     }
 
     void logEvent(String json) {
@@ -1818,6 +1857,17 @@ public class MyGame implements ApplicationListener {
         }
     }
 
+    /** Volver desde la gestión: al interior si se abrió desde allí. */
+    void managementBack() {
+        if (interiorManagement) {
+            interiorManagement = false;
+            state = INTERIOR;
+            layoutUi();
+            return;
+        }
+        undockFromStation();
+    }
+
     /** DESPEGAR desde la pantalla de estación. */
     void undockFromStation() {
         DockingSystem.undock(world);
@@ -1863,11 +1913,21 @@ public class MyGame implements ApplicationListener {
         interiorInput.set(mx, my);
         interiorAvatar.update(dt, interiorInput, interiorScene);
         interiorInput.reset();
+        Interactable near = interiorAvatar.nearest(interiorScene);
+        if (Gdx.input.justTouched() && near != null
+                && near.action != Interactable.Action.EXIT) {
+            interiorManagement = true;
+            managementScreen.enter(true);
+            layoutUi();
+            logEvent("{\"event\":\"interior_module\",\"room\":\""
+                    + near.roomId + "\"}");
+        }
     }
 
     private void closeInterior() {
         interiorScene = null;
         interiorAvatar = null;
+        interiorManagement = false;
         state = PLAYING;
         layoutUi();
     }
@@ -1970,14 +2030,23 @@ public class MyGame implements ApplicationListener {
         } else if (state == MAP) {
             mapScreen.draw(w, h);
         } else if (state == INTERIOR) {
-            batch.begin();
-            ui.textCentered("INTERIOR DE LA ESTACION",
-                    w * 0.5f, h - 40f * u, 0.95f * u, Visuals.ACCENT);
-            ui.textCentered("MUEVETE CON EL JOYSTICK O LAS FLECHAS",
-                    w * 0.5f, h - 68f * u, 0.70f * u, Visuals.TEXT_DIM);
-            ui.textCentered("ACERCATE A LA SALIDA PARA VOLVER",
-                    w * 0.5f, 42f * u, 0.65f * u, Visuals.TEXT_OFF);
-            batch.end();
+            if (interiorManagement) {
+                managementScreen.draw(w, h);
+            } else {
+                batch.begin();
+                ui.textCentered("INTERIOR DE LA ESTACION",
+                        w * 0.5f, h - 40f * u, 0.95f * u, Visuals.ACCENT);
+                ui.textCentered("MUEVETE CON EL JOYSTICK O LAS FLECHAS",
+                        w * 0.5f, h - 68f * u, 0.70f * u, Visuals.TEXT_DIM);
+                Interactable near = interiorAvatar == null ? null
+                        : interiorAvatar.nearest(interiorScene);
+                ui.textCentered(near == null
+                                ? "ACERCATE A UN MODULO O A LA SALIDA"
+                                : "TOCA PARA ABRIR " + near.label,
+                        w * 0.5f, 42f * u, 0.68f * u,
+                        near == null ? Visuals.TEXT_OFF : Visuals.ACCENT);
+                batch.end();
+            }
         } else {
             hud.state = state;
             hud.runActive = runActive;
