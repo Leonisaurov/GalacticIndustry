@@ -198,8 +198,29 @@ final class SaveCodec {
             w.pop();
             w.pop();
             w.pop();
+            w.name("agents").array();
+            for (int i = 0; i < world.agents.size(); i++) {
+                PilotAgent agent = world.agents.get(i);
+                w.object();
+                w.set("id", agent.id);
+                w.set("name", agent.name);
+                w.set("role", agent.role.name());
+                w.set("state", agent.state.name());
+                w.set("fuel", agent.fuel);
+                w.set("maxFuel", agent.maxFuel);
+                w.set("objective", agent.objective);
+                w.name("cargo").array();
+                for (Cargo cargo : agent.cargo.entries()) {
+                    w.object();
+                    w.set("commodity", cargo.commodity.name());
+                    w.set("amount", cargo.amount);
+                    w.pop();
+                }
+                w.pop();
+                w.pop();
+            }
             w.pop();
-
+            w.pop();
             w.pop();
             w.close();
             return out.toString();
@@ -418,6 +439,42 @@ final class SaveCodec {
                         }
                     }
                 }
+                JsonValue agents = sector.get("agents");
+                if (agents != null && agents.isArray()) {
+                    d.hasAgents = true;
+                    for (int i = 0; i < agents.size; i++) {
+                        JsonValue a = agents.get(i);
+                        if (a == null) {
+                            continue;
+                        }
+                        AgentData data = new AgentData();
+                        data.id = a.getString("id", "M-" + i);
+                        data.name = a.getString("name", data.id);
+                        data.role = PilotAgent.Role.valueOf(
+                                a.getString("role", PilotAgent.Role.MINER.name()));
+                        data.state = PilotAgent.State.valueOf(
+                                a.getString("state", PilotAgent.State.DOCKED.name()));
+                        data.fuel = a.getFloat("fuel", AgentRoster.MAX_FUEL);
+                        data.maxFuel = a.getFloat("maxFuel", AgentRoster.MAX_FUEL);
+                        data.objective = a.getString("objective", "NODRIZA");
+                        JsonValue agentCargo = a.get("cargo");
+                        if (agentCargo != null && agentCargo.isArray()) {
+                            for (int k = 0; k < agentCargo.size; k++) {
+                                JsonValue entry = agentCargo.get(k);
+                                if (entry == null) {
+                                    continue;
+                                }
+                                Commodity commodity = Commodity.byDisplayName(
+                                        entry.getString("commodity", null));
+                                int amount = entry.getInt("amount", 0);
+                                if (commodity != null && amount > 0) {
+                                    data.cargo.add(new CargoData(commodity, amount));
+                                }
+                            }
+                        }
+                        d.agents.add(data);
+                    }
+                }
                 JsonValue market = station.get("market");
                 if (market != null) {
                     d.hasMarket = true;
@@ -540,6 +597,24 @@ final class SaveCodec {
             CargoData entry = d.stationStorage.get(i);
             world.station.storage.hold.restore(entry.commodity, entry.amount);
         }
+        if (d.hasAgents) {
+            world.agents.clear();
+            for (int i = 0; i < d.agents.size(); i++) {
+                AgentData data = d.agents.get(i);
+                PilotAgent agent = new PilotAgent(data.id, data.name, data.role,
+                        AgentRoster.CARGO_CAPACITY, data.maxFuel,
+                        AgentRoster.SPEED, AgentRoster.MINING_RATE);
+                agent.state = data.state;
+                agent.fuel = Math.max(0f, Math.min(data.fuel, data.maxFuel));
+                agent.objective = data.objective;
+                agent.cargo.clear();
+                for (int k = 0; k < data.cargo.size(); k++) {
+                    CargoData entry = data.cargo.get(k);
+                    agent.cargo.restore(entry.commodity, entry.amount);
+                }
+                world.agents.add(agent);
+            }
+        }
         if (d.hasMarket) {
             world.station.market.setSpread(d.marketSpread);
             for (int i = 0; i < Commodity.values().length; i++) {
@@ -611,6 +686,8 @@ final class SaveCodec {
         float stationY = GameData.MOTHERSHIP_Y;
         String stationName = GameData.MOTHERSHIP.name;
         final List<CargoData> stationStorage = new ArrayList<>();
+        boolean hasAgents;
+        final List<AgentData> agents = new ArrayList<>();
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;
@@ -638,6 +715,17 @@ final class SaveCodec {
         Commodity commodity;
         int amount;
         float life = OreFragment.LIFE;
+    }
+
+    private static final class AgentData {
+        String id;
+        String name;
+        PilotAgent.Role role = PilotAgent.Role.MINER;
+        PilotAgent.State state = PilotAgent.State.DOCKED;
+        float fuel = AgentRoster.MAX_FUEL;
+        float maxFuel = AgentRoster.MAX_FUEL;
+        String objective = "NODRIZA";
+        final List<CargoData> cargo = new ArrayList<>();
     }
 
     private static final class CargoData {

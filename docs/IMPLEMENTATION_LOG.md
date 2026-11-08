@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:42:00-06:00  
+**Última actualización:** 2026-11-08T03:50:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,69 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-054 — Pilotos autónomos: datos y plantilla
+
+- **Fecha:** 2026-11-08T03:50:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-701
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `PilotAgent` resume la nave de un agente:
+  - id, nombre, rol (`MINER`/`HAULER`);
+  - capacidad de carga, combustible, velocidad y tasa de minado;
+  - estado, objetivo y bodega propia.
+- `AgentRoster` crea **8 mineros** deterministas y admite hasta **24**.
+- Los agentes viven en `GameWorld.agents`, se guardan en v2 y se restauran.
+- Un guardado sin agentes recibe la plantilla inicial.
+- No hay render de agentes todavía; T-702 añade el cerebro y T-706 el tráfico
+  limitado a los cercanos.
+
+### Archivos modificados
+
+- `src/com/example/codegame/PilotAgent.java` (nuevo)
+- `src/com/example/codegame/AgentRoster.java` (nuevo)
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `src/com/example/codegame/MyGame.java`
+- `tools/tests/15_agents.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS hay ocho agentes iniciales`
+- `PASS cada agente tiene rol, carga, combustible y estado`
+- `PASS la plantilla es configurable`
+- `PASS el roster respeta el máximo`
+- `PASS los agentes no se renderizan`
+- `PASS los agentes se guardan/restauran`
+- `PASS un guardado sin agentes crea la plantilla`
+- `15_agents`: 8 agentes, máximo 24 y 8 acoplados.
+
+### Decisiones tomadas
+
+- Todos los agentes iniciales son mineros; transportistas quedan para más
+  adelante.
+- La nave del agente es abstracta: sin posición 2D ni pathfinding.
+- Los agentes no se dibujan hasta T-706.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-702 — Implementar AgentBrain y máquina de estados**.
 
 ---
 

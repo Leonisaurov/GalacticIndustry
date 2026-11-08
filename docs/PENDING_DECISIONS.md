@@ -1,6 +1,6 @@
 # DECISIONES CERRADAS — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:42:00-06:00  
+**Última actualización:** 2026-11-08T03:50:00-06:00  
 **Estado:** no hay decisiones pendientes.  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
@@ -35,4 +35,4 @@ Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
 - `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
 - `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
 
-Las Etapas 1, 2, 3, 4, 5 y 6 están completadas. La siguiente tarea de implementación es **T-701 — Crear PilotAgent y AgentRoster** (Etapa 7).
+Las Etapas 1, 2, 3, 4, 5 y 6 están completadas. La siguiente tarea de implementación es **T-702 — Implementar AgentBrain y máquina de estados** (Etapa 7).

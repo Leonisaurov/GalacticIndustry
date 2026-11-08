@@ -25,6 +25,10 @@ final class GameData {
     /** El stock inicial arranca al 80 % del objetivo. */
     static final float MARKET_INITIAL = 0.8f;
 
+    /** Agentes autónomos iniciales y máximo. */
+    static final int INITIAL_AGENTS = 8;
+    static final int MAX_AGENTS = 24;
+
     static Market newMarket() {
         java.util.EnumMap<Commodity, Integer> targets =
                 new java.util.EnumMap<>(Commodity.class);

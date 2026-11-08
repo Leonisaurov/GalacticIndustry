@@ -44,6 +44,8 @@ class GameWorld {
             GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y);
     /** Simulación de mercados; tickea cada 10 s, no por frame. */
     final EconomySim economy = new EconomySim();
+    /** Pilotos autónomos del sector; todavía no se renderizan. */
+    final AgentRoster agents = new AgentRoster(GameData.INITIAL_AGENTS);
     /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
     LifeSupport lifeSupport;
     /** Restos de la nave del personaje anterior, en el punto de muerte. */
@@ -119,6 +121,7 @@ class GameWorld {
         elapsed = 0f;
         shake = 0f;
         economy.reset();
+        agents.createInitial(GameData.INITIAL_AGENTS);
         deathTimer = 0f;
         deathStage = 0;
         ignoredHits = 0;
@@ -178,6 +181,8 @@ class GameWorld {
         fuel.addAll(other.fuel);
         fragments.clear();
         fragments.addAll(other.fragments);
+        agents.clear();
+        agents.agents.addAll(other.agents.agents);
         legacyWreck = true;
         legacyWreckPos.set(other.ship.pos);
         legacyWreckHeading = other.ship.heading;

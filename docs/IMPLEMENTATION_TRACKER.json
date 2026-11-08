@@ -4,22 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:42:00-06:00",
-    "lastSessionId": "S-053",
+    "lastUpdated": "2026-11-08T03:50:00-06:00",
+    "lastSessionId": "S-054",
     "lastVerification": {
-      "date": "2026-11-08T03:42:00-06:00",
+      "date": "2026-11-08T03:50:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Gate S6: precios reaccionan, sin arbitraje, persistencia y expedición rentable",
-        "14_market: compraventa, anti-arbitraje y recarga",
-        "13_station y 02_navigation: OK",
+        "PilotAgent con rol, carga, combustible, estado y objetivo",
+        "AgentRoster: 8 iniciales, máximo 24 y plantilla configurable",
+        "Agentes guardados/restaurados; guardado sin agentes crea la plantilla",
+        "No hay render de agentes todavía",
+        "15_agents: 8/24/8 y sin render",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S7",
     "currentTaskId": null,
-    "nextTaskId": "T-701",
+    "nextTaskId": "T-702",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3444,7 +3446,7 @@
       "description": "Introducir agentes con nave resumida, carga, combustible, estado y objetivo.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-606"
@@ -3468,10 +3470,43 @@
         "Guardado de agentes"
       ],
       "technicalNotes": "Empezar con mineros; dejar transportistas para más adelante.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-054",
+          "date": "2026-11-08T03:50:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "PilotAgent y AgentRoster con 8 mineros iniciales configurables (máx. 24), nave resumida, bodega, combustible, estado y objetivo. Persistencia v2 con compatibilidad y telemetría; sin render.",
+          "files": [
+            "src/com/example/codegame/PilotAgent.java",
+            "src/com/example/codegame/AgentRoster.java",
+            "src/com/example/codegame/GameData.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java",
+            "src/com/example/codegame/MyGame.java",
+            "tools/tests/15_agents.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "15_agents",
+            "Guardado de agentes"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS hay ocho agentes iniciales",
+        "PASS cada agente tiene rol, carga, combustible y estado",
+        "PASS la plantilla es configurable",
+        "PASS el roster respeta el máximo",
+        "PASS los agentes no se renderizan",
+        "PASS los agentes se guardan/restauran",
+        "PASS un guardado sin agentes crea la plantilla",
+        "15_agents: 8/24/8"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:50:00-06:00"
     },
     {
       "id": "T-702",
@@ -3480,7 +3515,7 @@
       "description": "Hacer que los agentes elijan destino, viajen, minen, vuelvan, vendan y reposten.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-701"
@@ -5547,6 +5582,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-054",
+      "date": "2026-11-08T03:50:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Pilotos autónomos: datos y plantilla",
+      "summary": "PilotAgent y AgentRoster con 8 mineros configurables, persistencia y telemetría. Sin render ni cerebro todavía.",
+      "tasks": [
+        "T-701"
+      ],
+      "files": [
+        "src/com/example/codegame/PilotAgent.java",
+        "src/com/example/codegame/AgentRoster.java",
+        "src/com/example/codegame/GameData.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java",
+        "src/com/example/codegame/MyGame.java",
+        "tools/tests/15_agents.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 15_agents"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-702 (AgentBrain y máquina de estados)."
+    },
     {
       "id": "S-053",
       "date": "2026-11-08T03:42:00-06:00",

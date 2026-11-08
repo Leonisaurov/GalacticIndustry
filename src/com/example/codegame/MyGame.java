@@ -903,7 +903,8 @@ public class MyGame implements ApplicationListener {
                         + "\"marketIronStock\":%d,\"marketIronTarget\":%d,"
                         + "\"marketIronBuy\":%.2f,\"marketIronSell\":%.2f,"
                         + "\"marketOroStock\":%d,\"marketOroTarget\":%d,"
-                        + "\"marketQty\":%d,\"marketPending\":%s}",
+                        + "\"marketQty\":%d,\"marketPending\":%s,"
+                        + "\"agents\":%d,\"agentsMax\":%d,\"agentsDocked\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -953,7 +954,10 @@ public class MyGame implements ApplicationListener {
                 world.station.market.stock(Commodity.ORO),
                 world.station.market.target(Commodity.ORO),
                 marketScreen.quantity(),
-                marketScreen.pending()));
+                marketScreen.pending(),
+                world.agents.size(),
+                world.agents.maxSize(),
+                world.agents.dockedCount()));
     }
 
     void logEvent(String json) {

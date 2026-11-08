@@ -19,6 +19,37 @@ public class SelfTest {
         return count;
     }
 
+    /** Elimina un campo JSON con arrays/objetos anidados (para migraciones). */
+    private static String removeJsonField(String json, String field) {
+        String key = "\"" + field + "\":";
+        int start = json.indexOf(key);
+        if (start < 0) {
+            return json;
+        }
+        if (start > 0 && json.charAt(start - 1) == ',') {
+            start--;
+        }
+        int open = json.indexOf('[', start);
+        int depth = 0;
+        int end = open + 1;
+        for (int i = open; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '[') {
+                depth++;
+            } else if (c == ']') {
+                depth--;
+                if (depth == 0) {
+                    end = i + 1;
+                    break;
+                }
+            }
+        }
+        if (end < json.length() && json.charAt(end) == ',') {
+            end++;
+        }
+        return json.substring(0, start) + json.substring(end);
+    }
+
     /** Registra transacciones para comprobar el listener. */
     private static final class TradeRecorder implements TradeService.Listener {
         int count;
@@ -2272,6 +2303,60 @@ public class SelfTest {
         check("S6: el mercado persiste",
                 marketLoaded.sector.station.market.stock(Commodity.HIELO) == 77
                         && marketLoaded.sector.station.market.target(Commodity.HIELO) == 250);
+
+        // T-701: PilotAgent y AgentRoster.
+        AgentRoster roster = new AgentRoster(GameData.INITIAL_AGENTS);
+        check("hay ocho agentes iniciales",
+                roster.size() == 8 && roster.maxSize() == 24);
+        PilotAgent firstAgent = roster.get(0);
+        check("cada agente tiene rol, carga, combustible y estado",
+                firstAgent != null
+                        && firstAgent.role == PilotAgent.Role.MINER
+                        && firstAgent.state == PilotAgent.State.DOCKED
+                        && firstAgent.cargo != null
+                        && firstAgent.cargo.capacity() == AgentRoster.CARGO_CAPACITY
+                        && firstAgent.fuel == firstAgent.maxFuel
+                        && "NODRIZA".equals(firstAgent.objective));
+        check("la plantilla es configurable",
+                new AgentRoster(3).size() == 3
+                        && new AgentRoster(99).size() == GameData.MAX_AGENTS);
+        AgentRoster capped = new AgentRoster(GameData.MAX_AGENTS);
+        check("el roster respeta el máximo",
+                capped.size() == 24
+                        && !capped.add(new PilotAgent("X", "X",
+                        PilotAgent.Role.MINER, 10f, 10f, 10f, 1f)));
+        boolean hasDraw = false;
+        try {
+            AgentRoster.class.getDeclaredMethod("draw");
+            hasDraw = true;
+        } catch (NoSuchMethodException ignored) {
+            // Los agentes no se dibujan todavía.
+        }
+        check("los agentes no se renderizan", !hasDraw);
+        GameSession agentSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        agentSession.startRun();
+        agentSession.sector.agents.get(0).state = PilotAgent.State.MINE;
+        agentSession.sector.agents.get(0).fuel = 50f;
+        agentSession.sector.agents.get(0).objective = "ROCA-7";
+        agentSession.sector.agents.get(0).cargo.addExact(Commodity.HIELO, 10);
+        SaveService.MemoryStorage agentStore = new SaveService.MemoryStorage();
+        SaveService agentService = new SaveService(agentStore);
+        check("los agentes se guardan", agentService.save(agentSession));
+        GameSession agentLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("los agentes se restauran",
+                agentService.load(agentLoaded) == SaveService.LoadStatus.V2
+                        && agentLoaded.sector.agents.size() == 8
+                        && agentLoaded.sector.agents.get(0).state == PilotAgent.State.MINE
+                        && Math.abs(agentLoaded.sector.agents.get(0).fuel - 50f) < 0.01f
+                        && "ROCA-7".equals(agentLoaded.sector.agents.get(0).objective)
+                        && agentLoaded.sector.agents.get(0).cargo.amount(Commodity.HIELO) == 10);
+        String agentText = agentStore.read(SaveService.SAVE_NAME);
+        String noAgents = removeJsonField(agentText, "agents");
+        GameSession noAgentsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un guardado sin agentes crea la plantilla",
+                !agentText.equals(noAgents)
+                        && SaveCodec.decode(noAgents, noAgentsLoaded)
+                        && noAgentsLoaded.sector.agents.size() == 8);
 
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));

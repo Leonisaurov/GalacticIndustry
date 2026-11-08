@@ -156,6 +156,20 @@ estáticos se reutilizan.
 - Se registran `rescue_request` y `rescue` en el log; telemetría
   `canRescue`, `rescueActive` y `rescueSeconds`.
 
+## Pilotos autónomos (datos)
+
+- `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),
+  capacidad de carga, combustible, velocidad, tasa de minado, estado, objetivo
+  y bodega propia.
+- Estados previstos: `DOCKED`, `TRAVEL`, `MINE`, `RETURN`, `SELL`, `REFUEL`,
+  `IDLE`.
+- `AgentRoster` crea **8 mineros** deterministas por defecto y admite hasta
+  **24**. La plantilla es configurable.
+- Los agentes viven en el sector (`GameWorld.agents`), se guardan en v2 y se
+  restauran; un guardado sin agentes recibe la plantilla inicial.
+- No se renderizan todavía: el cerebro y el ciclo minero llegan en T-702, y el
+  tráfico cosmético/limitado a los cercanos en T-706.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de
