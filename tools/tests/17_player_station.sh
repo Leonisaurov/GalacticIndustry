@@ -7,7 +7,7 @@ prepare_device_module
 ensure_magick
 OUT=${OUT:-build/screens}
 mkdir -p "$OUT"
-rm -f "$OUT/33_base.png"
+rm -f "$OUT/33_base.png" "$OUT/34_modules.png"
 
 launch_app "--ez test_mode true --ez station_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de estación personal"
@@ -57,6 +57,20 @@ status=$(latest_status)
 assert_eq "módulos construidos" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
 assert_eq "servicios activos" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
 assert_eq "la base ya existe" false "$(printf '%s' "$status" | json_get canBuildBase)"
+shot "$OUT" 34_modules
+validate_shot "$OUT/34_modules.png"
+
+tap "$PAUSE_X" "$PAUSE_Y" 0.3
+wait_current_state PAUSED 5 || fail "no pausó para guardar los módulos"
+launch_app "--ez test_mode true"
+wait_current_state PAUSED 10 || fail "no cargó la partida con módulos"
+sleep 0.5
+tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.5
+wait_current_state PLAYING 5 || fail "no reanudó con módulos"
+sleep 0.4
+status=$(latest_status)
+assert_eq "los módulos persisten" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
+assert_eq "los servicios persisten" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
 
 check_no_crash
 echo "OK 17_player_station: vacía, construcción, persistencia y módulos"

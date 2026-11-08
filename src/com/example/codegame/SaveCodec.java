@@ -231,6 +231,19 @@ final class SaveCodec {
             w.set("x", session.playerStation.pos.x);
             w.set("y", session.playerStation.pos.y);
             w.set("sectorId", session.playerStation.sectorId());
+            w.name("modules").array();
+            for (int i = 0; i < session.playerStation.slotCount(); i++) {
+                StationModule module = session.playerStation.moduleAt(i);
+                if (module == null) {
+                    continue;
+                }
+                w.object();
+                w.set("slot", i);
+                w.set("def", module.def.name());
+                w.set("level", module.level());
+                w.pop();
+            }
+            w.pop();
             w.pop();
             w.name("sectorSnapshots").array();
             for (SectorRuntime.Snapshot snapshot : session.universe.snapshots()) {
@@ -517,6 +530,24 @@ final class SaveCodec {
                 d.playerStationY = playerStation.getFloat("y", 0f);
                 d.playerStationSector = playerStation.getString("sectorId",
                         GameData.START_SECTOR_ID);
+                JsonValue stationModules = playerStation.get("modules");
+                if (stationModules != null && stationModules.isArray()) {
+                    for (int i = 0; i < stationModules.size; i++) {
+                        JsonValue value = stationModules.get(i);
+                        if (value == null) {
+                            continue;
+                        }
+                        ModuleDef def = ModuleDef.byId(value.getString("def", null));
+                        if (def == null) {
+                            continue;
+                        }
+                        StationModuleData data = new StationModuleData();
+                        data.slot = value.getInt("slot", -1);
+                        data.def = def;
+                        data.level = value.getInt("level", 1);
+                        d.stationModules.add(data);
+                    }
+                }
             }
             JsonValue snapList = sector.get("sectorSnapshots");
             if (snapList != null && snapList.isArray()) {
@@ -788,6 +819,11 @@ final class SaveCodec {
         if (d.hasPlayerStation) {
             session.playerStation.restore(d.playerStationBuilt,
                     d.playerStationX, d.playerStationY, d.playerStationSector);
+            for (int i = 0; i < d.stationModules.size(); i++) {
+                StationModuleData module = d.stationModules.get(i);
+                session.playerStation.restoreModule(module.slot, module.def,
+                        module.level);
+            }
         }
         session.universe.clearSnapshots();
         for (int i = 0; i < d.snapshots.size(); i++) {
@@ -851,6 +887,7 @@ final class SaveCodec {
         float playerStationX;
         float playerStationY;
         String playerStationSector = GameData.START_SECTOR_ID;
+        final List<StationModuleData> stationModules = new ArrayList<>();
         boolean hasMarket;
         float marketSpread = PriceModel.DEFAULT_SPREAD;
         int[] marketStock;
@@ -914,6 +951,12 @@ final class SaveCodec {
         AsteroidType type;
         int reserve;
         int maxReserve;
+    }
+
+    private static final class StationModuleData {
+        int slot;
+        ModuleDef def;
+        int level = 1;
     }
 
     private static final class PickupData {

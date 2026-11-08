@@ -312,6 +312,17 @@ estáticos se reutilizan.
 - `serviceMask()` se deriva de los módulos; una plataforma vacía devuelve 0.
 - Añadir un módulo nuevo es añadir un `ModuleDef`, sin tocar el núcleo.
 
+### Persistencia de la estación
+
+- El guardado v2 incluye `playerStation`:
+  - posición, sector, estado construido;
+  - módulos instalados por ranura, tipo y nivel.
+- Al cargar se restauran los módulos y sus niveles; `serviceMask()` se vuelve a
+  derivar, no se guarda como verdad paralela.
+- Un guardado sin `playerStation` sigue siendo válido: la plataforma queda sin
+  construir.
+- No se duplican créditos, materiales ni módulos al cargar.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

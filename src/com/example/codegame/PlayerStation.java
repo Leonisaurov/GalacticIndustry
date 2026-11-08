@@ -233,6 +233,31 @@ final class PlayerStation {
         return new BuildResult(true, "", module);
     }
 
+    /** Restaura un módulo ya construido (carga de partida). */
+    boolean restoreModule(int slot, ModuleDef def, int level) {
+        if (!built || def == null || slot < 0 || slot >= SLOTS
+                || slots[slot] != null) {
+            return false;
+        }
+        StationModule module = new StationModule(def);
+        int target = Math.max(1, Math.min(StationModule.MAX_LEVEL, level));
+        while (module.level() < target) {
+            module.upgrade();
+        }
+        slots[slot] = module;
+        return true;
+    }
+
+    java.util.List<StationModule> modules() {
+        java.util.List<StationModule> list = new java.util.ArrayList<>();
+        for (int i = 0; i < SLOTS; i++) {
+            if (slots[i] != null) {
+                list.add(slots[i]);
+            }
+        }
+        return list;
+    }
+
     StationModule remove(int slot) {
         if (slot < 0 || slot >= SLOTS) {
             return null;

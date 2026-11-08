@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T07:02:00-06:00  
+**Última actualización:** 2026-11-08T07:18:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,61 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-072 — Persistencia de la estación personal
+
+- **Fecha:** 2026-11-08T07:18:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-905
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El guardado v2 incluye `playerStation`:
+  - posición, sector y estado construido;
+  - módulos instalados con ranura, tipo y nivel.
+- Al cargar se restauran los módulos y sus niveles; `serviceMask()` se deriva.
+- No se duplican créditos, materiales ni módulos.
+- Un guardado sin `playerStation` sigue siendo válido y deja la plataforma sin
+  construir.
+- `17_player_station` verifica 2 módulos y máscara 3 tras reiniciar.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/StationModule.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- `PASS la estacion con modulos se guarda`
+- `PASS la estacion restaura modulos y niveles`
+- `PASS la estacion no duplica recursos al cargar`
+- `17_player_station`: 2 módulos y máscara 3 persisten tras reiniciar.
+
+### Decisiones tomadas
+
+- Se guarda el nivel por módulo, no la máscara de servicios.
+- El estado de la plataforma es opcional en el formato para compatibilidad.
+- Los módulos desconocidos se ignoran al cargar.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-907 — Módulos de almacenamiento y reparación**.
 
 ---
 

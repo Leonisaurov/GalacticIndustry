@@ -3411,6 +3411,57 @@ public class SelfTest {
                         && baseLoaded.playerStation.serviceMask() == 0
                         && baseLoaded.ship().cargo().amount(Commodity.HIERRO) == 5);
 
+        // T-905: persistir módulos, niveles y servicios de la estación.
+        Upgrades stationUp = new Upgrades(true);
+        stationUp.setCoins(3000);
+        GameSession stationSession = new GameSession(
+                new PlayerProfile(stationUp));
+        stationSession.startRun();
+        stationSession.ship().pos.set(-1500f, 0f);
+        stationSession.ship().cargo().setCapacity(400f);
+        stationSession.ship().cargo().addExact(Commodity.HIERRO, 80);
+        stationSession.ship().cargo().addExact(Commodity.COBRE, 50);
+        stationSession.ship().cargo().addExact(Commodity.SILICATO, 60);
+        stationSession.ship().cargo().addExact(Commodity.TITANIO, 20);
+        check("preparar base con modulos para guardar",
+                ConstructionService.buildCore(stationSession, -1500f, 0f).ok
+                        && stationSession.playerStation.build(0,
+                        ModuleDef.STORAGE, stationUp,
+                        stationSession.ship().cargo()).ok
+                        && stationSession.playerStation.build(1,
+                        ModuleDef.REPAIR, stationUp,
+                        stationSession.ship().cargo()).ok
+                        && stationSession.playerStation.upgrade(0,
+                        stationUp, stationSession.ship().cargo()).ok);
+        int stationCoins = stationUp.coins();
+        int stationIron = stationSession.ship().cargo().amount(Commodity.HIERRO);
+        SaveService.MemoryStorage stationStore = new SaveService.MemoryStorage();
+        SaveService stationSaves = new SaveService(stationStore);
+        check("la estacion con modulos se guarda",
+                stationSaves.save(stationSession));
+        String stationText = stationStore.read(SaveService.SAVE_NAME);
+        GameSession stationLoaded = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        check("la estacion restaura modulos y niveles",
+                stationSaves.load(stationLoaded) == SaveService.LoadStatus.V2
+                        && stationLoaded.playerStation.built()
+                        && stationLoaded.playerStation.moduleCount() == 2
+                        && stationLoaded.playerStation.moduleAt(0).def
+                        == ModuleDef.STORAGE
+                        && stationLoaded.playerStation.moduleAt(0).level() == 2
+                        && stationLoaded.playerStation.moduleAt(1).def
+                        == ModuleDef.REPAIR
+                        && stationLoaded.playerStation.moduleAt(1).level() == 1
+                        && stationLoaded.playerStation.storage()
+                        && stationLoaded.playerStation.repair()
+                        && stationLoaded.playerStation.serviceMask() == 3);
+        check("la estacion no duplica recursos al cargar",
+                stationLoaded.upgrades().coins() == stationCoins
+                        && stationLoaded.ship().cargo().amount(Commodity.HIERRO)
+                        == stationIron
+                        && SaveCodec.validate(stationText)
+                        && stationText.contains("\"modules\""));
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();
