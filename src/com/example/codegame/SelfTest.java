@@ -121,8 +121,8 @@ public class SelfTest {
                 && w.ship.part[Ship.STEERING] == Ship.PART_MAX
                 && w.ship.part[Ship.WING_LEFT] == Ship.PART_MAX
                 && w.ship.part[Ship.WING_RIGHT] == Ship.PART_MAX);
-        check("soporte vital es la ultima parte",
-                Ship.LIFE_SUPPORT == Ship.PART_COUNT - 1
+        check("soporte vital existe al final de los sistemas",
+                Ship.LIFE_SUPPORT == 7
                         && "SOPORTE".equals(Ship.PART_NAMES[Ship.LIFE_SUPPORT]));
         check("soporte vital inicial intacto",
                 w.ship.part[Ship.LIFE_SUPPORT] == Ship.PART_MAX);
@@ -646,7 +646,8 @@ public class SelfTest {
         check("tiempo estimado incluye la fuga",
                 Math.abs(leak.estimatedSeconds(o2Session.pilot, leakShip) - 1090.9f) < 5f);
         o2Session.sector.fx.clear();
-        for (int i = 0; i < 120; i++) {
+        o2Session.sector.attachLifeSupport(o2Session.lifeSupport);
+        for (int i = 0; i < 600; i++) {
             o2Session.sector.asteroids.clear();
             o2Session.update(dt, new Controls());
         }
@@ -1199,6 +1200,88 @@ public class SelfTest {
                         && oldAsteroidWorld.asteroids.size == 1
                         && oldAsteroidWorld.asteroids.get(0).type == AsteroidType.C
                         && oldAsteroidWorld.asteroids.get(0).reserve > 0);
+
+        // T-402: MiningLaser y EnergyCapacitor.
+        check("el laser es la ultima parte",
+                Ship.MINING_LASER == Ship.PART_COUNT - 1
+                        && "LASER".equals(Ship.PART_NAMES[Ship.MINING_LASER]));
+        Upgrades laserUp = new Upgrades(true);
+        Ship laserShip = new Ship();
+        laserShip.reset(laserUp, 0f, 0f);
+        check("el laser inicial esta intacto",
+                laserShip.part[Ship.MINING_LASER] == Ship.PART_MAX
+                        && laserShip.laserFactor() == 1f);
+        EnergyCapacitor capacitor = new EnergyCapacitor();
+        check("capacitor inicial lleno", capacitor.energy == capacitor.maxEnergy);
+        capacitor.update(1f, true);
+        check("minar consume 3 de energia",
+                Math.abs(capacitor.energy - 97f) < 0.001f);
+        capacitor.update(40f, true);
+        check("el capacitor se agota", capacitor.energy == 0f);
+        capacitor.update(1.1f, false);
+        check("recarga tras 1 s de espera",
+                Math.abs(capacitor.energy - 0.8f) < 0.02f);
+        Asteroid rockC = new Asteroid(100f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 101L);
+        Asteroid rockS = new Asteroid(150f, 0f, Asteroid.MEDIUM,
+                AsteroidType.S, 35, 35, 102L);
+        Asteroid rockM = new Asteroid(200f, 0f, Asteroid.MEDIUM,
+                AsteroidType.M, 75, 75, 103L);
+        MiningLaser miningLaser = new MiningLaser();
+        check("tasa C ~6 UM/s",
+                Math.abs(miningLaser.rate(laserShip, rockC) - 6f) < 0.01f);
+        check("tasa S ~4.8 UM/s",
+                Math.abs(miningLaser.rate(laserShip, rockS) - 4.8f) < 0.01f);
+        check("tasa M ~3 UM/s",
+                Math.abs(miningLaser.rate(laserShip, rockM) - 3f) < 0.01f);
+        check("tiempos C/S/M dentro del plan",
+                rockC.reserve / 6f >= 2f && rockC.reserve / 6f <= 4f
+                        && rockS.reserve / 4.8f >= 6f && rockS.reserve / 4.8f <= 9f
+                        && rockM.reserve / 3f >= 20f && rockM.reserve / 3f <= 30f);
+        check("el laser sin objetivo no mina",
+                miningLaser.tick(1f, laserShip, laserShip.capacitor) == 0
+                        && !miningLaser.active);
+        laserShip.capacitor.reset();
+        miningLaser.aim(rockC);
+        float fuelBeforeLaser = laserShip.fuel;
+        int extractedC = miningLaser.tick(1f, laserShip, laserShip.capacitor);
+        check("el laser extrae y consume energia",
+                extractedC == 6
+                        && Math.abs(laserShip.capacitor.energy - 97f) < 0.01f
+                        && rockC.reserve == 9);
+        check("el laser no consume combustible",
+                laserShip.fuel == fuelBeforeLaser);
+        laserShip.capacitor.energy = 0f;
+        miningLaser.aim(rockS);
+        check("sin energia el laser no mina",
+                !miningLaser.canMine(laserShip, laserShip.capacitor)
+                        && miningLaser.tick(1f, laserShip, laserShip.capacitor) == 0
+                        && rockS.reserve == 35);
+        laserShip.capacitor.reset();
+        miningLaser.aim(rockM);
+        for (int i = 0; i < 30 && miningLaser.active; i++) {
+            miningLaser.tick(1f, laserShip, laserShip.capacitor);
+        }
+        check("el laser agota la roca y se detiene",
+                rockM.depleted() && !miningLaser.active);
+        laserShip.part[Ship.MINING_LASER] = 0f;
+        miningLaser.aim(rockS);
+        check("sin laser operativo no se mina",
+                !miningLaser.canMine(laserShip, laserShip.capacitor));
+        GameWorld mineWorld = new GameWorld(new Upgrades(true));
+        mineWorld.start();
+        mineWorld.immortal = true;
+        mineWorld.asteroids.clear();
+        Asteroid mineTarget = new Asteroid(100f, 0f, Asteroid.MEDIUM,
+                AsteroidType.C, 15, 15, 104L);
+        mineTarget.vel.set(0f, 0f);
+        mineWorld.asteroids.add(mineTarget);
+        mineWorld.ship.laser.aim(mineTarget);
+        for (int i = 0; i < 60; i++) {
+            mineWorld.update(1f / 60f, new Controls());
+        }
+        check("GameWorld integra el laser",
+                mineTarget.reserve == 9);
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();

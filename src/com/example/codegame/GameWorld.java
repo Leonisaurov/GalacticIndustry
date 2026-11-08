@@ -54,6 +54,8 @@ class GameWorld {
     boolean immortal;
     /** Impactos absorbidos por el modo inmortal (telemetría de pruebas). */
     int ignoredHits;
+    /** Mineral extraído en este frame; T-403 lo moverá a la bodega. */
+    int minedThisFrame;
     private float deathTimer;
     private int deathStage;
 
@@ -101,6 +103,7 @@ class GameWorld {
         deathTimer = 0f;
         deathStage = 0;
         ignoredHits = 0;
+        minedThisFrame = 0;
         legacyWreck = false;
         legacyWreckPos.setZero();
         legacyWreckHeading = 0f;
@@ -176,6 +179,7 @@ class GameWorld {
         wave = 1;
         shake = 0f;
         ignoredHits = 0;
+        minedThisFrame = 0;
         deathTimer = 0f;
         deathStage = 0;
         updateChunks();
@@ -378,6 +382,12 @@ class GameWorld {
             pilot.steer(c, this, dt);
         }
         ship.update(dt, up, c);
+        if (ship.laser.active) {
+            minedThisFrame = ship.laser.tick(dt, ship, ship.capacitor);
+        } else {
+            minedThisFrame = 0;
+            ship.capacitor.update(dt, false);
+        }
         if (lifeSupport != null) {
             lifeSupport.updateLeak(ship);
         }

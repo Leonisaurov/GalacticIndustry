@@ -23,18 +23,23 @@ class Ship {
     static final int WING_RIGHT = 6;
     /** Soporte vital: afecta al filtro de O2; se añade al final para no romper índices. */
     static final int LIFE_SUPPORT = 7;
-    static final int PART_COUNT = 8;
+    /** Láser minero: afecta a la tasa de extracción. */
+    static final int MINING_LASER = 8;
+    static final int PART_COUNT = 9;
     /** Integridad maxima de los sistemas; el casco crece con la mejora Blindaje. */
     static final float PART_MAX = 100f;
     /** Fuga maxima del deposito danado, en combustible por segundo. */
     static final float TANK_LEAK = 2.2f;
 
     static final String[] PART_NAMES = {
-            "CASCO", "MOTOR", "DEPOSITO", "CANON", "TIMON", "ALA IZQ", "ALA DER", "SOPORTE"
+            "CASCO", "MOTOR", "DEPOSITO", "CANON", "TIMON", "ALA IZQ", "ALA DER",
+            "SOPORTE", "LASER"
     };
 
     /** Bodega de la nave; la capacidad se ajustará con la mejora de bodega. */
     final CargoHold cargo = GameData.newCargoHold();
+    final EnergyCapacitor capacitor = new EnergyCapacitor();
+    final MiningLaser laser = new MiningLaser();
     final Vector2 pos = new Vector2();
     final Vector2 vel = new Vector2();
     final Vector2 dir = new Vector2(0f, 1f);
@@ -67,6 +72,8 @@ class Ship {
         fuel = maxFuel;
         cargo.setCapacity(up.cargoCapacity());
         cargo.clear();
+        capacitor.reset();
+        laser.stop();
         cooldown = 0f;
         invulnerable = 0f;
         lastDamaged = -1;
@@ -142,6 +149,11 @@ class Ship {
     /** Capacidad del deposito (40 % con el deposito destruido). */
     float tankFactor() {
         return 0.40f + 0.60f * part[TANK] / PART_MAX;
+    }
+
+    /** Integridad del láser minero (0 = sin extracción). */
+    float laserFactor() {
+        return part[MINING_LASER] / PART_MAX;
     }
 
     /** Media de integridad de las dos alas; afecta a giro y velocidad. */

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:01:00-06:00  
+**Última actualización:** 2026-11-08T01:07:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,76 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-030 — Láser minero y capacitor
+
+- **Fecha:** 2026-11-08T01:07:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-402
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `EnergyCapacitor`: 100 de energía, consumo 3/s minando y recarga 8/s tras
+  1 s sin minar.
+- `MiningLaser`:
+  - potencia 6 + 1.5·nivel;
+  - penetración 3 + 1·nivel;
+  - resistencia por dureza;
+  - rango 260 u;
+  - exige objetivo, energía y la parte `MINING_LASER`.
+- `MINING_LASER` es la novena parte de la nave.
+- El láser agota la reserva de la roca y se detiene.
+- No consume combustible.
+- `GameWorld` integra el tick; T-403 moverá el mineral a la bodega.
+- Corregido el texto de reparación de `LASER` en la tienda.
+
+### Archivos modificados
+
+- `src/com/example/codegame/EnergyCapacitor.java` (nuevo)
+- `src/com/example/codegame/MiningLaser.java` (nuevo)
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK** (dos ejecuciones).
+- `tools/run-tests.sh --no-build 03_controls 09_wing_damage`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS capacitor inicial lleno`
+- `PASS minar consume 3 de energia`
+- `PASS el capacitor se agota`
+- `PASS recarga tras 1 s de espera`
+- `PASS tasa C ~6 UM/s`
+- `PASS tasa S ~4.8 UM/s`
+- `PASS tasa M ~3 UM/s`
+- `PASS tiempos C/S/M dentro del plan`
+- `PASS el laser sin objetivo no mina`
+- `PASS el laser extrae y consume energia`
+- `PASS el laser no consume combustible`
+- `PASS sin energia el laser no mina`
+- `PASS el laser agota la roca y se detiene`
+- `PASS sin laser operativo no se mina`
+- `PASS GameWorld integra el laser`
+
+### Decisiones tomadas
+
+- La energía vive en `Ship`; el objetivo y el tick en `MiningLaser`.
+- La extracción aún no llena la bodega; se conecta en T-403.
+- La parte `MINING_LASER` se añade al final del array.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-403 — Integrar extracción, bodega y agotamiento**.
 
 ---
 

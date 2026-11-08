@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S4` — Minería láser y recursos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-401` — Definir AsteroidType, composición y RNG determinista.
-- Primera tarea disponible: `T-402` — Implementar MiningLaser y EnergyCapacitor.
+- Última tarea completada: `T-402` — Implementar MiningLaser y EnergyCapacitor.
+- Primera tarea disponible: `T-403` — Integrar extracción, bodega y agotamiento.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **27 %** (22 de 81 tareas de progreso).
+- La implementación del juego está al **28 %** (23 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

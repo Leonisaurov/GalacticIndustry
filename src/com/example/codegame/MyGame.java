@@ -1688,6 +1688,7 @@ public class MyGame implements ApplicationListener {
             case Ship.CANNON: return "Menos dano y cadencia";
             case Ship.STEERING: return "Gira mas despacio";
             case Ship.LIFE_SUPPORT: return "Filtro de O2 al 20%";
+            case Ship.MINING_LASER: return "Sin laser no se mina";
             default: return "Se pierde el ala y el giro";
         }
     }

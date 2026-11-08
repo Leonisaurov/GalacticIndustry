@@ -223,6 +223,17 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - El tipo no lleva recompensa en monedas. La recompensa legacy de `Asteroid`
   se elimina en T-405.
 
+## Minería láser y energía
+
+- `EnergyCapacitor`: 100 de base, consumo 3/s minando y recarga 8/s tras 1 s.
+- `MiningLaser`: potencia 6 + 1.5·nivel, penetración 3 + 1·nivel, rango 260 u
+  y resistencia `clamp(1 − max(0, dureza − penetración)·0.10, 0.15, 1)`.
+- La tasa es `potencia · integridadLaser · resistencia`; con equipo inicial:
+  C 6 UM/s, S 4.8 y M 3.
+- La parte `MINING_LASER` es la novena y su integridad multiplica la tasa.
+- El láser consume energía, no combustible, y se detiene al agotar la roca.
+  T-403 conecta la extracción con la bodega.
+
 ## Masa y movimiento
 
 - `MassModel.load()` usa `usado/capacidad` (0–1) y aplica topes.
