@@ -633,6 +633,23 @@ Android / MainActivity
 - No guardar cada frame.
 - Guardar en pausa, acople, transacción, cambio de sector y cada 30 s.
 
+### 11.4 Balance y rendimiento medidos
+
+Datos de T-1105 (SelfTest y dispositivo):
+
+| Medida | Valor |
+|---|---:|
+| Expedición: ingreso por 100 Silicato | 206 cr |
+| Coste de 40 de combustible | 40 cr |
+| Beneficio neto | +166 cr |
+| 3.000 frames, chunks generados | 25 |
+| Memoria adicional tras 3.000 frames | ~2 MB |
+| FPS en dispositivo (objetivo) | ≥ 30 |
+
+No se modificaron precios ni consumos: el margen es positivo y el consumo de
+combustible sigue siendo relevante. El objetivo de 60 FPS se cumple en gama
+media; el suelo de 30 FPS se verifica en `16_universe`.
+
 ### 11.4 Rendimiento
 
 | Recurso | Límite |

@@ -50,7 +50,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `17_warp` — viaje warp libre con motor, coste de combustible, snapshot del origen y regreso al sector anterior. En `warp_test` se usan `T`/`Y` o zonas invisibles de prueba.
 - `18_map` — mapa de sectores: 5/6 descubiertos, nodo oculto sin datos, coste del destino y viaje warp desde `VIAJAR` (captura `32_map`).
 - `18_interiors` — marco (3/2/3), render cenital (`36_interior`, FPS ≥ 25), interacción con módulo (`37_interaction`) y salida a la nave (`39_exit`). Avatar, colisión, puertas y guardado de posición se cubren en `01_logic`.
-- `19_audio` — efectos locales y silencio conmutable desde la pausa.
+- `19_audio` — efectos locales y silencio conmutable desde la pausa. Balance (`BENCH expedicion`) y rendimiento (`BENCH rendimiento`, FPS ≥ 30) en `01_logic`/`16_universe`.
 - `17_player_station` — plataforma vacía, construcción (`33_base`), módulos/servicios (`34_modules`), acople y gestión (`35_management`), entrada al interior (`38_entry`), mejora, descarga y persistencia. Refinería/mercado y guardado se cubren en `01_logic`; el mercado global sigue en `14_market`.
 
 ```sh

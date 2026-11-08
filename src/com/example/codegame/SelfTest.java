@@ -4021,6 +4021,46 @@ public class SelfTest {
         check("el contrato caduca por plazo",
                 expired.status == Mission.Status.FAILED);
 
+        // T-1105: balance de una expedicion y estabilidad de recursos.
+        GameSession balance = new GameSession(new PlayerProfile(new Upgrades(true)));
+        balance.startRun();
+        balance.ship().cargo().setCapacity(300f);
+        balance.ship().cargo().addExact(Commodity.SILICATO, 100);
+        float refillMissing = 40f;
+        int refillCost = balance.upgrades().refillCost(refillMissing);
+        int balanceStartCoins = balance.upgrades().coins();
+        TradeService.Result balanceSale = TradeService.sell(balance.sector,
+                balance.upgrades(), Commodity.SILICATO, 100, null);
+        int balanceIncome = balance.upgrades().coins() - balanceStartCoins;
+        System.out.println("BENCH expedicion ingreso=" + balanceIncome
+                + " combustible=" + refillCost
+                + " neto=" + (balanceIncome - refillCost));
+        check("una expedicion completa deja beneficio",
+                balanceSale.ok
+                        && balanceIncome > refillCost
+                        && balanceIncome - refillCost > 0);
+        GameWorld balancePerfWorld = new GameWorld(new Upgrades(true));
+        balancePerfWorld.start();
+        balancePerfWorld.immortal = true;
+        balancePerfWorld.asteroids.clear();
+        balancePerfWorld.fuel.clear();
+        long balanceMemBefore = Runtime.getRuntime().totalMemory()
+                - Runtime.getRuntime().freeMemory();
+        for (int i = 0; i < 3000; i++) {
+            balancePerfWorld.update(0.05f, new Controls());
+        }
+        long balanceMemAfter = Runtime.getRuntime().totalMemory()
+                - Runtime.getRuntime().freeMemory();
+        System.out.println("BENCH rendimiento frames=3000 chunks="
+                + balancePerfWorld.generatedChunks().size()
+                + " rocas=" + balancePerfWorld.asteroids.size
+                + " memDeltaMB=" + ((balanceMemAfter - balanceMemBefore) / (1024 * 1024)));
+        check("3000 frames mantienen recursos acotados",
+                balancePerfWorld.generatedChunks().size()
+                        <= (2 * GameWorld.RING + 1) * (2 * GameWorld.RING + 1)
+                        && balancePerfWorld.asteroids.size <= GameWorld.MAX_ASTEROIDS
+                        && balancePerfWorld.missiles.size < 100);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

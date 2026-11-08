@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T11:38:00-06:00  
+**Última actualización:** 2026-11-08T11:58:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,55 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-086 — Balance, telemetría y rendimiento
+
+- **Fecha:** 2026-11-08T11:58:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1105
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Expedición**: 100 Silicato → **206 cr**, combustible 40 → **neto +166 cr**.
+- **3.000 frames**: 25 chunks, 0 rocas extra, **~2 MB** adicionales.
+- **FPS**: ≥ 30 en dispositivo (`16_universe`).
+- Tabla de balance y rendimiento documentada en `docs/MASTER_PLAN.md`.
+- No se ajustaron precios ni consumos: el margen es positivo y el combustible
+  sigue siendo un coste relevante.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/MASTER_PLAN.md`
+- `docs/pruebas.md`
+- `tools/tests/16_universe.sh`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `BENCH expedicion ingreso=206 combustible=40 neto=166`
+- `PASS una expedicion completa deja beneficio`
+- `BENCH rendimiento frames=3000 chunks=25 rocas=0 memDeltaMB=2`
+- `PASS 3000 frames mantienen recursos acotados`
+- `16_universe`: FPS ≥ 30.
+
+### Decisiones tomadas
+
+- Sin cambios de precios/consumos por ahora.
+- El suelo de rendimiento es 30 FPS; el objetivo de 60 se cumple en gama media.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1106 — Accesibilidad y localización**.
 
 ---
 

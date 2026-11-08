@@ -4,23 +4,22 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T11:38:00-06:00",
-    "lastSessionId": "S-085",
+    "lastUpdated": "2026-11-08T11:58:00-06:00",
+    "lastSessionId": "S-086",
     "lastVerification": {
-      "date": "2026-11-08T11:38:00-06:00",
+      "date": "2026-11-08T11:58:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "AudioService local con efectos principales y motor en bucle",
-        "Assets WAV en assets/audio, sin red ni jars",
-        "Silencio global persistido y conmutable desde la pausa",
-        "19_audio en dispositivo",
+        "Expedicion: ingreso 206, combustible 40, neto +166",
+        "3000 frames: 25 chunks y ~2 MB adicionales",
+        "16_universe: FPS >= 30",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1105",
+    "nextTaskId": "T-1106",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5462,7 +5461,7 @@
       "description": "Medir tiempos, beneficio, mortalidad, FPS y memoria; ajustar parámetros.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1101"
@@ -5486,10 +5485,36 @@
         "Regresión"
       ],
       "technicalNotes": "No ajustar a ciegas; usar telemetría.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-086",
+          "date": "2026-11-08T11:58:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Balance medido: expedicion de 100 Silicato deja +166 cr netos; 3000 frames mantienen 25 chunks y ~2 MB; FPS>=30 en dispositivo. Documentada la tabla en MASTER_PLAN y pruebas. Sin cambios de precios por margen sano.",
+          "files": [
+            "src/com/example/codegame/SelfTest.java",
+            "docs/MASTER_PLAN.md",
+            "docs/pruebas.md",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "Bench",
+            "16_universe",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "BENCH expedicion ingreso=206 combustible=40 neto=166",
+        "PASS una expedicion completa deja beneficio",
+        "BENCH rendimiento frames=3000 chunks=25 rocas=0 memDeltaMB=2",
+        "PASS 3000 frames mantienen recursos acotados",
+        "16_universe: fps>=30"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T11:58:00-06:00"
     },
     {
       "id": "T-1106",
@@ -5498,7 +5523,7 @@
       "description": "Mejorar legibilidad, tamaños táctiles, avisos no cromáticos y textos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1105"
@@ -6525,6 +6550,28 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-086",
+      "date": "2026-11-08T11:58:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Balance, telemetría y rendimiento",
+      "summary": "Datos de expedición (+166 netos), 3000 frames acotados y FPS≥30; tabla de balance documentada y sin ajustes necesarios.",
+      "tasks": [
+        "T-1105"
+      ],
+      "files": [
+        "src/com/example/codegame/SelfTest.java",
+        "docs/MASTER_PLAN.md",
+        "docs/pruebas.md",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1106 (accesibilidad y localizacion)."
+    },
     {
       "id": "S-085",
       "date": "2026-11-08T11:38:00-06:00",

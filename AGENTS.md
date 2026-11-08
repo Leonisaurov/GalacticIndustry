@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S11` — Expansión.
 - No hay tarea en progreso.
-- Última tarea completada: `T-1104` — Infraestructura de audio y efectos de sonido.
-- Primera tarea disponible: `T-1105` — Balance, telemetría y rendimiento.
+- Última tarea completada: `T-1105` — Balance, telemetría y rendimiento.
+- Primera tarea disponible: `T-1106` — Accesibilidad y localización.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **94 %** (76 de 81 tareas de progreso).
+- La implementación del juego está al **95 %** (77 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
