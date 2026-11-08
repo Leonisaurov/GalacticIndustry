@@ -135,6 +135,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `station_test`: arranca junto a la nave nodriza. Lo usa `13_station` para
   revisar escala, zona segura y telemetría (`stationX/Y`, `stationRadius`,
   `stationDistance`, `stationAsteroids`).
+- `docking_test`: arranca a 900 u con `Autopilot.STATION`; el piloto frena en
+  la zona de acople y `13_station` pulsa `ACOPLAR`, comprueba `DOCKED` y
+  después `DESPEGAR`.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

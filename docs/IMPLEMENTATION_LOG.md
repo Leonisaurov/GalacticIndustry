@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:24:00-06:00  
+**Última actualización:** 2026-11-08T02:30:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,76 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-042 — Acoplamiento y Autopilot.STATION
+
+- **Fecha:** 2026-11-08T02:30:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-502
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `DockingSystem`: acople a ≤260 u y **<30 u/s**; detiene la nave y activa
+  `DOCKED`. `undock()` devuelve al exterior con velocidad cero.
+- `Autopilot.STATION` vuela a la estación, limita la aproximación y frena a
+  ~242 u del centro, fuera del casco visual (200) y dentro de la zona de acople
+  (260). La frenada final pone la velocidad a 0 para no dejar inercia.
+- El HUD muestra `ACOPLAR` con la distancia a la nodriza.
+- `DOCKED` abre una pantalla mínima con servicios y `DESPEGAR` (los servicios
+  completos llegan en T-503).
+- Telemetría: `docked` y `canDock`.
+- Nuevo `docking_test`; `13_station` cubre `Autopilot.STATION → ACOPLAR →
+  DOCKED → DESPEGAR`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/DockingSystem.java` (nuevo)
+- `src/com/example/codegame/Autopilot.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/HudView.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/OverlayRenderer.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 13_station 04_autopilot 12_mining 07_visual_play`: **4/4 OK**.
+
+### Evidencias
+
+- `PASS se puede acoplar cerca y despacio`
+- `PASS no se acopla con velocidad alta`
+- `PASS el acople detiene la nave y activa DOCKED`
+- `PASS el desacople devuelve la nave al exterior`
+- `PASS el piloto entra en modo STATION`
+- `PASS Autopilot.STATION frena en la zona de acople`
+- `PASS Autopilot.STATION no penetra el casco de la estacion`
+- `13_station`: `ACOPLAR → DOCKED → DESPEGAR → PLAYING`.
+- Capturas `26_dock` (ACOPLAR) y `27_docked` (pantalla de estación).
+
+### Decisiones tomadas
+
+- El acople es manual; el piloto solo aproxima y frena.
+- La estación se trata como obstáculo grande: la aproximación se limita a 90
+  u/s y se empuja hacia fuera dentro de `radio + 55`.
+- Al terminar cualquier frenada se anula la velocidad residual.
+- La pantalla de estación es mínima; los servicios completos son T-503.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-503 — Crear StationScreen y servicios básicos**.
 
 ---
 

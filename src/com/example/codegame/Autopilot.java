@@ -22,6 +22,8 @@ class Autopilot {
     static final int STOP = 3;
     /** Minería automática: aproximarse a una roca y mantener el láser. */
     static final int MINE = 4;
+    /** Viaje a la estación nodriza: aproximarse y frenar en la zona de acople. */
+    static final int STATION = 5;
 
     /** Distancia de aparcamiento para minar; queda dentro del alcance del láser. */
     static final float MINE_DIST = 180f;
@@ -58,6 +60,7 @@ class Autopilot {
     private int kind = NONE;
     private Asteroid rock;
     private FuelPickup cell;
+    private Station station;
     private float stopTime;
 
     private final Vector2 targetVel = new Vector2();
@@ -79,6 +82,7 @@ class Autopilot {
         kind = NONE;
         rock = null;
         cell = null;
+        station = null;
         stopTime = 0f;
     }
 
@@ -99,6 +103,13 @@ class Autopilot {
         cancel();
         kind = FUEL;
         cell = f;
+    }
+
+    /** Vuela a la estación y frena dentro de la zona de acople. */
+    void station(Station s) {
+        cancel();
+        kind = STATION;
+        station = s;
     }
 
     /** Rellena los controles de este fotograma. Si el objetivo desaparece, pasa a frenar. */
@@ -132,6 +143,11 @@ class Autopilot {
             stop = kind == MINE
                     ? MINE_DIST
                     : Math.max(FIRE_DIST, rock.radius + Ship.RADIUS + SAFE_CLEARANCE);
+        } else if (kind == STATION) {
+            goal = station.pos;
+            targetVel.set(0f, 0f);
+            // Dentro de dockRadius (260) y con holgura sobre el casco (200).
+            stop = Math.max(station.def.radius + 40f, station.def.dockRadius - 20f);
         } else {
             goal = cell.pos;
             targetVel.set(0f, 0f);
@@ -140,15 +156,26 @@ class Autopilot {
         toTarget.set(goal).sub(ship.pos);
         float dist = toTarget.len();
         Vector2 d = dist > 1e-3f ? toTarget.scl(1f / dist) : toTarget.set(MathUtils.cosDeg(ship.heading), MathUtils.sinDeg(ship.heading));
+        if (kind == STATION && dist <= stop + 30f) {
+            // Ya en la zona de acople: frena del todo en vez de orbitar el casco.
+            beginStop();
+            steerStop(c, w, dt);
+            return;
+        }
 
         // Velocidad de aproximación según la distancia de frenado con la aceleración real.
         // Se frena con la mitad de la aceleración: la nave tarda en girar hacia la dirección de frenado.
         // Solo frente a meteoritos: un bidón no hace daño, así que no hace falta frenar con margen.
-        float brake = (kind == ASTEROID || kind == MINE) ? accel * BRAKE_MARGIN : accel;
+        float brake = (kind == ASTEROID || kind == MINE || kind == STATION)
+                ? accel * BRAKE_MARGIN : accel;
         float slow = dist - stop;
         float approach = slow > 0f
                 ? Math.min(vmax, (float) Math.sqrt(2f * brake * slow))
                 : -Math.min(vmax * 0.3f, (float) Math.sqrt(2f * brake * -slow) * 0.5f);
+        if (kind == STATION && dist < 700f) {
+            // La estación es enorme: se llega despacio para no sobrepasar el casco.
+            approach = Math.min(approach, 90f);
+        }
         if (kind == FUEL && dist < FuelPickup.RADIUS + Ship.RADIUS + FUEL_ARRIVAL_BAND) {
             // Cerca del bidón no conviene llegar con velocidad casi nula: se pasaría
             // de frenada y el piloto tendría que volver a acelerar. Se fuerza un
@@ -157,7 +184,7 @@ class Autopilot {
         }
         desired.set(d).scl(approach).add(targetVel);
 
-        if (kind == ASTEROID || kind == MINE) {
+        if (kind == ASTEROID || kind == MINE || kind == STATION) {
             for (int i = 0; i < w.asteroids.size; i++) {
                 Asteroid a = w.asteroids.get(i);
                 if (a != rock) {
@@ -165,13 +192,16 @@ class Autopilot {
                 }
             }
         }
+        // La estación es un obstáculo grande: empuja hacia fuera si la nave se acerca demasiado.
+        avoidStation(w.station, ship, vmax);
 
         // Lo que hay que empujar para pasar de la velocidad relativa actual a la deseada.
         relVel.set(ship.vel).sub(targetVel);
         need.set(desired).sub(relVel);
         float needLen = need.len();
+        float band = kind == STATION ? 25f : COAST_BAND;
 
-        if (needLen > COAST_BAND) {
+        if (needLen > band) {
             // Hay que empujar: se gira hacia la dirección necesaria y solo se empuja si está bastante alineada.
             float aimDeg = MathUtils.atan2(need.y, need.x) * MathUtils.radiansToDegrees;
             float misalign = Math.abs(Ship.wrapDeg(aimDeg - ship.heading));
@@ -243,6 +273,8 @@ class Autopilot {
         stopTime += dt;
         float speed = ship.vel.len();
         if (speed < STOP_SPEED || stopTime > STOP_TIMEOUT) {
+            // No dejar inercia residual: la nave queda quieta al terminar la frenada.
+            ship.vel.setZero();
             cancel();
             return;
         }
@@ -341,6 +373,28 @@ class Autopilot {
         desired.y += my / miss * push;
     }
 
+    /** Empuja la velocidad deseada fuera del casco de la estación. */
+    private void avoidStation(Station station, Ship ship, float vmax) {
+        if (station == null) {
+            return;
+        }
+        float dx = ship.pos.x - station.pos.x;
+        float dy = ship.pos.y - station.pos.y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        float clearance = station.def.radius + 55f;
+        if (dist >= clearance) {
+            return;
+        }
+        if (dist < 0.001f) {
+            dx = 0f;
+            dy = -1f;
+            dist = 1f;
+        }
+        float push = (clearance - dist) / clearance * vmax * 0.9f;
+        desired.x += dx / dist * push;
+        desired.y += dy / dist * push;
+    }
+
     private boolean stillThere(GameWorld w) {
         if (kind == ASTEROID) {
             return w.asteroids.contains(rock, true);
@@ -350,6 +404,9 @@ class Autopilot {
         }
         if (kind == FUEL) {
             return w.fuel.contains(cell, true);
+        }
+        if (kind == STATION) {
+            return station != null && station == w.station && !w.ship.docked;
         }
         return false;
     }
@@ -369,13 +426,17 @@ class Autopilot {
             }
             return;
         }
-        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos : cell.pos;
-        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos
+                : kind == STATION ? station.pos : cell.pos;
+        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f
+                : kind == STATION ? station.def.radius + 24f : FuelPickup.RADIUS + 14f;
         float pulse = 1f + 0.06f * MathUtils.sin(time * 5f);
         if (kind == MINE) {
             shapes.setColor(1f, 0.78f, 0.28f, 0.90f);
         } else if (kind == ASTEROID) {
             shapes.setColor(0.45f, 0.85f, 1f, 0.85f);
+        } else if (kind == STATION) {
+            shapes.setColor(0.45f, 0.75f, 1f, 0.85f);
         } else {
             shapes.setColor(0.40f, 1f, 0.62f, 0.85f);
         }
@@ -409,11 +470,14 @@ class Autopilot {
             }
             return;
         }
-        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos : cell.pos;
-        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f : FuelPickup.RADIUS + 14f;
+        Vector2 p = (kind == ASTEROID || kind == MINE) ? rock.pos
+                : kind == STATION ? station.pos : cell.pos;
+        float r = (kind == ASTEROID || kind == MINE) ? rock.radius + 12f
+                : kind == STATION ? station.def.radius + 24f : FuelPickup.RADIUS + 14f;
         float pulse = 0.6f + 0.4f * MathUtils.sin(time * 5f);
         Color c = kind == MINE ? Visuals.GOLD
-                : kind == ASTEROID ? Visuals.ACCENT : Visuals.GOOD;
+                : kind == ASTEROID ? Visuals.ACCENT
+                : kind == STATION ? Visuals.ACCENT : Visuals.GOOD;
         art.glow(batch, p.x, p.y, r * 3.2f, c, 0.10f * pulse);
         for (int i = 0; i < 12; i++) {
             float a = i * 30f + time * 45f;

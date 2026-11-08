@@ -38,6 +38,63 @@ final class OverlayRenderer {
         shapes.begin(ShapeRenderer.ShapeType.Filled);
     }
 
+    /** Pantalla mínima de estación acoplada; los servicios completos llegan en T-503. */
+    void drawDocked(float w, float h) {
+        float pad = 16f * game.u;
+        beginShapes();
+        shapes.rect(0f, 0f, w, h,
+                Visuals.SKY_BOTTOM, Visuals.SKY_BOTTOM, Visuals.SKY_TOP, Visuals.SKY_TOP);
+        shapes.end();
+
+        batch.begin();
+        Visuals.additive(batch);
+        game.space.stars(w * 0.5f, h * 0.5f, w, h, game.u, 0.9f);
+        batch.end();
+        Visuals.normal(batch);
+
+        float pw = Math.min(w - 4f * pad, 540f * game.u);
+        float ph = 430f * game.u;
+        float px = (w - pw) * 0.5f;
+        float py = (h - ph) * 0.5f;
+
+        beginShapes();
+        shapes.setColor(0f, 0f, 0f, 0.55f);
+        shapes.rect(0f, 0f, w, h);
+        ui.panel(px, py, pw, ph, 26f * game.u, Visuals.PANEL, Visuals.PANEL_EDGE);
+        shapes.setColor(0.30f, 0.65f, 1f, 0.55f);
+        shapes.rect(px + pw * 0.25f, py + ph - 4f * game.u, pw * 0.5f, 3f * game.u);
+        // Barra de almacén.
+        float storeFrac = game.world.station.storage.capacity() > 0f
+                ? game.world.station.storage.usedMass()
+                / game.world.station.storage.capacity() : 0f;
+        ui.panel(px + 30f * game.u, py + 150f * game.u, pw - 60f * game.u,
+                16f * game.u, 8f * game.u, Visuals.PANEL, Visuals.PANEL_EDGE);
+        if (storeFrac > 0.001f) {
+            shapes.setColor(Visuals.ACCENT);
+            Visuals.roundRect(shapes, px + 32f * game.u, py + 152f * game.u,
+                    (pw - 64f * game.u) * storeFrac, 12f * game.u, 6f * game.u);
+        }
+        ui.drawButton(game.btnUndock, Visuals.BTN_PRIMARY, true);
+        shapes.end();
+
+        batch.begin();
+        ui.textCenteredMiddle("NODO " + game.world.station.def.name,
+                w * 0.5f, py + ph - 70f * game.u, 1.6f * game.u, Color.WHITE);
+        ui.textCenteredMiddle("SERVICIOS COMPLETOS",
+                w * 0.5f, py + ph - 120f * game.u, 0.85f * game.u, Visuals.ACCENT);
+        ui.textCenteredMiddle("Reparacion  -  Combustible  -  O2  -  Mejoras",
+                w * 0.5f, py + ph - 165f * game.u, 0.75f * game.u, Visuals.TEXT_DIM);
+        ui.textCenteredMiddle("MERCADO Y ALMACEN EN T-503",
+                w * 0.5f, py + ph - 200f * game.u, 0.72f * game.u, Visuals.TEXT_DIM);
+        ui.textLeft("ALMACEN " + Math.round(game.world.station.storage.usedMass())
+                        + "/" + Math.round(game.world.station.storage.capacity()) + " UM",
+                px + 32f * game.u, py + 190f * game.u, 0.70f * game.u, Visuals.TEXT_DIM);
+        ui.textCenteredMiddle("DESPEGAR devuelve la nave al exterior",
+                w * 0.5f, py + 52f * game.u, 0.70f * game.u, Visuals.TEXT_DIM);
+        ui.drawButtonText(game.btnUndock, true);
+        batch.end();
+    }
+
     void drawMenu(float w, float h) {
         float camX = game.time * 16f * game.u;
         float camY = game.time * 7f * game.u;

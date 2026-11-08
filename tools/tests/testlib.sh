@@ -35,6 +35,10 @@ SHOP_FIRST_BTN_X=0
 SHOP_FIRST_BTN_Y=0
 RECOVER_X=0
 RECOVER_Y=0
+DOCK_X=0
+DOCK_Y=0
+UNDOCK_X=0
+UNDOCK_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -88,6 +92,11 @@ device_geometry() {
     # Botón RECUPERAR NAVE: centro de la pantalla, a 30 % de altura + 23 u.
     RECOVER_X=$((W / 2))
     RECOVER_Y=$((H - (H * 30 / 100 + 23 * U)))
+    # Botones contextuales ACOPLAR (38 %) y DESPEGAR (30 %).
+    DOCK_X=$((W / 2))
+    DOCK_Y=$((H - (H * 38 / 100 + 23 * U)))
+    UNDOCK_X=$((W / 2))
+    UNDOCK_Y=$((H - (H * 30 / 100 + 23 * U)))
 }
 
 # ---------- build y SelfTest ----------

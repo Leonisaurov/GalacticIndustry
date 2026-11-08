@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S5` — Nave nodriza y acoplamiento.
 - No hay tarea en progreso.
-- Última tarea completada: `T-501` — Crear Station y la nave nodriza del sector inicial.
-- Primera tarea disponible: `T-502` — Implementar acoplamiento y Autopilot.STATION.
+- Última tarea completada: `T-502` — Implementar acoplamiento y Autopilot.STATION.
+- Primera tarea disponible: `T-503` — Crear StationScreen y servicios básicos.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **40 %** (32 de 81 tareas de progreso).
+- La implementación del juego está al **41 %** (33 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `ShopRenderer`, `OverlayRenderer` y `SpaceBackground` (T-007).
 

@@ -4,24 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:20:00-06:00",
-    "lastSessionId": "S-041",
+    "lastUpdated": "2026-11-08T02:30:00-06:00",
+    "lastSessionId": "S-042",
     "lastVerification": {
-      "date": "2026-11-08T02:20:00-06:00",
+      "date": "2026-11-08T02:30:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Station y StationDef en el sector inicial",
-        "Radio 200, acople 260, zona segura 480 y 6 servicios",
-        "Almacén de 2000 UM y zona segura sin asteroides",
-        "13_station: escala, zona segura y telemetría OK",
-        "12_mining, 04_autopilot, 03_controls, 07_visual_play, 13_tractor y 16_universe: OK",
+        "DockingSystem exige proximidad y <30 u/s; acople y despegue",
+        "Autopilot.STATION frena a ~242 u sin penetrar el casco (radio 200)",
+        "HUD ACOPLAR y pantalla DOCKED con DESPEGAR",
+        "13_station: 3 capturas y flujo completo OK",
+        "04_autopilot, 12_mining y 07_visual_play: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S5",
     "currentTaskId": null,
-    "nextTaskId": "T-502",
+    "nextTaskId": "T-503",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2623,7 +2623,7 @@
       "description": "Permitir aproximarse, frenar, acoplar, desacoplar y que el piloto automático lleve a la estación.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-501"
@@ -2647,10 +2647,47 @@
         "01_logic"
       ],
       "technicalNotes": "No implementar interiores; es una transición de estado.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-042",
+          "date": "2026-11-08T02:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "DockingSystem añade canDock/dock/undock (≤260 u y <30 u/s). Autopilot.STATION vuela, limita la aproximación y frena a ~242 u sin penetrar el casco. El HUD muestra ACOPLAR, el estado DOCKED abre una pantalla mínima con DESPEGAR y la telemetría expone docked/canDock.",
+          "files": [
+            "src/com/example/codegame/DockingSystem.java",
+            "src/com/example/codegame/Autopilot.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh",
+            "tools/tests/testlib.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "04_autopilot",
+            "12_mining",
+            "07_visual_play"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS se puede acoplar cerca y despacio; PASS no se acopla con velocidad alta",
+        "PASS el acople detiene la nave y activa DOCKED; PASS el desacople devuelve la nave al exterior",
+        "PASS el piloto entra en modo STATION",
+        "PASS Autopilot.STATION frena en la zona de acople",
+        "PASS Autopilot.STATION no penetra el casco de la estacion",
+        "13_station: ACOPLAR -> DOCKED -> DESPEGAR -> PLAYING",
+        "Capturas 26_dock y 27_docked correctas"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T02:30:00-06:00"
     },
     {
       "id": "T-503",
@@ -2659,7 +2696,7 @@
       "description": "Añadir descarga, venta a precio base, combustible, O2, reparaciones y mejoras desde la estación.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-502",
@@ -5172,6 +5209,35 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-042",
+      "date": "2026-11-08T02:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Acoplamiento y Autopilot.STATION",
+      "summary": "Acople por proximidad/velocidad, transición DOCKED con pantalla mínima y despegue. Autopilot.STATION frena a 242 u y no penetra el casco. HUD contextual y telemetría; 13_station cubre el flujo completo.",
+      "tasks": [
+        "T-502"
+      ],
+      "files": [
+        "src/com/example/codegame/DockingSystem.java",
+        "src/com/example/codegame/Autopilot.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh",
+        "tools/tests/testlib.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 13_station 04_autopilot 12_mining 07_visual_play"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-503 (StationScreen y servicios)."
+    },
     {
       "id": "S-041",
       "date": "2026-11-08T02:20:00-06:00",

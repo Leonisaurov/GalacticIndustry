@@ -1893,6 +1893,60 @@ public class SelfTest {
                         GameData.MOTHERSHIP_X + GameData.MOTHERSHIP.safeRadius + 1f,
                         GameData.MOTHERSHIP_Y));
 
+        // T-502: acople y Autopilot.STATION.
+        GameWorld dockWorld = new GameWorld(new Upgrades(true));
+        dockWorld.start();
+        dockWorld.immortal = true;
+        dockWorld.asteroids.clear();
+        dockWorld.fuel.clear();
+        dockWorld.ship.pos.set(dockWorld.station.pos.x, dockWorld.station.pos.y - 100f);
+        dockWorld.ship.vel.set(0f, 0f);
+        check("se puede acoplar cerca y despacio", DockingSystem.canDock(dockWorld));
+        dockWorld.ship.vel.set(60f, 0f);
+        check("no se acopla con velocidad alta", !DockingSystem.canDock(dockWorld));
+        dockWorld.ship.vel.set(0f, 0f);
+        check("el acople detiene la nave y activa DOCKED",
+                DockingSystem.dock(dockWorld)
+                        && dockWorld.ship.docked
+                        && dockWorld.ship.vel.len() == 0f
+                        && !dockWorld.pilot.active());
+        DockingSystem.undock(dockWorld);
+        check("el desacople devuelve la nave al exterior",
+                !dockWorld.ship.docked && dockWorld.ship.vel.len() == 0f);
+        GameWorld stationPilot = new GameWorld(new Upgrades(true));
+        stationPilot.start();
+        stationPilot.immortal = true;
+        stationPilot.asteroids.clear();
+        stationPilot.fuel.clear();
+        stationPilot.ship.pos.set(stationPilot.station.pos.x,
+                stationPilot.station.pos.y - 900f);
+        stationPilot.ship.heading = 90f;
+        stationPilot.ship.dir.set(0f, 1f);
+        stationPilot.pilot.station(stationPilot.station);
+        check("el piloto entra en modo STATION",
+                stationPilot.pilot.mode() == Autopilot.STATION);
+        for (int i = 0; i < 60 * 40 && stationPilot.ship.docked == false; i++) {
+            stationPilot.asteroids.clear();
+            stationPilot.fuel.clear();
+            stationPilot.update(dt, new Controls());
+            if (stationPilot.pilot.mode() == Autopilot.STATION
+                    && DockingSystem.canDock(stationPilot)
+                    && stationPilot.ship.vel.len() < Autopilot.STOP_SPEED) {
+                break;
+            }
+        }
+        float stationDist = stationPilot.station.distanceTo(stationPilot.ship.pos);
+        check("Autopilot.STATION frena en la zona de acople",
+                stationDist >= stationPilot.station.def.radius
+                        && stationDist <= stationPilot.station.def.dockRadius
+                        && stationPilot.ship.vel.len() < DockingSystem.MAX_DOCK_SPEED);
+        check("Autopilot.STATION no penetra el casco de la estacion",
+                stationDist > stationPilot.station.def.radius + Ship.RADIUS);
+        check("tras el piloto se puede acoplar",
+                DockingSystem.canDock(stationPilot)
+                        && DockingSystem.dock(stationPilot)
+                        && stationPilot.ship.docked);
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

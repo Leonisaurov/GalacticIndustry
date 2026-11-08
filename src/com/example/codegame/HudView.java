@@ -22,4 +22,6 @@ final class HudView {
     Button pause;
     Button thrust;
     Button recover;
+    Button dock;
+    boolean canDock;
 }

@@ -59,6 +59,8 @@ class Ship {
     boolean thrusting;
     /** La nave ha explotado; se deja de dibujar hasta la siguiente partida. */
     boolean wrecked;
+    /** La nave está acoplada a una estación. */
+    boolean docked;
 
     void reset(Upgrades up, float x, float y) {
         pos.set(x, y);
@@ -84,6 +86,7 @@ class Ship {
         lastDamaged = -1;
         damageFlash = 0f;
         wrecked = false;
+        docked = false;
     }
 
     CargoHold cargo() {

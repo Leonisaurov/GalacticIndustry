@@ -108,8 +108,20 @@ estáticos se reutilizan.
 - `GameWorld.generateChunk()` descarta cualquier asteroide dentro de la zona
   segura: `GameData.MOTHERSHIP.safeRadius`.
 - El acople, los servicios y el almacén persistente llegan en T-502..T-505.
-- Telemetría: `stationX`, `stationY`, `stationRadius`, `stationDistance` y
-  `stationAsteroids`.
+- Telemetría: `stationX`, `stationY`, `stationRadius`, `stationDistance`,
+  `stationAsteroids`, `docked` y `canDock`.
+
+## Acoplamiento
+
+- `DockingSystem` exige estar dentro de `dockRadius` (260) y a menos de **30
+  u/s** para mostrar `ACOPLAR`.
+- Al acoplar: la nave se detiene, el piloto/láser/tractor se cancelan y el
+  estado pasa a `DOCKED`, con una pantalla mínima de estación.
+- `DESPEGAR` (o ESC) devuelve a `PLAYING` con velocidad cero.
+- `Autopilot.STATION` vuela a la estación y frena a ~240 u del centro, dentro
+  de la zona de acople y fuera del casco visual.
+- Los servicios completos y la persistencia del acople quedan para T-503 y
+  T-505.
 
 ## Render y aspecto visual
 

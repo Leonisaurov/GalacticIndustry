@@ -28,6 +28,7 @@ public class MyGame implements ApplicationListener {
     static final int SHOP = 3;
     static final int OVER = 4;
     static final int DYING = 5;
+    static final int DOCKED = 6;
 
     private static final float MIN_W = 480f;
     private static final float MIN_H = 800f;
@@ -98,6 +99,8 @@ public class MyGame implements ApplicationListener {
     private final boolean tractorTest;
     /** Arranca junto a la nave nodriza para revisar su escala y zona segura. */
     private final boolean stationTest;
+    /** Arranca lejos con Autopilot.STATION para probar aproximación y acople. */
+    private final boolean dockingTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -110,6 +113,8 @@ public class MyGame implements ApplicationListener {
     private Button btnThrust, btnPause;
     /** Recuperar la nave del personaje anterior cuando se está cerca. */
     private Button btnRecover;
+    /** Acoplar a la nodriza y despegar de ella. */
+    Button btnDock, btnUndock;
     final Array<Button> buyButtons = new Array<>();
     /** Botones de reparacion de cada parte (solo con una partida activa). */
     final Array<Button> repairButtons = new Array<>();
@@ -236,6 +241,19 @@ public class MyGame implements ApplicationListener {
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest, boolean tractorTest, boolean stationTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, false);
+    }
+
+    /**
+     * @param dockingTest arranca lejos con Autopilot.STATION para probar el acople.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -248,9 +266,11 @@ public class MyGame implements ApplicationListener {
         this.miningTest = miningTest;
         this.tractorTest = tractorTest;
         this.stationTest = stationTest;
+        this.dockingTest = dockingTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
-                || cargoTest || miningTest || tractorTest || stationTest;
+                || cargoTest || miningTest || tractorTest || stationTest
+                || dockingTest;
     }
 
     @Override
@@ -389,6 +409,16 @@ public class MyGame implements ApplicationListener {
             world.ship.pos.set(world.station.pos.x, world.station.pos.y - 330f);
             world.ship.heading = 90f;
             world.ship.dir.set(0f, 1f);
+        } else if (dockingTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.pos.x, world.station.pos.y - 900f);
+            world.ship.heading = 90f;
+            world.ship.dir.set(0f, 1f);
+            world.pilot.station(world.station);
         }
     }
 
@@ -530,6 +560,10 @@ public class MyGame implements ApplicationListener {
         float panelH = topPanelH();
         btnPause = new Button("", w - pad - ps, h - panelH * 0.5f - ps * 0.5f + 6f * u, ps, ps);
         btnRecover = new Button("RECUPERAR NAVE", cx + bw * 0.05f, h * 0.30f,
+                bw * 0.9f, 46f * u);
+        btnDock = new Button("ACOPLAR", cx + bw * 0.05f, h * 0.38f,
+                bw * 0.9f, 46f * u);
+        btnUndock = new Button("DESPEGAR", cx + bw * 0.05f, h * 0.30f,
                 bw * 0.9f, 46f * u);
 
         // Pestañas de la tienda: solo hay reparaciones si existe una partida.
@@ -679,6 +713,11 @@ public class MyGame implements ApplicationListener {
         return distance >= 0f && distance <= GameWorld.LEGACY_RECOVERY_RADIUS;
     }
 
+    /** La nave está dentro de la zona de acople y a baja velocidad. */
+    private boolean canDock() {
+        return state == PLAYING && runActive && DockingSystem.canDock(world);
+    }
+
     /** Coste de reparar una parte: proporcional a la integridad que le falta. */
     int repairCost(int index) {
         float missing = world.ship.partMax(index) - world.ship.part[index];
@@ -805,6 +844,7 @@ public class MyGame implements ApplicationListener {
             case PLAYING: updatePlaying(dt); break;
             case PAUSED: handlePause(); break;
             case SHOP: handleShop(); break;
+            case DOCKED: handleDocked(); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
@@ -824,6 +864,7 @@ public class MyGame implements ApplicationListener {
             case PLAYING: return "PLAYING";
             case PAUSED: return "PAUSED";
             case SHOP: return "SHOP";
+            case DOCKED: return "DOCKED";
             case OVER: return "OVER";
             case DYING: return "DYING";
             default: return "MENU";
@@ -836,6 +877,7 @@ public class MyGame implements ApplicationListener {
             case Autopilot.FUEL: return "FUEL";
             case Autopilot.ASTEROID: return "ASTEROID";
             case Autopilot.MINE: return "MINE";
+            case Autopilot.STATION: return "STATION";
             case Autopilot.STOP: return "STOP";
             default: return "NONE";
         }
@@ -883,7 +925,8 @@ public class MyGame implements ApplicationListener {
                         + "\"laserLevel\":%d,\"tractorActive\":%s,\"tractorTargets\":%d,"
                         + "\"tractorLevel\":%d,"
                         + "\"stationX\":%.1f,\"stationY\":%.1f,\"stationRadius\":%.1f,"
-                        + "\"stationDistance\":%.1f,\"stationAsteroids\":%d}",
+                        + "\"stationDistance\":%.1f,\"stationAsteroids\":%d,"
+                        + "\"docked\":%s,\"canDock\":%s}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -919,7 +962,9 @@ public class MyGame implements ApplicationListener {
                 world.station.pos.y,
                 world.station.def.radius,
                 world.station.distanceTo(world.ship.pos),
-                stationAsteroids()));
+                stationAsteroids(),
+                world.ship.docked,
+                canDock()));
     }
 
     private void logEvent(String json) {
@@ -1071,6 +1116,16 @@ public class MyGame implements ApplicationListener {
             }
             return;
         }
+        if (canDock() && tapped(btnDock)) {
+            if (DockingSystem.dock(world)) {
+                resetControls();
+                state = DOCKED;
+                saveRun();
+                logEvent("{\"event\":\"dock\",\"station\":\""
+                        + world.station.def.name + "\"}");
+            }
+            return;
+        }
         updateJoystick();
         updateSlider();
         boolean pilotWasActive = world.pilot.active();
@@ -1216,6 +1271,14 @@ public class MyGame implements ApplicationListener {
     /** Elige el bidón o meteorito más cercano al toque (con margen) y lo asigna al piloto. */
     private boolean pickTarget(Vector2 p) {
         final float slop = 30f;
+        if (world.station.distanceTo(p) - world.station.def.radius < slop) {
+            world.pilot.station(world.station);
+            if (sliderPointer < 0) {
+                thrustLevel = 0f;
+                throttle = 0f;
+            }
+            return true;
+        }
         Asteroid rock = null;
         float rockD = slop;
         for (int i = 0; i < world.asteroids.size; i++) {
@@ -1256,7 +1319,8 @@ public class MyGame implements ApplicationListener {
         return pointerInCircle(joyCx, joyCy, joyR * 1.45f, pointer)
                 || pointerIn(sliderZone, pointer)
                 || hit(btnPause, pointer)
-                || (canRecoverLegacy() && hit(btnRecover, pointer));
+                || (canRecoverLegacy() && hit(btnRecover, pointer))
+                || (canDock() && hit(btnDock, pointer));
     }
 
     private void handlePause() {
@@ -1267,6 +1331,17 @@ public class MyGame implements ApplicationListener {
         } else if (tapped(btnMenu)) {
             state = MENU;
             saveRun();
+        }
+    }
+
+    /** En la estación: DESPEGAR o ESC devuelven la nave al exterior. */
+    private void handleDocked() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnUndock)) {
+            DockingSystem.undock(world);
+            resetControls();
+            state = PLAYING;
+            saveRun();
+            logEvent("{\"event\":\"undock\"}");
         }
     }
 
@@ -1484,6 +1559,8 @@ public class MyGame implements ApplicationListener {
             shopRenderer.draw(w, h);
         } else if (state == DYING) {
             overlay.drawDeathFlourish(w, h);
+        } else if (state == DOCKED) {
+            overlay.drawDocked(w, h);
         } else {
             hud.state = state;
             hud.runActive = runActive;
@@ -1499,6 +1576,8 @@ public class MyGame implements ApplicationListener {
             hud.pause = btnPause;
             hud.thrust = btnThrust;
             hud.recover = btnRecover;
+            hud.dock = btnDock;
+            hud.canDock = canDock();
             playHud.draw(w, h);
             if (state == PAUSED) {
                 overlay.drawPause(w, h);
