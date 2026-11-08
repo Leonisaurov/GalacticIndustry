@@ -113,6 +113,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `pilot_death_test`: arranca en `PLAYING` con el piloto a 0 HP e
   `INCAPACITATED`; `MyGame` debe pasar por `DYING` y `OVER`, marcar la nave
   legado y permitir `NUEVO PERSONAJE`. Lo usa `05_death`.
+- `recovery_test`: modo de desarrollo. Guarda un punto seguro al empezar y
+  cada 10 s; tras la muerte, el botón `RECUPERAR (DEBUG)` restaura ese punto.
+  Sin el flag no existe y el juego normal sigue con muerte permanente.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

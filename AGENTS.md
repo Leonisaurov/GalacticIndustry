@@ -147,10 +147,10 @@ No empieces otra tarea mientras haya una `EN_PROGRESO` recuperable.
 
 El estado real está siempre en el tracker. Al cierre de la sesión de preparación:
 
-- Etapa actual: `S2` — Supervivencia.
+- Etapa actual: `S3` — Inventario, almacenamiento y peso.
 - No hay tarea en progreso.
-- Última tarea completada: `T-209` — Crear flujo de nuevo personaje y nave legado.
-- Primera tarea disponible: `T-210` — Modo de desarrollo de recuperación tras muerte.
+- Última tarea completada: `T-210` — Modo de desarrollo de recuperación tras muerte.
+- Primera tarea disponible: `T-301` — Definir Commodity y Cargo.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
 - La implementación del juego está al **19 %** (15 de 81 tareas de progreso).
 

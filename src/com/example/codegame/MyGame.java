@@ -56,6 +56,9 @@ public class MyGame implements ApplicationListener {
     private SaveService saves;
     /** Snapshot del último personaje muerto: mundo y nave legado. */
     private SaveService legacySaves;
+    /** Punto seguro del modo de desarrollo de recuperación. */
+    private SaveService recoverySaves;
+    private float recoveryTimer;
     private int characterSerial;
     private final Vector2 touch = new Vector2();
 
@@ -82,6 +85,8 @@ public class MyGame implements ApplicationListener {
     private final boolean survivalTest;
     /** Arranca con el piloto incapacitado para probar la muerte por asfixia. */
     private final boolean pilotDeathTest;
+    /** Modo de desarrollo: recupera el último punto seguro tras la muerte. */
+    private final boolean recoveryTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -179,6 +184,18 @@ public class MyGame implements ApplicationListener {
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, false);
+    }
+
+    /**
+     * @param survivalTest   arranca con O2 bajo, salud dañada y fuga visible.
+     * @param pilotDeathTest arranca con el piloto incapacitado para probar la muerte.
+     * @param recoveryTest   modo de desarrollo: recupera el último punto seguro.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -186,8 +203,9 @@ public class MyGame implements ApplicationListener {
         this.wingTest = wingTest;
         this.survivalTest = survivalTest;
         this.pilotDeathTest = pilotDeathTest;
+        this.recoveryTest = recoveryTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
-                || wingTest || survivalTest || pilotDeathTest;
+                || wingTest || survivalTest || pilotDeathTest || recoveryTest;
     }
 
     @Override
@@ -216,12 +234,18 @@ public class MyGame implements ApplicationListener {
         legacySaves = new SaveService(
                 new SaveService.FileStorage(Gdx.files.local("save").file()), upgrades,
                 SaveService.LEGACY_SLOT);
+        recoverySaves = new SaveService(
+                new SaveService.FileStorage(Gdx.files.local("save").file()), upgrades,
+                SaveService.RECOVERY_SLOT);
         loadRun();
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         if (debugDeath) {
             session.startRun();
             runActive = true;
             state = PLAYING;
+            if (recoveryTest) {
+                saveRecoveryPoint();
+            }
             world.coinsEarned = 7;
             triggerDeath();
         } else if (autopilotTest) {
@@ -269,6 +293,9 @@ public class MyGame implements ApplicationListener {
             session.startRun();
             runActive = true;
             state = PLAYING;
+            if (recoveryTest) {
+                saveRecoveryPoint();
+            }
             world.asteroids.clear();
             world.fuel.clear();
             session.pilot.oxygen = 0f;
@@ -347,6 +374,14 @@ public class MyGame implements ApplicationListener {
         }
     }
 
+    /** Punto seguro del modo de desarrollo; nunca guarda una partida ya muerta. */
+    private void saveRecoveryPoint() {
+        if (recoveryTest && recoverySaves != null && runActive
+                && !world.isOver() && session.pilot.alive()) {
+            recoverySaves.save(session);
+        }
+    }
+
     /** Borra la partida guardada al terminar la partida. */
     private void clearRun() {
         if (saves != null) {
@@ -385,7 +420,8 @@ public class MyGame implements ApplicationListener {
         btnMenu = stacked("MENU", cx, pauseCy, bw, bh, gap, 2, 3);
 
         float overCy = h * 0.41f;
-        btnRetry = stacked("NUEVO PERSONAJE", cx, overCy, bw, bh, gap, 0, 2);
+        btnRetry = stacked(recoveryTest ? "RECUPERAR (DEBUG)" : "NUEVO PERSONAJE",
+                cx, overCy, bw, bh, gap, 0, 2);
         btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
         btnBack = new Button("VOLVER", cx, pad, bw, bh);
 
@@ -744,6 +780,10 @@ public class MyGame implements ApplicationListener {
             runActive = true;
         }
         state = PLAYING;
+        if (recoveryTest) {
+            recoveryTimer = 0f;
+            saveRecoveryPoint();
+        }
         logEvent("{\"event\":\"run_start\",\"resume\":" + resume + "}");
     }
 
@@ -770,7 +810,38 @@ public class MyGame implements ApplicationListener {
         if (saves.save(session) && legacyLoaded && legacySaves != null) {
             legacySaves.clear();
         }
+        if (recoveryTest) {
+            recoveryTimer = 0f;
+            saveRecoveryPoint();
+        }
         logEvent("{\"event\":\"new_character\",\"legacy\":" + legacyLoaded + "}");
+    }
+
+    /** Recupera el último punto seguro del modo de desarrollo. */
+    private void recoverCharacter() {
+        if (recoverySaves == null || !recoverySaves.hasSave()) {
+            startNewCharacter();
+            return;
+        }
+        SaveService.LoadStatus status = recoverySaves.load(session);
+        if (status != SaveService.LoadStatus.V2
+                && status != SaveService.LoadStatus.BACKUP) {
+            startNewCharacter();
+            return;
+        }
+        resetControls();
+        world.pilot.cancel();
+        deathTimer = 0f;
+        overCoins = 0;
+        worldCam.zoom = 1f;
+        recoveryTimer = 0f;
+        runActive = true;
+        state = PLAYING;
+        saveRun();
+        if (legacySaves != null) {
+            legacySaves.clear();
+        }
+        logEvent("{\"event\":\"recovery\"}");
     }
 
     /** Carga el último mundo de un personaje muerto en una sesión temporal. */
@@ -854,6 +925,13 @@ public class MyGame implements ApplicationListener {
             // vuelve a 0 para que no siga gastando combustible en la dirección de frenada.
             thrustLevel = 0f;
             throttle = 0f;
+        }
+        if (recoveryTest) {
+            recoveryTimer += dt;
+            if (recoveryTimer >= 10f) {
+                recoveryTimer = 0f;
+                saveRecoveryPoint();
+            }
         }
         if (world.isOver()) {
             triggerDeath();
@@ -1087,7 +1165,11 @@ public class MyGame implements ApplicationListener {
 
     private void handleOver() {
         if (tapped(btnRetry)) {
-            startNewCharacter();
+            if (recoveryTest) {
+                recoverCharacter();
+            } else {
+                startNewCharacter();
+            }
         } else if (tapped(btnOverMenu)) {
             state = MENU;
         }
@@ -2102,8 +2184,9 @@ public class MyGame implements ApplicationListener {
                 w * 0.5f, h * 0.5f + 112f * u, 0.95f * u, Visuals.GOLD);
         textCenteredMiddle("PUNTOS " + world.score + "   -   OLEADA " + world.wave,
                 w * 0.5f, h * 0.5f + 78f * u, 0.90f * u, Visuals.TEXT_DIM);
-        textCenteredMiddle("La nave queda en el espacio", w * 0.5f,
-                h * 0.5f + 48f * u, 0.72f * u, Visuals.TEXT_DIM);
+        textCenteredMiddle(recoveryTest ? "MODO PRUEBAS: RECUPERAR" : "La nave queda en el espacio",
+                w * 0.5f, h * 0.5f + 48f * u, 0.72f * u,
+                recoveryTest ? Visuals.WARN : Visuals.TEXT_DIM);
         drawButtonText(btnRetry, true);
         drawButtonText(btnOverMenu, true);
         batch.end();

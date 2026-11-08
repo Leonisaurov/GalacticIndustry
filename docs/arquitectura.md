@@ -192,6 +192,9 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - Con el nuevo personaje a ≤100 u aparece `RECUPERAR NAVE`. Al recuperarla se
   obtiene un desguace de 10–90 créditos y `legacyWreck` pasa a `false`; el
   estado se guarda para no duplicar la nave.
+- `recovery_test` es una herramienta de desarrollo, no una mecánica normal:
+  guarda un punto seguro cada 10 s y permite `RECUPERAR (DEBUG)` tras morir.
+  Sin el flag, la muerte es permanente.
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

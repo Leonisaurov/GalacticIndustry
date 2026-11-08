@@ -611,23 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:29:00-06:00",
-    "lastSessionId": "S-021",
+    "lastUpdated": "2026-11-08T00:33:00-06:00",
+    "lastSessionId": "S-022",
     "lastVerification": {
-      "date": "2026-11-08T00:29:00-06:00",
+      "date": "2026-11-08T00:33:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Nuevo personaje conserva mundo, restos y nave legado",
-        "Recuperación de nave legado a ≤100 u con desguace de créditos",
-        "16_universe: nuevo personaje + mundo persistente + recuperación OK",
-        "05_death OK",
+        "recovery_test recupera el punto seguro y vuelve a PLAYING",
+        "El modo normal sigue usando NUEVO PERSONAJE y muerte permanente",
+        "05_death: casco, piloto 0 HP, NUEVO PERSONAJE y RECUPERAR (DEBUG)",
+        "08_visual_death: OK",
+        "Etapa S2 cerrada; siguiente S3/T-301",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
-    "currentStageId": "S2",
+    "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-210",
+    "nextTaskId": "T-301",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -700,7 +701,7 @@
       "id": "S2",
       "order": 2,
       "name": "Supervivencia",
-      "status": "EN_PROGRESO",
+      "status": "COMPLETADO",
       "type": "implementation",
       "objective": "Añadir oxígeno, soporte vital, fugas, salud del piloto y sus consecuencias.",
       "gate": "Una expedición puede agotar O2 o sufrir una fuga sin depender solo del casco.",
@@ -711,7 +712,7 @@
       "id": "S3",
       "order": 3,
       "name": "Inventario, almacenamiento y peso",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "type": "implementation",
       "objective": "Añadir bodega, minerales, capacidad, masa y su efecto en el movimiento y el combustible.",
       "gate": "Una bodega llena sigue siendo viable y el consumo de combustible está rebalanceado.",
@@ -2118,7 +2119,7 @@
       "description": "Crear la tabla de minerales/materiales y el contenedor de bodega con masa por unidad y capacidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-103"
@@ -4523,7 +4524,7 @@
       "description": "Añadir un modo de pruebas que permita continuar o recuperar al personaje tras la muerte sin alterar el comportamiento normal del juego.",
       "category": "implementation",
       "priority": "P2",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": false,
       "dependencies": [
         "T-208"
@@ -4548,10 +4549,36 @@
         "08_visual_death"
       ],
       "technicalNotes": "Es una herramienta de test, no una mecánica de juego. Documentarla en docs/pruebas.md.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-022",
+          "date": "2026-11-08T00:33:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Añadido recovery_test: guarda puntos seguros cada 10 s y al empezar, y el botón RECUPERAR (DEBUG) restaura el punto seguro tras la muerte. Sin el flag, el juego sigue con muerte permanente y NUEVO PERSONAJE.",
+          "files": [
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SaveService.java",
+            "tools/tests/05_death.sh",
+            "docs/pruebas.md"
+          ],
+          "tests": [
+            "05_death",
+            "08_visual_death",
+            "01_logic"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "05_death: RECUPERAR (DEBUG) vuelve a PLAYING con salud 100 y estado OK",
+        "Sin recovery_test: NUEVO PERSONAJE mantiene muerte permanente",
+        "08_visual_death OK",
+        "Etapa S2 cerrada"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T00:33:00-06:00"
     },
     {
       "id": "T-409",
@@ -5140,6 +5167,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-022",
+      "date": "2026-11-08T00:33:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Recuperación de desarrollo tras muerte",
+      "summary": "Se añadió recovery_test: puntos seguros al empezar y cada 10 s; tras morir, el botón RECUPERAR (DEBUG) restaura el punto y vuelve a PLAYING. Sin el flag, el juego normal mantiene muerte permanente y NUEVO PERSONAJE. Etapa S2 cerrada.",
+      "tasks": [
+        "T-210"
+      ],
+      "files": [
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SaveService.java",
+        "tools/tests/05_death.sh",
+        "docs/pruebas.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 05_death",
+        "tools/run-tests.sh --no-build 08_visual_death"
+      ],
+      "outcome": "Completado",
+      "notes": "S2 COMPLETADO. Siguiente etapa: S3, primera tarea T-301."
+    },
     {
       "id": "S-021",
       "date": "2026-11-08T00:29:00-06:00",

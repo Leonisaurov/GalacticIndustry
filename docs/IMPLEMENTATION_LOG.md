@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:29:00-06:00  
+**Última actualización:** 2026-11-08T00:33:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,63 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-022 — Recuperación de desarrollo tras muerte
+
+- **Fecha:** 2026-11-08T00:33:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-210
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Nuevo extra `recovery_test`, desactivado por defecto.
+- Con el flag, se guarda un punto seguro al empezar y cada 10 s.
+- Tras morir, el botón cambia a `RECUPERAR (DEBUG)` y restaura el punto
+  seguro: salud, O2, casco, nave y mundo.
+- La recuperación limpia la nave legado y guarda la partida restaurada.
+- Sin el flag, el juego normal sigue con muerte permanente y `NUEVO PERSONAJE`.
+- Etapa **S2 (Supervivencia) cerrada**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SaveService.java`
+- `tools/tests/05_death.sh`
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 05_death`: **OK**.
+- `tools/run-tests.sh --no-build 08_visual_death`: **OK**.
+
+### Evidencias
+
+- `05_death`:
+  - casco → `OVER`;
+  - piloto 0 HP → `OVER`;
+  - `NUEVO PERSONAJE` → `PLAYING`;
+  - `RECUPERAR (DEBUG)` → `PLAYING` con salud 100, estado `OK`, casco lleno
+    y sin nave legado.
+- `08_visual_death` valida las capturas de la secuencia.
+
+### Decisiones tomadas
+
+- El modo de recuperación solo existe con el extra de test; no se persiste.
+- El punto seguro se guarda cada 10 s y al iniciar/reanudar.
+- La recuperación restaura el punto seguro completo, no una resurrección
+  parcial.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 3 con **T-301 — Definir Commodity y Cargo**.
 
 ---
 

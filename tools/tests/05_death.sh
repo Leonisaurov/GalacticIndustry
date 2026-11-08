@@ -51,5 +51,23 @@ assert_eq "nuevo personaje con casco lleno" \
     "$(printf '%s' "$status" | json_get hull)"
 assert_eq "el legado sigue en el mundo" true "$(printf '%s' "$status" | json_get legacyWreck)"
 
+# Modo de recuperación de desarrollo: flag separado del juego normal.
+reset_app
+launch_app "--ez pilot_death_test true --ez recovery_test true"
+wait_current_state DYING 6 || fail "no empezó la muerte con recovery_test"
+wait_current_state OVER 10 || fail "no se llegó a OVER con recovery_test"
+sleep 0.5
+tap "$((W / 2))" "$OVER_RETRY_Y" 0.2
+wait_current_state PLAYING 5 || fail "recuperación no inició la partida"
+sleep 0.5
+status=$(latest_status)
+assert_eq "recuperación vuelve a PLAYING" PLAYING "$(printf '%s' "$status" | json_get state)"
+assert_eq "recuperación restaura la salud" 100.0 "$(printf '%s' "$status" | json_get pilotHealth)"
+assert_eq "recuperación restaura el estado" OK "$(printf '%s' "$status" | json_get pilotStatus)"
+assert_eq "recuperación restaura el casco" \
+    "$(printf '%s' "$status" | json_get maxHull)" \
+    "$(printf '%s' "$status" | json_get hull)"
+assert_eq "recuperación retira la nave legado" false "$(printf '%s' "$status" | json_get legacyWreck)"
+
 check_no_crash
-echo "OK 05_death: casco DYING->OVER, piloto 0 HP->OVER sin romper casco, nuevo personaje con legado"
+echo "OK 05_death: casco->OVER, piloto 0 HP->OVER, NUEVO PERSONAJE y RECUPERAR (DEBUG)"
