@@ -1,7 +1,8 @@
 # GalacticIndustry
 
-Juego Android en **Java + libGDX 1.14.2**, construido con **apkc + apkc-deps**.
-No hay Gradle ni `module.toml`: no los reintroduzcas.
+Juego Android en **Java + libGDX 1.14.2**. El build canónico es **apkc +
+apkc-deps** (sin Gradle). `app/module.toml` existe solo como puente para
+CodeAssist en el móvil; no es un segundo build que mantener.
 
 ## Comandos (siempre desde la raíz del repo)
 
@@ -9,6 +10,10 @@ No hay Gradle ni `module.toml`: no los reintroduzcas.
   `apkc-deps add/remove`, nunca copiando jars a mano en `jar/`.
 - Build: `apkc build --inc` → `build/app.apk` (firma debug automática).
 - Instalar/ejecutar: `apkc run --inc` (adb) o `apkc run --inc --rish` (Shizuku).
+- Instalar el APK ya construido: `adb install -r build/app.apk`. Si da
+  `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, la versión instalada está firmada con
+  otra clave: hay que desinstalar (se pierde el progreso guardado) o firmar con
+  esa clave.
 - Watch: `apkc watch --inc --run`.
 - Diagnóstico: `apkc-deps doctor`, `apkc-deps verify`, `apkc-deps dex-check`.
 
@@ -62,6 +67,9 @@ borres aunque solo uses apkc.
 
 Los artefactos generados (`.platform/`, `app/build/`, `build/`, `jar/`,
 `res/__deps/`, `R.java`) están ignorados, así que no viajan entre dispositivos.
+Tras cambiar `app/module.toml` (o hacer pull en el móvil), **cierra y reabre el
+proyecto** en CodeAssist: si estaba abierto, conserva en memoria el módulo que
+no cargó y sigue diciendo que no encuentra `app`.
 
 ## Dependencias y nativos
 
