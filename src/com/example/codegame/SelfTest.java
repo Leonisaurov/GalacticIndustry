@@ -2585,6 +2585,34 @@ public class SelfTest {
                         && noSimLoaded.sector.station.market.stock(Commodity.HIELO)
                         == GameData.MARKET_INITIAL * GameData.MARKET_HIELO);
 
+        // T-706: tráfico cosmético de la estación.
+        GameWorld trafficWorld = new GameWorld(new Upgrades(true));
+        trafficWorld.start();
+        trafficWorld.immortal = true;
+        trafficWorld.asteroids.clear();
+        trafficWorld.fuel.clear();
+        int trafficStock = trafficWorld.station.market.stock(Commodity.HIELO);
+        trafficWorld.update(0.1f, new Controls());
+        check("el tráfico se activa cerca de la estación",
+                trafficWorld.traffic.active()
+                        && trafficWorld.traffic.activeCount() == StationTraffic.SHIPS
+                        && StationTraffic.SHIPS >= 2 && StationTraffic.SHIPS <= 4);
+        check("el tráfico no toca la economía",
+                trafficWorld.station.market.stock(Commodity.HIELO) == trafficStock
+                        && trafficWorld.asteroids.size == 0);
+        StationTraffic farTraffic = new StationTraffic();
+        farTraffic.update(0.1f, new Vector2(0f, -5000f),
+                trafficWorld.station, trafficWorld.fx);
+        check("el tráfico se desactiva lejos",
+                !farTraffic.active() && farTraffic.activeCount() == 0);
+        long trafficStart = System.nanoTime();
+        for (int i = 0; i < 10000; i++) {
+            trafficWorld.traffic.update(0.016f, trafficWorld.ship.pos,
+                    trafficWorld.station, null);
+        }
+        long trafficMs = (System.nanoTime() - trafficStart) / 1_000_000L;
+        check("el tráfico no degrada el rendimiento", trafficMs < 500);
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

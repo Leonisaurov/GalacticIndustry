@@ -46,6 +46,8 @@ class GameWorld {
     final EconomySim economy = new EconomySim();
     /** Pilotos autónomos del sector; todavía no se renderizan. */
     final AgentRoster agents = new AgentRoster(GameData.INITIAL_AGENTS);
+    /** Tráfico cosmético de la estación; no colisiona ni afecta a la economía. */
+    final StationTraffic traffic = new StationTraffic();
     /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
     LifeSupport lifeSupport;
     /** Restos de la nave del personaje anterior, en el punto de muerte. */
@@ -122,6 +124,7 @@ class GameWorld {
         shake = 0f;
         economy.reset();
         agents.createInitial(GameData.INITIAL_AGENTS);
+        traffic.reset();
         deathTimer = 0f;
         deathStage = 0;
         ignoredHits = 0;
@@ -423,6 +426,7 @@ class GameWorld {
         elapsed += dt;
         wave = 1 + (int) (elapsed / 45f);
         station.update(dt);
+        traffic.update(dt, ship.pos, station, fx);
         economy.update(dt, this);
 
         if (pilot.active()) {
@@ -838,6 +842,7 @@ class GameWorld {
     /** Dibuja el mundo visible con la cámara ya posicionada. */
     void draw(ShapeRenderer shapes) {
         station.draw(shapes, elapsed);
+        traffic.draw(shapes, station, elapsed);
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).draw(shapes);
         }
@@ -918,6 +923,7 @@ class GameWorld {
     /** Brillos aditivos del mundo: motores, impactos, objetivos y partículas. */
     void drawGlow(SpriteBatch batch, Visuals art) {
         station.drawGlow(batch, art, elapsed);
+        traffic.drawGlow(batch, art, station, elapsed);
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).drawGlow(batch, art);
         }

@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S7` — Pilotos autónomos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-705` — Simulación offline y persistencia de agentes.
-- Primera tarea disponible: `T-706` — Añadir tráfico cosmético cerca de la estación.
+- Última tarea completada: `T-706` — Añadir tráfico cosmético cerca de la estación.
+- Primera tarea disponible: `T-707` — Verificación de agentes, determinismo y rendimiento.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **60 %** (49 de 81 tareas de progreso).
+- La implementación del juego está al **62 %** (50 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

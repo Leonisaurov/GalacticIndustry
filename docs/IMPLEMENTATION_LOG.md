@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T04:22:00-06:00  
+**Última actualización:** 2026-11-08T04:30:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,58 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-059 — Tráfico cosmético de la estación
+
+- **Fecha:** 2026-11-08T04:30:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-706
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `StationTraffic` dibuja **3 naves** pequeñas entrando/saliendo de la nodriza.
+- Solo se actualizan/dibujan a **≤1400 u** de la estación.
+- No colisionan, no entran en la economía y no se guardan.
+- Estelas ligeras con `Effects`.
+- Captura `30_traffic` y telemetría `traffic`/`trafficActive`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/StationTraffic.java` (nuevo)
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/15_agents.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS el tráfico se activa cerca de la estación`
+- `PASS el tráfico no toca la economía`
+- `PASS el tráfico se desactiva lejos`
+- `PASS el tráfico no degrada el rendimiento`
+- `15_agents`: 3 naves y captura `30_traffic`.
+
+### Decisiones tomadas
+
+- El tráfico es puramente cosmético y separado de `AgentRoster`.
+- Se activa por distancia para no gastar recursos lejos.
+- No se persiste: se reinicia con la partida.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-707 — Verificación de agentes, determinismo y rendimiento**, que cierra S7.
 
 ---
 

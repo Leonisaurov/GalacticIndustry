@@ -180,6 +180,14 @@ estáticos se reutilizan.
   reposta con sus créditos (sin saldo negativo).
 - El tick/LOD de agentes llega en T-703; el render limitado, en T-706.
 
+## Tráfico cosmético
+
+- `StationTraffic` dibuja **3 naves** pequeñas entrando/saliendo de la nodriza.
+- Solo se actualizan y dibujan si el jugador está a **≤1400 u** de la estación.
+- No colisionan, no entran en asteroides/misiles ni tocan el mercado.
+- Usan el mismo `Ship.drawBody` y dejan una estela ligera en `Effects`.
+- Se reinician al empezar una partida y no se guardan.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de
