@@ -125,6 +125,8 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
   minar 15 UM, llenar la bodega y terminar sin disparar misiles. Lo usa
   `12_mining`, que captura `23_mining_beam` con el haz activo y comprueba que
   `energy` baja de `energyMax` y que `mining=true`.
+- Los fragmentos minerales se guardan en v2 y en el formato legacy; el SelfTest
+  cubre persistencia, migración sin `fragments` y pérdida configurable.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

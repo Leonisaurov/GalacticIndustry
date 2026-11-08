@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:43:00-06:00  
+**Última actualización:** 2026-11-08T01:47:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,67 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-036 — Fragmentos persistentes y pérdida configurable
+
+- **Fecha:** 2026-11-08T01:47:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-409
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `OreFragment` se guarda con posición, velocidad, mineral, cantidad y vida.
+- `SaveCodec` v2 escribe/lee `fragments`; los guardados antiguos sin ese campo
+  cargan con la lista vacía.
+- El formato legacy (`serialize`/`restore`) usa líneas `o` y también conserva
+  los fragmentos.
+- `fragmentShare` y `fragmentLoss` pasan a ser ajustables por mundo, con los
+  valores por defecto de T-406.
+- El mundo legado (`copyWorldFrom`) conserva los fragmentos; un personaje nuevo
+  no los borra.
+- La recuperación sigue siendo por contacto; el rayo tractor y sus mejoras
+  quedan para T-410.
+- Se actualizó el criterio de T-409 para reflejar ese reparto.
+
+### Archivos modificados
+
+- `src/com/example/codegame/OreFragment.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 12_mining 04_autopilot 16_universe`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS los fragmentos se guardan`
+- `PASS los fragmentos se restauran`
+- `PASS un guardado sin fragmentos carga vacio`
+- `PASS el formato legacy conserva fragmentos`
+- `PASS la perdida de material es configurable`
+- `PASS sin fragmentos todo queda en escombros`
+- `12_mining`, `04_autopilot` y `16_universe` OK.
+
+### Decisiones tomadas
+
+- La vida restante del fragmento se conserva al guardar.
+- Un guardado sin el campo `fragments` es válido (migración).
+- La pérdida se controla con dos floats por mundo, no con constantes fijas.
+- El rayo tractor no se adelanta: T-410 lo implementa con sus mejoras y HUD.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-410 — Implementar rayo tractor y captura de fragmentos**.
 
 ---
 

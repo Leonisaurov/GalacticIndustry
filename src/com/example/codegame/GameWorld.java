@@ -33,6 +33,9 @@ class GameWorld {
     static final float FRAGMENT_SHARE = 0.60f;
     /** Fracción de material que se pierde al romper la roca (ajustable). */
     static final float FRAGMENT_LOSS = 0.25f;
+    /** Valores efectivos de balance; se pueden ajustar por pruebas. */
+    float fragmentShare = FRAGMENT_SHARE;
+    float fragmentLoss = FRAGMENT_LOSS;
 
     final Upgrades up;
     final Ship ship = new Ship();
@@ -167,6 +170,8 @@ class GameWorld {
         asteroids.addAll(other.asteroids);
         fuel.clear();
         fuel.addAll(other.fuel);
+        fragments.clear();
+        fragments.addAll(other.fragments);
         legacyWreck = true;
         legacyWreckPos.set(other.ship.pos);
         legacyWreckHeading = other.ship.heading;
@@ -182,7 +187,6 @@ class GameWorld {
         pilot.cancel();
         ship.reset(up, x, y);
         missiles.clear();
-        fragments.clear();
         fx.clear();
         coinsEarned = 0;
         score = 0;
@@ -286,6 +290,13 @@ class GameWorld {
             sb.append("f ").append(f.pos.x).append(' ').append(f.pos.y).append(' ')
                     .append(f.life()).append('\n');
         }
+        for (int i = 0; i < fragments.size; i++) {
+            OreFragment o = fragments.get(i);
+            sb.append("o ").append(o.pos.x).append(' ').append(o.pos.y).append(' ')
+                    .append(o.vel.x).append(' ').append(o.vel.y).append(' ')
+                    .append(o.commodity.name()).append(' ').append(o.amount).append(' ')
+                    .append(o.life()).append('\n');
+        }
         return sb.toString();
     }
 
@@ -303,6 +314,7 @@ class GameWorld {
             HashSet<Long> chunks = new HashSet<>();
             Array<Asteroid> rocks = new Array<>();
             Array<FuelPickup> cells = new Array<>();
+            Array<OreFragment> ores = new Array<>();
 
             for (String line : text.split("\n")) {
                 if (line.isEmpty()) {
@@ -346,6 +358,15 @@ class GameWorld {
                 } else if (p[0].equals("f")) {
                     cells.add(new FuelPickup(Float.parseFloat(p[1]), Float.parseFloat(p[2]),
                             Float.parseFloat(p[3])));
+                } else if (p[0].equals("o")) {
+                    Commodity commodity = Commodity.byDisplayName(p[5]);
+                    if (commodity != null) {
+                        ores.add(new OreFragment(Float.parseFloat(p[1]),
+                                Float.parseFloat(p[2]), commodity,
+                                Integer.parseInt(p[6]),
+                                Float.parseFloat(p[3]), Float.parseFloat(p[4]),
+                                Float.parseFloat(p[7])));
+                    }
                 }
             }
             if (hull < 0f) {
@@ -374,6 +395,8 @@ class GameWorld {
             asteroids.addAll(rocks);
             fuel.clear();
             fuel.addAll(cells);
+            fragments.clear();
+            fragments.addAll(ores);
             missiles.clear();
             fx.clear();
             pilot.cancel();
@@ -688,8 +711,8 @@ class GameWorld {
         if (remaining <= 0) {
             return;
         }
-        int fragmentUnits = Math.round(remaining * FRAGMENT_SHARE);
-        int debrisUnits = remaining - fragmentUnits - Math.round(remaining * FRAGMENT_LOSS);
+        int fragmentUnits = Math.round(remaining * fragmentShare);
+        int debrisUnits = remaining - fragmentUnits - Math.round(remaining * fragmentLoss);
         if (fragmentUnits > 0) {
             spawnFragments(a, fragmentUnits);
         }

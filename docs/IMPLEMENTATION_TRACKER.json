@@ -4,24 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:43:00-06:00",
-    "lastSessionId": "S-035",
+    "lastUpdated": "2026-11-08T01:47:00-06:00",
+    "lastSessionId": "S-036",
     "lastVerification": {
-      "date": "2026-11-08T01:43:00-06:00",
+      "date": "2026-11-08T01:47:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Mejora LASER: +potencia, +penetración y +capacitor; conserva carga relativa",
-        "HUD contextual de energía con barra y porcentaje",
-        "Haz e impacto con color por tipo de roca (C/S/M) y chispas de mineral",
-        "12_mining: energía baja y haz visible en 23_mining_beam",
-        "03_controls, 04_autopilot, 09_wing_damage y 19_melt: OK",
+        "Fragmentos persistidos en v2 y en el formato legacy",
+        "Guardados sin fragmentos cargan vacíos",
+        "fragmentShare/fragmentLoss ajustables por instancia",
+        "El mundo legado conserva los fragmentos",
+        "12_mining, 04_autopilot y 16_universe: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S4",
     "currentTaskId": null,
-    "nextTaskId": "T-409",
+    "nextTaskId": "T-410",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4370,7 +4370,7 @@
       "description": "Crear fragmentos físicos con mineral al destruir/fragmentar asteroides con misiles, con estado persistente y recuperación posterior.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-406",
@@ -4386,8 +4386,8 @@
       ],
       "acceptanceCriteria": [
         "Los fragmentos tienen mineral y posición/velocidad.",
-        "Los fragmentos se conservan al guardar/cargar.",
-        "Se pueden recuperar con el rayo tractor.",
+        "Los fragmentos se conservan al guardar/cargar y en el formato legacy.",
+        "Se pueden recuperar al acercarse; el rayo tractor llega en T-410.",
         "La pérdida de material es configurable y se ajusta por balance."
       ],
       "tests": [
@@ -4396,10 +4396,39 @@
         "Guardado de fragmentos"
       ],
       "technicalNotes": "No fijar porcentajes definitivos. La dispersión debe ser visible y comprensible.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-036",
+          "date": "2026-11-08T01:47:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Los fragmentos se guardan y restauran en v2 (posición, velocidad, mineral, cantidad y vida) y en el formato legacy; los guardados sin fragmentos cargan vacíos. fragmentShare/fragmentLoss son ajustables por instancia y el mundo legado conserva los fragmentos. La recuperación por contacto ya existe; el rayo tractor queda en T-410.",
+          "files": [
+            "src/com/example/codegame/OreFragment.java",
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "12_mining",
+            "04_autopilot",
+            "16_universe"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS los fragmentos se guardan",
+        "PASS los fragmentos se restauran",
+        "PASS un guardado sin fragmentos carga vacio",
+        "PASS el formato legacy conserva fragmentos",
+        "PASS la perdida de material es configurable",
+        "PASS sin fragmentos todo queda en escombros",
+        "12_mining, 04_autopilot y 16_universe OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T01:47:00-06:00"
     },
     {
       "id": "T-410",
@@ -4408,7 +4437,7 @@
       "description": "Añadir un sistema de recuperación que atraiga fragmentos minerales hacia la nave, con alcance, velocidad y capacidad mejorables.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-409",
@@ -4950,6 +4979,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-036",
+      "date": "2026-11-08T01:47:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Fragmentos persistentes y pérdida configurable",
+      "summary": "Los fragmentos minerales se guardan y restauran en v2 y en el formato legacy con posición, velocidad, mineral, cantidad y vida. Los guardados sin fragmentos cargan vacíos. fragmentShare/fragmentLoss son ajustables y el mundo legado conserva los fragmentos.",
+      "tasks": [
+        "T-409"
+      ],
+      "files": [
+        "src/com/example/codegame/OreFragment.java",
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 12_mining",
+        "tools/run-tests.sh --no-build 04_autopilot",
+        "tools/run-tests.sh --no-build 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-410 (rayo tractor y captura)."
+    },
     {
       "id": "S-035",
       "date": "2026-11-08T01:43:00-06:00",

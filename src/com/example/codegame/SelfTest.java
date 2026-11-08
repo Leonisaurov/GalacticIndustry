@@ -1507,6 +1507,86 @@ public class SelfTest {
         check("la nave cargada usa el capacitor mejorado",
                 Math.abs(loadedShip.capacitor.maxEnergy - 150f) < 0.001f);
 
+        // T-409: persistencia de fragmentos y pérdida configurable.
+        GameSession oreSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        oreSession.startRun();
+        oreSession.sector.fragments.add(new OreFragment(120f, -40f, Commodity.TITANIO,
+                6, 12f, -3f, 42f));
+        oreSession.sector.fragments.add(new OreFragment(-30f, 80f, Commodity.HIELO,
+                2, -5f, 4f, 17f));
+        SaveService.MemoryStorage oreStorage = new SaveService.MemoryStorage();
+        SaveService oreService = new SaveService(oreStorage);
+        check("los fragmentos se guardan", oreService.save(oreSession));
+        GameSession oreLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("los fragmentos se restauran",
+                oreService.load(oreLoaded) == SaveService.LoadStatus.V2
+                        && oreLoaded.sector.fragments.size == 2
+                        && oreLoaded.sector.fragments.get(0).commodity == Commodity.TITANIO
+                        && oreLoaded.sector.fragments.get(0).amount == 6
+                        && Math.abs(oreLoaded.sector.fragments.get(0).pos.x - 120f) < 0.01f
+                        && Math.abs(oreLoaded.sector.fragments.get(0).vel.x - 12f) < 0.01f
+                        && Math.abs(oreLoaded.sector.fragments.get(0).life() - 42f) < 0.01f);
+        String oreSave = oreStorage.read(SaveService.SAVE_NAME);
+        String noFragmentsSave = oreSave.replaceAll("\"fragments\":\\[[^]]*\\],?", "");
+        GameSession noFragmentsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un guardado sin fragmentos carga vacio",
+                !oreSave.equals(noFragmentsSave)
+                        && SaveCodec.decode(noFragmentsSave, noFragmentsLoaded)
+                        && noFragmentsLoaded.sector.fragments.size == 0);
+        GameWorld legacyOre = new GameWorld(new Upgrades(true));
+        legacyOre.start();
+        legacyOre.fragments.add(new OreFragment(10f, 20f, Commodity.ORO, 3, 1f, 2f, 25f));
+        String legacyOreText = legacyOre.serialize();
+        GameWorld legacyOreLoaded = new GameWorld(new Upgrades(true));
+        check("el formato legacy conserva fragmentos",
+                legacyOreLoaded.restore(legacyOreText)
+                        && legacyOreLoaded.fragments.size == 1
+                        && legacyOreLoaded.fragments.get(0).commodity == Commodity.ORO
+                        && legacyOreLoaded.fragments.get(0).amount == 3
+                        && Math.abs(legacyOreLoaded.fragments.get(0).life() - 25f) < 0.01f);
+        GameWorld allFragments = new GameWorld(new Upgrades(true));
+        allFragments.start();
+        allFragments.immortal = true;
+        allFragments.fragmentShare = 1f;
+        allFragments.fragmentLoss = 0f;
+        allFragments.asteroids.clear();
+        allFragments.fuel.clear();
+        Asteroid wholeRock = new Asteroid(300f, 0f, Asteroid.SMALL,
+                AsteroidType.C, 12, 12, 601L);
+        wholeRock.vel.set(0f, 0f);
+        allFragments.asteroids.add(wholeRock);
+        allFragments.missiles.add(new Missile(wholeRock.pos.x - 10f, wholeRock.pos.y,
+                new com.badlogic.gdx.math.Vector2(1f, 0f),
+                new com.badlogic.gdx.math.Vector2(), 99));
+        allFragments.update(dt, new Controls());
+        int wholeUnits = 0;
+        for (int i = 0; i < allFragments.fragments.size; i++) {
+            wholeUnits += allFragments.fragments.get(i).amount;
+        }
+        check("la perdida de material es configurable",
+                wholeUnits == 12 && allFragments.asteroids.size == 0);
+        GameWorld zeroShare = new GameWorld(new Upgrades(true));
+        zeroShare.start();
+        zeroShare.immortal = true;
+        zeroShare.fragmentShare = 0f;
+        zeroShare.fragmentLoss = 0f;
+        zeroShare.asteroids.clear();
+        zeroShare.fuel.clear();
+        Asteroid debrisOnly = new Asteroid(300f, 0f, Asteroid.MEDIUM,
+                AsteroidType.S, 30, 30, 602L);
+        debrisOnly.vel.set(0f, 0f);
+        zeroShare.asteroids.add(debrisOnly);
+        zeroShare.missiles.add(new Missile(debrisOnly.pos.x - 10f, debrisOnly.pos.y,
+                new com.badlogic.gdx.math.Vector2(1f, 0f),
+                new com.badlogic.gdx.math.Vector2(), 99));
+        zeroShare.update(dt, new Controls());
+        int debrisOnlyUnits = 0;
+        for (int i = 0; i < zeroShare.asteroids.size; i++) {
+            debrisOnlyUnits += zeroShare.asteroids.get(i).reserve;
+        }
+        check("sin fragmentos todo queda en escombros",
+                zeroShare.fragments.size == 0 && debrisOnlyUnits == 30);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         // La simulación mide generación y monedas, no supervivencia: evita que

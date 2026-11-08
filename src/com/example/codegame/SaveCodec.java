@@ -147,6 +147,20 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            w.name("fragments").array();
+            for (int i = 0; i < world.fragments.size; i++) {
+                OreFragment o = world.fragments.get(i);
+                w.object();
+                w.set("x", o.pos.x);
+                w.set("y", o.pos.y);
+                w.set("vx", o.vel.x);
+                w.set("vy", o.vel.y);
+                w.set("commodity", o.commodity.name());
+                w.set("amount", o.amount);
+                w.set("life", o.life());
+                w.pop();
+            }
+            w.pop();
             w.pop();
 
             w.pop();
@@ -322,6 +336,30 @@ final class SaveCodec {
                 f.life = pickup.getFloat("life", FuelPickup.LIFE);
                 d.pickups.add(f);
             }
+            JsonValue fragments = sector.get("fragments");
+            if (fragments != null && fragments.isArray()) {
+                for (int i = 0; i < fragments.size; i++) {
+                    JsonValue fragment = fragments.get(i);
+                    if (fragment == null) {
+                        continue;
+                    }
+                    Commodity commodity = Commodity.byDisplayName(
+                            fragment.getString("commodity", null));
+                    int amount = fragment.getInt("amount", 0);
+                    if (commodity == null || amount <= 0) {
+                        continue;
+                    }
+                    FragmentData o = new FragmentData();
+                    o.x = fragment.getFloat("x", 0f);
+                    o.y = fragment.getFloat("y", 0f);
+                    o.vx = fragment.getFloat("vx", 0f);
+                    o.vy = fragment.getFloat("vy", 0f);
+                    o.commodity = commodity;
+                    o.amount = amount;
+                    o.life = fragment.getFloat("life", OreFragment.LIFE);
+                    d.fragments.add(o);
+                }
+            }
             return d;
         } catch (RuntimeException e) {
             return null;
@@ -410,6 +448,12 @@ final class SaveCodec {
             PickupData f = d.pickups.get(i);
             world.fuel.add(new FuelPickup(f.x, f.y, Math.max(0.01f, f.life)));
         }
+        world.fragments.clear();
+        for (int i = 0; i < d.fragments.size(); i++) {
+            FragmentData o = d.fragments.get(i);
+            world.fragments.add(new OreFragment(o.x, o.y, o.commodity, o.amount,
+                    o.vx, o.vy, Math.max(0.01f, o.life)));
+        }
         world.missiles.clear();
         world.fx.clear();
         world.pilot.cancel();
@@ -467,6 +511,17 @@ final class SaveCodec {
         final List<AsteroidData> asteroids = new ArrayList<>();
         final List<CargoData> cargo = new ArrayList<>();
         final List<PickupData> pickups = new ArrayList<>();
+        final List<FragmentData> fragments = new ArrayList<>();
+    }
+
+    private static final class FragmentData {
+        float x;
+        float y;
+        float vx;
+        float vy;
+        Commodity commodity;
+        int amount;
+        float life = OreFragment.LIFE;
     }
 
     private static final class CargoData {

@@ -36,10 +36,17 @@ class OreFragment {
 
     OreFragment(float x, float y, Commodity commodity, int amount,
                 float vx, float vy) {
+        this(x, y, commodity, amount, vx, vy, LIFE);
+    }
+
+    /** Fragmento restaurado desde un guardado, con la vida que le quedaba. */
+    OreFragment(float x, float y, Commodity commodity, int amount,
+                float vx, float vy, float life) {
         pos.set(x, y);
         this.commodity = commodity;
         this.amount = Math.max(1, amount);
         vel.set(vx, vy);
+        this.life = Math.max(0.01f, life);
         spin = MathUtils.random(-140f, 140f);
         rot = MathUtils.random(360f);
     }

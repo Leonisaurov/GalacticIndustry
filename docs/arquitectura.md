@@ -262,7 +262,10 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   propias; no entran en la bodega hasta que la nave los toca.
 - Si la bodega está llena, el fragmento permanece en el espacio. Su vida es de
   90 s y desaparecen si se alejan demasiado.
-- La persistencia de fragmentos y el rayo tractor llegan en T-409/T-410.
+- `fragmentShare` y `fragmentLoss` son ajustables por mundo para balance.
+- Los fragmentos se guardan en v2 y en el formato legacy con posición,
+  velocidad, mineral, cantidad y vida restante; un guardado sin ellos carga
+  vacío. El rayo tractor llega en T-410.
 
 ## Economía temporal: fundición
 

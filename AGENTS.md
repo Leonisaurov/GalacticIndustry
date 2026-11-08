@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S4` — Minería láser y recursos.
 - No hay tarea en progreso.
-- Última tarea completada: `T-407` — Añadir mejoras de láser, HUD de energía y efectos visuales.
-- Primera tarea disponible: `T-409` — Generar fragmentos de mineral y dispersión por misiles (persistencia).
+- Última tarea completada: `T-409` — Generar fragmentos de mineral y dispersión por misiles (persistencia).
+- Primera tarea disponible: `T-410` — Implementar rayo tractor y captura de fragmentos.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **35 %** (28 de 81 tareas de progreso).
+- La implementación del juego está al **36 %** (29 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 
