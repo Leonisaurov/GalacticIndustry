@@ -3197,6 +3197,82 @@ public class SelfTest {
                         && Math.abs(galaxySession.sector.station.market.spread()
                         - 0.10f) < 0.001f);
 
+        // T-807: gate de la etapa 8 (universo, warp, mapa, streaming).
+        Upgrades gateUp = new Upgrades(true);
+        gateUp.addCoins(20000);
+        gateUp.buy(Upgrades.MOTOR);
+        for (int i = 0; i < 5; i++) {
+            gateUp.buy(Upgrades.LASER);
+        }
+        GameSession gateSession = new GameSession(new PlayerProfile(gateUp));
+        gateSession.startRun();
+        TravelService.Quote gateQuote = TravelService.quote(gateSession, "sol-belt");
+        check("S8: el mapa muestra descubrimientos y coste",
+                gateSession.universe.discoveredCount() == 5
+                        && gateSession.universe.sectorCount() == 6
+                        && !gateSession.universe.isDiscovered("andromeda-drift")
+                        && gateQuote.ok
+                        && gateQuote.fuelCost > 0
+                        && gateQuote.energyCost > 0);
+        check("S8: el streaming no mantiene todo el universo",
+                gateSession.streamer.loadedCount() < gateSession.universe.sectorCount()
+                        && gateSession.streamer.unloadedCount() > 0
+                        && gateSession.universe.snapshot("draco-core") == null);
+        check("S8: viaje libre de ida",
+                TravelService.travel(gateSession, "sol-belt").ok
+                        && "sol-belt".equals(gateSession.currentSector.id)
+                        && gateSession.streamer.loadedCount() < 6);
+        int gateBeltReserve = 0;
+        for (int i = 0; i < gateSession.sector.asteroids.size; i++) {
+            gateBeltReserve += gateSession.sector.asteroids.get(i).reserve;
+        }
+        gateSession.ship().fuel = gateSession.ship().maxFuel;
+        gateSession.ship().capacitor.reset();
+        check("S8: se puede cambiar de sector y volver",
+                TravelService.travel(gateSession, "sol-ice").ok
+                        && gateSession.universe.hasSnapshot("sol-belt")
+                        && TravelService.travel(gateSession, "sol-belt").ok
+                        && "sol-belt".equals(gateSession.currentSector.id));
+        int gateBeltAfter = 0;
+        for (int i = 0; i < gateSession.sector.asteroids.size; i++) {
+            gateBeltAfter += gateSession.sector.asteroids.get(i).reserve;
+        }
+        check("S8: cada sector conserva su estado",
+                gateBeltAfter == gateBeltReserve
+                        && SectorRuntime.reserveUnits(
+                        gateSession.universe.snapshot("sol-belt")) == gateBeltReserve);
+        gateSession.ship().fuel = gateSession.ship().maxFuel;
+        gateSession.ship().capacitor.reset();
+        check("S8: Via Lactea y otra galaxia difieren",
+                TravelService.travel(gateSession, "andromeda-forge").ok
+                        && gateSession.sector.station.def.name.equals("NODRIZA ANDROMEDA")
+                        && gateSession.sector.station.market.target(Commodity.TITANIO) == 130
+                        && gateSession.universe.isDiscovered("andromeda-drift")
+                        && gateSession.universe.snapshot("draco-core") == null);
+        gateSession.ship().fuel = gateSession.ship().maxFuel;
+        gateSession.ship().capacitor.reset();
+        long gateStart = System.nanoTime();
+        boolean gateTrips = true;
+        for (int i = 0; i < 8; i++) {
+            gateSession.ship().fuel = gateSession.ship().maxFuel;
+            gateSession.ship().capacitor.reset();
+            gateTrips = gateTrips
+                    && TravelService.travel(gateSession,
+                    i % 2 == 0 ? "andromeda-drift" : "andromeda-forge").ok;
+        }
+        long gateMs = (System.nanoTime() - gateStart) / 1_000_000L;
+        System.out.println("BENCH universo 8 viajes=" + gateMs + "ms");
+        check("S8: el viaje y la carga dinámica son ligeros",
+                gateTrips && gateMs < 1000
+                        && gateSession.streamer.loadedCount() == 1
+                        && gateSession.universe.snapshot("draco-core") == null);
+        gateSession.ship().fuel = gateSession.ship().maxFuel;
+        gateSession.ship().capacitor.reset();
+        check("S8: se puede volver a la Via Lactea",
+                TravelService.travel(gateSession, GameData.START_SECTOR_ID).ok
+                        && GameData.START_SECTOR_ID.equals(gateSession.currentSector.id)
+                        && gateSession.sector.station.def.name.equals("NODRIZA"));
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

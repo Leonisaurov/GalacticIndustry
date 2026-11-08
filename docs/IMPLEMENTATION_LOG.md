@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T05:58:00-06:00  
+**Última actualización:** 2026-11-08T06:12:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,63 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-068 — Verificación y cierre del universo
+
+- **Fecha:** 2026-11-08T06:12:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-807
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- **Gate S8** integrado en `SelfTest`:
+  - mapa con descubrimientos y coste de warp;
+  - streaming sin cargar todo el universo;
+  - viaje libre de ida y regreso;
+  - estado por sector conservado sin duplicar;
+  - Vía Láctea y Andrómeda con nodriza/economía distintas;
+  - galaxias inactivas solo con snapshot, sin detalle.
+- Bench: **8 viajes en 1 ms**.
+- Documentada la matriz del gate en `docs/pruebas.md`.
+- **S8 cerrada**; **S9 lista**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SelfTest.java`
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `16_universe 18_map`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS S8: el mapa muestra descubrimientos y coste`
+- `PASS S8: el streaming no mantiene todo el universo`
+- `PASS S8: viaje libre de ida`
+- `PASS S8: se puede cambiar de sector y volver`
+- `PASS S8: cada sector conserva su estado`
+- `PASS S8: Via Lactea y otra galaxia difieren`
+- `BENCH universo 8 viajes=1ms`
+- `PASS S8: se puede volver a la Via Lactea`
+
+### Decisiones tomadas
+
+- El gate usa una sesión con motor y láser mejorados para cubrir viajes largos.
+- Los sectores no visitados permanecen sin snapshot hasta que se visitan.
+- No se simulan galaxias inactivas en detalle.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 9 con **T-901 — Crear PlayerStation y ModuleDef para
+  plataforma vacía**.
 
 ---
 

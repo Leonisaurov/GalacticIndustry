@@ -236,6 +236,20 @@ Verificación de T-707:
 | El offline respeta el límite | `PASS el offline respeta el límite` |
 | La simulación es determinista | `PASS la simulación es determinista` |
 
+## Gate de la Etapa 8 — universo y galaxias
+
+Verificación de T-807:
+
+| Criterio | Evidencia |
+|---|---|
+| Viaje libre con warp y regreso | `PASS S8: viaje libre de ida`, `PASS S8: se puede volver a la Via Lactea` |
+| Cada sector conserva su estado | `PASS S8: cada sector conserva su estado` |
+| El mapa muestra descubrimientos y costes | `PASS S8: el mapa muestra descubrimientos y coste` |
+| Vía Láctea y otra galaxia difieren | `PASS S8: Via Lactea y otra galaxia difieren` |
+| El streaming no carga todo el universo | `PASS S8: el streaming no mantiene todo el universo` |
+| No se simulan galaxias inactivas en detalle | Snapshot de `draco-core` nulo y solo sectores visitados conservan estado |
+| Rendimiento de viaje/carga | `BENCH universo 8 viajes=1ms`; `18_map`, `16_universe` |
+
 ## Añadir pruebas
 
 - Lógica pura → `SelfTest`; termina en `TODO OK`.

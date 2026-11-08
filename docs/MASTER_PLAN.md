@@ -687,7 +687,7 @@ La granularidad ejecutable está en `IMPLEMENTATION_TRACKER.json`. Esta tabla es
 | S5 | Nave nodriza | Estación física, acople, servicios | S4 | T-501..T-507 | **Completada**: ciclo completo en estación |
 | S6 | Mercado | Stock, precios, compraventa | S5 | T-601..T-606 | **Completada**: precios reaccionan |
 | S7 | NPC | Agentes, economía autónoma | S6 | T-701..T-707 | **Completada**: precios cambian sin jugador |
-| S8 | Universo | Warp libre, streaming, galaxias reales/ficticias | S5–S7 | T-801..T-808 | Viaje libre y streaming |
+| S8 | Universo | Warp libre, streaming, galaxias reales/ficticias | S5–S7 | T-801..T-808 | **Completada**: viaje libre y streaming |
 | S9 | Estación propia | Plataforma vacía, módulos construibles | S6, S8 | T-901..T-908 | Construir y ampliar |
 | S10 | Interiores | Movimiento a pie; estación propia y base para naves | S9 | T-1001..T-1007 | Entrar, caminar, salir |
 | S11 | Expansión | Naves modulares, audio completo, balance | S8–S10 | T-1101..T-1109 | Regresión final |
