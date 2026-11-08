@@ -115,6 +115,8 @@ public class MyGame implements ApplicationListener {
     private final boolean warpTest;
     /** Arranca con creditos/materiales y espacio para construir la base. */
     private final boolean baseTest;
+    /** Arranca con base y módulos ya construidos para probar servicios. */
+    private final boolean moduleTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -344,6 +346,22 @@ public class MyGame implements ApplicationListener {
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest, boolean boundsTest, boolean warpTest,
                   boolean baseTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, boundsTest, warpTest, baseTest, false);
+    }
+
+    /**
+     * @param moduleTest arranca con base y módulos ya construidos.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest, boolean warpTest,
+                  boolean baseTest, boolean moduleTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -363,11 +381,12 @@ public class MyGame implements ApplicationListener {
         this.boundsTest = boundsTest;
         this.warpTest = warpTest;
         this.baseTest = baseTest;
+        this.moduleTest = moduleTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
                 || dockingTest || stationServiceTest || rescueTest || marketTest
-                || boundsTest || warpTest || baseTest;
+                || boundsTest || warpTest || baseTest || moduleTest;
     }
 
     @Override
@@ -581,6 +600,7 @@ public class MyGame implements ApplicationListener {
             world.ship.capacitor.reset();
         } else if (baseTest) {
             session.startRun();
+            session.playerStation.restore(false, 0f, 0f, null);
             runActive = true;
             state = PLAYING;
             world.asteroids.clear();
@@ -591,6 +611,28 @@ public class MyGame implements ApplicationListener {
             world.ship.cargo().addExact(Commodity.HIERRO, 30);
             world.ship.cargo().addExact(Commodity.COBRE, 15);
             world.ship.cargo().addExact(Commodity.SILICATO, 25);
+        } else if (moduleTest) {
+            session.startRun();
+            session.playerStation.restore(false, 0f, 0f, null);
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(-1500f, 0f);
+            world.ship.vel.set(0f, 0f);
+            upgrades.setCoins(1000);
+            world.ship.cargo().addExact(Commodity.HIERRO, 30);
+            world.ship.cargo().addExact(Commodity.COBRE, 15);
+            world.ship.cargo().addExact(Commodity.SILICATO, 25);
+            ConstructionService.buildCore(session, -1500f, 0f);
+            upgrades.setCoins(2000);
+            world.ship.cargo().addExact(Commodity.HIERRO, 40);
+            world.ship.cargo().addExact(Commodity.COBRE, 20);
+            world.ship.cargo().addExact(Commodity.SILICATO, 30);
+            session.playerStation.build(0, ModuleDef.STORAGE, upgrades,
+                    world.ship.cargo());
+            session.playerStation.build(1, ModuleDef.REPAIR, upgrades,
+                    world.ship.cargo());
         }
     }
 

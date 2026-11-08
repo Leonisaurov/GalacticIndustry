@@ -300,6 +300,18 @@ estáticos se reutilizan.
 - El acople lógico está disponible (`PlayerStation.canDock`); la pantalla de
   gestión modular llega en T-904.
 
+### Sistema modular
+
+- `StationModule` representa un módulo instalado con **nivel 1–3**.
+- `PlayerStation.build()` es la única vía para obtener un servicio:
+  - valida ranura, módulo previo, créditos y materiales;
+  - descuenta de forma atómica;
+  - crea el `StationModule` en la ranura.
+- `upgrade()` amplía un módulo existente con coste creciente; no cambia el tipo
+  de servicio.
+- `serviceMask()` se deriva de los módulos; una plataforma vacía devuelve 0.
+- Añadir un módulo nuevo es añadir un `ModuleDef`, sin tocar el núcleo.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

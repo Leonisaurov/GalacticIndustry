@@ -3302,29 +3302,59 @@ public class SelfTest {
                         && ModuleDef.STORAGE.service == ModuleDef.Service.STORAGE
                         && ModuleDef.byId("ALMACEN") == ModuleDef.STORAGE
                         && ModuleDef.byId("TALLER") == ModuleDef.REPAIR);
-        check("los módulos se construyen progresivamente",
-                platform.install(0, ModuleDef.REPAIR) == false
-                        && platform.install(0, ModuleDef.STORAGE)
+        Upgrades moduleUp = new Upgrades(true);
+        moduleUp.setCoins(10000);
+        CargoHold moduleCargo = new CargoHold(300);
+        moduleCargo.addExact(Commodity.HIERRO, 60);
+        moduleCargo.addExact(Commodity.COBRE, 50);
+        moduleCargo.addExact(Commodity.SILICATO, 60);
+        moduleCargo.addExact(Commodity.TITANIO, 20);
+        check("los módulos se construyen en orden y con coste",
+                !platform.build(0, ModuleDef.REPAIR, moduleUp, moduleCargo).ok
+                        && platform.build(0, ModuleDef.STORAGE, moduleUp, moduleCargo).ok
                         && platform.storage()
                         && !platform.repair()
-                        && platform.install(1, ModuleDef.REPAIR)
+                        && platform.build(1, ModuleDef.REPAIR, moduleUp, moduleCargo).ok
                         && platform.repair()
-                        && platform.install(2, ModuleDef.REFINERY)
+                        && platform.build(2, ModuleDef.REFINERY, moduleUp, moduleCargo).ok
                         && platform.refinery()
-                        && platform.install(3, ModuleDef.MARKET)
+                        && platform.build(3, ModuleDef.MARKET, moduleUp, moduleCargo).ok
                         && platform.market()
                         && platform.moduleCount() == 4
                         && platform.freeSlots() == 2);
+        check("construir descuenta creditos y materiales",
+                moduleUp.coins() == 10000 - ModuleDef.STORAGE.creditCost
+                        - ModuleDef.REPAIR.creditCost
+                        - ModuleDef.REFINERY.creditCost
+                        - ModuleDef.MARKET.creditCost
+                        && moduleCargo.amount(Commodity.HIERRO) == 25
+                        && moduleCargo.amount(Commodity.COBRE) == 20
+                        && moduleCargo.amount(Commodity.SILICATO) == 20
+                        && moduleCargo.amount(Commodity.TITANIO) == 10);
         check("una ranura ocupada o invalida no acepta módulos",
-                !platform.install(0, ModuleDef.MARKET)
-                        && !platform.install(-1, ModuleDef.STORAGE)
-                        && !platform.install(PlayerStation.SLOTS, ModuleDef.STORAGE));
+                !platform.build(0, ModuleDef.MARKET, moduleUp, moduleCargo).ok
+                        && !platform.build(-1, ModuleDef.STORAGE, moduleUp, moduleCargo).ok
+                        && !platform.build(PlayerStation.SLOTS, ModuleDef.STORAGE,
+                        moduleUp, moduleCargo).ok);
+        Upgrades poorModuleUp = new Upgrades(true);
+        poorModuleUp.setCoins(10000);
+        PlayerStation poorPlatform = new PlayerStation(0f, 0f);
+        check("sin materiales no se construye y no se cobra",
+                !poorPlatform.build(0, ModuleDef.STORAGE, poorModuleUp,
+                        new CargoHold(300)).ok
+                        && poorModuleUp.coins() == 10000
+                        && poorPlatform.moduleCount() == 0);
+        check("los módulos se pueden ampliar",
+                platform.moduleAt(0) != null
+                        && platform.moduleAt(0).level() == 1
+                        && platform.upgrade(0, moduleUp, moduleCargo).ok
+                        && platform.moduleAt(0).level() == 2
+                        && platform.serviceMask() == 15);
         PlayerStation unplaced = new PlayerStation();
         check("una plataforma no colocada no acopla ni construye",
                 !unplaced.built()
                         && !unplaced.canDock(new Vector2(0f, 0f), 1f)
-                        && !unplaced.install(0, ModuleDef.STORAGE));
-
+                        && !unplaced.build(0, ModuleDef.STORAGE, moduleUp, moduleCargo).ok);
         // T-902: compra, colocación y persistencia de la plataforma vacía.
         Upgrades baseUp = new Upgrades(true);
         baseUp.setCoins(1000);

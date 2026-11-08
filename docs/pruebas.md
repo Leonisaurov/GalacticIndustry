@@ -49,7 +49,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `16_universe` — 3 galaxias, 3 sistemas, 6 sectores, nodriza propia de la Vía Láctea (NODRIZA, spread 0,08), IDs estables, sector de 12.000 × 12.000, borde finito (`31_bounds`) y streaming 2 cargados / 4 descargados. El contenido diferenciado, la persistencia y el bench de 200 sectores se cubren en `01_logic`.
 - `17_warp` — viaje warp libre con motor, coste de combustible, snapshot del origen y regreso al sector anterior. En `warp_test` se usan `T`/`Y` o zonas invisibles de prueba.
 - `18_map` — mapa de sectores: 5/6 descubiertos, nodo oculto sin datos, coste del destino y viaje warp desde `VIAJAR` (captura `32_map`).
-- `17_player_station` — plataforma personal vacía, construcción con créditos/materiales, captura `33_base`, persistencia tras reiniciar y 0 servicios. Las definiciones y la instalación progresiva se cubren en `01_logic`.
+- `17_player_station` — plataforma personal vacía, construcción con créditos/materiales, captura `33_base`, persistencia y módulos/servicios (`module_test`: 2 módulos, máscara 3). La construcción transaccional y las ampliaciones se cubren en `01_logic`.
 
 ```sh
 tools/run-tests.sh --list

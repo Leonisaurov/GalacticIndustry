@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T06:44:00-06:00  
+**Última actualización:** 2026-11-08T07:02:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-071 — Sistema modular de estación
+
+- **Fecha:** 2026-11-08T07:02:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-903
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `StationModule`: módulo instalado con **nivel 1–3** y coste de ampliación.
+- `PlayerStation.build()` es la única vía para obtener un servicio:
+  - valida ranura, requisito, créditos y materiales;
+  - descuenta de forma atómica;
+  - no deja recursos a medias si falla.
+- `upgrade()` amplía módulos existentes.
+- `serviceMask()` se deriva de los módulos; plataforma vacía = 0.
+- Añadir un módulo nuevo es añadir un `ModuleDef`.
+- `module_test` verifica en dispositivo 2 módulos y máscara 3.
+
+### Archivos modificados
+
+- `src/com/example/codegame/StationModule.java` (nuevo)
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/ModuleDef.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_player_station.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_player_station`: **OK**.
+
+### Evidencias
+
+- `PASS los módulos se construyen en orden y con coste`
+- `PASS construir descuenta creditos y materiales`
+- `PASS sin materiales no se construye y no se cobra`
+- `PASS los módulos se pueden ampliar`
+- `PASS una ranura ocupada o invalida no acepta módulos`
+- `17_player_station`: `module_test` con 2 módulos y máscara 3.
+
+### Decisiones tomadas
+
+- La construcción es transaccional y solo por `build()`.
+- Los servicios se derivan de módulos; no hay servicios implícitos.
+- Las ampliaciones suben nivel y coste sin cambiar de servicio.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-905 — Persistir la estación personal**.
 
 ---
 

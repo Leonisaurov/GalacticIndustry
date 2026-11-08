@@ -49,5 +49,14 @@ assert_eq "la base persiste" true "$(printf '%s' "$status" | json_get playerStat
 assert_eq "la posición persiste" -1500.0 "$(printf '%s' "$status" | json_get playerStationX)"
 assert_eq "sigue sin servicios" 0 "$(printf '%s' "$status" | json_get playerStationServices)"
 
+# T-903: módulos construidos y servicios derivados.
+launch_app "--ez test_mode true --ez module_test true"
+wait_current_state PLAYING 10 || fail "no arrancó la prueba de módulos"
+sleep 0.5
+status=$(latest_status)
+assert_eq "módulos construidos" 2 "$(printf '%s' "$status" | json_get playerStationModules)"
+assert_eq "servicios activos" 3 "$(printf '%s' "$status" | json_get playerStationServices)"
+assert_eq "la base ya existe" false "$(printf '%s' "$status" | json_get canBuildBase)"
+
 check_no_crash
-echo "OK 17_player_station: plataforma vacía, construcción, persistencia y 0 servicios"
+echo "OK 17_player_station: vacía, construcción, persistencia y módulos"
