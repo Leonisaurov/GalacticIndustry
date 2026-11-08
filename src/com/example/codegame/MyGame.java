@@ -36,7 +36,7 @@ public class MyGame implements ApplicationListener {
     private OrthographicCamera worldCam;
     private ExtendViewport worldView;
     private OrthographicCamera hudCam;
-    private ScreenViewport hudView;
+    ScreenViewport hudView;
     private ShapeRenderer shapes;
     private SpriteBatch batch;
     private BitmapFont font;
@@ -50,6 +50,7 @@ public class MyGame implements ApplicationListener {
     private final HudView hud = new HudView();
     private PlayHud playHud;
     private ShopRenderer shopRenderer;
+    private StationScreen stationScreen;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -101,6 +102,8 @@ public class MyGame implements ApplicationListener {
     private final boolean stationTest;
     /** Arranca lejos con Autopilot.STATION para probar aproximación y acople. */
     private final boolean dockingTest;
+    /** Arranca acoplado con carga y daños para probar los servicios de estación. */
+    private final boolean stationServiceTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -254,6 +257,19 @@ public class MyGame implements ApplicationListener {
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, false);
+    }
+
+    /**
+     * @param stationServiceTest arranca acoplado con carga y daños.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -267,10 +283,11 @@ public class MyGame implements ApplicationListener {
         this.tractorTest = tractorTest;
         this.stationTest = stationTest;
         this.dockingTest = dockingTest;
+        this.stationServiceTest = stationServiceTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
-                || dockingTest;
+                || dockingTest || stationServiceTest;
     }
 
     @Override
@@ -298,6 +315,7 @@ public class MyGame implements ApplicationListener {
         world = session.sector;
         playHud = new PlayHud(ui, world, session, upgrades, batch, shapes, art, hud);
         shopRenderer = new ShopRenderer(this, ui, batch, shapes);
+        stationScreen = new StationScreen(this, ui, batch, shapes, space);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
         saves = new SaveService(
@@ -419,6 +437,21 @@ public class MyGame implements ApplicationListener {
             world.ship.heading = 90f;
             world.ship.dir.set(0f, 1f);
             world.pilot.station(world.station);
+        } else if (stationServiceTest) {
+            session.startRun();
+            runActive = true;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.pos.x, world.station.pos.y - 220f);
+            world.ship.vel.set(0f, 0f);
+            world.ship.docked = true;
+            world.ship.part[Ship.HULL] = 50f;
+            world.ship.fuel = 40f;
+            world.ship.cargo().addExact(Commodity.SILICATO, 100);
+            session.pilot.oxygen = 40f;
+            upgrades.setCoins(200);
+            state = DOCKED;
+            stationScreen.enter();
         }
     }
 
@@ -485,7 +518,7 @@ public class MyGame implements ApplicationListener {
     }
 
     /** Guarda la partida en curso (la pausa, la tienda y el cierre de la app la llaman). */
-    private void saveRun() {
+    void saveRun() {
         if (runActive && !world.isOver()) {
             saves.save(session);
         }
@@ -628,6 +661,9 @@ public class MyGame implements ApplicationListener {
                         i, cardX, cardW, bbw, bbh));
             }
         }
+        if (stationScreen != null) {
+            stationScreen.layout(w, h);
+        }
     }
 
     private Button shopButton(String label, int row, float cardX, float cardW, float bbw, float bbh) {
@@ -738,7 +774,7 @@ public class MyGame implements ApplicationListener {
     }
 
     /** Repara por completo una parte y conserva el combustible que gana el deposito al ampliarse. */
-    private void repairPart(int index) {
+    void repairPart(int index) {
         float oldMax = world.ship.maxFuel;
         world.ship.repair(index);
         if (index == Ship.TANK) {
@@ -751,7 +787,7 @@ public class MyGame implements ApplicationListener {
     }
 
     /** Aplica al casco/deposito de la partida en curso las mejoras compradas en la tienda. */
-    private void applyUpgradeToRun(int index) {
+    void applyUpgradeToRun(int index) {
         if (!runActive) {
             return;
         }
@@ -796,7 +832,7 @@ public class MyGame implements ApplicationListener {
     }
 
     /** Pulsación nueva sobre el botón (en cualquier dedo). */
-    private boolean tapped(Button b) {
+    boolean tapped(Button b) {
         if (!Gdx.input.justTouched()) {
             return false;
         }
@@ -844,7 +880,7 @@ public class MyGame implements ApplicationListener {
             case PLAYING: updatePlaying(dt); break;
             case PAUSED: handlePause(); break;
             case SHOP: handleShop(); break;
-            case DOCKED: handleDocked(); break;
+            case DOCKED: stationScreen.handle(); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
             default: handleMenu(); break;
@@ -926,7 +962,9 @@ public class MyGame implements ApplicationListener {
                         + "\"tractorLevel\":%d,"
                         + "\"stationX\":%.1f,\"stationY\":%.1f,\"stationRadius\":%.1f,"
                         + "\"stationDistance\":%.1f,\"stationAsteroids\":%d,"
-                        + "\"docked\":%s,\"canDock\":%s}",
+                        + "\"docked\":%s,\"canDock\":%s,"
+                        + "\"stationStorageMass\":%.1f,\"stationStorageUnits\":%d,"
+                        + "\"motorLevel\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -964,10 +1002,13 @@ public class MyGame implements ApplicationListener {
                 world.station.distanceTo(world.ship.pos),
                 stationAsteroids(),
                 world.ship.docked,
-                canDock()));
+                canDock(),
+                world.station.storage.usedMass(),
+                world.station.storage.totalUnits(),
+                upgrades.level(Upgrades.MOTOR)));
     }
 
-    private void logEvent(String json) {
+    void logEvent(String json) {
         if (debugMode) {
             Gdx.app.log(TAG, json);
         }
@@ -1119,7 +1160,10 @@ public class MyGame implements ApplicationListener {
         if (canDock() && tapped(btnDock)) {
             if (DockingSystem.dock(world)) {
                 resetControls();
+                bankCoins();
                 state = DOCKED;
+                stationScreen.enter();
+                layoutUi();
                 saveRun();
                 logEvent("{\"event\":\"dock\",\"station\":\""
                         + world.station.def.name + "\"}");
@@ -1334,17 +1378,6 @@ public class MyGame implements ApplicationListener {
         }
     }
 
-    /** En la estación: DESPEGAR o ESC devuelven la nave al exterior. */
-    private void handleDocked() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnUndock)) {
-            DockingSystem.undock(world);
-            resetControls();
-            state = PLAYING;
-            saveRun();
-            logEvent("{\"event\":\"undock\"}");
-        }
-    }
-
     private void handleShop() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnBack)) {
             state = shopReturn;
@@ -1461,6 +1494,15 @@ public class MyGame implements ApplicationListener {
         }
     }
 
+    /** DESPEGAR desde la pantalla de estación. */
+    void undockFromStation() {
+        DockingSystem.undock(world);
+        resetControls();
+        state = PLAYING;
+        saveRun();
+        logEvent("{\"event\":\"undock\"}");
+    }
+
     private void openShop(int from) {
         shopReturn = from;
         state = SHOP;
@@ -1560,7 +1602,7 @@ public class MyGame implements ApplicationListener {
         } else if (state == DYING) {
             overlay.drawDeathFlourish(w, h);
         } else if (state == DOCKED) {
-            overlay.drawDocked(w, h);
+            stationScreen.draw(w, h);
         } else {
             hud.state = state;
             hud.runActive = runActive;

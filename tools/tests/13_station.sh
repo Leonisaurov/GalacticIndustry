@@ -49,5 +49,54 @@ status=$(latest_status)
 assert_eq "nave desacoplada" false "$(printf '%s' "$status" | json_get docked)"
 assert_eq "velocidad cero al despegar" 0.0 "$(printf '%s' "$status" | json_get speed)"
 
+# T-503: servicios de estación (descarga, venta, combustible, O2, reparación y mejoras).
+reset_app
+launch_app "--ez test_mode true --ez station_service_test true"
+wait_current_state DOCKED 10 || fail "no arrancó la estación de servicios"
+sleep 0.5
+status=$(latest_status)
+assert_eq "carga inicial" 100 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "créditos iniciales" 200 "$(printf '%s' "$status" | json_get coins)"
+assert_eq "casco dañado" 50.0 "$(printf '%s' "$status" | json_get hull)"
+assert_eq "combustible bajo" 40.0 "$(printf '%s' "$status" | json_get fuel)"
+assert_eq "O2 bajo" 40.0 "$(printf '%s' "$status" | json_get pilotOxygen)"
+
+tap "$((W / 2))" "$ST_ROW1_Y" 0.3
+wait_status_field cargoUnits 0 5 || fail "DESCARGAR no vació la bodega"
+status=$(latest_status)
+assert_eq "almacén recibe la carga" 100 "$(printf '%s' "$status" | json_get stationStorageUnits)"
+
+tap "$((W / 2))" "$ST_ROW2_Y" 0.3
+wait_status_field stationStorageUnits 0 5 || fail "VENDER no vació el almacén"
+status=$(latest_status)
+assert_eq "venta a precio base" 400 "$(printf '%s' "$status" | json_get coins)"
+
+tap "$((W / 2))" "$ST_ROW3_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "repostaje completo" 160.0 "$(printf '%s' "$status" | json_get fuel)"
+
+tap "$((W / 2))" "$ST_ROW4_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "O2 completo" 100.0 "$(printf '%s' "$status" | json_get pilotOxygen)"
+
+tap "$((W / 2))" "$ST_ROW5_Y" 0.3
+sleep 0.4
+status=$(latest_status)
+assert_eq "casco reparado" 100.0 "$(printf '%s' "$status" | json_get hull)"
+
+tap "$ST_TAB_UPG_X" "$ST_TAB_Y" 0.3
+sleep 0.4
+tap "$((W / 2))" "$ST_UPG1_Y" 0.3
+sleep 0.5
+status=$(latest_status)
+assert_eq "mejora Motor comprada" 1 "$(printf '%s' "$status" | json_get motorLevel)"
+
+tap "$((W / 2))" "$ST_UNDOCK_Y" 0.3
+wait_current_state PLAYING 5 || fail "DESPEGAR de estación no volvió al exterior"
+status=$(latest_status)
+assert_eq "nave desacoplada tras servicios" false "$(printf '%s' "$status" | json_get docked)"
+
 check_no_crash
-echo "OK 13_station: nodriza, zona segura, Autopilot.STATION, acople y despegue"
+echo "OK 13_station: nodriza, zona segura, Autopilot.STATION, acople, servicios y despegue"

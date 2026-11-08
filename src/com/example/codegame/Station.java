@@ -22,13 +22,13 @@ final class Station {
 
     final StationDef def;
     final Vector2 pos = new Vector2();
-    final CargoHold storage;
+    final StationStorage storage;
     private float rotation;
 
     Station(StationDef def, float x, float y) {
         this.def = def;
         this.pos.set(x, y);
-        this.storage = new CargoHold(STORAGE_CAPACITY);
+        this.storage = new StationStorage(STORAGE_CAPACITY);
     }
 
     void update(float dt) {
@@ -120,7 +120,4 @@ final class Station {
                 def.radius * 0.5f, LIGHT_WARM, 0.22f * pulse);
     }
 
-    static float storageSpace(CargoHold hold) {
-        return hold == null ? 0f : hold.freeMass();
-    }
 }

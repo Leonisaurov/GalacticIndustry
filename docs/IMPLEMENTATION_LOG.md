@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:30:00-06:00  
+**Última actualización:** 2026-11-08T02:40:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,71 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-043 — StationScreen y servicios básicos
+
+- **Fecha:** 2026-11-08T02:40:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-503
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `StationScreen` sustituye el panel mínimo de acople:
+  - pestaña **SERVICIOS**: descargar bodega, vender almacén a precio base,
+    repostar combustible, rellenar O2 y reparar todas las partes;
+  - pestaña **MEJORAS**: compra de las ocho mejoras;
+  - `DESPEGAR` siempre visible.
+- `StationStorage` con capacidad en UM:
+  - `depositAll()` mueve lo que cabe y deja el resto en la nave;
+  - `sellAll()` paga precio base y vacía el almacén.
+- Al acoplar se ingresan las monedas de la partida para poder gastar.
+- Nuevo `station_service_test` con carga, casco dañado, combustible y O2 bajos.
+- `13_station` cubre ahora también todos los servicios.
+
+### Archivos modificados
+
+- `src/com/example/codegame/StationScreen.java` (nuevo)
+- `src/com/example/codegame/StationStorage.java` (nuevo)
+- `src/com/example/codegame/Station.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_station.sh`
+- `tools/tests/testlib.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 13_station`: **OK**.
+- `02_navigation 03_controls`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS el almacén recibe la bodega`
+- `PASS la venta usa el precio base`
+- `PASS la descarga parcial respeta la capacidad`
+- `PASS la estación descarga desde la nave`
+- `13_station`: descarga 100 UM, venta 200 cr, combustible, O2, casco 100,
+  Motor nivel 1 y `DESPEGAR`.
+- Captura `27_docked`: pestañas SERVICIOS/MEJORAS y tarjetas de servicio.
+
+### Decisiones tomadas
+
+- Descargar y vender son acciones separadas: primero almacén, luego créditos.
+- La venta usa precio base como puente hasta el mercado de la Etapa 6.
+- La tienda de pausa sigue existiendo hasta T-504.
+- La persistencia del almacén llega en T-505.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-504 — Retirar la tienda económica de la pausa**.
 
 ---
 

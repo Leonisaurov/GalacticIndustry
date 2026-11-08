@@ -1947,6 +1947,35 @@ public class SelfTest {
                         && DockingSystem.dock(stationPilot)
                         && stationPilot.ship.docked);
 
+        // T-503: almacén y venta a precio base.
+        StationStorage store = new StationStorage(200f);
+        CargoHold dockCargo = new CargoHold(200f);
+        dockCargo.addExact(Commodity.SILICATO, 100);
+        dockCargo.addExact(Commodity.ORO, 10);
+        check("el almacén recibe la bodega",
+                store.depositAll(dockCargo) == 110
+                        && dockCargo.isEmpty()
+                        && store.totalUnits() == 110
+                        && Math.abs(store.usedMass() - 125f) < 0.01f);
+        check("la venta usa el precio base",
+                store.totalValue() == 500f
+                        && store.sellAll() == 500
+                        && store.isEmpty());
+        StationStorage smallStore = new StationStorage(50f);
+        CargoHold partialCargo = new CargoHold(200f);
+        partialCargo.addExact(Commodity.SILICATO, 100);
+        check("la descarga parcial respeta la capacidad",
+                smallStore.depositAll(partialCargo) == 50
+                        && partialCargo.amount(Commodity.SILICATO) == 50
+                        && smallStore.totalUnits() == 50);
+        GameWorld serviceWorld = new GameWorld(new Upgrades(true));
+        serviceWorld.start();
+        serviceWorld.ship.cargo().addExact(Commodity.HIERRO, 10);
+        check("la estación descarga desde la nave",
+                serviceWorld.station.storage.depositAll(serviceWorld.ship.cargo()) == 10
+                        && serviceWorld.ship.cargo().isEmpty()
+                        && serviceWorld.station.storage.totalUnits() == 10);
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

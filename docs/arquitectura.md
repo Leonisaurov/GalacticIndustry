@@ -123,6 +123,20 @@ estáticos se reutilizan.
 - Los servicios completos y la persistencia del acople quedan para T-503 y
   T-505.
 
+## Servicios de estación
+
+- `StationScreen` sustituye el panel mínimo de acople y ofrece dos pestañas:
+  - **SERVICIOS**: descargar bodega al almacén, vender el almacén a precio base,
+    repostar combustible, rellenar O2 y reparar todas las partes.
+  - **MEJORAS**: las ocho mejoras del loadout.
+- `StationStorage` mide la capacidad en UM. `depositAll()` mueve lo que cabe y
+  deja el resto en la nave; `sellAll()` paga el precio base y vacía el almacén.
+- Los créditos de la partida se ingresan al acoplar (`bankCoins`).
+- Los precios usan las mismas fórmulas que la tienda temporal: combustible
+  1 cr/UM (mín. 5), O2 0,5 cr/UM (mín. 5) y reparación 0,7 cr por punto.
+- `DESPEGAR` cierra la pantalla y devuelve la nave al exterior. La tienda de
+  pausa se retira en T-504.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de

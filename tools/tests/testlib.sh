@@ -39,6 +39,16 @@ DOCK_X=0
 DOCK_Y=0
 UNDOCK_X=0
 UNDOCK_Y=0
+ST_TAB_SERV_X=0
+ST_TAB_UPG_X=0
+ST_TAB_Y=0
+ST_ROW1_Y=0
+ST_ROW2_Y=0
+ST_ROW3_Y=0
+ST_ROW4_Y=0
+ST_ROW5_Y=0
+ST_UPG1_Y=0
+ST_UNDOCK_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -96,7 +106,28 @@ device_geometry() {
     DOCK_X=$((W / 2))
     DOCK_Y=$((H - (H * 38 / 100 + 23 * U)))
     UNDOCK_X=$((W / 2))
-    UNDOCK_Y=$((H - (H * 30 / 100 + 23 * U)))
+    UNDOCK_Y=$((H - 68 * U))
+    # Pantalla de estación: pestañas y filas (5 servicios / 8 mejoras).
+    local st_px=$((8 * U))
+    local st_pw=$((W - 16 * U))
+    local st_tab_w=$(( (st_pw - 60 * U) / 2 ))
+    ST_TAB_SERV_X=$(( st_px + 20 * U + st_tab_w / 2 ))
+    ST_TAB_UPG_X=$(( st_px + 40 * U + st_tab_w + st_tab_w / 2 ))
+    ST_TAB_Y=$((76 * U))
+    local st_list_top=$((H - 160 * U))
+    local st_bottom=$((8 * U + 100 * U))
+    local st_gap=$((8 * U))
+    local st_row_h=$(( (st_list_top - st_bottom - 4 * st_gap) / 5 ))
+    [ "$st_row_h" -gt $((86 * U)) ] && st_row_h=$((86 * U))
+    ST_ROW1_Y=$((H - (st_list_top - st_row_h / 2)))
+    ST_ROW2_Y=$((H - (st_list_top - (st_row_h + st_gap) - st_row_h / 2)))
+    ST_ROW3_Y=$((H - (st_list_top - 2 * (st_row_h + st_gap) - st_row_h / 2)))
+    ST_ROW4_Y=$((H - (st_list_top - 3 * (st_row_h + st_gap) - st_row_h / 2)))
+    ST_ROW5_Y=$((H - (st_list_top - 4 * (st_row_h + st_gap) - st_row_h / 2)))
+    local st_row_h8=$(( (st_list_top - st_bottom - 7 * st_gap) / 8 ))
+    [ "$st_row_h8" -gt $((86 * U)) ] && st_row_h8=$((86 * U))
+    ST_UPG1_Y=$((H - (st_list_top - st_row_h8 / 2)))
+    ST_UNDOCK_Y=$((H - (8 * U + 60 * U)))
 }
 
 # ---------- build y SelfTest ----------
