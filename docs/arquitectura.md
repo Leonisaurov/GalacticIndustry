@@ -456,6 +456,17 @@ estáticos se reutilizan.
   en la pausa.
 - No usa red ni recursos de jars; todos los assets van en `assets/audio`.
 
+## Accesibilidad y localización (T-1106)
+
+- Botones táctiles de al menos **44 u** de alto; mapa, mercado y gestión se
+  ampliaron.
+- Los avisos no dependen solo del color: llevan prefijo `!` y texto explícito
+  (`! O2 CRITICO`, `! SIN COMBUSTIBLE...`).
+- `UiKit.textCenteredFit()` y `textLeftFit()` reducen escala para evitar cortes
+  en pantallas estrechas.
+- La fuente sigue siendo ASCII; no se añaden acentos ni glifos ausentes.
+- La localización completa a otros idiomas queda para más adelante.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

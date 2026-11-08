@@ -107,7 +107,8 @@ final class MarketScreen {
         btnBuy = new Button("COMPRAR", px + 22f * u, py + 94f * u, halfW, 44f * u);
         btnSell = new Button("VENDER", px + 22f * u + halfW + 8f * u,
                 py + 94f * u, halfW, 44f * u);
-        btnBack = new Button("VOLVER", px + pw - 96f * u, h - 52f * u, 78f * u, 32f * u);
+        btnBack = new Button("VOLVER", px + pw - 110f * u, h - 60f * u,
+                92f * u, 44f * u);
     }
 
     private Commodity selectedCommodity() {

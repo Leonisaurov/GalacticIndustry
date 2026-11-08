@@ -185,6 +185,25 @@ final class UiKit {
         font.getData().setScale(1f);
     }
 
+    /** Texto centrado que reduce la escala si supera maxWidth. */
+    void textCenteredFit(String text, float cx, float topY, float scale,
+                         float maxWidth, Color c) {
+        float s = scale;
+        font.getData().setScale(s);
+        layout.setText(font, text);
+        if (layout.width > maxWidth && layout.width > 0f) {
+            s *= maxWidth / layout.width;
+            font.getData().setScale(s);
+        }
+        float x = cx - layout.width * 0.5f;
+        float sh = Math.max(1.5f, s * 0.6f);
+        font.setColor(0f, 0f, 0f, 0.45f);
+        font.draw(batch, text, x + sh, topY - sh);
+        font.setColor(c);
+        font.draw(batch, text, x, topY);
+        font.getData().setScale(1f);
+    }
+
     void textCenteredMiddle(String text, float cx, float cy, float scale, Color c) {
         font.getData().setScale(scale);
         layout.setText(font, text);

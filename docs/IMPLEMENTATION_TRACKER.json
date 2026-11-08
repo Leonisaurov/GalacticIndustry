@@ -4,22 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T11:58:00-06:00",
-    "lastSessionId": "S-086",
+    "lastUpdated": "2026-11-08T12:18:00-06:00",
+    "lastSessionId": "S-087",
     "lastVerification": {
-      "date": "2026-11-08T11:58:00-06:00",
+      "date": "2026-11-08T12:18:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Expedicion: ingreso 206, combustible 40, neto +166",
-        "3000 frames: 25 chunks y ~2 MB adicionales",
-        "16_universe: FPS >= 30",
+        "Botones tactiles >=44u en mapa/mercado/gestion",
+        "Avisos con prefijo ! y texto explicito",
+        "Textos largos con ajuste de escala",
+        "20_accessibility: captura 40_accessibility",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S11",
     "currentTaskId": null,
-    "nextTaskId": "T-1106",
+    "nextTaskId": "T-1108",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -5523,7 +5524,7 @@
       "description": "Mejorar legibilidad, tamaños táctiles, avisos no cromáticos y textos.",
       "category": "implementation",
       "priority": "P2",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-1105"
@@ -5545,10 +5546,38 @@
         "Regresión"
       ],
       "technicalNotes": "La localización completa puede quedar para más adelante; priorizar accesibilidad.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-087",
+          "date": "2026-11-08T12:18:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Accesibilidad: botones tactiles >=44u, avisos con prefijo ! y texto explicito, textCenteredFit/textLeftFit contra cortes y fuente ASCII. Captura 40_accessibility y regresion.",
+          "files": [
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MapScreen.java",
+            "src/com/example/codegame/MarketScreen.java",
+            "src/com/example/codegame/StationManagementScreen.java",
+            "docs/convenciones.md",
+            "tools/tests/20_accessibility.sh"
+          ],
+          "tests": [
+            "Revisión visual",
+            "Regresión"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "Botones de mapa/mercado/gestion >=44u",
+        "Avisos ! O2 CRITICO y ! SIN COMBUSTIBLE",
+        "Textos largos ajustados sin cortes",
+        "20_accessibility: 40_accessibility"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T12:18:00-06:00"
     },
     {
       "id": "T-1107",
@@ -6244,7 +6273,7 @@
       "description": "Añadir música ambiental espacial, ambientes tranquilos de exploración y música para distintas situaciones, con transiciones suaves.",
       "category": "implementation",
       "priority": "P2",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1104"
@@ -6550,6 +6579,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-087",
+      "date": "2026-11-08T12:18:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Accesibilidad y localización",
+      "summary": "Botones táctiles mayores, avisos no cromáticos, ajuste de texto y fuente ASCII; revisión visual 40_accessibility.",
+      "tasks": [
+        "T-1106"
+      ],
+      "files": [
+        "src/com/example/codegame/UiKit.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MapScreen.java",
+        "src/com/example/codegame/MarketScreen.java",
+        "src/com/example/codegame/StationManagementScreen.java",
+        "docs/convenciones.md",
+        "tools/tests/20_accessibility.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 20_accessibility",
+        "tools/run-tests.sh 01_logic"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1108 (musica y ambientes)."
+    },
     {
       "id": "S-086",
       "date": "2026-11-08T11:58:00-06:00",

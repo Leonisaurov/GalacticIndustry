@@ -104,8 +104,8 @@ final class StationManagementScreen {
                 py + 80f * u, halfW, 42f * u);
         btnUndock = new Button(fromInterior ? "VOLVER" : "DESPEGAR",
                 px + 20f * u, py + 28f * u, pw - 40f * u, 44f * u);
-        btnEnter = new Button("ENTRAR", px + pw - 112f * u, h - 54f * u,
-                92f * u, 34f * u);
+        btnEnter = new Button("ENTRAR", px + pw - 118f * u, h - 62f * u,
+                98f * u, 44f * u);
     }
 
     int selectedSlot() {

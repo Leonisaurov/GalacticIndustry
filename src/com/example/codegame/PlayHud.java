@@ -141,7 +141,7 @@ final class PlayHud {
         int o2Alert = session.pilot.o2AlertLevel();
         int o2Pct = Math.round(session.pilot.oxygenFraction() * 100f);
         if (o2Alert == 2) {
-            ui.textLeft("O2 CRITICO " + o2Pct + "%",
+            ui.textLeft("! O2 CRITICO " + o2Pct + "%",
                     pad + 8f * u, h - 154f * u, 0.78f * u, Visuals.DANGER);
         } else if (o2Alert == 1) {
             ui.textLeft("O2 BAJO " + o2Pct + "%",
@@ -175,11 +175,11 @@ final class PlayHud {
         }
         if (hud.canDock) {
             ui.drawButtonText(hud.dock, true);
-            ui.textCentered("NODRIZA A "
+            ui.textCenteredFit("NODRIZA A "
                             + Math.round(world.station.distanceTo(world.ship.pos)) + " u",
                     hud.dock.bounds.x + hud.dock.bounds.width * 0.5f,
                     hud.dock.bounds.y + hud.dock.bounds.height + 22f * u,
-                    0.72f * u, Visuals.ACCENT);
+                    0.72f * u, w - 2f * pad, Visuals.ACCENT);
         }
         if (hud.canOpenMap) {
             ui.drawButtonText(hud.map, true);
@@ -193,15 +193,15 @@ final class PlayHud {
         }
         if (hud.canRescue) {
             ui.drawButtonText(hud.rescue, true);
-            ui.textCentered("SIN COMBUSTIBLE - EL RESCATE CUESTA 100 CR Y CARGA",
+            ui.textCenteredFit("! SIN COMBUSTIBLE - RESCATE 100 CR + CARGA",
                     hud.rescue.bounds.x + hud.rescue.bounds.width * 0.5f,
                     hud.rescue.bounds.y + hud.rescue.bounds.height + 22f * u,
-                    0.68f * u, Visuals.WARN);
+                    0.68f * u, w - 2f * pad, Visuals.WARN);
         }
         if (hud.rescueActive) {
-            ui.textCentered(String.format(java.util.Locale.US,
+            ui.textCenteredFit(String.format(java.util.Locale.US,
                             "RESCATE EN %.1f s", hud.rescueSeconds),
-                    w * 0.5f, h * 0.55f, 1.10f * u, Visuals.WARN);
+                    w * 0.5f, h * 0.55f, 1.10f * u, w - 2f * pad, Visuals.WARN);
         }
         if (hud.state == MyGame.PLAYING) {
             ui.textCenteredMiddle("GIRO", hud.joyCx, hud.joyCy + hud.joyR + 28f * u, 0.68f * u, Visuals.TEXT_DIM);

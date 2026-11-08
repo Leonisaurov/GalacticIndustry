@@ -319,11 +319,11 @@ final class MapScreen {
             info = quote == null || quote.error.isEmpty()
                     ? "SIN COSTE" : quote.error;
         }
-        ui.textCentered(info, px + pw * 0.5f, py + 178f * u,
-                0.70f * u, Visuals.TEXT);
+        ui.textCenteredFit(info, px + pw * 0.5f, py + 178f * u,
+                0.70f * u, pw - 40f * u, Visuals.TEXT);
         if (!message.isEmpty()) {
-            ui.textCentered(message, px + pw * 0.5f, py + 152f * u,
-                    0.68f * u, Visuals.WARN);
+            ui.textCenteredFit(message, px + pw * 0.5f, py + 152f * u,
+                    0.68f * u, pw - 40f * u, Visuals.WARN);
         } else {
             ui.textCentered("EL WARP NO NECESITA PUERTAS",
                     px + pw * 0.5f, py + 152f * u, 0.62f * u,

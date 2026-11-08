@@ -863,7 +863,7 @@ public class MyGame implements ApplicationListener {
         btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
         boolean muted = audio != null && audio.muted();
         btnMute = new Button(muted ? "SONIDO OFF" : "SONIDO ON",
-                cx, pauseCy - bh * 1.18f, bw, bh * 0.82f);
+                cx, pauseCy - bh * 1.95f, bw, bh * 0.82f);
 
         joyR = 70f * u;
         joyCx = pad + joyR * 1.06f;
@@ -2185,10 +2185,10 @@ public class MyGame implements ApplicationListener {
                         w * 0.5f, h - 68f * u, 0.70f * u, Visuals.TEXT_DIM);
                 Interactable near = interiorAvatar == null ? null
                         : interiorAvatar.nearest(interiorScene);
-                ui.textCentered(near == null
+                ui.textCenteredFit(near == null
                                 ? "ACERCATE A UN MODULO O A LA SALIDA"
                                 : "TOCA PARA ABRIR " + near.label,
-                        w * 0.5f, 42f * u, 0.68f * u,
+                        w * 0.5f, 42f * u, 0.68f * u, w - 32f * u,
                         near == null ? Visuals.TEXT_OFF : Visuals.ACCENT);
                 batch.end();
             }

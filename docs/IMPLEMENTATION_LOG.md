@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T11:58:00-06:00  
+**Última actualización:** 2026-11-08T12:18:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-087 — Accesibilidad y localización
+
+- **Fecha:** 2026-11-08T12:18:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1106
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Botones táctiles de al menos **44 u** en mapa, mercado y gestión; silencio
+  reubicado para no solaparse con MENU.
+- Avisos no cromáticos con prefijo `!` y texto explícito.
+- `UiKit.textCenteredFit()` para evitar cortes en pantallas estrechas.
+- La fuente sigue siendo ASCII.
+- Revisión visual en `40_accessibility`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/UiKit.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MapScreen.java`
+- `src/com/example/codegame/MarketScreen.java`
+- `src/com/example/codegame/StationManagementScreen.java`
+- `docs/convenciones.md`
+- `tools/tests/20_accessibility.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 20_accessibility`: **OK**.
+
+### Evidencias
+
+- Botones de mapa/mercado/gestión ≥ 44 u.
+- `! O2 CRITICO`, `! SIN COMBUSTIBLE...`.
+- Textos largos ajustados sin cortes.
+- Captura `40_accessibility`.
+
+### Decisiones tomadas
+
+- La accesibilidad se prioriza sobre la localización completa.
+- Se mantiene la fuente ASCII y los textos en español.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1108 — Música y ambientes dinámicos**.
 
 ---
 

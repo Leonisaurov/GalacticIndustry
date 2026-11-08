@@ -21,3 +21,14 @@
 - No uses `new BitmapFont()`: los recursos de los jars no se empaquetan. La
   fuente vive en `assets/fonts/`.
 - No documentes aquí: `AGENTS.md` es el índice; el detalle va en `docs/`.
+
+## Accesibilidad (T-1106)
+
+- Botones táctiles de al menos **44 u** de alto; los botones pequenos de mapa,
+  mercado y gestion se han ampliado.
+- Los avisos no dependen solo del color: usan prefijo `!` y texto explicito
+  (`! O2 CRITICO`, `! SIN COMBUSTIBLE`).
+- Los textos largos usan `textLeftFit`/`textCenteredFit` para reducir escala y
+  evitar cortes en pantallas estrechas.
+- La fuente sigue siendo ASCII; no se introducen acentos ni glifos ausentes.
+- La localizacion completa a otros idiomas queda para mas adelante.
