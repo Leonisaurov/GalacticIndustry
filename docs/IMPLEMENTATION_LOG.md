@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:46:00-06:00  
+**Última actualización:** 2026-11-08T02:52:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,63 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-045 — Persistencia de estación y acople
+
+- **Fecha:** 2026-11-08T02:52:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-505
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `SaveCodec` v2 guarda:
+  - posición y nombre de la estación;
+  - almacén (mineral y cantidad);
+  - flag `docked` de la nave.
+- Al cargar se restauran almacén y acople sin duplicar mineral.
+- `CONTINUAR` sobre una partida acoplada abre directamente `DOCKED`.
+- Los guardados sin los campos nuevos cargan con la nodriza por defecto,
+  almacén vacío y sin acople.
+- `13_station` verifica persistencia tras `force-stop`, despegue y nueva carga.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/StationStorage.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_station.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 13_station`: **OK**.
+- `02_navigation 03_controls`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS la estación se restaura con su almacén y acople`
+- `PASS no se duplica mineral al cargar`
+- `PASS un guardado sin docked carga desacoplado`
+- `13_station`: tras reiniciar, `DOCKED`, almacén 100 UM y bodega 0; tras
+  despegar y recargar, almacén intacto y sin acople.
+
+### Decisiones tomadas
+
+- El acople se guarda como flag de la nave, no como estado de UI.
+- Al reanudar, la UI deriva `DOCKED` del flag del mundo.
+- El almacén y la bodega se guardan por separado; la descarga es atómica.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-506 — Añadir rescate para combustible agotado**.
 
 ---
 

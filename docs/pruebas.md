@@ -43,7 +43,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `11_cargo` — bodega, masa, HUD de carga y persistencia al pausar.
 - `12_mining` — piloto MINE, haz y energía contextual, extracción a bodega y roca agotada.
 - `13_tractor` — rayo tractor: atracción, energía, captura de fragmentos y HUD.
-- `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios (descarga/venta/combustible/O2/reparación/mejoras) y despegue.
+- `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios, persistencia de almacén/acople y despegue.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh

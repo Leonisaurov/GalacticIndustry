@@ -1969,6 +1969,36 @@ public class SelfTest {
                         && serviceWorld.ship.cargo().isEmpty()
                         && serviceWorld.station.storage.totalUnits() == 10);
 
+        // T-505: persistencia de estación, almacén y estado acoplado.
+        GameSession dockSave = new GameSession(new PlayerProfile(new Upgrades(true)));
+        dockSave.startRun();
+        dockSave.ship().docked = true;
+        dockSave.ship().cargo().addExact(Commodity.SILICATO, 40);
+        dockSave.sector.station.storage.hold.restore(Commodity.HIERRO, 25);
+        dockSave.sector.station.pos.set(15f, 620f);
+        SaveService.MemoryStorage dockStorage = new SaveService.MemoryStorage();
+        SaveService dockService = new SaveService(dockStorage);
+        check("la estación y el acople se guardan", dockService.save(dockSave));
+        GameSession dockLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("la estación se restaura con su almacén y acople",
+                dockService.load(dockLoaded) == SaveService.LoadStatus.V2
+                        && dockLoaded.ship().docked
+                        && Math.abs(dockLoaded.sector.station.pos.x - 15f) < 0.01f
+                        && Math.abs(dockLoaded.sector.station.pos.y - 620f) < 0.01f
+                        && dockLoaded.sector.station.storage.amount(Commodity.HIERRO) == 25
+                        && dockLoaded.ship().cargo().amount(Commodity.SILICATO) == 40);
+        check("no se duplica mineral al cargar",
+                dockLoaded.ship().cargo().totalUnits() == 40
+                        && dockLoaded.sector.station.storage.totalUnits() == 25);
+        String dockText = dockStorage.read(SaveService.SAVE_NAME);
+        String noDocked = dockText.replace(",\"docked\":true", "");
+        GameSession noDockedLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un guardado sin docked carga desacoplado",
+                !dockText.equals(noDocked)
+                        && SaveCodec.decode(noDocked, noDockedLoaded)
+                        && !noDockedLoaded.ship().docked
+                        && noDockedLoaded.sector.station.storage.amount(Commodity.HIERRO) == 25);
+
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();
         gateShip.reset(new Upgrades(true), 0f, 0f);

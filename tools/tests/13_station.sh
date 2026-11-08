@@ -98,5 +98,32 @@ wait_current_state PLAYING 5 || fail "DESPEGAR de estación no volvió al exteri
 status=$(latest_status)
 assert_eq "nave desacoplada tras servicios" false "$(printf '%s' "$status" | json_get docked)"
 
+# T-505: persistencia de almacén y estado acoplado.
+reset_app
+launch_app "--ez test_mode true --ez station_service_test true"
+wait_current_state DOCKED 10 || fail "no arrancó la estación para persistencia"
+tap "$((W / 2))" "$ST_ROW1_Y" 0.3
+wait_status_field stationStorageUnits 100 5 || fail "no se descargó antes de guardar"
+launch_app "--ez test_mode true"
+wait_current_state PAUSED 10 || fail "la partida guardada no cargó en pausa"
+tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.3
+wait_current_state DOCKED 5 || fail "el estado acoplado no se restauró"
+sleep 0.4
+status=$(latest_status)
+assert_eq "acople restaurado" true "$(printf '%s' "$status" | json_get docked)"
+assert_eq "almacén restaurado" 100 "$(printf '%s' "$status" | json_get stationStorageUnits)"
+assert_eq "bodega sin duplicar" 0 "$(printf '%s' "$status" | json_get cargoUnits)"
+
+tap "$((W / 2))" "$ST_UNDOCK_Y" 0.3
+wait_current_state PLAYING 5 || fail "no despegó tras restaurar"
+launch_app "--ez test_mode true"
+wait_current_state PAUSED 10 || fail "no recargó tras despegar"
+tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.3
+wait_current_state PLAYING 5 || fail "no reanudó en el exterior"
+sleep 0.4
+status=$(latest_status)
+assert_eq "acople no persiste tras despegar" false "$(printf '%s' "$status" | json_get docked)"
+assert_eq "almacén persiste tras despegar" 100 "$(printf '%s' "$status" | json_get stationStorageUnits)"
+
 check_no_crash
-echo "OK 13_station: nodriza, zona segura, Autopilot.STATION, acople, servicios y despegue"
+echo "OK 13_station: nodriza, zona segura, Autopilot.STATION, acople, servicios, persistencia y despegue"

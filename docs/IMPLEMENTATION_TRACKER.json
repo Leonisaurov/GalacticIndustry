@@ -4,24 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:46:00-06:00",
-    "lastSessionId": "S-044",
+    "lastUpdated": "2026-11-08T02:52:00-06:00",
+    "lastSessionId": "S-045",
     "lastVerification": {
-      "date": "2026-11-08T02:46:00-06:00",
+      "date": "2026-11-08T02:52:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "La pausa solo ofrece CONTINUAR/MENU; sin tienda",
-        "El menú principal ya no tiene TIENDA",
-        "Economía solo en StationScreen (descarga, venta, combustible, O2, reparación y mejoras)",
-        "09_wing_damage repara en estación; 19_melt retirado",
-        "02_navigation, 03_controls, 07_visual_play, 09_wing_damage y 13_station: OK",
+        "El guardado v2 incluye estación, almacén y docked",
+        "El almacén y el acople se restauran sin duplicar mineral",
+        "Un guardado sin docked carga desacoplado",
+        "13_station: persistencia tras reiniciar y despegar",
+        "02_navigation y 03_controls: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S5",
     "currentTaskId": null,
-    "nextTaskId": "T-505",
+    "nextTaskId": "T-506",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2843,7 +2843,7 @@
       "description": "Guardar y restaurar estaciones, almacén, posición y estado de acoplamiento.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-501",
@@ -2868,10 +2868,38 @@
         "Guardado/carga"
       ],
       "technicalNotes": "Cuidado con guardar dos veces la misma transacción.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-045",
+          "date": "2026-11-08T02:52:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SaveCodec v2 guarda posición/nombre de estación, almacén y flag docked. Al cargar se restauran sin duplicar; CONTINUAR abre DOCKED si la nave estaba acoplada. Guardados sin los campos nuevos siguen cargando con valores por defecto. 13_station verifica persistencia tras force-stop.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/13_station.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "02_navigation",
+            "03_controls"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la estación se restaura con su almacén y acople",
+        "PASS no se duplica mineral al cargar",
+        "PASS un guardado sin docked carga desacoplado",
+        "13_station: almacén 100 UM y DOCKED tras reiniciar; despegue y nueva carga",
+        "02_navigation y 03_controls OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T02:52:00-06:00"
     },
     {
       "id": "T-506",
@@ -2880,7 +2908,7 @@
       "description": "Evitar el softlock cuando el jugador no puede volver a la estación, sin convertir el rescate en una resurrección automática ni en un punto de reaparición.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-502"
@@ -5278,6 +5306,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-045",
+      "date": "2026-11-08T02:52:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia de estación y acople",
+      "summary": "El guardado v2 conserva estación, almacén y estado DOCKED. Al reanudar una partida acoplada se abre la estación; el almacén sobrevive a reinicios y no se duplica mineral.",
+      "tasks": [
+        "T-505"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/13_station.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 13_station",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-506 (rescate por combustible agotado)."
+    },
     {
       "id": "S-044",
       "date": "2026-11-08T02:46:00-06:00",

@@ -902,6 +902,11 @@ public class MyGame implements ApplicationListener {
             runActive = true;
         }
         state = PLAYING;
+        if (world.ship.docked) {
+            state = DOCKED;
+            stationScreen.enter();
+            layoutUi();
+        }
         if (recoveryTest) {
             recoveryTimer = 0f;
             saveRecoveryPoint();
@@ -1225,7 +1230,13 @@ public class MyGame implements ApplicationListener {
 
     private void handlePause() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
-            state = PLAYING;
+            if (world.ship.docked) {
+                state = DOCKED;
+                stationScreen.enter();
+                layoutUi();
+            } else {
+                state = PLAYING;
+            }
         } else if (tapped(btnMenu)) {
             state = MENU;
             saveRun();

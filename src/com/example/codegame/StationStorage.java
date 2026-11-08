@@ -32,6 +32,10 @@ final class StationStorage {
         return hold.totalUnits();
     }
 
+    int amount(Commodity commodity) {
+        return hold.amount(commodity);
+    }
+
     float totalValue() {
         return hold.totalValue();
     }

@@ -87,6 +87,7 @@ final class SaveCodec {
             w.set("fuel", ship.fuel);
             w.set("hull", ship.part[Ship.HULL]);
             w.set("invulnerable", ship.invulnerable);
+            w.set("docked", ship.docked);
             w.name("parts").array();
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 w.value(ship.part[i]);
@@ -160,6 +161,19 @@ final class SaveCodec {
                 w.set("life", o.life());
                 w.pop();
             }
+            w.pop();
+            w.name("station").object();
+            w.set("x", world.station.pos.x);
+            w.set("y", world.station.pos.y);
+            w.set("name", world.station.def.name);
+            w.name("storage").array();
+            for (Cargo cargo : world.station.storage.hold.entries()) {
+                w.object();
+                w.set("commodity", cargo.commodity.name());
+                w.set("amount", cargo.amount);
+                w.pop();
+            }
+            w.pop();
             w.pop();
             w.pop();
 
@@ -250,6 +264,7 @@ final class SaveCodec {
             d.fuel = ship.getFloat("fuel", 0f);
             d.hull = ship.getFloat("hull", 0f);
             d.invulnerable = ship.getFloat("invulnerable", 0f);
+            d.docked = ship.getBoolean("docked", false);
             JsonValue parts = ship.get("parts");
             // Los guardados anteriores a T-201 tienen 7 partes; LIFE_SUPPORT se
             // rellena con integridad completa.
@@ -360,6 +375,27 @@ final class SaveCodec {
                     d.fragments.add(o);
                 }
             }
+            JsonValue station = sector.get("station");
+            if (station != null) {
+                d.stationX = station.getFloat("x", GameData.MOTHERSHIP_X);
+                d.stationY = station.getFloat("y", GameData.MOTHERSHIP_Y);
+                d.stationName = station.getString("name", GameData.MOTHERSHIP.name);
+                JsonValue storage = station.get("storage");
+                if (storage != null && storage.isArray()) {
+                    for (int i = 0; i < storage.size; i++) {
+                        JsonValue entry = storage.get(i);
+                        if (entry == null) {
+                            continue;
+                        }
+                        Commodity commodity = Commodity.byDisplayName(
+                                entry.getString("commodity", null));
+                        int amount = entry.getInt("amount", 0);
+                        if (commodity != null && amount > 0) {
+                            d.stationStorage.add(new CargoData(commodity, amount));
+                        }
+                    }
+                }
+            }
             return d;
         } catch (RuntimeException e) {
             return null;
@@ -454,6 +490,13 @@ final class SaveCodec {
             world.fragments.add(new OreFragment(o.x, o.y, o.commodity, o.amount,
                     o.vx, o.vy, Math.max(0.01f, o.life)));
         }
+        world.station.pos.set(d.stationX, d.stationY);
+        world.station.storage.hold.clear();
+        for (int i = 0; i < d.stationStorage.size(); i++) {
+            CargoData entry = d.stationStorage.get(i);
+            world.station.storage.hold.restore(entry.commodity, entry.amount);
+        }
+        world.ship.docked = d.docked;
         world.missiles.clear();
         world.fx.clear();
         world.pilot.cancel();
@@ -501,6 +544,11 @@ final class SaveCodec {
         int coinsEarned;
         int score;
         float elapsed;
+        boolean docked;
+        float stationX = GameData.MOTHERSHIP_X;
+        float stationY = GameData.MOTHERSHIP_Y;
+        String stationName = GameData.MOTHERSHIP.name;
+        final List<CargoData> stationStorage = new ArrayList<>();
         boolean legacyWreck;
         float legacyX;
         float legacyY;
