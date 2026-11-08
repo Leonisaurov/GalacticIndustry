@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T08:36:00-06:00  
+**Última actualización:** 2026-11-08T08:56:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,70 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-077 — Marco de interiores
+
+- **Fecha:** 2026-11-08T08:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-1001
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `InteriorScene` con `Room`, `Door` e `Interactable` para estaciones y naves.
+- El interior de la estación personal se deriva de sus módulos:
+  - `hub` + salida;
+  - una habitación por módulo (`module-<ranura>`), con su `ModuleDef`;
+  - una puerta por módulo y un interactuable de servicio.
+- `valid()` comprueba IDs, conexiones y posiciones; `nearest()` prepara la
+  interacción por proximidad.
+- Interior de nave mediante `InteriorScene.ship(id)`.
+- El guardado conserva metadatos del interior y los reconstruye desde módulos.
+- `18_interiors` verifica 3 habitaciones, 2 puertas y 3 interactuables.
+
+### Archivos modificados
+
+- `src/com/example/codegame/InteriorScene.java` (nuevo)
+- `src/com/example/codegame/Room.java` (nuevo)
+- `src/com/example/codegame/Door.java` (nuevo)
+- `src/com/example/codegame/Interactable.java` (nuevo)
+- `src/com/example/codegame/PlayerStation.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/18_interiors.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 18_interiors`: **OK**.
+
+### Evidencias
+
+- `PASS el interior vacio solo tiene el nucleo`
+- `PASS cada modulo se mapea a una habitacion`
+- `PASS las puertas conectan salas`
+- `PASS los interactuables tienen posicion y accion`
+- `PASS el marco tambien sirve para naves`
+- `PASS el interior se deriva del estado guardado`
+- `18_interiors`: 3 habitaciones, 2 puertas y 3 interactuables.
+
+### Decisiones tomadas
+
+- El interior de la estación es derivado, no una segunda fuente de verdad.
+- Las habitaciones se colocan en cuadrícula alrededor del núcleo.
+- El movimiento, render e interacción llegan en T-1002/T-1003/T-1004.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-1002 — Implementar Avatar, movimiento y colisión**.
 
 ---
 

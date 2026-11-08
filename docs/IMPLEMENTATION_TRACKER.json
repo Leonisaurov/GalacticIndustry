@@ -4,22 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T08:36:00-06:00",
-    "lastSessionId": "S-076",
+    "lastUpdated": "2026-11-08T08:56:00-06:00",
+    "lastSessionId": "S-077",
     "lastVerification": {
-      "date": "2026-11-08T08:36:00-06:00",
+      "date": "2026-11-08T08:56:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Gate S9: plataforma, acople, 4 modulos, servicios y persistencia",
-        "Sin servicios antes de construir modulos; sin movimiento a pie",
-        "17_player_station y 14_market en verde",
+        "InteriorScene con salas, puertas e interactuables validos",
+        "Cada modulo se mapea a una habitacion",
+        "El interior de nave usa el mismo marco",
+        "Metadatos del interior persistidos y reconstruidos",
+        "18_interiors: 3 habitaciones, 2 puertas y 3 interactuables",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S10",
     "currentTaskId": null,
-    "nextTaskId": "T-1001",
+    "nextTaskId": "T-1002",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4826,7 +4828,7 @@
       "description": "Definir un marco genérico de interiores aplicable a estaciones espaciales, estación propia y naves: salas, puertas, interactuables y relación con módulos.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-906"
@@ -4852,10 +4854,42 @@
         "18_interiors"
       ],
       "technicalNotes": "D-006 aprobada a largo plazo. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan en T-1007.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-077",
+          "date": "2026-11-08T08:56:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Marco de interiores con InteriorScene/Room/Door/Interactable para estaciones y naves. El interior de la estacion se deriva de modulos (hub + habitacion/puerta/interactuable por modulo), valida conexiones, tiene nearest() y metadatos persistidos. 18_interiors.",
+          "files": [
+            "src/com/example/codegame/InteriorScene.java",
+            "src/com/example/codegame/Room.java",
+            "src/com/example/codegame/Door.java",
+            "src/com/example/codegame/Interactable.java",
+            "src/com/example/codegame/PlayerStation.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/18_interiors.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "18_interiors"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el interior vacio solo tiene el nucleo",
+        "PASS cada modulo se mapea a una habitacion",
+        "PASS las puertas conectan salas",
+        "PASS los interactuables tienen posicion y accion",
+        "PASS el marco tambien sirve para naves",
+        "PASS el interior se deriva del estado guardado",
+        "18_interiors: 3/2/3"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T08:56:00-06:00"
     },
     {
       "id": "T-1002",
@@ -4864,7 +4898,7 @@
       "description": "Añadir el personaje a pie con joystick, colisiones y límites de sala.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-1001"
@@ -6262,6 +6296,33 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-077",
+      "date": "2026-11-08T08:56:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Marco de interiores",
+      "summary": "InteriorScene/Room/Door/Interactable para estaciones y naves; habitaciones derivadas de módulos y metadatos persistentes. Prueba 18_interiors.",
+      "tasks": [
+        "T-1001"
+      ],
+      "files": [
+        "src/com/example/codegame/InteriorScene.java",
+        "src/com/example/codegame/Room.java",
+        "src/com/example/codegame/Door.java",
+        "src/com/example/codegame/Interactable.java",
+        "src/com/example/codegame/PlayerStation.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/18_interiors.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 18_interiors"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-1002 (Avatar y movimiento)."
+    },
     {
       "id": "S-076",
       "date": "2026-11-08T08:36:00-06:00",

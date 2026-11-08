@@ -255,6 +255,14 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            InteriorScene interior = session.playerStation.buildInterior();
+            w.name("interior").object();
+            w.set("id", interior.id);
+            w.set("kind", interior.kind.name());
+            w.set("rooms", interior.roomCount());
+            w.set("doors", interior.doorCount());
+            w.set("interactables", interior.interactableCount());
+            w.pop();
             Market playerMarket = session.playerStation.tradeMarket();
             if (playerMarket != null) {
                 w.name("playerMarket").object();
@@ -584,6 +592,16 @@ final class SaveCodec {
                         data.level = value.getInt("level", 1);
                         d.stationModules.add(data);
                     }
+                }
+                JsonValue interior = playerStation.get("interior");
+                if (interior != null) {
+                    d.hasInterior = true;
+                    d.interiorId = interior.getString("id", PlayerStation.ID);
+                    d.interiorKind = interior.getString("kind",
+                            InteriorScene.Kind.PLAYER_STATION.name());
+                    d.interiorRooms = interior.getInt("rooms", 0);
+                    d.interiorDoors = interior.getInt("doors", 0);
+                    d.interiorInteractables = interior.getInt("interactables", 0);
                 }
                 JsonValue playerMarket = playerStation.get("playerMarket");
                 if (playerMarket != null) {
@@ -987,6 +1005,12 @@ final class SaveCodec {
         String playerStationSector = GameData.START_SECTOR_ID;
         final List<StationModuleData> stationModules = new ArrayList<>();
         final List<CargoData> playerStationStorage = new ArrayList<>();
+        boolean hasInterior;
+        String interiorId = PlayerStation.ID;
+        String interiorKind = InteriorScene.Kind.PLAYER_STATION.name();
+        int interiorRooms;
+        int interiorDoors;
+        int interiorInteractables;
         boolean hasPlayerMarket;
         float playerMarketSpread = PriceModel.DEFAULT_SPREAD;
         int[] playerMarketStock;

@@ -161,6 +161,11 @@ final class PlayerStation {
         return SLOTS - moduleCount();
     }
 
+    /** Interior derivado de los módulos actuales. */
+    InteriorScene buildInterior() {
+        return InteriorScene.fromPlayerStation(this);
+    }
+
     StationStorage stationStorage() {
         return stationStorage;
     }

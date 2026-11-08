@@ -358,6 +358,21 @@ estáticos se reutilizan.
   construir.
 - No se duplican créditos, materiales ni módulos al cargar.
 
+## Marco de interiores (T-1001)
+
+- `InteriorScene` contiene `Room`, `Door` e `Interactable` y sirve para
+  estaciones y naves (`Kind.PLAYER_STATION` / `Kind.SHIP`).
+- El interior de la estación personal se **deriva de sus módulos**:
+  - habitación `hub` (núcleo) con interactuable de salida;
+  - una habitación por módulo (`module-<ranura>`) con su `ModuleDef`;
+  - una puerta `hub` ↔ habitación por módulo;
+  - un interactuable de servicio en el centro de cada habitación.
+- `InteriorScene.valid()` valida IDs, conexiones e interactuables dentro de su
+  sala; `nearest()` facilita la interacción por proximidad (T-1004).
+- El interior de una nave usa `InteriorScene.ship(id)` con cabina y salida.
+- El guardado v2 incluye metadatos del interior (`id`, tipo, número de salas,
+  puertas e interactuables); el contenido se reconstruye desde los módulos.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

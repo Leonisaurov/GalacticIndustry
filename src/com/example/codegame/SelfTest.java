@@ -51,6 +51,10 @@ public class SelfTest {
         return json.substring(0, start) + json.substring(end);
     }
 
+    private static int dStationInteriorRooms(GameSession session) {
+        return session.playerStation.buildInterior().roomCount();
+    }
+
     /** Registra transacciones para comprobar el listener. */
     private static final class TradeRecorder implements TradeService.Listener {
         int count;
@@ -3688,6 +3692,64 @@ public class SelfTest {
                         && s9Loaded.playerStation.stationStorage().totalUnits()
                         == s9.playerStation.stationStorage().totalUnits()
                         && noWalking);
+
+        // T-1001: marco de interiores para estaciones y naves.
+        PlayerStation interiorBare = new PlayerStation(0f, 0f);
+        InteriorScene bareInterior = interiorBare.buildInterior();
+        check("el interior vacio solo tiene el nucleo",
+                bareInterior.kind == InteriorScene.Kind.PLAYER_STATION
+                        && bareInterior.roomCount() == 1
+                        && bareInterior.doorCount() == 0
+                        && bareInterior.interactableCount() == 1
+                        && bareInterior.valid()
+                        && bareInterior.interactables.get(0).action
+                        == Interactable.Action.EXIT);
+        Upgrades interiorUp = new Upgrades(true);
+        interiorUp.setCoins(3000);
+        CargoHold interiorCargo = new CargoHold(300f);
+        interiorCargo.addExact(Commodity.HIERRO, 80);
+        interiorCargo.addExact(Commodity.COBRE, 50);
+        interiorCargo.addExact(Commodity.SILICATO, 60);
+        PlayerStation interiorStation = new PlayerStation(0f, 0f);
+        check("construir modulos prepara el interior",
+                interiorStation.build(0, ModuleDef.STORAGE, interiorUp,
+                        interiorCargo).ok
+                        && interiorStation.build(1, ModuleDef.REPAIR, interiorUp,
+                        interiorCargo).ok);
+        InteriorScene stationInterior = interiorStation.buildInterior();
+        check("cada modulo se mapea a una habitacion",
+                stationInterior.roomCount() == 3
+                        && stationInterior.doorCount() == 2
+                        && stationInterior.interactableCount() == 3
+                        && stationInterior.valid()
+                        && stationInterior.room("module-0") != null
+                        && stationInterior.room("module-0").module
+                        == ModuleDef.STORAGE
+                        && stationInterior.room("module-0").moduleSlot == 0
+                        && stationInterior.room("module-1").module
+                        == ModuleDef.REPAIR);
+        check("las puertas conectan salas",
+                stationInterior.doors.get(0).connects("hub", "module-0")
+                        && stationInterior.doors.get(1).connects("hub", "module-1"));
+        Interactable nearStorage = stationInterior.nearest(
+                stationInterior.room("module-0").x,
+                stationInterior.room("module-0").y);
+        check("los interactuables tienen posicion y accion",
+                nearStorage != null
+                        && nearStorage.action == Interactable.Action.STORAGE
+                        && stationInterior.nearest(9999f, 9999f) == null);
+        InteriorScene shipInterior = InteriorScene.ship("ship-test");
+        check("el marco tambien sirve para naves",
+                shipInterior.kind == InteriorScene.Kind.SHIP
+                        && shipInterior.roomCount() == 1
+                        && shipInterior.valid()
+                        && shipInterior.nearest(0f, -90f).action
+                        == Interactable.Action.EXIT);
+        check("el interior se deriva del estado guardado",
+                stationText.contains("\"interior\"")
+                        && stationLoaded.playerStation.buildInterior().roomCount()
+                        == 3
+                        && dStationInteriorRooms(stationLoaded) == 3);
 
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));

@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S10` — Interiores.
 - No hay tarea en progreso.
-- Última tarea completada: `T-906` — Verificación de la estación personal.
-- Primera tarea disponible: `T-1001` — Crear marco de interiores para estaciones y naves.
+- Última tarea completada: `T-1001` — Crear marco de interiores para estaciones y naves.
+- Primera tarea disponible: `T-1002` — Implementar Avatar, movimiento y colisión.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **83 %** (67 de 81 tareas de progreso).
+- La implementación del juego está al **84 %** (68 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 

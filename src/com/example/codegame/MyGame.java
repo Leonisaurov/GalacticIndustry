@@ -1096,7 +1096,9 @@ public class MyGame implements ApplicationListener {
                         + "\"baseWhileDocked\":%s,\"baseStorageCapacity\":%.0f,"
                         + "\"baseStorageUnits\":%d,\"dockedAtPlayer\":%s,"
                         + "\"baseSlot\":%d,\"baseModule0Level\":%d,"
-                        + "\"baseMessage\":\"%s\"}",
+                        + "\"baseMessage\":\"%s\",\"interiorKind\":\"%s\","
+                        + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
+                        + "\"interiorInteractables\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1195,7 +1197,11 @@ public class MyGame implements ApplicationListener {
                 session.playerStation.moduleAt(0) == null ? 0
                         : session.playerStation.moduleAt(0).level(),
                 state == DOCKED && world.dockedAtPlayer
-                        ? managementScreen.message() : ""));
+                        ? managementScreen.message() : "",
+                session.playerStation.buildInterior().kind.name(),
+                session.playerStation.buildInterior().roomCount(),
+                session.playerStation.buildInterior().doorCount(),
+                session.playerStation.buildInterior().interactableCount()));
     }
 
     void logEvent(String json) {
