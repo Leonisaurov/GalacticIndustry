@@ -109,6 +109,8 @@ public class MyGame implements ApplicationListener {
     private Button btnPlay, btnShop, btnResume, btnPauseShop, btnMenu, btnRetry, btnOverMenu, btnBack;
     /** Barra de aceleración: su rectángulo es btnThrust.bounds. */
     private Button btnThrust, btnPause;
+    /** Recuperar la nave del personaje anterior cuando se está cerca. */
+    private Button btnRecover;
     private final Array<Button> buyButtons = new Array<>();
     /** Botones de reparacion de cada parte (solo con una partida activa). */
     private final Array<Button> repairButtons = new Array<>();
@@ -401,6 +403,8 @@ public class MyGame implements ApplicationListener {
         float ps = 54f * u;
         float panelH = topPanelH();
         btnPause = new Button("", w - pad - ps, h - panelH * 0.5f - ps * 0.5f + 6f * u, ps, ps);
+        btnRecover = new Button("RECUPERAR NAVE", cx + bw * 0.05f, h * 0.30f,
+                bw * 0.9f, 46f * u);
 
         // Pestañas de la tienda: solo hay reparaciones si existe una partida.
         if (!runActive) {
@@ -483,6 +487,15 @@ public class MyGame implements ApplicationListener {
     private boolean canRefillO2() {
         return runActive && session.pilot.oxygen < session.pilot.o2Max - 0.01f
                 && upgrades.coins() + world.coinsEarned >= o2RefillCost();
+    }
+
+    /** Hay una nave legado y el jugador está dentro de su radio de recuperación. */
+    private boolean canRecoverLegacy() {
+        if (state != PLAYING || !runActive || !world.legacyWreck) {
+            return false;
+        }
+        float distance = world.legacyDistance(world.ship.pos);
+        return distance >= 0f && distance <= GameWorld.LEGACY_RECOVERY_RADIUS;
     }
 
     /** Coste de reparar una parte: proporcional a la integridad que le falta. */
@@ -670,7 +683,8 @@ public class MyGame implements ApplicationListener {
                         + "\"pilotOxygen\":%.1f,\"pilotO2Max\":%.1f,\"pilotStatus\":\"%s\","
                         + "\"pilotGrace\":%.1f,\"pilotLeak\":%.1f,\"pilotBreach\":%s,"
                         + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f,"
-                        + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f}",
+                        + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f,"
+                        + "\"legacyNear\":%s,\"legacyDistance\":%.1f}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -686,7 +700,10 @@ public class MyGame implements ApplicationListener {
                 session.lifeSupport.breach, session.pilot.o2AlertLevel(),
                 Math.min(999999f, session.lifeSupport.estimatedSeconds(
                         session.pilot, world.ship)),
-                world.legacyWreck, world.legacyWreckPos.x, world.legacyWreckPos.y));
+                world.legacyWreck, world.legacyWreckPos.x, world.legacyWreckPos.y,
+                world.legacyWreck && world.legacyDistance(world.ship.pos)
+                        <= GameWorld.LEGACY_RECOVERY_RADIUS,
+                world.legacyDistance(world.ship.pos)));
     }
 
     private void logEvent(String json) {
@@ -791,6 +808,16 @@ public class MyGame implements ApplicationListener {
             resetControls();
             state = PAUSED;
             saveRun();
+            return;
+        }
+        if (canRecoverLegacy() && tapped(btnRecover)) {
+            int salvage = world.recoverLegacyWreck(world.ship.pos);
+            if (salvage >= 0) {
+                world.coinsEarned += salvage;
+                saveRun();
+                logEvent("{\"event\":\"legacy_recovered\",\"salvage\":"
+                        + salvage + "}");
+            }
             return;
         }
         updateJoystick();
@@ -968,7 +995,8 @@ public class MyGame implements ApplicationListener {
     private boolean onControl(int pointer) {
         return pointerInCircle(joyCx, joyCy, joyR * 1.45f, pointer)
                 || pointerIn(sliderZone, pointer)
-                || hit(btnPause, pointer);
+                || hit(btnPause, pointer)
+                || (canRecoverLegacy() && hit(btnRecover, pointer));
     }
 
     private void handlePause() {
@@ -1592,6 +1620,9 @@ public class MyGame implements ApplicationListener {
         drawHullChip(w, h);
         drawSurvivalBars(w, h);
         drawPartAlerts(w, h, panelH);
+        if (canRecoverLegacy()) {
+            drawButton(btnRecover, Visuals.BTN_PRIMARY, true);
+        }
         drawIconButton(btnPause);
         drawCoinIcon(pad + 18f * u, h - 54f * u, 13f * u);
         if (state == PLAYING) {
@@ -1650,6 +1681,14 @@ public class MyGame implements ApplicationListener {
             textLeft(Ship.PART_NAMES[i] + " " + pct + "%",
                     ax + 14f * u, ay + 15f * u, 0.68f * u, partColor(pf));
             slot++;
+        }
+        if (canRecoverLegacy()) {
+            drawButtonText(btnRecover, true);
+            textCentered("NAVE LEGADO A "
+                            + Math.round(world.legacyDistance(world.ship.pos)) + " u",
+                    btnRecover.bounds.x + btnRecover.bounds.width * 0.5f,
+                    btnRecover.bounds.y + btnRecover.bounds.height + 22f * u,
+                    0.72f * u, Visuals.WARN);
         }
         if (state == PLAYING) {
             textCenteredMiddle("GIRO", joyCx, joyCy + joyR + 28f * u, 0.68f * u, Visuals.TEXT_DIM);

@@ -29,6 +29,8 @@ BACK_X=0
 BACK_Y=0
 TAB_REPAIR_X=0
 TAB_REPAIR_Y=0
+RECOVER_X=0
+RECOVER_Y=0
 
 fail() {
     echo "FALLO: $*" >&2
@@ -70,6 +72,9 @@ device_geometry() {
     # centro de la fila de pestañas (a 77 unidades de densidad del borde superior).
     TAB_REPAIR_X=$((W * 3 / 4 - 10 * U))
     TAB_REPAIR_Y=$((77 * U))
+    # Botón RECUPERAR NAVE: centro de la pantalla, a 30 % de altura + 23 u.
+    RECOVER_X=$((W / 2))
+    RECOVER_Y=$((H - (H * 30 / 100 + 23 * U)))
 }
 
 # ---------- build y SelfTest ----------

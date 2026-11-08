@@ -24,6 +24,8 @@ class GameWorld {
     static final int MAX_ASTEROIDS = 300;
     /** Probabilidad de que una zona tenga un bidón. */
     static final float FUEL_CHANCE = 0.75f;
+    /** Distancia para poder recuperar la nave legado. */
+    static final float LEGACY_RECOVERY_RADIUS = 100f;
 
     final Upgrades up;
     final Ship ship = new Ship();
@@ -116,6 +118,29 @@ class GameWorld {
         legacyWreckHeading = wreck.heading;
         legacyWreckHull = wreck.part[Ship.HULL];
         System.arraycopy(wreck.part, 0, legacyWreckParts, 0, Ship.PART_COUNT);
+    }
+
+    /** Distancia actual a la nave legado, o -1 si no existe. */
+    float legacyDistance(Vector2 point) {
+        return legacyWreck && point != null ? point.dst(legacyWreckPos) : -1f;
+    }
+
+    /**
+     * Recupera la nave legado si el jugador está cerca. Devuelve los créditos
+     * de desguace, o -1 si no se puede recuperar.
+     */
+    int recoverLegacyWreck(Vector2 playerPos) {
+        if (!legacyWreck || playerPos == null
+                || playerPos.dst(legacyWreckPos) > LEGACY_RECOVERY_RADIUS) {
+            return -1;
+        }
+        int salvage = 0;
+        for (int i = Ship.ENGINE; i < Ship.PART_COUNT; i++) {
+            salvage += Math.round(legacyWreckParts[i] * 0.10f);
+        }
+        salvage = Math.max(10, Math.min(90, salvage));
+        legacyWreck = false;
+        return salvage;
     }
 
     /** Copia el estado persistente del mundo y deja la nave del guardado como resto. */

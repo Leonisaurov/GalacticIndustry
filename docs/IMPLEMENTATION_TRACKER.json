@@ -4,23 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:24:00-06:00",
-    "lastSessionId": "S-020",
+    "lastUpdated": "2026-11-08T00:29:00-06:00",
+    "lastSessionId": "S-021",
     "lastVerification": {
-      "date": "2026-11-08T00:24:00-06:00",
+      "date": "2026-11-08T00:29:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Muerte por casco y por piloto 0 HP terminan la partida",
-        "legacy.json guarda mundo/nave; nuevo personaje carga el mismo mundo",
-        "05_death: casco->OVER, piloto->OVER sin romper casco, NUEVO PERSONAJE PLAYING",
-        "08_visual_death y 03_controls: OK",
+        "Nuevo personaje conserva mundo, restos y nave legado",
+        "Recuperación de nave legado a ≤100 u con desguace de créditos",
+        "16_universe: nuevo personaje + mundo persistente + recuperación OK",
+        "05_death OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S2",
     "currentTaskId": null,
-    "nextTaskId": "T-209",
+    "nextTaskId": "T-210",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3849,7 +3849,7 @@
       "description": "Permitir crear un personaje nuevo tras la muerte y entrar en el mismo mundo persistente, con la nave anterior en el lugar de la muerte y recuperable por el nuevo personaje.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-208",
@@ -3878,10 +3878,36 @@
         "16_universe"
       ],
       "technicalNotes": "No implementar reaparición en la nodriza. La nave legado no debe duplicarse.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-021",
+          "date": "2026-11-08T00:29:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "El nuevo personaje conserva el mundo legado y puede recuperar la nave anterior al acercarse (≤100 u): botón RECUPERAR NAVE, desguace en créditos, guardado del estado recuperado y prueba 16_universe.",
+          "files": [
+            "src/com/example/codegame/GameWorld.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/testlib.sh",
+            "tools/tests/16_universe.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "05_death",
+            "16_universe"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS la nave legado no se recupera de lejos",
+        "PASS la nave legado se recupera al acercarse",
+        "16_universe: nuevo personaje, mundo persistente y nave legado recuperada",
+        "05_death OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T00:29:00-06:00"
     },
     {
       "id": "T-210",
@@ -4507,6 +4533,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-021",
+      "date": "2026-11-08T00:29:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Nuevo personaje y nave legado recuperable",
+      "summary": "El flujo de nuevo personaje conserva el mundo persistente y permite recuperar la nave anterior al acercarse. Se añadió el botón RECUPERAR NAVE, el desguace en créditos y la prueba 16_universe; el estado recuperado se guarda en v2.",
+      "tasks": [
+        "T-209"
+      ],
+      "files": [
+        "src/com/example/codegame/GameWorld.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/testlib.sh",
+        "tools/tests/16_universe.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 05_death",
+        "tools/run-tests.sh --no-build 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-210 (modo de recuperación de desarrollo)."
+    },
     {
       "id": "S-020",
       "date": "2026-11-08T00:24:00-06:00",

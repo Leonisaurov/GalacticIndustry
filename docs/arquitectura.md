@@ -189,6 +189,9 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 - Antes de cerrar, `finishRun()` marca la nave como `legacyWreck`, guarda
   `legacy.json` y limpia la partida del personaje. El botón `NUEVO PERSONAJE`
   carga ese mundo y deja la nave anterior en el punto de muerte.
+- Con el nuevo personaje a ≤100 u aparece `RECUPERAR NAVE`. Al recuperarla se
+  obtiene un desguace de 10–90 créditos y `legacyWreck` pasa a `false`; el
+  estado se guarda para no duplicar la nave.
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

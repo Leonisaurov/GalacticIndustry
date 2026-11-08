@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:24:00-06:00  
+**Última actualización:** 2026-11-08T00:29:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,62 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-021 — Nuevo personaje y nave legado recuperable
+
+- **Fecha:** 2026-11-08T00:29:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-209
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El nuevo personaje conserva el mundo persistente: asteroides, bidones,
+  chunks y restos.
+- La nave legado se dibuja en el punto de muerte.
+- A ≤100 u aparece el botón `RECUPERAR NAVE`.
+- Al recuperarla se obtiene un desguace en créditos (10–90 según las partes) y
+  el resto desaparece.
+- El estado recuperado se guarda; al cargar ya no reaparece la nave legado.
+- Se añadió `16_universe`, que cubre muerte de piloto, nuevo personaje, mundo
+  persistente y recuperación.
+
+### Archivos modificados
+
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/testlib.sh`
+- `tools/tests/16_universe.sh`
+- `docs/pruebas.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh --no-build 05_death`: **OK**.
+- `tools/run-tests.sh --no-build 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS la nave legado no se recupera de lejos`
+- `PASS la nave legado se recupera al acercarse`
+- `16_universe: nuevo personaje, mundo persistente y nave legado recuperada`
+- El botón solo aparece dentro del radio; fuera se ignora.
+
+### Decisiones tomadas
+
+- La recuperación es manual (botón) y no automática.
+- El desguace da créditos como puente hasta la carga/minería de S3/S4.
+- El estado `legacyWreck=false` se guarda para no duplicar la nave.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-210 — Modo de desarrollo de recuperación tras muerte**.
 
 ---
 

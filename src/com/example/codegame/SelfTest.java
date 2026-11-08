@@ -231,16 +231,18 @@ public class SelfTest {
         w.missiles.clear();
         w.ship.invulnerable = 0f;
         float hull0 = w.ship.part[Ship.HULL];
-        float systems0 = w.ship.part[Ship.ENGINE] + w.ship.part[Ship.TANK]
-                + w.ship.part[Ship.CANNON] + w.ship.part[Ship.STEERING]
-                + w.ship.part[Ship.WING_LEFT] + w.ship.part[Ship.WING_RIGHT];
+        float systems0 = 0f;
+        for (int i = Ship.ENGINE; i < Ship.PART_COUNT; i++) {
+            systems0 += w.ship.part[i];
+        }
         Asteroid hitter = new Asteroid(w.ship.pos.x, w.ship.pos.y, Asteroid.MEDIUM);
         hitter.vel.set(0f, 0f);
         w.asteroids.add(hitter);
         w.update(dt, false, false, false, false);
-        float systems1 = w.ship.part[Ship.ENGINE] + w.ship.part[Ship.TANK]
-                + w.ship.part[Ship.CANNON] + w.ship.part[Ship.STEERING]
-                + w.ship.part[Ship.WING_LEFT] + w.ship.part[Ship.WING_RIGHT];
+        float systems1 = 0f;
+        for (int i = Ship.ENGINE; i < Ship.PART_COUNT; i++) {
+            systems1 += w.ship.part[i];
+        }
         check("colisionar con meteorito dana el casco", w.ship.part[Ship.HULL] < hull0);
         check("colisionar con meteorito dana un sistema", systems1 < systems0);
         check("invulnerable tras golpe", w.ship.invulnerable > 0f);
@@ -854,6 +856,14 @@ public class SelfTest {
                         && rebornLoaded.sector.legacyWreck
                         && Math.abs(rebornLoaded.sector.legacyWreckPos.x - 1234f) < 0.01f
                         && Math.abs(rebornLoaded.sector.legacyWreckPos.y + 567f) < 0.01f);
+        rebornLoaded.sector.legacyWreckPos.set(1000f, 1000f);
+        check("la nave legado no se recupera de lejos",
+                rebornLoaded.sector.recoverLegacyWreck(
+                        new com.badlogic.gdx.math.Vector2(0f, 0f)) == -1);
+        rebornLoaded.sector.ship.pos.set(1000f, 1000f);
+        int salvage = rebornLoaded.sector.recoverLegacyWreck(rebornLoaded.ship().pos);
+        check("la nave legado se recupera al acercarse",
+                salvage >= 10 && !rebornLoaded.sector.legacyWreck);
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();

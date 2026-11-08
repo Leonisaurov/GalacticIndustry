@@ -40,6 +40,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `08_visual_death` — capturas de la explosión y el diálogo.
 - `09_wing_damage` — ala perdida, humo y pestaña de reparaciones.
 - `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
+- `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh
 tools/run-tests.sh --list
@@ -112,6 +113,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `pilot_death_test`: arranca en `PLAYING` con el piloto a 0 HP e
   `INCAPACITATED`; `MyGame` debe pasar por `DYING` y `OVER`, marcar la nave
   legado y permitir `NUEVO PERSONAJE`. Lo usa `05_death`.
+- La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
+  nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
+  `16_universe`.
 
 ## Telemetría
 
