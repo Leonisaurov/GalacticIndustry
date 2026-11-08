@@ -135,9 +135,10 @@ estáticos se reutilizan.
 - Los precios usan las mismas fórmulas que la antigua tienda: combustible
   1 cr/UM (mín. 5), O2 0,5 cr/UM (mín. 5) y reparación 0,7 cr por punto.
 - `DESPEGAR` cierra la pantalla y devuelve la nave al exterior.
-- Persistencia (T-505): el guardado v2 incluye posición/nombre de estación,
-  almacén (mineral y cantidad) y el flag `docked`. Los guardados antiguos sin
-  esos campos cargan con la nodriza por defecto, almacén vacío y sin acople.
+- Persistencia (T-505/T-605): el guardado v2 incluye posición/nombre de
+  estación, almacén, mercado (stock, objetivo, producción, consumo y spread) y
+  el flag `docked`. Los guardados antiguos sin esos campos cargan con la
+  nodriza por defecto, almacén vacío, mercado por defecto y sin acople.
 - Al reanudar una partida acoplada, `CONTINUAR` abre directamente la estación.
 
 ## Rescate por combustible

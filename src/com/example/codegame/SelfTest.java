@@ -2011,6 +2011,37 @@ public class SelfTest {
                         && !noDockedLoaded.ship().docked
                         && noDockedLoaded.sector.station.storage.amount(Commodity.HIERRO) == 25);
 
+        // T-605: persistencia del mercado.
+        GameSession marketSave = new GameSession(new PlayerProfile(new Upgrades(true)));
+        marketSave.startRun();
+        Market savedMarket = marketSave.sector.station.market;
+        savedMarket.setStock(Commodity.HIELO, 77);
+        savedMarket.setTarget(Commodity.HIELO, 250);
+        savedMarket.setSpread(0.12f);
+        savedMarket.setProduction(Commodity.HIERRO, 5);
+        savedMarket.setConsumption(Commodity.COBRE, 3);
+        SaveService.MemoryStorage marketStore = new SaveService.MemoryStorage();
+        SaveService marketService = new SaveService(marketStore);
+        check("el mercado se guarda", marketService.save(marketSave));
+        GameSession marketLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("el mercado se restaura",
+                marketService.load(marketLoaded) == SaveService.LoadStatus.V2
+                        && marketLoaded.sector.station.market.stock(Commodity.HIELO) == 77
+                        && marketLoaded.sector.station.market.target(Commodity.HIELO) == 250
+                        && Math.abs(marketLoaded.sector.station.market.spread() - 0.12f) < 0.001f
+                        && marketLoaded.sector.station.market.production(Commodity.HIERRO) == 5
+                        && marketLoaded.sector.station.market.consumption(Commodity.COBRE) == 3);
+        String marketText = marketStore.read(SaveService.SAVE_NAME);
+        String noMarket = marketText.replaceAll(",\"market\":\\{[^}]*\\}", "");
+        GameSession noMarketLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un guardado sin mercado usa los valores por defecto",
+                !marketText.equals(noMarket)
+                        && SaveCodec.decode(noMarket, noMarketLoaded)
+                        && noMarketLoaded.sector.station.market.stock(Commodity.HIELO)
+                        == GameData.MARKET_INITIAL * GameData.MARKET_HIELO
+                        && Math.abs(noMarketLoaded.sector.station.market.spread()
+                        - PriceModel.DEFAULT_SPREAD) < 0.001f);
+
         // T-506: rescate por combustible agotado.
         GameWorld rescueWorld = new GameWorld(new Upgrades(true));
         rescueWorld.start();

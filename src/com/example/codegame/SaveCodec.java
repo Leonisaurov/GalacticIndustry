@@ -174,6 +174,29 @@ final class SaveCodec {
                 w.pop();
             }
             w.pop();
+            w.name("market").object();
+            w.set("spread", world.station.market.spread());
+            w.name("stock").array();
+            for (Commodity commodity : Commodity.values()) {
+                w.value(world.station.market.stock(commodity));
+            }
+            w.pop();
+            w.name("target").array();
+            for (Commodity commodity : Commodity.values()) {
+                w.value(world.station.market.target(commodity));
+            }
+            w.pop();
+            w.name("production").array();
+            for (Commodity commodity : Commodity.values()) {
+                w.value(world.station.market.production(commodity));
+            }
+            w.pop();
+            w.name("consumption").array();
+            for (Commodity commodity : Commodity.values()) {
+                w.value(world.station.market.consumption(commodity));
+            }
+            w.pop();
+            w.pop();
             w.pop();
             w.pop();
 
@@ -395,11 +418,32 @@ final class SaveCodec {
                         }
                     }
                 }
+                JsonValue market = station.get("market");
+                if (market != null) {
+                    d.hasMarket = true;
+                    d.marketSpread = market.getFloat("spread",
+                            PriceModel.DEFAULT_SPREAD);
+                    d.marketStock = intArray(market.get("stock"));
+                    d.marketTarget = intArray(market.get("target"));
+                    d.marketProduction = intArray(market.get("production"));
+                    d.marketConsumption = intArray(market.get("consumption"));
+                }
             }
             return d;
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    private static int[] intArray(JsonValue array) {
+        if (array == null || !array.isArray()) {
+            return null;
+        }
+        int[] values = new int[array.size];
+        for (int i = 0; i < array.size; i++) {
+            values[i] = array.get(i).asInt();
+        }
+        return values;
     }
 
     private static boolean apply(Data d, GameSession session) {
@@ -496,6 +540,24 @@ final class SaveCodec {
             CargoData entry = d.stationStorage.get(i);
             world.station.storage.hold.restore(entry.commodity, entry.amount);
         }
+        if (d.hasMarket) {
+            world.station.market.setSpread(d.marketSpread);
+            for (int i = 0; i < Commodity.values().length; i++) {
+                Commodity commodity = Commodity.values()[i];
+                if (d.marketStock != null && i < d.marketStock.length) {
+                    world.station.market.setStock(commodity, d.marketStock[i]);
+                }
+                if (d.marketTarget != null && i < d.marketTarget.length) {
+                    world.station.market.setTarget(commodity, d.marketTarget[i]);
+                }
+                if (d.marketProduction != null && i < d.marketProduction.length) {
+                    world.station.market.setProduction(commodity, d.marketProduction[i]);
+                }
+                if (d.marketConsumption != null && i < d.marketConsumption.length) {
+                    world.station.market.setConsumption(commodity, d.marketConsumption[i]);
+                }
+            }
+        }
         world.ship.docked = d.docked;
         world.missiles.clear();
         world.fx.clear();
@@ -549,6 +611,12 @@ final class SaveCodec {
         float stationY = GameData.MOTHERSHIP_Y;
         String stationName = GameData.MOTHERSHIP.name;
         final List<CargoData> stationStorage = new ArrayList<>();
+        boolean hasMarket;
+        float marketSpread = PriceModel.DEFAULT_SPREAD;
+        int[] marketStock;
+        int[] marketTarget;
+        int[] marketProduction;
+        int[] marketConsumption;
         boolean legacyWreck;
         float legacyX;
         float legacyY;

@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:30:00-06:00  
+**Última actualización:** 2026-11-08T03:36:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,60 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-052 — Persistencia de mercados y almacenes
+
+- **Fecha:** 2026-11-08T03:36:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-605
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- El guardado v2 incluye el **mercado** de la estación:
+  - stock, objetivo, producción, consumo y spread por mineral.
+- Junto con estación, almacén y flag `docked` (T-505), todo el estado económico
+  sobrevive a reinicios.
+- Los guardados sin mercado cargan con los valores por defecto.
+- `14_market` verifica stock/carga/créditos tras `force-stop` y recarga.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/Market.java`
+- `src/com/example/codegame/StationStorage.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/14_market.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `14_market 13_station`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS el mercado se guarda`
+- `PASS el mercado se restaura`
+- `PASS un guardado sin mercado usa los valores por defecto`
+- `14_market`: hierro 169, carga 1 y créditos persisten tras reiniciar.
+- `13_station`: almacén y acople siguen persistiendo.
+
+### Decisiones tomadas
+
+- El mercado se guarda por arrays en el orden de `Commodity.values()`.
+- Los campos del mercado son opcionales para mantener compatibilidad.
+- El acumulador de `EconomySim` no se persiste; el stock sí.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-606 — Verificación de mercado y anti-exploit**, que cierra S6.
 
 ---
 

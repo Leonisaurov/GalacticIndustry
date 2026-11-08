@@ -4,23 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T03:30:00-06:00",
-    "lastSessionId": "S-051",
+    "lastUpdated": "2026-11-08T03:36:00-06:00",
+    "lastSessionId": "S-052",
     "lastVerification": {
-      "date": "2026-11-08T03:30:00-06:00",
+      "date": "2026-11-08T03:36:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "EconomySim tickea cada 10 s con producción/consumo y reversión",
-        "30 min simulados mueven stock y precios de forma coherente",
-        "Stock acotado y sin oscilaciones desbocadas",
-        "14_market y 13_station siguen en verde",
+        "El guardado v2 incluye stock, objetivo, producción, consumo y spread del mercado",
+        "Mercado y almacén se restauran sin duplicar",
+        "Guardados sin mercado cargan con valores por defecto",
+        "14_market: stock 169 y carga 1 persisten tras reiniciar",
+        "13_station sigue en verde",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S6",
     "currentTaskId": null,
-    "nextTaskId": "T-605",
+    "nextTaskId": "T-606",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -3315,7 +3316,7 @@
       "description": "Guardar y restaurar stock, precios y almacén sin duplicar transacciones.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-601",
@@ -3340,10 +3341,38 @@
         "Guardado/carga"
       ],
       "technicalNotes": "Guardar después de transacciones y al pausar.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-052",
+          "date": "2026-11-08T03:36:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "SaveCodec v2 guarda el mercado (stock, objetivo, producción, consumo y spread) junto con estación, almacén y acople. Compatible con guardados sin mercado; 14_market verifica persistencia de stock/carga/créditos tras force-stop.",
+          "files": [
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/Market.java",
+            "src/com/example/codegame/StationStorage.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/14_market.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "13_station",
+            "Guardado/carga"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el mercado se guarda",
+        "PASS el mercado se restaura",
+        "PASS un guardado sin mercado usa los valores por defecto",
+        "14_market: hierro 169, carga 1 y créditos persisten tras reiniciar",
+        "13_station OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T03:36:00-06:00"
     },
     {
       "id": "T-606",
@@ -3352,7 +3381,7 @@
       "description": "Cerrar la etapa con pruebas de precios, stock, spread, capacidad, persistencia y rentabilidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-603",
@@ -5492,6 +5521,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-052",
+      "date": "2026-11-08T03:36:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Persistencia de mercados y almacenes",
+      "summary": "El guardado v2 conserva el mercado completo además de estación y almacén. Compatible con guardados antiguos; la persistencia se verifica en SelfTest y 14_market.",
+      "tasks": [
+        "T-605"
+      ],
+      "files": [
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/Market.java",
+        "src/com/example/codegame/StationStorage.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/14_market.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 14_market 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-606 (verificación de mercado y anti-exploit)."
+    },
     {
       "id": "S-051",
       "date": "2026-11-08T03:30:00-06:00",

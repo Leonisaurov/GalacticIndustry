@@ -63,5 +63,17 @@ assert_lt "créditos bajan al comprar" "$coins_before" "$(printf '%s' "$status" 
 tap "$MC_BACK_X" "$MC_BACK_Y" 0.3
 wait_current_state DOCKED 5 || fail "VOLVER no regresó a la estación"
 
+# T-605: el mercado persiste tras reiniciar.
+coins_after=$(latest_status | python3 -c 'import json,sys; print(json.load(sys.stdin)["coins"])')
+launch_app "--ez test_mode true"
+wait_current_state PAUSED 10 || fail "la partida con mercado no cargó"
+tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.3
+wait_current_state DOCKED 5 || fail "no volvió acoplado tras cargar"
+sleep 0.4
+status=$(latest_status)
+assert_eq "stock de hierro persistido" 169 "$(printf '%s' "$status" | json_get marketIronStock)"
+assert_eq "carga persistida" 1 "$(printf '%s' "$status" | json_get cargoUnits)"
+assert_eq "créditos persistidos" "$coins_after" "$(printf '%s' "$status" | json_get coins)"
+
 check_no_crash
-echo "OK 14_market: precios, venta parcial/total, nada, compra y vuelta a estación"
+echo "OK 14_market: precios, compraventa, confirmación y persistencia"
