@@ -28,6 +28,9 @@ final class GalaxyDef {
     final float marketInitial;
     final float marketSpread;
     final List<SystemDef> systems = new ArrayList<>();
+    /** Centroide de los sistemas, recalculado al añadirlos (UPD-006-T15). */
+    float mapX;
+    float mapY;
 
     GalaxyDef(String id, String name, String description, long seed,
               int nebulaColor, int starColor, Map<Commodity, Float> biases) {
@@ -64,8 +67,27 @@ final class GalaxyDef {
     SystemDef addSystem(SystemDef system) {
         if (system != null && system(system.id) == null) {
             systems.add(system);
+            updatePosition();
         }
         return system;
+    }
+
+    /** Centroide determinista de las posiciones de sus sistemas. */
+    void updatePosition() {
+        if (systems.isEmpty()) {
+            mapX = 0f;
+            mapY = 0f;
+            return;
+        }
+        float sx = 0f;
+        float sy = 0f;
+        for (int i = 0; i < systems.size(); i++) {
+            systems.get(i).updatePosition();
+            sx += systems.get(i).mapX;
+            sy += systems.get(i).mapY;
+        }
+        mapX = sx / systems.size();
+        mapY = sy / systems.size();
     }
 
     SystemDef system(String systemId) {

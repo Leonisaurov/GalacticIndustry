@@ -25,6 +25,16 @@ class Autopilot {
     /** Viaje a la estación nodriza: aproximarse y frenar en la zona de acople. */
     static final int STATION = 5;
 
+    /** Fases internas del atraque automático (UPD-006-T07). */
+    static final int APPROACH = 0;
+    static final int ALIGN = 1;
+    static final int FINAL = 2;
+
+    /** Distancia al punto de espera para pasar a alineación. */
+    static final float ALIGN_DIST = 55f;
+    /** Error de rumbo máximo para entrar al corredor. */
+    static final float ALIGN_ANGLE = 9f;
+
     /** Distancia de aparcamiento para minar; queda dentro del alcance del láser. */
     static final float MINE_DIST = 180f;
 
@@ -61,6 +71,8 @@ class Autopilot {
     private Asteroid rock;
     private FuelPickup cell;
     private Station station;
+    /** Fase del atraque automático: APPROACH, ALIGN o FINAL. */
+    private int dockPhase;
     private float stopTime;
 
     private final Vector2 targetVel = new Vector2();
@@ -83,6 +95,7 @@ class Autopilot {
         rock = null;
         cell = null;
         station = null;
+        dockPhase = APPROACH;
         stopTime = 0f;
     }
 
@@ -105,11 +118,17 @@ class Autopilot {
         cell = f;
     }
 
-    /** Vuela a la estación y frena dentro de la zona de acople. */
+    /** Vuela a la estación, recorre el corredor y acopla (UPD-006-T07). */
     void station(Station s) {
         cancel();
         kind = STATION;
         station = s;
+        dockPhase = APPROACH;
+    }
+
+    /** Fase actual del atraque automático, para telemetría. */
+    int dockPhase() {
+        return dockPhase;
     }
 
     /** Rellena los controles de este fotograma. Si el objetivo desaparece, pasa a frenar. */
@@ -129,6 +148,10 @@ class Autopilot {
             w.ship.laser.stop();
             beginStop();
             steerStop(c, w, dt);
+            return;
+        }
+        if (kind == STATION) {
+            steerStation(c, w, dt);
             return;
         }
         Ship ship = w.ship;
@@ -255,6 +278,85 @@ class Autopilot {
             }
         }
     }
+
+    /**
+     * Atraque automático por fases: espera -> alineación -> corredor -> acople.
+     * No teletransporta la nave: la mueve por el corredor y solo acopla cuando
+     * se cumplen los requisitos reales de {@link DockingSystem}.
+     */
+    private void steerStation(Controls c, GameWorld w, float dt) {
+        Ship ship = w.ship;
+        float accel = w.up.thrust();
+        if (station == null || station != w.station) {
+            cancel();
+            return;
+        }
+        float alignment = station.headingError(ship.heading);
+        float speed = ship.vel.len();
+        float distApproach = ship.pos.dst(station.approachPoint);
+        float distDock = station.distanceToDock(ship.pos);
+        if (dockPhase == APPROACH && distApproach < ALIGN_DIST && speed < 50f) {
+            dockPhase = ALIGN;
+        }
+        if (dockPhase == ALIGN && alignment <= ALIGN_ANGLE && speed < 20f) {
+            dockPhase = FINAL;
+        }
+        if (dockPhase == FINAL && DockingSystem.canDock(w)) {
+            DockingSystem.dock(w);
+            cancel();
+            return;
+        }
+        // Si el corredor se pierde por mucho, vuelve a aproximación.
+        if (dockPhase == FINAL && !station.inDockCorridor(ship.pos)
+                && distDock > station.def.approachDistance) {
+            dockPhase = APPROACH;
+        }
+
+        Vector2 goal = dockPhase == FINAL ? station.dockPoint : station.approachPoint;
+        toTarget.set(goal).sub(ship.pos);
+        float dist = toTarget.len();
+        Vector2 d = dist > 1e-3f ? toTarget.scl(1f / dist)
+                : toTarget.set(MathUtils.cosDeg(station.dockHeading()),
+                MathUtils.sinDeg(station.dockHeading()));
+        float targetSpeed;
+        if (dockPhase == APPROACH) {
+            float slow = dist - 12f;
+            targetSpeed = slow > 0f
+                    ? Math.min(130f, (float) Math.sqrt(2f * accel * 0.55f * slow))
+                    : 0f;
+        } else if (dockPhase == ALIGN) {
+            targetSpeed = dist > 6f ? Math.min(18f, dist * 0.6f) : 0f;
+        } else {
+            targetSpeed = dist > 4f
+                    ? Math.min(26f, Math.max(9f, dist * 0.9f)) : 0f;
+        }
+        desired.set(d).scl(targetSpeed);
+        for (int i = 0; i < w.asteroids.size; i++) {
+            avoid(w.asteroids.get(i), ship, w.up.maxSpeed());
+        }
+        // Dentro del corredor no se aplica la avoidance del casco.
+        if (!station.inDockCorridor(ship.pos)) {
+            avoidStation(station, ship, w.up.maxSpeed());
+        }
+        relVel.set(ship.vel);
+        need.set(desired).sub(relVel);
+        float needLen = need.len();
+        if (needLen > 4f) {
+            float aimDeg = MathUtils.atan2(need.y, need.x) * MathUtils.radiansToDegrees;
+            float misalign = Math.abs(Ship.wrapDeg(aimDeg - ship.heading));
+            c.aiming = true;
+            c.aimDeg = aimDeg;
+            if (misalign < THRUST_CONE) {
+                c.thrust = MathUtils.clamp(needLen / accel, 0f, 1f);
+            }
+        }
+        if (dockPhase != APPROACH && alignment > ALIGN_ANGLE && speed < 24f) {
+            // Cerca de la boca, prioriza mirar al eje de entrada.
+            c.aiming = true;
+            c.aimDeg = station.dockHeading();
+        }
+    }
+
 
     /** Pasa a la fase de frenada cuando el objetivo ya no existe. */
     private void beginStop() {

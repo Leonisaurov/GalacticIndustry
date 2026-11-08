@@ -1,9 +1,10 @@
 package com.example.codegame;
 
 /**
- * Acople de la nave a una estación: exige proximidad y velocidad baja, detiene
- * la nave y deja constancia del estado DOCKED. El desacople la devuelve al
- * exterior con velocidad cero.
+ * Acople de la nave a una estación: exige proximidad a la boca, velocidad baja,
+ * orientación alineada y estar dentro del corredor de entrada (UPD-006-T02).
+ * La plataforma personal conserva su comportamiento histórico de radio.
+ * El desacople devuelve la nave al exterior con velocidad cero.
  */
 final class DockingSystem {
 
@@ -23,7 +24,8 @@ final class DockingSystem {
     static boolean canDock(GameWorld world) {
         return world != null && world.ship != null && !world.ship.docked
                 && ((world.station != null
-                && world.station.canDock(world.ship.pos, world.ship.vel.len()))
+                && world.station.canDock(world.ship.pos, world.ship.vel.len(),
+                world.ship.heading))
                 || canDockPlayer(world));
     }
 
@@ -39,6 +41,9 @@ final class DockingSystem {
         world.ship.laser.stop();
         world.ship.tractor.stop();
         world.pilot.cancel();
+        if (!player && world.station != null) {
+            world.station.snapToDock(world.ship.pos);
+        }
         return true;
     }
 
@@ -46,9 +51,15 @@ final class DockingSystem {
         if (world == null || world.ship == null) {
             return;
         }
+        boolean player = world.dockedAtPlayer;
         world.ship.docked = false;
         world.dockedAtPlayer = false;
         world.ship.vel.setZero();
         world.ship.thrusting = false;
+        if (!player && world.station != null
+                && !world.station.inDockCorridor(world.ship.pos)) {
+            // Al despegar se sale por la boca, nunca desde dentro del casco.
+            world.ship.pos.set(world.station.dockPoint);
+        }
     }
 }

@@ -19,6 +19,13 @@ final class UniverseState {
     /** Sectores descubiertos; el mapa oculta los detalles del resto. */
     private final java.util.Set<String> discovered = new java.util.LinkedHashSet<>();
 
+    /** Recalcula centroides de sistemas y galaxias tras cargar los datos. */
+    void recomputePositions() {
+        for (int i = 0; i < galaxies.size(); i++) {
+            galaxies.get(i).updatePosition();
+        }
+    }
+
     GalaxyDef addGalaxy(GalaxyDef galaxy) {
         if (galaxy != null && galaxy(galaxy.id) == null) {
             galaxies.add(galaxy);
@@ -145,6 +152,17 @@ final class UniverseState {
 
     void clearSnapshots() {
         snapshots.clear();
+    }
+
+    /** Restaura el conjunto de sectores descubiertos de un guardado. */
+    void restoreDiscovered(List<String> ids) {
+        discovered.clear();
+        if (ids == null) {
+            return;
+        }
+        for (int i = 0; i < ids.size(); i++) {
+            discover(ids.get(i));
+        }
     }
 
     void discover(String sectorId) {

@@ -32,6 +32,8 @@ class Asteroid {
     /** Unidades de cada mineral que quedan en la roca. */
     final int[] mineralUnits;
     float flash;
+    /** La roca ya ha cruzado el campo de contención (UPD-006-T04). */
+    boolean contained;
 
     private float rot;
     private final float spin;

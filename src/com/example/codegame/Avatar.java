@@ -3,18 +3,33 @@ package com.example.codegame;
 /**
  * Personaje a pie dentro de un interior. Se mueve sin gravedad ni combate;
  * las paredes bloquean y solo se cambia de sala a través de una puerta.
+ *
+ * <p>UPD-006-T20 añade estado visual: fase de caminata ligada a la distancia
+ * recorrida, reposo y orientación continua. La colisión no cambia.</p>
  */
 final class Avatar {
 
     static final float RADIUS = 12f;
     static final float SPEED = 170f;
-    static final float DOOR_REACH = 72f;
+    static final float DOOR_REACH = 120f;
+    /** Longitud de zancada para el ciclo de caminata. */
+    static final float STRIDE = 34f;
 
     float x;
     float y;
     float facingX;
     float facingY = 1f;
     String roomId;
+
+    /** Dirección de mirada en grados (0 = derecha). */
+    float facingAngle = 90f;
+    /** Fase de caminata en radianes. */
+    float walkPhase;
+    /** Tiempo detenido, para la respiración del reposo. */
+    float idleTime;
+    /** Distancia recorrida desde el último cambio de sala. */
+    float travelled;
+    boolean moving;
 
     Avatar(InteriorScene scene) {
         if (scene == null || scene.rooms.isEmpty()) {
@@ -38,6 +53,12 @@ final class Avatar {
         float dy = input.moveY;
         float len = (float) Math.sqrt(dx * dx + dy * dy);
         if (len < 0.001f) {
+            moving = false;
+            idleTime += dt;
+            walkPhase *= 0.90f;
+            if (walkPhase < 0.01f) {
+                walkPhase = 0f;
+            }
             return;
         }
         if (len > 1f) {
@@ -46,10 +67,29 @@ final class Avatar {
         }
         facingX = dx;
         facingY = dy;
+        facingAngle = (float) Math.toDegrees(Math.atan2(dy, dx));
         float step = SPEED * dt;
+        float beforeX = x;
+        float beforeY = y;
+        boolean moved = false;
         if (!tryMove(dx * step, dy * step, scene)) {
-            tryMove(dx * step, 0f, scene);
-            tryMove(0f, dy * step, scene);
+            moved = tryMove(dx * step, 0f, scene);
+            moved = tryMove(0f, dy * step, scene) || moved;
+        } else {
+            moved = true;
+        }
+        float dist = (float) Math.sqrt((x - beforeX) * (x - beforeX)
+                + (y - beforeY) * (y - beforeY));
+        moving = moved && dist > 0.01f;
+        if (moving) {
+            travelled += dist;
+            walkPhase += dist / STRIDE * (float) Math.PI * 2f;
+            if (walkPhase > (float) Math.PI * 2f) {
+                walkPhase -= (float) Math.PI * 2f;
+            }
+            idleTime = 0f;
+        } else {
+            idleTime += dt;
         }
     }
 

@@ -20,7 +20,7 @@ import java.util.List;
  */
 final class SaveCodec {
 
-    static final int VERSION = 2;
+    static final int VERSION = 3;
 
     private SaveCodec() {
     }
@@ -31,6 +31,16 @@ final class SaveCodec {
             JsonWriter w = new JsonWriter(out);
             w.object();
             w.set("version", VERSION);
+            w.set("currentSector", session.currentSector == null
+                    ? GameData.START_SECTOR_ID : session.currentSector.id);
+            w.name("discovered").array();
+            for (String id : session.universe.discoveredSectorIds()) {
+                w.value(id);
+            }
+            w.pop();
+            w.set("stationEnergy", session.sector == null
+                    || session.sector.station == null ? -1f
+                    : session.sector.station.energy.energy);
 
             PlayerProfile profile = session.profile;
             w.name("profile").object();
@@ -41,6 +51,36 @@ final class SaveCodec {
             w.set("name", profile.name);
             w.set("coins", profile.upgrades.coins());
             w.set("refills", profile.upgrades.refillCount());
+            w.set("debt", profile.upgrades.debt());
+            w.set("hasShip", session.hasShip);
+            w.set("starterBudgetGranted", session.starterBudgetGranted);
+            w.set("starterBudget", session.starterBudget);
+            if (session.ownedShip != null) {
+                ShipSpec spec = session.ownedShip;
+                w.name("ownedShip").object();
+                w.set("id", spec.id);
+                w.set("label", spec.label);
+                w.set("category", spec.category.name());
+                w.set("shipClass", spec.shipClass.id);
+                w.set("hull", spec.hull);
+                w.set("fuelCapacity", spec.fuelCapacity);
+                w.set("efficiency", spec.efficiency);
+                w.set("massFactor", spec.massFactor);
+                w.set("cargo", spec.cargoCapacity);
+                w.set("price", spec.price);
+                w.set("description", spec.description);
+                w.name("parts").array();
+                for (int i = 0; i < Ship.PART_COUNT; i++) {
+                    w.value(spec.parts[i]);
+                }
+                w.pop();
+                w.name("modules").array();
+                for (int i = 0; i < spec.modules.length; i++) {
+                    w.value(spec.modules[i]);
+                }
+                w.pop();
+                w.pop();
+            }
             w.name("levels").array();
             for (int i = 0; i < ShipLoadout.COUNT; i++) {
                 w.value(profile.upgrades.loadout.level(i));
@@ -89,6 +129,9 @@ final class SaveCodec {
             w.set("invulnerable", ship.invulnerable);
             w.set("docked", ship.docked);
             w.set("shipClass", session.upgrades().shipClass().id);
+            w.set("specFuelCapacity", ship.specFuelCapacity);
+            w.set("specFuelFactor", ship.specFuelFactor);
+            w.set("specMassFactor", ship.specMassFactor);
             w.name("parts").array();
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 w.value(ship.part[i]);
@@ -341,7 +384,11 @@ final class SaveCodec {
         }
         try {
             JsonValue root = new JsonReader().parse(text);
-            if (root == null || root.getInt("version", 0) != VERSION) {
+            if (root == null) {
+                return null;
+            }
+            int version = root.getInt("version", 0);
+            if (version < 2 || version > VERSION) {
                 return null;
             }
             JsonValue profile = root.get("profile");
@@ -359,6 +406,48 @@ final class SaveCodec {
             d.profileName = profile.getString("name", PlayerProfile.DEFAULT_NAME);
             d.coins = profile.getInt("coins", 0);
             d.refills = profile.getInt("refills", 0);
+            d.debt = profile.getInt("debt", 0);
+            // v2 no tenia propiedad de nave: migra a hasShip=true.
+            d.hasShip = profile.getBoolean("hasShip", true);
+            d.starterBudgetGranted = profile.getBoolean("starterBudgetGranted", true);
+            d.starterBudget = profile.getInt("starterBudget", 0);
+            JsonValue owned = profile.get("ownedShip");
+            if (owned != null && !owned.isNull()) {
+                JsonValue specParts = owned.get("parts");
+                ShipSpec.Category category = ShipSpec.Category.USED;
+                try {
+                    category = ShipSpec.Category.valueOf(
+                            owned.getString("category", "USED"));
+                } catch (IllegalArgumentException ignored) {
+                    category = ShipSpec.Category.USED;
+                }
+                java.util.List<String> specModules = new java.util.ArrayList<>();
+                JsonValue mods = owned.get("modules");
+                if (mods != null && mods.isArray()) {
+                    for (int i = 0; i < mods.size; i++) {
+                        String id = mods.get(i).asString();
+                        if (id != null && !id.isEmpty()) {
+                            specModules.add(id);
+                        }
+                    }
+                }
+                float component = 1f;
+                if (specParts != null && specParts.size > Ship.ENGINE) {
+                    component = specParts.get(Ship.ENGINE).asFloat() / Ship.PART_MAX;
+                }
+                d.ownedShip = new ShipSpec(owned.getString("id", "owned"),
+                        owned.getString("label", "NAVE"),
+                        category, ShipClassDef.byId(owned.getString("shipClass",
+                        ShipClassDef.MINER.id)),
+                        owned.getFloat("hull", 100f), component,
+                        owned.getFloat("fuelCapacity", 160f),
+                        owned.getFloat("efficiency", 1f),
+                        owned.getFloat("massFactor", 1f),
+                        owned.getFloat("cargo", 100f),
+                        specModules.toArray(new String[0]),
+                        owned.getInt("price", 0),
+                        owned.getString("description", ""));
+            }
             JsonValue levels = profile.get("levels");
             // Los guardados anteriores a T-305 tienen 5 niveles; BODEGA se
             // rellena a 0.
@@ -405,6 +494,9 @@ final class SaveCodec {
             d.invulnerable = ship.getFloat("invulnerable", 0f);
             d.docked = ship.getBoolean("docked", false);
             d.shipClass = ship.getString("shipClass", ShipClassDef.MINER.id);
+            d.specFuelCapacity = ship.getFloat("specFuelCapacity", -1f);
+            d.specFuelFactor = ship.getFloat("specFuelFactor", 1f);
+            d.specMassFactor = ship.getFloat("specMassFactor", 1f);
             JsonValue parts = ship.get("parts");
             // Los guardados anteriores a T-201 tienen 7 partes; LIFE_SUPPORT se
             // rellena con integridad completa.
@@ -432,6 +524,20 @@ final class SaveCodec {
             }
 
             d.sectorId = sector.getString("sectorId", GameData.START_SECTOR_ID);
+            String current = root.getString("currentSector", null);
+            if (current != null) {
+                d.sectorId = current;
+            }
+            JsonValue discovered = root.get("discovered");
+            if (discovered != null && discovered.isArray()) {
+                for (int i = 0; i < discovered.size; i++) {
+                    String id = discovered.get(i).asString();
+                    if (id != null && !id.isEmpty()) {
+                        d.discovered.add(id);
+                    }
+                }
+            }
+            d.stationEnergy = root.getFloat("stationEnergy", -1f);
             d.coinsEarned = sector.getInt("coinsEarned", 0);
             d.score = sector.getInt("score", 0);
             d.elapsed = sector.getFloat("elapsed", 0f);
@@ -815,6 +921,11 @@ final class SaveCodec {
         Upgrades up = session.upgrades();
         up.setCoins(d.coins);
         up.setRefillCount(d.refills);
+        up.setDebt(d.debt);
+        session.hasShip = d.hasShip;
+        session.starterBudgetGranted = d.starterBudgetGranted;
+        session.starterBudget = d.starterBudget;
+        session.ownedShip = d.ownedShip;
         for (int i = 0; i < ShipLoadout.COUNT; i++) {
             up.loadout.setLevel(i, d.levels[i]);
         }
@@ -833,6 +944,13 @@ final class SaveCodec {
                 || !d.sectorId.equals(session.currentSector.id))) {
             session.switchSector(d.sectorId);
         }
+        if (!d.discovered.isEmpty()) {
+            session.universe.restoreDiscovered(d.discovered);
+        }
+        if (d.stationEnergy >= 0f && session.sector != null
+                && session.sector.station != null) {
+            session.sector.station.energy.setEnergy(d.stationEnergy);
+        }
         GameWorld world = session.sector;
         world.start();
         Ship ship = world.ship;
@@ -848,6 +966,14 @@ final class SaveCodec {
         ship.syncFuel(up);
         ship.fuel = clamp(d.fuel, 0f, ship.maxFuel);
         ship.invulnerable = Math.max(0f, d.invulnerable);
+        if (d.specFuelCapacity > 0f) {
+            ship.specFuelCapacity = d.specFuelCapacity;
+            ship.specFuelFactor = Math.max(0.6f, d.specFuelFactor);
+            ship.specMassFactor = Math.max(0.6f, d.specMassFactor);
+            ship.maxFuel = Math.max(ship.specFuelCapacity, up.maxFuel());
+            ship.fuel = Math.min(ship.fuel, ship.maxFuel);
+        }
+        ship.wrecked = !session.hasShip;
         ship.cargo().clear();
         for (int i = 0; i < d.cargo.size(); i++) {
             CargoData cargo = d.cargo.get(i);
@@ -1032,6 +1158,14 @@ final class SaveCodec {
         String profileName;
         int coins;
         int refills;
+        int debt;
+        boolean hasShip = true;
+        boolean starterBudgetGranted = true;
+        int starterBudget;
+        ShipSpec ownedShip;
+        float specFuelCapacity = -1f;
+        float specFuelFactor = 1f;
+        float specMassFactor = 1f;
         int[] levels;
         String[] modules;
         float health;
@@ -1054,6 +1188,8 @@ final class SaveCodec {
         float invulnerable;
         float[] parts;
         String sectorId = GameData.START_SECTOR_ID;
+        final List<String> discovered = new ArrayList<>();
+        float stationEnergy = -1f;
         int coinsEarned;
         int score;
         float elapsed;

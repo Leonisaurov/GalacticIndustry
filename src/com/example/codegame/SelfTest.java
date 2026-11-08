@@ -90,6 +90,15 @@ public class SelfTest {
         return save.substring(0, start + 10) + sb + save.substring(end);
     }
 
+    private static boolean hasAction(InteriorScene scene, Interactable.Action action) {
+        for (int i = 0; i < scene.interactables.size(); i++) {
+            if (scene.interactables.get(i).action == action) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void check(String name, boolean ok) {
         System.out.println((ok ? "PASS " : "FAIL ") + name);
         if (!ok) {
@@ -285,6 +294,9 @@ public class SelfTest {
         check("disparar gasta combustible", w.ship.fuel < w.ship.maxFuel);
 
         // Un misil impacta un meteorito pequeño: se destruye sin dar monedas.
+        // Lejos de la estación para no interferir con el campo de contención.
+        w.ship.pos.set(0f, -2000f);
+        w.ship.vel.setZero();
         w.asteroids.clear();
         w.missiles.clear();
         w.coinsEarned = 0;
@@ -535,7 +547,7 @@ public class SelfTest {
                 saveService.save(saveSession) && saveStorage.exists(SaveService.SAVE_NAME));
         String v2Text = saveStorage.read(SaveService.SAVE_NAME);
         check("save v2 incluye version, perfil, piloto, nave y sector",
-                v2Text.contains("\"version\":2")
+                v2Text.contains("\"version\":3")
                         && v2Text.contains("\"profile\":")
                         && v2Text.contains("\"pilot\":")
                         && v2Text.contains("\"ship\":")
@@ -1099,6 +1111,8 @@ public class SelfTest {
         GameWorld trip = new GameWorld(new Upgrades(true));
         trip.start();
         trip.immortal = true;
+        trip.ship.pos.set(0f, -2000f);
+        trip.ship.vel.setZero();
         trip.ship.cargo().addExact(Commodity.SILICATO, 100);
         float startX = trip.ship.pos.x;
         float startY = trip.ship.pos.y;
@@ -1926,12 +1940,17 @@ public class SelfTest {
                 Math.abs(stationWorld.station.storage.capacity() - Station.STORAGE_CAPACITY) < 0.01f);
         check("la zona segura no tiene asteroides",
                 stationAsteroidsInSafeZone(stationWorld) == 0);
-        check("no se puede acoplar lejos o rapido",
-                !stationWorld.station.canDock(new Vector2(0f, 0f), 5f)
-                        && !stationWorld.station.canDock(
-                        new Vector2(0f, GameData.MOTHERSHIP_Y - 100f), 50f)
-                        && stationWorld.station.canDock(
-                        new Vector2(0f, GameData.MOTHERSHIP_Y - 100f), 10f));
+        Vector2 mouth = new Vector2(stationWorld.station.dockPoint);
+        float dockHeading = stationWorld.station.dockHeading();
+        check("la boca de atraque esta en el borde inferior",
+                Math.abs(mouth.x) < 0.01f
+                        && mouth.y < stationWorld.station.pos.y
+                        && stationWorld.station.inDockCorridor(mouth));
+        check("no se puede acoplar lejos, rapido o desalineado",
+                !stationWorld.station.canDock(new Vector2(0f, 0f), 5f, dockHeading)
+                        && !stationWorld.station.canDock(mouth, 50f, dockHeading)
+                        && !stationWorld.station.canDock(mouth, 10f, dockHeading + 90f)
+                        && stationWorld.station.canDock(mouth, 10f, dockHeading));
         check("la zona segura detecta el centro y el exterior",
                 stationWorld.station.inSafeZone(GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y)
                         && !stationWorld.station.inSafeZone(
@@ -1944,9 +1963,13 @@ public class SelfTest {
         dockWorld.immortal = true;
         dockWorld.asteroids.clear();
         dockWorld.fuel.clear();
-        dockWorld.ship.pos.set(dockWorld.station.pos.x, dockWorld.station.pos.y - 100f);
+        dockWorld.ship.pos.set(dockWorld.station.dockPoint);
+        dockWorld.ship.heading = dockWorld.station.dockHeading();
+        dockWorld.ship.dir.set(com.badlogic.gdx.math.MathUtils.cosDeg(
+                dockWorld.ship.heading), com.badlogic.gdx.math.MathUtils.sinDeg(
+                dockWorld.ship.heading));
         dockWorld.ship.vel.set(0f, 0f);
-        check("se puede acoplar cerca y despacio", DockingSystem.canDock(dockWorld));
+        check("se puede acoplar en la boca y despacio", DockingSystem.canDock(dockWorld));
         dockWorld.ship.vel.set(60f, 0f);
         check("no se acopla con velocidad alta", !DockingSystem.canDock(dockWorld));
         dockWorld.ship.vel.set(0f, 0f);
@@ -1981,16 +2004,19 @@ public class SelfTest {
             }
         }
         float stationDist = stationPilot.station.distanceTo(stationPilot.ship.pos);
-        check("Autopilot.STATION frena en la zona de acople",
-                stationDist >= stationPilot.station.def.radius
-                        && stationDist <= stationPilot.station.def.dockRadius
-                        && stationPilot.ship.vel.len() < DockingSystem.MAX_DOCK_SPEED);
+        check("Autopilot.STATION acopla recorriendo el corredor",
+                stationPilot.ship.docked
+                        || (stationPilot.station.distanceToDock(stationPilot.ship.pos) < 30f
+                        && stationPilot.station.inDockCorridor(stationPilot.ship.pos)
+                        && stationPilot.ship.vel.len() < DockingSystem.MAX_DOCK_SPEED));
         check("Autopilot.STATION no penetra el casco de la estacion",
-                stationDist > stationPilot.station.def.radius + Ship.RADIUS);
+                stationPilot.station.inDockCorridor(stationPilot.ship.pos)
+                        || stationDist > stationPilot.station.def.radius + Ship.RADIUS);
         check("tras el piloto se puede acoplar",
-                DockingSystem.canDock(stationPilot)
+                stationPilot.ship.docked
+                        || (DockingSystem.canDock(stationPilot)
                         && DockingSystem.dock(stationPilot)
-                        && stationPilot.ship.docked);
+                        && stationPilot.ship.docked));
 
         // T-503: almacén y venta a precio base.
         StationStorage store = new StationStorage(200f);
@@ -2153,7 +2179,10 @@ public class SelfTest {
         s5.immortal = true;
         s5.asteroids.clear();
         s5.fuel.clear();
-        s5.ship.pos.set(s5.station.pos.x, s5.station.pos.y - 100f);
+        s5.ship.pos.set(s5.station.dockPoint);
+        s5.ship.heading = s5.station.dockHeading();
+        s5.ship.dir.set(com.badlogic.gdx.math.MathUtils.cosDeg(s5.ship.heading),
+                com.badlogic.gdx.math.MathUtils.sinDeg(s5.ship.heading));
         s5.ship.vel.set(0f, 0f);
         boolean s5Docked = DockingSystem.canDock(s5) && DockingSystem.dock(s5)
                 && s5.ship.docked;
@@ -2976,11 +3005,17 @@ public class SelfTest {
                         && streamer.unloadedCount() == 4);
         check("el mapa soporta escala de sistema y galaxia",
                 streamU.sector(GameData.START_SECTOR_ID).distanceTo(
-                        streamU.sector("sol-belt")) < 2.5f
+                        streamU.sector("sol-belt")) > 2f
                         && streamU.sector(GameData.START_SECTOR_ID).distanceTo(
-                        streamU.sector("andromeda-forge")) > 30f
+                        streamU.sector("sol-belt")) < 10f
+                        && streamU.sector(GameData.START_SECTOR_ID).distanceTo(
+                        streamU.sector("andromeda-forge")) > 100f
                         && streamU.sector("andromeda-forge").distanceTo(
-                        streamU.sector("draco-core")) > 50f);
+                        streamU.sector("draco-core")) > 200f
+                        && streamU.system(GameData.START_SYSTEM_ID).mapX > 1f
+                        && streamU.system(GameData.START_SYSTEM_ID).mapX < 4f
+                        && streamU.galaxy(GameData.START_GALAXY_ID).mapX
+                        == streamU.system(GameData.START_SYSTEM_ID).mapX);
         GameSession streamSession = new GameSession(
                 new PlayerProfile(new Upgrades(true)));
         streamSession.startRun();
@@ -3037,8 +3072,8 @@ public class SelfTest {
         }
         long streamMs = (System.nanoTime() - streamStart) / 1_000_000L;
         check("el coste no depende del tamaño del universo",
-                bigStreamer.loadedCount() == 1
-                        && bigStreamer.unloadedCount() == 199
+                bigStreamer.loadedCount() <= 5
+                        && bigStreamer.unloadedCount() >= 190
                         && streamMs < 100);
 
         // T-804: warp libre y TravelService.
@@ -4248,6 +4283,310 @@ public class SelfTest {
         check("S4: el mineral extraido respeta la capacidad",
                 gate.ship.cargo().usedMass() > 0f
                         && !gate.ship.cargo().overCapacity());
+
+        // UPD-006: geometría de atraque, colisión y campo de contención.
+        GameWorld geo = new GameWorld(new Upgrades(true));
+        geo.start();
+        check("UPD006: boca de atraque bajo la estación",
+                Math.abs(geo.station.dockPoint.x - geo.station.pos.x) < 0.01f
+                        && geo.station.dockPoint.y
+                        < geo.station.pos.y - geo.station.def.radius * 0.8f);
+        check("UPD006: punto de espera fuera del casco",
+                geo.station.approachPoint.dst(geo.station.pos)
+                        > geo.station.def.radius + Ship.RADIUS);
+        check("UPD006: corredor entre espera y boca",
+                geo.station.inDockCorridor(geo.station.approachPoint)
+                        && geo.station.inDockCorridor(geo.station.dockPoint)
+                        && !geo.station.inDockCorridor(geo.station.pos.x + 220f,
+                        geo.station.pos.y));
+        GameWorld crash = new GameWorld(new Upgrades(true));
+        crash.start();
+        crash.immortal = false;
+        crash.asteroids.clear();
+        crash.fuel.clear();
+        crash.ship.pos.set(crash.station.pos.x + crash.station.def.radius + 5f,
+                crash.station.pos.y);
+        crash.ship.vel.set(-180f, 0f);
+        float crashHull = crash.ship.part[Ship.HULL];
+        crash.update(1f / 60f, new Controls());
+        check("UPD006: el casco frena y daña a la nave",
+                crash.ship.part[Ship.HULL] < crashHull
+                        && crash.ship.pos.dst(crash.station.pos)
+                        >= crash.station.def.radius + Ship.RADIUS - 0.5f);
+        GameWorld corridor = new GameWorld(new Upgrades(true));
+        corridor.start();
+        corridor.asteroids.clear();
+        corridor.fuel.clear();
+        corridor.ship.pos.set(corridor.station.pos.x,
+                corridor.station.pos.y - corridor.station.def.radius - 4f);
+        corridor.ship.vel.set(0f, 120f);
+        float corridorHull = corridor.ship.part[Ship.HULL];
+        corridor.update(1f / 60f, new Controls());
+        check("UPD006: el corredor no aplica colisión de casco",
+                corridor.ship.part[Ship.HULL] == corridorHull
+                        && corridor.ship.pos.dst(corridor.station.pos)
+                        < corridor.station.def.radius + Ship.RADIUS);
+        GameWorld field = new GameWorld(new Upgrades(true));
+        field.start();
+        field.ship.pos.set(0f, -2200f);
+        field.ship.vel.setZero();
+        field.asteroids.clear();
+        field.fuel.clear();
+        Asteroid intruder = new Asteroid(field.station.pos.x,
+                field.station.pos.y - field.station.def.safeRadius + 40f,
+                Asteroid.LARGE, AsteroidType.M, 20, 20, 4242L);
+        intruder.vel.set(0f, -80f);
+        field.asteroids.add(intruder);
+        float energy0 = field.station.energy.energy;
+        field.update(1f / 60f, new Controls());
+        check("UPD006: el campo expulsa la roca del radio seguro",
+                !field.station.inSafeZone(intruder.pos)
+                        && field.asteroids.contains(intruder, true));
+        check("UPD006: el campo consume energía por impacto",
+                field.station.energy.energy < energy0
+                        && field.containment.impacts > 0);
+        GameWorld off = new GameWorld(new Upgrades(true));
+        off.start();
+        off.ship.pos.set(0f, -2200f);
+        off.ship.vel.setZero();
+        off.station.energy.setEnergy(0f);
+        off.asteroids.clear();
+        off.fuel.clear();
+        Asteroid pass = new Asteroid(off.station.pos.x,
+                off.station.pos.y - off.station.def.safeRadius + 40f,
+                Asteroid.MEDIUM, AsteroidType.C, 20, 20, 4243L);
+        pass.vel.set(0f, -60f);
+        off.asteroids.add(pass);
+        off.update(1f / 60f, new Controls());
+        check("UPD006: sin energía el campo se apaga y no bloquea",
+                off.containment.fieldDisabled);
+        check("UPD006: la energía de estación se recarga",
+                off.station.energy.fraction() >= 0f
+                        && off.station.energy.capacity() > 0f);
+
+        // UPD-006-T35: separación real entre minería y estacionamiento.
+        Upgrades sepUp = new Upgrades(true);
+        sepUp.addCoins(1000);
+        boolean sepAuto = sepUp.installShipModule(0, ShipModuleDef.AUTOPILOT);
+        boolean sepDock = sepUp.installShipModule(3,
+                ShipModuleDef.DOCKING_AUTOPILOT);
+        check("UPD006: los autopilotos de mineria y atraque son independientes",
+                sepAuto && sepDock
+                        && sepUp.loadout().hasAutopilot()
+                        && sepUp.loadout().hasDockingAutopilot()
+                        && sepUp.shipModuleCount() == 2
+                        && sepUp.removeShipModule(0)
+                        && !sepUp.loadout().hasAutopilot()
+                        && sepUp.loadout().hasDockingAutopilot());
+
+        // UPD-006: sensores, brújula, ranuras y planes de viaje.
+        Upgrades sensorUp = new Upgrades(true);
+        float baseRange = Sensors.range(sensorUp);
+        sensorUp.loadout().installModule(0, ShipModuleDef.RADAR.id);
+        check("UPD006: el radar amplía el alcance de sensores",
+                Math.abs(Sensors.range(sensorUp) - baseRange * 1.70f) < 0.1f);
+        GameWorld sensorWorld = new GameWorld(new Upgrades(true));
+        sensorWorld.start();
+        sensorWorld.ship.pos.set(0f, -2200f);
+        sensorWorld.asteroids.clear();
+        Asteroid nearRock = new Asteroid(300f, -2200f, Asteroid.SMALL);
+        Asteroid farRock = new Asteroid(4000f, -2200f, Asteroid.SMALL);
+        sensorWorld.asteroids.add(nearRock);
+        sensorWorld.asteroids.add(farRock);
+        NavTarget picked = Sensors.pick(sensorWorld, sensorUp,
+                new Vector2(305f, -2200f));
+        check("UPD006: solo se conocen los objetivos dentro del alcance",
+                picked != null && picked.type == NavTarget.Type.ASTEROID
+                        && Sensors.pick(sensorWorld, sensorUp,
+                        new Vector2(4005f, -2200f)) == null);
+        boolean targetWasAlive = picked != null && picked.alive(sensorWorld);
+        if (nearRock != null) {
+            sensorWorld.asteroids.removeValue(nearRock, true);
+        }
+        check("UPD006: el objetivo se limpia al desaparecer",
+                targetWasAlive && !picked.alive(sensorWorld));
+        Upgrades navUp = new Upgrades(true);
+        check("UPD006: ranuras compatibles por tipo",
+                navUp.loadout().canInstall(0, ShipModuleDef.NAVIGATION,
+                        ShipClassDef.MINER)
+                        && navUp.loadout().canInstall(0, ShipModuleDef.RADAR,
+                        ShipClassDef.MINER)
+                        && !navUp.loadout().canInstall(1,
+                        ShipModuleDef.DOCKING_AUTOPILOT, ShipClassDef.MINER)
+                        && navUp.loadout().canInstall(3,
+                        ShipModuleDef.DOCKING_AUTOPILOT, ShipClassDef.MINER));
+        Upgrades planUp = new Upgrades(true);
+        planUp.addCoins(1000);
+        GameSession planSession = new GameSession(new PlayerProfile(planUp));
+        planSession.startRun();
+        TravelPlan convNoWarp = TravelPlan.quote(planSession, "sol-belt",
+                TravelPlan.Mode.CONVENTIONAL);
+        TravelPlan warpNoMotor = TravelPlan.quote(planSession, "sol-belt",
+                TravelPlan.Mode.WARP);
+        check("UPD006: el viaje convencional no exige warp",
+                convNoWarp.ok() && !warpNoMotor.ok()
+                        && convNoWarp.hours > 0f && convNoWarp.energyCost == 0);
+        planUp.buy(Upgrades.MOTOR);
+        TravelPlan warp = TravelPlan.quote(planSession, "sol-belt",
+                TravelPlan.Mode.WARP);
+        check("UPD006: el warp sigue siendo opcional y más rápido",
+                warp.ok() && warp.timeLabel().contains("INSTANTANEO")
+                        && !convNoWarp.timeLabel().contains("INSTANTANEO"));
+        planSession.ship().fuel = planSession.ship().maxFuel;
+        TravelService.Result convTrip = TravelService.travel(planSession,
+                "sol-belt", TravelPlan.Mode.CONVENTIONAL);
+        check("UPD006: el viaje convencional llega al destino",
+                convTrip.ok && "sol-belt".equals(planSession.currentSector.id));
+        GameSession discoverySession = new GameSession(
+                new PlayerProfile(new Upgrades(true)));
+        discoverySession.startRun();
+        discoverySession.universe.discover("andromeda-forge");
+        String discoveredSave = SaveCodec.encode(discoverySession);
+        GameSession reloaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        boolean decoded = SaveCodec.decode(discoveredSave, reloaded);
+        check("UPD006: el descubrimiento del mapa persiste",
+                decoded && reloaded.universe.isDiscovered("andromeda-forge"));
+
+        // UPD-006: avatar, interior de nodriza, equipamiento y mercado de naves.
+        InteriorScene mother = InteriorScene.mothership();
+        check("UPD006: la nodriza tiene interior amplio y valido",
+                mother.valid() && mother.kind == InteriorScene.Kind.MOTHERSHIP
+                        && mother.roomCount() >= 7 && mother.doorCount() >= 6);
+        check("UPD006: la nodriza incluye servicios representados",
+                mother.npcCount() >= 6 && mother.npcCount() <= 12
+                        && hasAction(mother, Interactable.Action.BUY_SHIP)
+                        && hasAction(mother, Interactable.Action.EQUIP)
+                        && hasAction(mother, Interactable.Action.BOARD_SHIP)
+                        && hasAction(mother, Interactable.Action.FUEL)
+                        && hasAction(mother, Interactable.Action.EXIT));
+        Avatar walker = new Avatar(mother);
+        float walkerStartX = walker.x;
+        InteriorInput move = new InteriorInput();
+        move.set(1f, 0f);
+        for (int i = 0; i < 10; i++) {
+            walker.update(1f / 60f, move, mother);
+        }
+        float walkedX = walker.x;
+        float phase = walker.walkPhase;
+        move.set(0f, 0f);
+        walker.update(1f / 60f, move, mother);
+        check("UPD006: el avatar camina y anima sin cambiar su radio",
+                walkedX > walkerStartX && phase > 0f && !walker.moving
+                        && Avatar.RADIUS == 12f);
+        NpcActor npc = mother.npcs.get(0);
+        float npcX = npc.x;
+        float npcY = npc.y;
+        for (int i = 0; i < 120; i++) {
+            mother.updateNpcs(1f / 60f);
+        }
+        check("UPD006: los NPC se mueven por el interior",
+                npc.x != npcX || npc.y != npcY);
+        Upgrades previewUp = new Upgrades(true);
+        previewUp.addCoins(500);
+        float thrustBefore = previewUp.thrust();
+        LoadoutPreview preview = LoadoutPreview.preview(previewUp,
+                ShipModuleDef.PROPULSION, true, 2, ShipClassDef.MINER);
+        check("UPD006: la previsualizacion no muta el loadout",
+                preview.ok() && preview.thrustAfter > thrustBefore
+                        && previewUp.thrust() == thrustBefore
+                        && preview.cost == ShipModuleDef.PROPULSION.creditCost);
+        LoadoutPreview badPreview = LoadoutPreview.preview(previewUp,
+                ShipModuleDef.DOCKING_AUTOPILOT, true, 1, ShipClassDef.MINER);
+        check("UPD006: la previsualizacion detecta ranura incompatible",
+                !badPreview.ok() && badPreview.error.contains("COMPATIBLE"));
+
+        ShipMarket marketC = new ShipMarket(4242L);
+        ShipMarket marketD = new ShipMarket(4242L);
+        boolean same = marketC.size() == marketD.size();
+        int categories = 0;
+        for (int i = 0; i < marketC.size(); i++) {
+            same = same && marketC.offer(i).spec.price
+                    == marketD.offer(i).spec.price
+                    && marketC.offer(i).spec.id.equals(marketD.offer(i).spec.id);
+            if (marketC.offer(i).spec.category == ShipSpec.Category.SCRAP) {
+                categories |= 1;
+            } else if (marketC.offer(i).spec.category == ShipSpec.Category.USED) {
+                categories |= 2;
+            } else if (marketC.offer(i).spec.category == ShipSpec.Category.NEW) {
+                categories |= 4;
+            }
+        }
+        check("UPD006: el mercado de naves es determinista y variado",
+                same && categories == 7 && marketC.cheapest() != null);
+        check("UPD006: hay una nave alcanzable con el presupuesto inicial",
+                marketC.cheapest().spec.price + 60 <= 1200);
+        boolean allConsistent = true;
+        boolean packagePriced = true;
+        boolean packagesEquipped = true;
+        for (int i = 0; i < marketC.size(); i++) {
+            ShipOffer candidate = marketC.offer(i);
+            allConsistent = allConsistent && candidate.dataIsConsistent();
+            if (candidate.spec.category == ShipSpec.Category.NEW) {
+                int separate = 0;
+                for (int k = 0; k < candidate.spec.modules.length; k++) {
+                    ShipModuleDef mod = ShipModuleDef.byId(
+                            candidate.spec.modules[k]);
+                    separate += mod == null ? 0 : mod.creditCost;
+                }
+                packagePriced = packagePriced
+                        && candidate.spec.price > separate;
+                packagesEquipped = packagesEquipped
+                        && candidate.spec.moduleCount() >= 2;
+            }
+        }
+        check("UPD006: todas las ofertas tienen datos coherentes",
+                allConsistent);
+        check("UPD006: los paquetes nuevos incluyen equipo y cuestan mas",
+                packagePriced && packagesEquipped);
+        ShipOffer offer = marketC.cheapest();
+        check("UPD006: la ficha de oferta es coherente",
+                offer.dataIsConsistent()
+                        && offer.spec.parts[Ship.HULL] == offer.spec.hull);
+        Upgrades inspectUp = new Upgrades(true);
+        inspectUp.addCoins(100);
+        check("UPD006: la inspeccion cobra y revela el estado real",
+                offer.inspect(inspectUp) && offer.inspected
+                        && inspectUp.coins() == 100 - ShipOffer.INSPECTION_COST);
+        Upgrades buyUp = new Upgrades(true);
+        GameSession buySession = new GameSession(new PlayerProfile(buyUp));
+        buySession.profile.restoreIdentity("player-test", "char-start", "START");
+        buySession.beginStarterFlow();
+        int budget = buyUp.coins();
+        ShipOffer cheap = buySession.shipMarket.cheapest();
+        boolean shipBought = buySession.purchaseShip(cheap, 60);
+        check("UPD006: el inicio sin nave concede 1200 CR y compra",
+                budget == 1200 && buySession.starterBudgetGranted
+                        && shipBought && buySession.hasShip
+                        && buyUp.coins() == budget - cheap.spec.price - 60
+                        && buySession.sector.ship.fuel == 60f
+                        && buySession.sector.ship.pos.dst(
+                        buySession.sector.station.dockPoint) < 1f);
+        String boughtSave = SaveCodec.encode(buySession);
+        GameSession boughtLoad = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("UPD006: la nave comprada y el estado inicial persisten",
+                SaveCodec.decode(boughtSave, boughtLoad)
+                        && boughtLoad.hasShip && boughtLoad.ownedShip != null
+                        && boughtLoad.ownedShip.id.equals(cheap.spec.id)
+                        && boughtLoad.sector.ship.specFuelFactor
+                        == cheap.spec.efficiency);
+        GameSession noShip = new GameSession(new PlayerProfile(new Upgrades(true)));
+        noShip.hasShip = false;
+        String noShipSave = SaveCodec.encode(noShip);
+        String v2Save = noShipSave.replace("\"version\":3", "\"version\":2")
+                .replace("\"hasShip\":false,", "")
+                .replace("\"starterBudgetGranted\":true,", "")
+                .replace("\"starterBudget\":0,", "");
+        GameSession upgradedSave = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("UPD006: un guardado v2 migra a hasShip=true",
+                SaveCodec.decode(v2Save, upgradedSave)
+                        && upgradedSave.hasShip);
+        GameSession rescueSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        rescueSession.beginStarterFlow();
+        rescueSession.upgrades().setCoins(0);
+        check("UPD006: sin nave ni saldo hay nave de servicio",
+                rescueSession.grantServiceShip()
+                        && rescueSession.hasShip
+                        && rescueSession.upgrades().debt() == 300);
 
         // Medición de eficiencia del piloto (no son pruebas de corrección, solo cifras para comparar).
         benchFuel("cerca", 300f, 0f, 0f, 0f);

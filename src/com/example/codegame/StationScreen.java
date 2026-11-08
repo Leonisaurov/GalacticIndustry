@@ -26,7 +26,7 @@ final class StationScreen {
 
     private final Array<Button> rowButtons = new Array<>();
     private final Array<Button> tabButtons = new Array<>();
-    private Button btnUndock;
+    private Button btnUndock, btnEnter, btnEquip;
     private int tab;
     private String message = "";
     private float px;
@@ -88,8 +88,14 @@ final class StationScreen {
             rowButtons.add(new Button("", px + 24f * u, top - rowH,
                     pw - 48f * u, rowH));
         }
-        btnUndock = new Button("DESPEGAR", (w - Math.min(w * 0.6f, 280f * u)) * 0.5f,
-                py + 34f * u, Math.min(w * 0.6f, 280f * u), 52f * u);
+        float undockW = Math.min(w * 0.6f, 280f * u);
+        btnUndock = new Button("DESPEGAR", (w - undockW) * 0.5f,
+                py + 34f * u, undockW, 52f * u);
+        float enterW = Math.min(110f * u, w * 0.22f);
+        btnEnter = new Button("ENTRAR", w - pad - enterW - 8f * u,
+                py + 34f * u, enterW, 52f * u);
+        btnEquip = new Button("VISTA NAVE", px + 20f * u, py + 34f * u,
+                Math.min(120f * u, pw * 0.26f), 52f * u);
     }
 
     private float rowTop(int index) {
@@ -114,6 +120,14 @@ final class StationScreen {
         if (game.tapped(tabButtons.get(3))) {
             message = "";
             game.openMarket();
+            return true;
+        }
+        if (game.tapped(btnEquip)) {
+            game.openEquipment();
+            return true;
+        }
+        if (game.tapped(btnEnter)) {
+            game.enterMothershipInterior();
             return true;
         }
         if (game.tapped(btnUndock)) {
@@ -208,9 +222,9 @@ final class StationScreen {
             }
             return;
         }
-        int free = game.freeShipModuleSlot();
+        int free = game.freeShipModuleSlot(def);
         if (free < 0) {
-            message = "SIN RANURA LIBRE";
+            message = "SIN RANURA COMPATIBLE";
             return;
         }
         if (game.upgrades.coins() < def.creditCost) {
@@ -236,8 +250,8 @@ final class StationScreen {
             if (game.shipModuleSlot(def) >= 0) {
                 return "INSTALADO";
             }
-            if (game.freeShipModuleSlot() < 0) {
-                return "SIN RANURA LIBRE";
+            if (game.freeShipModuleSlot(def) < 0) {
+                return "SIN RANURA COMPATIBLE";
             }
             return "SIN CREDITOS";
         }
@@ -348,6 +362,8 @@ final class StationScreen {
         }
         drawRows();
         ui.drawButtonText(btnUndock, true);
+        ui.drawButtonText(btnEnter, true);
+        ui.drawButtonText(btnEquip, true);
         batch.end();
     }
 
@@ -447,8 +463,8 @@ final class StationScreen {
                 ui.textRight("RETIRAR", b.bounds.x + b.bounds.width - 26f * u,
                         mid - 14f * u, 0.66f * u, Visuals.TEXT_DIM);
                 continue;
-            } else if (game.freeShipModuleSlot() < 0) {
-                status = "SIN RANURA LIBRE";
+            } else if (game.freeShipModuleSlot(def) < 0) {
+                status = "SIN RANURA COMPATIBLE";
                 color = Visuals.TEXT_OFF;
             } else {
                 status = "INSTALAR " + def.creditCost + " CR";
@@ -504,7 +520,7 @@ final class StationScreen {
             if (game.shipModuleSlot(def) >= 0) {
                 return true;
             }
-            return game.freeShipModuleSlot() >= 0
+            return game.freeShipModuleSlot(def) >= 0
                     && game.upgrades.coins() >= def.creditCost;
         }
         if (index == 0) {

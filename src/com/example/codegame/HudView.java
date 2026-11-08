@@ -28,8 +28,29 @@ final class HudView {
     boolean canRescue;
     Button map;
     boolean canOpenMap;
+    Button radar;
+    boolean canOpenRadar;
     Button buildBase;
     boolean canBuildBase;
     boolean rescueActive;
     float rescueSeconds;
+
+    /** Brújula básica: dirección relativa a la nodriza más cercana. */
+    boolean compassValid;
+    boolean compassLocal;
+    boolean compassBehind;
+    boolean compassHere;
+    float compassAngle;
+    float compassDistance;
+    String compassLabel = "";
+    /** Brújula avanzada (módulo NAVEGACION). */
+    boolean hasNavigation;
+    NavTarget navTarget;
+    /** Guiado de atraque manual (UPD-006-T06). */
+    boolean dockGuide;
+    boolean inDockCorridor;
+    float dockDistance;
+    float dockLateral;
+    float dockAngle;
+    float dockSpeed;
 }

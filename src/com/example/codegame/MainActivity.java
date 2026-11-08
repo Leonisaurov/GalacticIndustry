@@ -66,12 +66,47 @@ public class MainActivity extends AndroidApplication {
                 && getIntent().getBooleanExtra("interior_test", false);
         boolean interiorMgmtTest = getIntent() != null
                 && getIntent().getBooleanExtra("interior_mgmt_test", false);
+        boolean starterTest = getIntent() != null
+                && getIntent().getBooleanExtra("starter_test", false);
+        boolean collisionTest = getIntent() != null
+                && getIntent().getBooleanExtra("collision_test", false);
+        boolean fieldTest = getIntent() != null
+                && getIntent().getBooleanExtra("field_test", false);
+        boolean manualDockTest = getIntent() != null
+                && getIntent().getBooleanExtra("manual_dock_test", false);
+        boolean navTest = getIntent() != null
+                && getIntent().getBooleanExtra("nav_test", false);
+        boolean compassTest = getIntent() != null
+                && getIntent().getBooleanExtra("compass_test", false);
+        boolean brokeTest = getIntent() != null
+                && getIntent().getBooleanExtra("broke_test", false);
         this.game = new MyGame(testMode, debugDeath, slowDeath, autopilotTest,
                 wingTest, survivalTest, pilotDeathTest, recoveryTest, cargoTest,
                 miningTest, tractorTest, stationTest, dockingTest,
                 stationServiceTest, rescueTest, marketTest, boundsTest,
                 warpTest, baseTest, moduleTest, interiorTest,
                 interiorMgmtTest);
+        if (starterTest) {
+            game.enableStarterTest();
+        }
+        if (collisionTest) {
+            game.enableCollisionTest();
+        }
+        if (fieldTest) {
+            game.enableFieldTest();
+        }
+        if (manualDockTest) {
+            game.enableManualDockTest();
+        }
+        if (navTest) {
+            game.enableNavTest();
+        }
+        if (compassTest) {
+            game.enableCompassTest();
+        }
+        if (brokeTest) {
+            game.enableBrokeTest();
+        }
         initialize(game, cfg);
     }
 

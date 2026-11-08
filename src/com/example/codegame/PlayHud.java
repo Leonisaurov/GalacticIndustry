@@ -34,6 +34,16 @@ final class PlayHud {
     private final HudView hud;
     private float u = 1f;
 
+    /** Estado cacheado de la brújula para no crear objetos por frame. */
+    private boolean compassHas;
+    private boolean compassLocal;
+    private boolean compassBehind;
+    private boolean compassHere;
+    private float compassRel;
+    private float compassDist;
+    private String compassLabel = "";
+    private static final Color COMPASS_PANEL = new Color(0.030f, 0.042f, 0.058f, 0.90f);
+
     void setWorld(GameWorld world) {
         if (world != null) {
             this.world = world;
@@ -105,6 +115,10 @@ final class PlayHud {
         drawHullChip(w, h);
         drawSurvivalBars(w, h);
         drawPartAlerts(w, h, panelH);
+        updateCompass();
+        drawCompassShapes(w, h);
+        drawAdvancedCompassMarker(w, h);
+        drawDockGuideShapes(w, h);
         if (hud.canRecover) {
             ui.drawButton(hud.recover, Visuals.BTN_PRIMARY, true);
         }
@@ -116,6 +130,9 @@ final class PlayHud {
         }
         if (hud.canOpenMap) {
             ui.drawButton(hud.map, Visuals.BTN_SECONDARY, true);
+        }
+        if (hud.canOpenRadar) {
+            ui.drawButton(hud.radar, Visuals.BTN_SECONDARY, true);
         }
         if (hud.canBuildBase) {
             ui.drawButton(hud.buildBase, Visuals.BTN_PRIMARY, true);
@@ -160,6 +177,8 @@ final class PlayHud {
                 pad + 8f * u, h - 134f * u, 0.60f * u, w - 2f * pad,
                 Visuals.TEXT_DIM);
         drawEnergyText(w, h);
+        drawCompassText(w, h);
+        drawDockGuideText(w, h);
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         ui.textCenteredMiddle(Math.round(frac * 100f) + "%",
                 pad + 44f * u + fuelBarW(w) * 0.5f, h - 110f * u, 0.78f * u, Color.WHITE);
@@ -216,6 +235,9 @@ final class PlayHud {
         }
         if (hud.canOpenMap) {
             ui.drawButtonText(hud.map, true);
+        }
+        if (hud.canOpenRadar) {
+            ui.drawButtonText(hud.radar, true);
         }
         if (hud.canBuildBase) {
             ui.drawButtonText(hud.buildBase, true);
@@ -657,8 +679,256 @@ final class PlayHud {
         shapes.circle(x + bw * 0.5f, knobYLocal, bw * 0.19f, 14);
     }
 
-    void drawHudGlow(float w, float h) {
-        batch.begin();
+    /** Datos de la brújula para telemetría y pruebas de aceptación. */
+    String compassLabel() { return compassLabel; }
+    float compassAngle() { return compassRel; }
+    float compassDistance() { return compassDist; }
+    boolean compassBehind() { return compassBehind; }
+    boolean compassHere() { return compassHere; }
+    boolean compassLocal() { return compassLocal; }
+
+    /** Barra horizontal de rumbo a la nodriza más cercana (UPD-006-T08). */
+    private void updateCompass() {
+        compassHas = false;
+        compassBehind = false;
+        compassHere = false;
+        compassLocal = true;
+        compassLabel = "";
+        if (world == null || world.ship == null || world.station == null
+                || session == null) {
+            return;
+        }
+        Station local = world.station;
+        boolean localMother = isMothership(local.def);
+        SectorDef remote = localMother ? null : nearestMothershipSector();
+        float tx;
+        float ty;
+        if (localMother) {
+            tx = local.pos.x;
+            ty = local.pos.y;
+            compassLabel = "NODRIZA";
+            compassLocal = true;
+        } else if (remote != null && !remote.id.equals(
+                session.currentSector == null ? "" : session.currentSector.id)) {
+            tx = local.pos.x;
+            ty = local.pos.y;
+            compassLabel = "NAV " + remote.name;
+            compassLocal = false;
+        } else if (remote != null) {
+            tx = local.pos.x;
+            ty = local.pos.y;
+            compassLabel = remote.name;
+            compassLocal = true;
+        } else {
+            tx = local.pos.x;
+            ty = local.pos.y;
+            compassLabel = local.def.name;
+            compassLocal = true;
+        }
+        float dx = tx - world.ship.pos.x;
+        float dy = ty - world.ship.pos.y;
+        compassDist = (float) Math.sqrt(dx * dx + dy * dy);
+        float absolute = MathUtils.atan2(dy, dx) * MathUtils.radiansToDegrees;
+        compassRel = Ship.wrapDeg(absolute - world.ship.heading);
+        compassBehind = Math.abs(compassRel) > 90f;
+        compassHere = compassDist < 60f;
+        compassHas = true;
+    }
+
+    private static boolean isMothership(StationDef def) {
+        return def != null && def.name != null && def.name.startsWith("NODRIZA");
+    }
+
+    /** Sector descubierto con nodriza más cercano por distancia de mapa. */
+    private SectorDef nearestMothershipSector() {
+        if (session == null || session.universe == null) {
+            return null;
+        }
+        SectorDef best = null;
+        float bestDist = Float.MAX_VALUE;
+        for (GalaxyDef galaxy : session.universe.galaxies()) {
+            for (SystemDef system : galaxy.systems) {
+                for (SectorDef sector : system.sectors) {
+                    if (!session.universe.isDiscovered(sector.id)) {
+                        continue;
+                    }
+                    boolean mother = false;
+                    for (int i = 0; i < sector.stationCount(); i++) {
+                        if (isMothership(sector.station(i))) {
+                            mother = true;
+                            break;
+                        }
+                    }
+                    if (!mother) {
+                        continue;
+                    }
+                    float d = session.currentSector == null ? 0f
+                            : session.currentSector.distanceTo(sector);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = sector;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    private float compassBarW(float w) {
+        return Math.min(w * 0.66f, 300f * u);
+    }
+
+    private float compassBarX(float w) {
+        return (w - compassBarW(w)) * 0.5f;
+    }
+
+    private float compassBarY(float h) {
+        return 16f * u + 126f * u;
+    }
+
+    private void drawCompassShapes(float w, float h) {
+        if (!compassHas || hud.state != MyGame.PLAYING) {
+            return;
+        }
+        float x = compassBarX(w);
+        float y = compassBarY(h);
+        float bw = compassBarW(w);
+        float bh = 22f * u;
+        ui.panel(x, y, bw, bh, bh * 0.5f, COMPASS_PANEL, Visuals.PANEL_EDGE);
+        // Marcas laterales y centro.
+        for (int i = 1; i < 8; i++) {
+            shapes.setColor(1f, 1f, 1f, i == 4 ? 0.35f : 0.16f);
+            shapes.rect(x + bw * i / 8f, y + 4f * u, 1.2f * u, bh - 8f * u);
+        }
+        shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.75f);
+        shapes.rect(x + bw * 0.5f - 1f * u, y + 2f * u, 2f * u, bh - 4f * u);
+
+        float t = compassHere ? 0f : MathUtils.sinDeg(compassRel);
+        if (compassBehind) {
+            t = compassRel > 0f ? 1f : -1f;
+        }
+        float dotX = x + bw * 0.5f + t * bw * 0.45f;
+        Color dot = compassHere ? Visuals.GOOD
+                : compassLocal ? Visuals.ACCENT : Visuals.WARN;
+        shapes.setColor(dot);
+        shapes.circle(dotX, y + bh * 0.5f, 4.4f * u, 12);
+        shapes.setColor(1f, 1f, 1f, 0.55f);
+        shapes.circle(dotX, y + bh * 0.5f, 1.4f * u, 8);
+        if (compassBehind) {
+            shapes.setColor(Visuals.WARN);
+            float ex = compassRel > 0f ? x + bw - 6f * u : x + 2f * u;
+            shapes.triangle(ex, y + bh * 0.5f + 5f * u,
+                    ex, y + bh * 0.5f - 5f * u,
+                    compassRel > 0f ? ex + 4f * u : ex - 4f * u, y + bh * 0.5f);
+        }
+    }
+
+    private void drawCompassText(float w, float h) {
+        if (!compassHas || hud.state != MyGame.PLAYING) {
+            return;
+        }
+        float x = compassBarX(w);
+        float y = compassBarY(h);
+        float bw = compassBarW(w);
+        String label = compassLabel;
+        if (compassHere) {
+            label = "AQUI  " + label;
+        } else if (compassBehind) {
+            label = "DETRAS  " + label;
+        }
+        ui.textLeftFit(label, x + 8f * u, y + 30f * u, 0.58f * u,
+                bw * 0.60f, Visuals.TEXT_DIM);
+        ui.textRight(Math.round(compassDist) + " u", x + bw - 8f * u,
+                y + 30f * u, 0.58f * u, Visuals.TEXT_DIM);
+        if (hud.hasNavigation && hud.navTarget != null) {
+            drawAdvancedCompassText(w, h);
+        }
+    }
+
+    /** Marca del objetivo avanzado sobre la barra (pasada de formas). */
+    private void drawAdvancedCompassMarker(float w, float h) {
+        NavTarget target = hud.navTarget;
+        if (!hud.hasNavigation || target == null) {
+            return;
+        }
+        target.sync();
+        float dx = target.pos.x - world.ship.pos.x;
+        float dy = target.pos.y - world.ship.pos.y;
+        float abs = MathUtils.atan2(dy, dx) * MathUtils.radiansToDegrees;
+        float rel = Ship.wrapDeg(abs - world.ship.heading);
+        boolean behind = Math.abs(rel) > 90f;
+        float bw = compassBarW(w);
+        float t = behind ? (rel > 0f ? 1f : -1f) : MathUtils.sinDeg(rel);
+        shapes.setColor(Visuals.GOLD.r, Visuals.GOLD.g, Visuals.GOLD.b, 0.85f);
+        shapes.circle(compassBarX(w) + bw * 0.5f + t * bw * 0.45f,
+                compassBarY(h) - 5f * u, 2.4f * u, 8);
+    }
+
+    /** Brújula avanzada: solo con módulo NAVEGACION y objetivo conocido. */
+    private void drawAdvancedCompassText(float w, float h) {
+        NavTarget target = hud.navTarget;
+        if (target == null) {
+            return;
+        }
+        target.sync();
+        float dx = target.pos.x - world.ship.pos.x;
+        float dy = target.pos.y - world.ship.pos.y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        float abs = MathUtils.atan2(dy, dx) * MathUtils.radiansToDegrees;
+        float rel = Ship.wrapDeg(abs - world.ship.heading);
+        boolean behind = Math.abs(rel) > 90f;
+        float y = compassBarY(h) + 66f * u;
+        ui.textLeftFit("OBJETIVO  " + target.label, compassBarX(w),
+                y, 0.62f * u, compassBarW(w) * 0.72f, Visuals.GOLD);
+        ui.textRight((behind ? "DETRAS " : "") + Math.round(dist) + " u",
+                compassBarX(w) + compassBarW(w), y, 0.62f * u,
+                behind ? Visuals.WARN : Visuals.TEXT);
+    }
+
+    /** Datos de la maniobra de atraque manual (UPD-006-T06). */
+    private void drawDockGuideShapes(float w, float h) {
+        if (!hud.dockGuide || hud.state != MyGame.PLAYING) {
+            return;
+        }
+        float bw = Math.min(w * 0.82f, 360f * u);
+        float x = (w - bw) * 0.5f;
+        float y = compassBarY(h) + 96f * u;
+        ui.panel(x, y, bw, 58f * u, 6f * u, COMPASS_PANEL,
+                hud.inDockCorridor ? Visuals.GOOD : Visuals.PANEL_EDGE);
+        // Indicador lateral: corredor y desviación.
+        float cx = x + bw * 0.5f;
+        shapes.setColor(0.20f, 0.30f, 0.40f, 0.55f);
+        shapes.rect(x + 10f * u, y + 10f * u, bw - 20f * u, 2f * u);
+        float half = 90f;
+        float lat = MathUtils.clamp(hud.dockLateral, -half, half);
+        float lx = cx + lat / half * (bw * 0.42f);
+        shapes.setColor(hud.inDockCorridor ? Visuals.GOOD : Visuals.WARN);
+        shapes.circle(lx, y + 11f * u, 4f * u, 10);
+        shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.7f);
+        shapes.rect(cx - 1f * u, y + 5f * u, 2f * u, 12f * u);
+    }
+
+    private void drawDockGuideText(float w, float h) {
+        if (!hud.dockGuide || hud.state != MyGame.PLAYING) {
+            return;
+        }
+        float bw = Math.min(w * 0.82f, 360f * u);
+        float x = (w - bw) * 0.5f;
+        float y = compassBarY(h) + 96f * u;
+        ui.textLeftFit("ATRAQUE  D " + Math.round(hud.dockDistance) + " u",
+                x + 10f * u, y + 44f * u, 0.62f * u, bw * 0.44f, Visuals.ACCENT);
+        ui.textRight("V " + Math.round(hud.dockSpeed) + "  ANG "
+                        + Math.round(hud.dockAngle) + "  LAT "
+                        + (hud.dockLateral >= 0f ? "+" : "")
+                        + Math.round(hud.dockLateral),
+                x + bw - 10f * u, y + 44f * u, 0.58f * u,
+                hud.inDockCorridor ? Visuals.GOOD : Visuals.TEXT_DIM);
+        ui.textCenteredFit(hud.inDockCorridor ? "EN CORREDOR" : "FUERA DE CORREDOR",
+                x + bw * 0.5f, y + 27f * u, 0.54f * u, bw - 20f * u,
+                hud.inDockCorridor ? Visuals.GOOD : Visuals.WARN);
+    }
+
+    void drawHudGlow(float w, float h) {        batch.begin();
         Visuals.additive(batch);
         if (hud.state == MyGame.PLAYING) {
             art.glow(batch, hud.joyCx + hud.knobX, hud.joyCy + hud.knobY, hud.joyR * 1.15f, Visuals.ACCENT, 0.10f);

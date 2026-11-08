@@ -14,7 +14,7 @@ import java.util.Set;
 final class SectorStreamer {
 
     /** Radio de carga en unidades del mapa de universo. */
-    static final float LOAD_RADIUS = 2.5f;
+    static final float LOAD_RADIUS = 10f;
 
     private final UniverseState universe;
     private final PlayerStation playerStation;

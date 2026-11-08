@@ -133,6 +133,55 @@ class ShipLoadout {
         return hasModule(AUTOPILOT_MODULE);
     }
 
+    boolean hasDockingAutopilot() {
+        return hasModule(ShipModuleDef.DOCKING_AUTOPILOT.id);
+    }
+
+    boolean hasNavigation() {
+        return hasModule(ShipModuleDef.NAVIGATION.id);
+    }
+
+    boolean hasRadar() {
+        return hasModule(ShipModuleDef.RADAR.id);
+    }
+
+    /** Módulo instalado en una ranura, o null. */
+    ShipModuleDef moduleDef(int slot) {
+        return ShipModuleDef.byId(module(slot));
+    }
+
+    /** Compatibilidad de una ranura con un módulo para una clase de nave. */
+    boolean canInstall(int slot, ShipModuleDef module, ShipClassDef shipClass) {
+        if (slot < 0 || slot >= MODULE_SLOTS || module == null) {
+            return false;
+        }
+        ShipSlotDef def = ShipSlotDef.slotFor(shipClass, slot);
+        return def != null && def.accepts(module);
+    }
+
+    /** Primera ranura libre compatible, o -1. */
+    int freeCompatibleSlot(ShipModuleDef module, ShipClassDef shipClass) {
+        if (module == null) {
+            return -1;
+        }
+        for (int i = 0; i < MODULE_SLOTS; i++) {
+            if (modules[i] == null && canInstall(i, module, shipClass)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Instalación con compatibilidad; la variante simple se mantiene para cargas legadas. */
+    boolean installModuleChecked(int slot, ShipModuleDef module,
+                                 ShipClassDef shipClass) {
+        if (!canInstall(slot, module, shipClass) || modules[slot] != null) {
+            return false;
+        }
+        return installModule(slot, module.id);
+    }
+
+
     int installedModules() {
         int count = 0;
         for (int i = 0; i < MODULE_SLOTS; i++) {

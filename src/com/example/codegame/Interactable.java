@@ -8,7 +8,12 @@ final class Interactable {
         REPAIR,
         REFINERY,
         MARKET,
-        EXIT
+        EXIT,
+        BUY_SHIP,
+        EQUIP,
+        FUEL,
+        CONTRACTS,
+        BOARD_SHIP
     }
 
     final String id;

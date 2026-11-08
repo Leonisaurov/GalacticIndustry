@@ -8,8 +8,9 @@ package com.example.codegame;
  */
 final class TravelService {
 
-    static final float FUEL_PER_UNIT = 2f;
-    static final float ENERGY_PER_UNIT = 4f;
+    /** Coste por unidad de mapa; la escala del universo se amplió en UPD-006-T15. */
+    static final float FUEL_PER_UNIT = 0.5f;
+    static final float ENERGY_PER_UNIT = 1.2f;
     static final int MIN_WARP_LEVEL = 1;
     static final float MIN_FUEL = 2f;
     static final float MIN_ENERGY = 4f;
@@ -107,7 +108,52 @@ final class TravelService {
     }
 
     static Result travel(GameSession session, String targetId) {
-        return travel(session, targetId, null);
+        return travel(session, targetId, (JumpGate) null);
+    }
+
+    /** Plan unificado para la UI y el servicio (UPD-006-T17). */
+    static TravelPlan plan(GameSession session, String targetId,
+                           TravelPlan.Mode mode) {
+        return TravelPlan.quote(session, targetId, mode);
+    }
+
+    /** Viaje en el modo solicitado; la UI y el servicio comparten el plan. */
+    static Result travel(GameSession session, String targetId,
+                         TravelPlan.Mode mode) {
+        TravelPlan plan = TravelPlan.quote(session, targetId, mode);
+        if (!plan.ok()) {
+            Quote quote = new Quote();
+            quote.fromSectorId = plan.fromSectorId;
+            quote.toSectorId = plan.toSectorId;
+            quote.distance = plan.distance;
+            quote.fuelCost = plan.fuelCost;
+            quote.energyCost = plan.energyCost;
+            quote.warpLevel = plan.shipWarpLevel;
+            quote.error = plan.error;
+            return new Result(false, plan.error, quote);
+        }
+        Ship ship = session.sector.ship;
+        ship.fuel = Math.max(0f, ship.fuel - plan.fuelCost);
+        if (plan.mode == TravelPlan.Mode.WARP) {
+            ship.capacitor.drain(plan.energyCost);
+        }
+        ship.thrusting = false;
+        ship.laser.stop();
+        ship.tractor.stop();
+        session.sector.pilot.cancel();
+        GameWorld next = session.switchSector(targetId);
+        if (next == null) {
+            return new Result(false, "No se pudo cargar el destino", null);
+        }
+        Quote quote = new Quote();
+        quote.ok = true;
+        quote.fromSectorId = plan.fromSectorId;
+        quote.toSectorId = plan.toSectorId;
+        quote.distance = plan.distance;
+        quote.fuelCost = plan.fuelCost;
+        quote.energyCost = plan.energyCost;
+        quote.warpLevel = plan.shipWarpLevel;
+        return new Result(true, "", quote);
     }
 
     static Result travel(GameSession session, String targetId, JumpGate gate) {

@@ -23,6 +23,9 @@ Imprime `PASS`/`FAIL` y termina en `TODO OK` si todo pasa. Incluye:
   (incluida una frenada desde 160 u/s, que debe terminar por debajo de
   `Autopilot.STOP_SPEED`). También comprueba que reiniciar la partida cancela el
   piloto anterior.
+- `UPD-006`: geometría de atraque, colisión de casco, contención y energía,
+  sensores, ranuras, previsualización, mercado determinista, compra, migración
+  v2→v3, NPC, avatar animado y viaje convencional.
 - Benchmarks de eficiencia del piloto (`BENCH`/`TRAZA`).
 
 ## Tests en `tools/tests/`
@@ -55,6 +58,13 @@ defecto: el runner, sin argumentos, solo lista.
 - `20_accessibility` — pausa legible, botón de silencio y textos ajustados (captura `40_accessibility`).
 - `22_ui_polish` — pausa sin solapes, etiquetas de cantidad centradas en su botón, toggles de sonido/música, navegación Atrás (pausa, reanudar, mapa) y vuelta al menú.
 - `23_ship_modules` — pestaña MODULOS: compra e instalación de AUTOPILOTO, rechazo sin créditos, persistencia tras reiniciar, retirada sin reembolso y compra de RADAR.
+- `29_first_ship` — introducción, inicio a pie sin nave, presupuesto de 1200 CR, concesionario (2 chatarra, 2 usadas, 2 nuevas), inspección, dos módulos extra en la compra, combustible inicial, abordar y salir al espacio.
+- `30_docking_physical` — boca y corredor, colisión contra el casco, campo de contención con energía y acople manual sin módulo.
+- `31_compass_radar` — brújula básica delante/detrás, radar circular, contacto fijado y brújula avanzada con NAVEGACION.
+- `32_local_map` — mapa local, chunks explorados, zoom, selección de la nodriza y FIJAR OBJETIVO.
+- `33_equipment` — pantalla visual de equipamiento, ranuras, compatibilidad, previsualización de empuje, instalación y retirada.
+- `34_conventional_travel` — viaje convencional sin motor warp desde el mapa.
+- `35_service_ship` — nave de servicio con saldo 0 y deuda de 300 CR.
 - `04_autopilot`, `11_cargo` y `12_mining` verifican la regresión con el catálogo de módulos de nave (`01_logic` cubre instalación/efectos/persistencia).
 - `17_player_station` — plataforma vacía, construcción (`33_base`), módulos/servicios (`34_modules`), acople y gestión (`35_management`), entrada al interior (`38_entry`), mejora, descarga y persistencia. Refinería/mercado y guardado se cubren en `01_logic`; el mercado global sigue en `14_market`.
 

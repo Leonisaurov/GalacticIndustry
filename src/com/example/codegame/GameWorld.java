@@ -67,6 +67,8 @@ class GameWorld {
     /** Mineral disperso por los misiles, recuperable al acercarse. */
     final Array<OreFragment> fragments = new Array<>();
     final Effects fx = new Effects();
+    /** Campo de contención de la estación (UPD-006-T04). */
+    final ContainmentField containment = new ContainmentField();
     /** Piloto automático activado por un toque sobre un bidón o un meteorito. */
     final Autopilot pilot = new Autopilot();
 
@@ -156,6 +158,7 @@ class GameWorld {
         fuel.clear();
         fragments.clear();
         fx.clear();
+        containment.clear();
         generated.clear();
         coinsEarned = 0;
         score = 0;
@@ -512,12 +515,77 @@ class GameWorld {
         updateAsteroids(dt);
         updateFuel(dt);
         updateFragments(dt);
+        boolean fieldWasActive = station.energy.active();
+        containment.update(dt, this);
+        station.energy.update(dt, fieldWasActive);
+        collideShipStation();
         collideShipAsteroids();
         collideShipFuel();
         collideShipFragments();
         collideMissilesAsteroids();
         fx.update(dt);
         updateChunks();
+    }
+
+    /**
+     * Colisión de la nave con el casco de la estación (UPD-006-T03). El
+     * corredor de atraque es la única excepción: dentro de él no hay casco.
+     * Fuera, el impacto empuja la nave, anula la velocidad entrante y aplica
+     * daño proporcional a la velocidad relativa.
+     */
+    private void collideShipStation() {
+        if (station == null || ship == null || ship.docked) {
+            return;
+        }
+        if (station.inDockCorridor(ship.pos)) {
+            return;
+        }
+        float minDist = station.def.radius + Ship.RADIUS;
+        float dx = ship.pos.x - station.pos.x;
+        float dy = ship.pos.y - station.pos.y;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        if (dist >= minDist) {
+            return;
+        }
+        float nx;
+        float ny;
+        if (dist < 0.001f) {
+            nx = 0f;
+            ny = 1f;
+        } else {
+            nx = dx / dist;
+            ny = dy / dist;
+        }
+        float speed = ship.vel.len();
+        ship.pos.set(station.pos.x + nx * (minDist + 0.5f),
+                station.pos.y + ny * (minDist + 0.5f));
+        float vn = ship.vel.x * nx + ship.vel.y * ny;
+        if (vn < 0f) {
+            ship.vel.x -= 1.65f * vn * nx;
+            ship.vel.y -= 1.65f * vn * ny;
+        }
+        if (immortal) {
+            ignoredHits++;
+            fx.burst(ship.pos.x, ship.pos.y, SPARK_WARM, 8, 150f);
+            ship.invulnerable = Math.max(ship.invulnerable, 0.4f);
+            return;
+        }
+        if (ship.invulnerable > 0f) {
+            return;
+        }
+        // Umbral: por debajo de 45 u/s solo se empuja y se avisa con chispas.
+        float damage = MathUtils.clamp((speed - 45f) * 0.42f, 0f, 38f);
+        if (damage > 0.5f) {
+            ship.damage(Ship.HULL, damage);
+            if (lifeSupport != null) {
+                lifeSupport.onHullDamage(ship, damage);
+            }
+        }
+        ship.invulnerable = 1.2f;
+        shake = Math.max(shake, damage > 0.5f ? 16f : 7f);
+        fx.burst(ship.pos.x, ship.pos.y, SPARK_WARM, 14, 210f);
+        fx.burst(ship.pos.x, ship.pos.y, SPARK_WHITE, 6, 160f);
+        fx.shock(ship.pos.x, ship.pos.y, SHOCK_GOLD, 90f);
     }
 
     /**
@@ -904,7 +972,8 @@ class GameWorld {
         if (rnd.nextFloat() < GameData.fuelChance(sector.profile)) {
             float x = (cx + rnd.nextFloat()) * CHUNK;
             float y = (cy + rnd.nextFloat()) * CHUNK;
-            if (!outsideSector(x, y)) {
+            if (!outsideSector(x, y) && !station.inSafeZone(x, y)
+                    && !playerStation.inSafeZone(x, y)) {
                 fuel.add(new FuelPickup(x, y));
             }
         }

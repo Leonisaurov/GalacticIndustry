@@ -27,18 +27,16 @@ reset_app
 launch_app "--ez test_mode true --ez docking_test true"
 wait_current_state PLAYING 10 || fail "no arrancó la prueba de acople"
 wait_status_field pilot STATION 10 || fail "el piloto no entró en STATION"
-wait_status_field canDock true 45 || fail "el piloto no llegó a la zona de acople"
-sleep 0.4
-status=$(latest_status)
-assert_ge "distancia de acople" 200 "$(printf '%s' "$status" | json_get stationDistance)"
-assert_lt "distancia de acople máxima" 261 "$(printf '%s' "$status" | json_get stationDistance)"
-shot "$OUT" 26_dock
-
-tap "$DOCK_X" "$DOCK_Y" 0.3
-wait_current_state DOCKED 5 || fail "ACOPLAR no abrió la estación"
+# UPD-006: el módulo de atraque recorre el corredor y acopla solo.
+wait_current_state DOCKED 45 || fail "el piloto no completó el atraque"
 sleep 0.4
 status=$(latest_status)
 assert_eq "nave acoplada" true "$(printf '%s' "$status" | json_get docked)"
+assert_ge "distancia a la boca" 150 "$(printf '%s' "$status" | json_get stationDistance)"
+assert_lt "distancia a la boca máxima" 220 "$(printf '%s' "$status" | json_get stationDistance)"
+shot "$OUT" 26_dock
+
+sleep 0.2
 shot "$OUT" 27_docked
 validate_shot "$OUT/27_docked.png"
 

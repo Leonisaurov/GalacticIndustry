@@ -63,6 +63,12 @@ class Ship {
     boolean docked;
     /** Clase de nave; afecta a estadisticas y silueta. */
     ShipClassDef shipClass = ShipClassDef.MINER;
+    /** Capacidad de depósito propia de la nave comprada (UPD-006-T39). */
+    float specFuelCapacity;
+    /** Multiplicador de consumo propio de la nave (1 = normal). */
+    float specFuelFactor = 1f;
+    /** Multiplicador de masa base (1 = normal). */
+    float specMassFactor = 1f;
 
     void reset(Upgrades up, float x, float y) {
         pos.set(x, y);
@@ -74,6 +80,9 @@ class Ship {
         for (int i = 0; i < PART_COUNT; i++) {
             part[i] = i == HULL ? maxHull : PART_MAX;
         }
+        specFuelCapacity = up.maxFuel();
+        specFuelFactor = 1f;
+        specMassFactor = 1f;
         maxFuel = up.maxFuel();
         fuel = maxFuel;
         cargo.setCapacity(up.cargoCapacity());
@@ -137,7 +146,8 @@ class Ship {
         float wing = wingFactor();
         float steer = steerFactor() * (0.55f + 0.45f * wing);
         float massTurn = MassModel.turnFactor(cargo);
-        float massAccel = MassModel.accelerationFactor(cargo);
+        float massAccel = MassModel.accelerationFactor(cargo)
+                / Math.max(0.5f, specMassFactor);
         float massSpeed = MassModel.speedFactor(cargo);
         float massFuel = MassModel.fuelFactor(cargo);
         if (c.aiming) {
@@ -155,16 +165,19 @@ class Ship {
         thrusting = level > 0.01f && fuel > 0f;
         if (thrusting) {
             vel.mulAdd(dir, up.thrust() * engine * level * massAccel * dt);
-            fuel = Math.max(0f, fuel - FUEL_PER_SEC_THRUST * up.fuelUse() * massFuel * level * dt);
+            fuel = Math.max(0f, fuel - FUEL_PER_SEC_THRUST * up.fuelUse()
+                    * massFuel * Math.max(0.6f, specFuelFactor) * level * dt);
         }
-        float max = up.maxSpeed() * (0.35f + 0.65f * engine) * (0.78f + 0.22f * wing) * massSpeed;
+        float max = up.maxSpeed() * (0.35f + 0.65f * engine)
+                * (0.78f + 0.22f * wing) * massSpeed
+                / (float) Math.sqrt(Math.max(0.6f, specMassFactor));
         if (vel.len2() > max * max) {
             vel.setLength(max);
         }
         pos.mulAdd(vel, dt);
 
         // Deposito danado: menos capacidad y fuga lenta de combustible.
-        maxFuel = up.maxFuel() * tankFactor();
+        maxFuel = Math.max(specFuelCapacity, up.maxFuel()) * tankFactor();
         if (fuel > maxFuel) {
             fuel = maxFuel;
         }
@@ -238,7 +251,7 @@ class Ship {
 
     /** Recalcula la capacidad del deposito tras una reparacion o un cambio de mejora. */
     void syncFuel(Upgrades up) {
-        maxFuel = up.maxFuel() * tankFactor();
+        maxFuel = Math.max(specFuelCapacity, up.maxFuel()) * tankFactor();
         if (fuel > maxFuel) {
             fuel = maxFuel;
         }

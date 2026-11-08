@@ -31,6 +31,11 @@ public class MyGame implements ApplicationListener {
     static final int MARKET = 7;
     static final int MAP = 8;
     static final int INTERIOR = 9;
+    static final int RADAR = 10;
+    static final int LOCAL_MAP = 11;
+    static final int EQUIPMENT = 12;
+    static final int DEALER = 13;
+    static final int INTRO = 14;
 
     private static final float MIN_W = 480f;
     private static final float MIN_H = 800f;
@@ -48,12 +53,32 @@ public class MyGame implements ApplicationListener {
     private UiKit ui;
     /** Fondo espacial (degradado, estrellas, nebulosas y planeta). */
     SpaceBackground space;
+    /** Objetivo de navegación fijado desde el mapa local o el radar (UPD-006-T09). */
+    NavTarget navTarget;
+
+    void setNavTarget(NavTarget target) {
+        navTarget = target;
+    }
+
+    NavTarget navTarget() {
+        return navTarget;
+    }
+
+    void clearNavTarget() {
+        navTarget = null;
+    }
+
     /** Estado reutilizable que alimenta el HUD de partida. */
     private final HudView hud = new HudView();
     private PlayHud playHud;
     private StationScreen stationScreen;
     private MarketScreen marketScreen;
     private MapScreen mapScreen;
+    private RadarScreen radarScreen;
+    private LocalMapScreen localMapScreen;
+    private EquipmentScreen equipmentScreen;
+    private ShipDealerScreen dealerScreen;
+    private final IntroSequence intro = new IntroSequence();
     private StationManagementScreen managementScreen;
     /** Origen del mercado abierto: false = nodriza, true = plataforma. */
     private boolean marketFromPlayer;
@@ -64,6 +89,8 @@ public class MyGame implements ApplicationListener {
     private final InteriorInput interiorInput = new InteriorInput();
     /** La pantalla de gestión se abrió desde el interior (no desde el acople). */
     private boolean interiorManagement;
+    /** Los servicios de la nodriza se abrieron desde el interior. */
+    private boolean interiorService;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
     GameSession session;
@@ -136,6 +163,15 @@ public class MyGame implements ApplicationListener {
     private final boolean interiorMgmtTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
+    /** Arranque de prueba del flujo a pie en la nodriza. */
+    private boolean starterTest;
+    /** Arranques de prueba de la etapa fisica (UPD-006-T02..T06). */
+    private boolean collisionTest;
+    private boolean fieldTest;
+    private boolean manualDockTest;
+    private boolean navTest;
+    private boolean compassTest;
+    private boolean brokeTest;
     private float telemetryTimer;
     private int lastState = -1;
     private static final String TAG = "AsteroidsTelemetry";
@@ -152,6 +188,8 @@ public class MyGame implements ApplicationListener {
     Button btnRescue;
     /** Abrir el mapa de sectores. */
     Button btnMap;
+    /** Abrir el radar circular (módulo RADAR). */
+    Button btnRadar;
     /** Construir la plataforma personal en la posición actual. */
     Button btnBuildBase;
     /** Acción contextual del interior (abrir módulo o salir). */
@@ -184,6 +222,41 @@ public class MyGame implements ApplicationListener {
 
     public MyGame() {
         this(false, false, false, false, false);
+    }
+
+    /** Activa el arranque de prueba del flujo inicial sin nave. */
+    public void enableStarterTest() {
+        starterTest = true;
+    }
+
+    /** Coloca la nave contra el casco fuera del corredor (T03). */
+    public void enableCollisionTest() {
+        collisionTest = true;
+    }
+
+    /** Inyecta un asteroide dentro del campo de contención (T04/T05). */
+    public void enableFieldTest() {
+        fieldTest = true;
+    }
+
+    /** Coloca la nave en la boca para el acople manual (T06). */
+    public void enableManualDockTest() {
+        manualDockTest = true;
+    }
+
+    /** Instala radar y navegación y deja un asteroide cercano (T09/T10/T43). */
+    public void enableNavTest() {
+        navTest = true;
+    }
+
+    /** Coloca la nodriza detrás para probar la brújula básica (T08). */
+    public void enableCompassTest() {
+        compassTest = true;
+    }
+
+    /** Sin nave ni saldo para probar la nave de servicio (T31). */
+    public void enableBrokeTest() {
+        brokeTest = true;
     }
 
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath) {
@@ -480,6 +553,10 @@ public class MyGame implements ApplicationListener {
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
         marketScreen = new MarketScreen(this, ui, batch, shapes, space);
         mapScreen = new MapScreen(this, ui, batch, shapes, space);
+        radarScreen = new RadarScreen(this, ui, batch, shapes, space);
+        localMapScreen = new LocalMapScreen(this, ui, batch, shapes, space);
+        equipmentScreen = new EquipmentScreen(this, ui, batch, shapes);
+        dealerScreen = new ShipDealerScreen(this, ui, batch, shapes);
         managementScreen = new StationManagementScreen(this, ui, batch, shapes, space);
         interiorRenderer = new InteriorRenderer(shapes, batch, font);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
@@ -739,6 +816,77 @@ public class MyGame implements ApplicationListener {
             }
             state = INTERIOR;
         }
+        if (collisionTest) {
+            session.startRun();
+            runActive = true;
+            world.immortal = false;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.pos.x + world.station.def.radius + 40f,
+                    world.station.pos.y);
+            world.ship.heading = 180f;
+            world.ship.dir.set(-1f, 0f);
+            world.ship.vel.set(-200f, 0f);
+        } else if (fieldTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            // Energía baja para que el consumo del impacto sea observable.
+            world.station.energy.setEnergy(150f);
+            Asteroid intruder = new Asteroid(world.station.pos.x,
+                    world.station.pos.y - world.station.def.safeRadius + 40f,
+                    Asteroid.LARGE, AsteroidType.M, 20, 20, 6060L);
+            intruder.vel.set(0f, -90f);
+            world.asteroids.add(intruder);
+        } else if (manualDockTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.dockPoint);
+            world.ship.heading = world.station.dockHeading();
+            world.ship.dir.set(MathUtils.cosDeg(world.ship.heading),
+                    MathUtils.sinDeg(world.ship.heading));
+            world.ship.vel.setZero();
+        } else if (navTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            upgrades.loadout().installModule(0, ShipModuleDef.RADAR.id);
+            upgrades.loadout().installModule(1, ShipModuleDef.NAVIGATION.id);
+            upgrades.loadout().installModule(2, ShipModuleDef.AUTOPILOT.id);
+            syncShipModules();
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(0f, -2000f);
+            world.ship.heading = 90f;
+            world.ship.dir.set(0f, 1f);
+            world.ship.vel.setZero();
+            Asteroid navRock = new Asteroid(400f, -2000f, Asteroid.MEDIUM);
+            navRock.vel.set(0f, 0f);
+            world.asteroids.add(navRock);
+        } else if (brokeTest) {
+            session.beginStarterFlow(true);
+            upgrades.setCoins(0);
+            runActive = true;
+            session.shipMarket = new ShipMarket(session.marketSeed());
+            dealerScreen.enter();
+            state = DEALER;
+        } else if (compassTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(0f, 0f);
+            world.ship.heading = 270f;
+            world.ship.dir.set(-1f, 0f);
+            world.ship.vel.setZero();
+        }
     }
 
     /** El casco llegó a 0: la nave explota y termina la partida. */
@@ -902,8 +1050,11 @@ public class MyGame implements ApplicationListener {
                 bw * 0.9f, 46f * u);
         btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
                 bw * 0.9f, 46f * u);
-        btnMap = new Button("MAPA", w * 0.5f - Math.min(140f * u, w * 0.18f) * 0.5f,
-                pad, Math.min(140f * u, w * 0.18f), 44f * u);
+        float navBtnW = Math.min(100f * u, w * 0.20f);
+        btnMap = new Button("MAPA", w * 0.5f - navBtnW - 2f * u, pad,
+                navBtnW + 4f * u, 44f * u);
+        btnRadar = new Button("RADAR", w * 0.5f + 2f * u, pad,
+                navBtnW, 44f * u);
         btnBuildBase = new Button("CONSTRUIR BASE", cx + bw * 0.05f, h * 0.54f,
                 bw * 0.9f, 46f * u);
         float ibw = Math.min(w * 0.62f, 300f * u);
@@ -923,6 +1074,21 @@ public class MyGame implements ApplicationListener {
         if (mapScreen != null) {
             mapScreen.layout(w, h);
         }
+        if (radarScreen != null) {
+            radarScreen.layout(w, h);
+        }
+        if (localMapScreen != null) {
+            localMapScreen.layout(w, h);
+        }
+        if (equipmentScreen != null) {
+            equipmentScreen.layout(w, h);
+        }
+        if (dealerScreen != null) {
+            dealerScreen.layout(w, h);
+        }
+        if (state == INTRO) {
+            intro.layout(w, h);
+        }
         if (managementScreen != null) {
             managementScreen.layout(w, h);
         }
@@ -939,6 +1105,32 @@ public class MyGame implements ApplicationListener {
             total += world.fragments.get(i).amount;
         }
         return total;
+    }
+
+    /** Numero de ofertas de una categoria en el mercado de naves. */
+    private int marketCategoryCount(ShipSpec.Category category) {
+        ShipMarket market = session == null ? null : session.shipMarket;
+        if (market == null) {
+            return 0;
+        }
+        int count = 0;
+        for (int i = 0; i < market.size(); i++) {
+            if (market.offer(i).spec.category == category) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Bidones dentro de la zona segura (debe ser 0 tras UPD-006-T05). */
+    private int fuelInSafeZone() {
+        int count = 0;
+        for (int i = 0; i < world.fuel.size; i++) {
+            if (world.station.inSafeZone(world.fuel.get(i).pos)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** Asteroides dentro de la zona segura de la estación (debe ser 0). */
@@ -1053,8 +1245,21 @@ public class MyGame implements ApplicationListener {
         return -1;
     }
 
-    /** Compra e instala un módulo en una ranura libre y guarda la partida. */
+    /** Primera ranura libre compatible con el módulo, o -1. */
+    int freeShipModuleSlot(ShipModuleDef module) {
+        return upgrades.loadout().freeCompatibleSlot(module, upgrades.shipClass());
+    }
+
+    /** La ranura admite el módulo con la clase de nave actual. */
+    boolean slotAccepts(int slot, ShipModuleDef module) {
+        return upgrades.loadout().canInstall(slot, module, upgrades.shipClass());
+    }
+
+    /** Compra e instala un módulo en una ranura compatible y guarda la partida. */
     boolean installShipModule(int slot, ShipModuleDef module) {
+        if (!slotAccepts(slot, module)) {
+            return false;
+        }
         if (!upgrades.installShipModule(slot, module)) {
             return false;
         }
@@ -1162,6 +1367,11 @@ public class MyGame implements ApplicationListener {
                 break;
             case MARKET: marketScreen.handle(); break;
             case MAP: mapScreen.handle(); break;
+            case RADAR: radarScreen.handle(); break;
+            case LOCAL_MAP: localMapScreen.handle(); break;
+            case EQUIPMENT: equipmentScreen.handle(); break;
+            case DEALER: dealerScreen.handle(); break;
+            case INTRO: if (intro.handle(hudView.getWorldWidth(), hudView.getWorldHeight())) { intro.markSeen(upgrades); enterMothershipInterior(); } break;
             case INTERIOR:
                 if (interiorManagement) {
                     managementScreen.handle();
@@ -1197,6 +1407,11 @@ public class MyGame implements ApplicationListener {
             case MARKET: return "MARKET";
             case MAP: return "MAP";
             case INTERIOR: return "INTERIOR";
+            case RADAR: return "RADAR";
+            case LOCAL_MAP: return "LOCAL_MAP";
+            case EQUIPMENT: return "EQUIPMENT";
+            case DEALER: return "DEALER";
+            case INTRO: return "INTRO";
             case OVER: return "OVER";
             case DYING: return "DYING";
             default: return "MENU";
@@ -1239,6 +1454,7 @@ public class MyGame implements ApplicationListener {
         partJson.append(']');
         Gdx.app.log(TAG, String.format(Locale.US,
                 "{\"event\":\"status\",\"state\":\"%s\",\"fps\":%d,\"coins\":%d,\"banked\":%d,"
+                        + "\"hasShip\":%s,\"debt\":%d,"
                         + "\"score\":%d,\"wave\":%d,\"hull\":%.1f,\"maxHull\":%.1f,"
                         + "\"parts\":%s,"
                         + "\"fuel\":%.1f,\"maxFuel\":%.1f,\"throttle\":%.2f,\"speed\":%.1f,"
@@ -1258,6 +1474,26 @@ public class MyGame implements ApplicationListener {
                         + "\"tractorLevel\":%d,"
                         + "\"stationX\":%.1f,\"stationY\":%.1f,\"stationRadius\":%.1f,"
                         + "\"stationDistance\":%.1f,\"stationAsteroids\":%d,"
+                        + "\"dockPointX\":%.1f,\"dockPointY\":%.1f,"
+                        + "\"approachX\":%.1f,\"approachY\":%.1f,"
+                        + "\"dockDistanceToMouth\":%.1f,\"dockCorridor\":%s,"
+                        + "\"dockLateral\":%.1f,\"dockAngleError\":%.1f,"
+                        + "\"stationEnergy\":%.1f,\"stationEnergyFrac\":%.3f,"
+                        + "\"containmentImpacts\":%d,\"fuelInSafeZone\":%d,"
+                        + "\"compassLabel\":\"%s\",\"compassAngle\":%.1f,"
+                        + "\"compassBehind\":%s,\"compassHere\":%s,"
+                        + "\"compassDistance\":%.1f,\"compassLocal\":%s,"
+                        + "\"hasNavigation\":%s,\"navTargetLabel\":\"%s\","
+                        + "\"navTargetDistance\":%.1f,"
+                        + "\"localMapScale\":%.3f,\"localMapSelected\":\"%s\","
+                        + "\"chunks\":%d,"
+                        + "\"equipPreview\":\"%s\",\"equipPreviewOk\":%s,"
+                        + "\"equipThrust\":%.1f,\"equipThrustAfter\":%.1f,"
+                        + "\"dealerOffers\":%d,\"dealerCategory\":\"%s\","
+                        + "\"dealerPrice\":%d,\"dealerInspected\":%s,"
+                        + "\"dealerExtras\":%d,\"marketScrap\":%d,"
+                        + "\"marketUsed\":%d,\"marketNew\":%d,"
+                        + "\"npcs\":%d,"
                         + "\"docked\":%s,\"canDock\":%s,"
                         + "\"stationStorageMass\":%.1f,\"stationStorageUnits\":%d,"
                         + "\"motorLevel\":%d,"
@@ -1292,11 +1528,12 @@ public class MyGame implements ApplicationListener {
                         + "\"interiorRooms\":%d,\"interiorDoors\":%d,"
                         + "\"interiorInteractables\":%d,\"avatarRoom\":\"%s\","
                         + "\"avatarX\":%.1f,\"avatarY\":%.1f,"
-                        + "\"interiorManagement\":%s,\"shipClass\":\"%s\","
+                        + "\"interiorManagement\":%s,\"interiorNear\":\"%s\",\"shipClass\":\"%s\","
                         + "\"audioMuted\":%s,\"musicMuted\":%s,"
                         + "\"musicMode\":\"%s\",\"shipModules\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
+                session.hasShip, upgrades.debt(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
                 partJson,
                 world.ship.fuel, world.ship.maxFuel, throttle, world.ship.vel.len(),
@@ -1331,6 +1568,43 @@ public class MyGame implements ApplicationListener {
                 world.station.def.radius,
                 world.station.distanceTo(world.ship.pos),
                 stationAsteroids(),
+                world.station.dockPoint.x,
+                world.station.dockPoint.y,
+                world.station.approachPoint.x,
+                world.station.approachPoint.y,
+                world.station.distanceToDock(world.ship.pos),
+                world.station.inDockCorridor(world.ship.pos),
+                world.station.lateralDeviation(world.ship.pos.x, world.ship.pos.y),
+                world.station.headingError(world.ship.heading),
+                world.station.energy.energy,
+                world.station.energy.fraction(),
+                world.containment.impacts,
+                fuelInSafeZone(),
+                playHud == null ? "" : playHud.compassLabel(),
+                playHud == null ? 0f : playHud.compassAngle(),
+                playHud != null && playHud.compassBehind(),
+                playHud != null && playHud.compassHere(),
+                playHud == null ? 0f : playHud.compassDistance(),
+                playHud != null && playHud.compassLocal(),
+                upgrades.loadout().hasNavigation(),
+                navTarget == null ? "" : navTarget.label,
+                navTarget == null ? -1f : navTarget.pos.dst(world.ship.pos),
+                localMapScreen == null ? 0f : localMapScreen.scale(),
+                localMapScreen == null ? "" : localMapScreen.selectedLabel(),
+                world.generatedChunks().size(),
+                equipmentScreen == null ? "" : equipmentScreen.previewModule(),
+                equipmentScreen != null && equipmentScreen.previewOk(),
+                equipmentScreen == null ? 0f : equipmentScreen.previewThrust(),
+                equipmentScreen == null ? 0f : equipmentScreen.previewThrustAfter(),
+                dealerScreen == null ? 0 : dealerScreen.offerCount(),
+                dealerScreen == null ? "" : dealerScreen.selectedCategory(),
+                dealerScreen == null ? 0 : dealerScreen.selectedPrice(),
+                dealerScreen != null && dealerScreen.selectedInspected(),
+                dealerScreen == null ? 0 : dealerScreen.extraCount(),
+                marketCategoryCount(ShipSpec.Category.SCRAP),
+                marketCategoryCount(ShipSpec.Category.USED),
+                marketCategoryCount(ShipSpec.Category.NEW),
+                interiorScene == null ? 0 : interiorScene.npcCount(),
                 world.ship.docked,
                 canDock(),
                 world.station.storage.usedMass(),
@@ -1394,14 +1668,25 @@ public class MyGame implements ApplicationListener {
                         : session.playerStation.moduleAt(0).level(),
                 state == DOCKED && world.dockedAtPlayer
                         ? managementScreen.message() : "",
-                session.playerStation.buildInterior().kind.name(),
-                session.playerStation.buildInterior().roomCount(),
-                session.playerStation.buildInterior().doorCount(),
-                session.playerStation.buildInterior().interactableCount(),
+                state == INTERIOR && interiorScene != null
+                        ? interiorScene.kind.name()
+                        : session.playerStation.buildInterior().kind.name(),
+                state == INTERIOR && interiorScene != null
+                        ? interiorScene.roomCount()
+                        : session.playerStation.buildInterior().roomCount(),
+                state == INTERIOR && interiorScene != null
+                        ? interiorScene.doorCount()
+                        : session.playerStation.buildInterior().doorCount(),
+                state == INTERIOR && interiorScene != null
+                        ? interiorScene.interactableCount()
+                        : session.playerStation.buildInterior().interactableCount(),
                 interiorAvatar == null ? "" : interiorAvatar.roomId,
                 interiorAvatar == null ? 0f : interiorAvatar.x,
                 interiorAvatar == null ? 0f : interiorAvatar.y,
                 interiorManagement,
+                interiorAvatar == null || interiorScene == null ? ""
+                        : (interiorAvatar.nearest(interiorScene) == null ? "NONE"
+                        : interiorAvatar.nearest(interiorScene).id),
                 session.upgrades().shipClass().id,
                 audio != null && audio.muted(),
                 audio != null && audio.musicMuted(),
@@ -1441,8 +1726,18 @@ public class MyGame implements ApplicationListener {
                 startNewCharacter();
                 return;
             }
+            // La partida real empieza a pie en la nodriza (UPD-006-T27). Los
+            // modos de prueba conservan el arranque clásico en el espacio.
+            if (!debugMode || starterTest) {
+                startStarterFlow(true);
+                return;
+            }
             session.startRun();
             runActive = true;
+        }
+        if (!session.hasShip) {
+            enterMothershipInterior();
+            return;
         }
         state = PLAYING;
         if (world.ship.docked) {
@@ -1461,6 +1756,23 @@ public class MyGame implements ApplicationListener {
         logEvent("{\"event\":\"run_start\",\"resume\":" + resume + "}");
     }
 
+    /** Arranque aprobado: a pie en la nodriza, sin nave y con presupuesto. */
+    private void startStarterFlow(boolean freshWorld) {
+        session.beginStarterFlow(freshWorld);
+        world = session.sector;
+        playHud.setWorld(world);
+        runActive = true;
+        if (intro.seen(upgrades)) {
+            enterMothershipInterior();
+        } else {
+            intro.enter();
+            state = INTRO;
+            layoutUi();
+        }
+        saveRun();
+        logEvent("{\"event\":\"run_start\",\"starter\":true}");
+    }
+
     /**
      * Crea un personaje nuevo. Si hay un mundo legado, lo carga y deja la nave
      * anterior como resto; si no, empieza un universo nuevo.
@@ -1473,6 +1785,23 @@ public class MyGame implements ApplicationListener {
         worldCam.zoom = 1f;
         boolean legacyLoaded = loadLegacyWorld();
         session.profile.startNewCharacter(nextCharacterId(), PlayerProfile.DEFAULT_NAME);
+        if (!debugMode) {
+            // Sin nave: vuelve a la nodriza a pie; el mundo anterior persiste y
+            // el fondo de arranque solo se concede la primera vez por cuenta.
+            session.beginStarterFlow(!legacyLoaded);
+            world = session.sector;
+            playHud.setWorld(world);
+            runActive = true;
+            intro.markSeen(upgrades);
+            enterMothershipInterior();
+            saves.save(session);
+            if (legacyLoaded && legacySaves != null) {
+                legacySaves.clear();
+            }
+            logEvent("{\"event\":\"new_character\",\"legacy\":" + legacyLoaded
+                    + ",\"hasShip\":false}");
+            return;
+        }
         session.pilot.reset();
         session.lifeSupport.reset();
         if (!legacyLoaded) {
@@ -1566,6 +1895,11 @@ public class MyGame implements ApplicationListener {
         if (tapped(btnMap)) {
             resetControls();
             openMap();
+            return;
+        }
+        if (upgrades.loadout().hasRadar() && tapped(btnRadar)) {
+            resetControls();
+            openRadar();
             return;
         }
         if (warpTest && tapped(btnWarpDebug)) {
@@ -1676,6 +2010,22 @@ public class MyGame implements ApplicationListener {
         c.thrust = throttle;
         c.fire = keyFire || freeTap;
         session.update(dt, c);
+        // El piloto de estacionamiento puede completar el acople por sí mismo.
+        if (world.ship.docked && state == PLAYING) {
+            resetControls();
+            bankCoins();
+            state = DOCKED;
+            if (world.dockedAtPlayer) {
+                managementScreen.enter();
+            } else {
+                stationScreen.enter();
+            }
+            layoutUi();
+            playSfx(AudioService.Sfx.DOCK);
+            saveRun();
+            logEvent("{\"event\":\"dock\",\"auto\":true}");
+            return;
+        }
         updateAudio(dt);
         if (world.pilot.active()) {
             // El piloto ha tomado los controles: la barra muestra su empuje.
@@ -1794,18 +2144,23 @@ public class MyGame implements ApplicationListener {
 
     /** Elige el bidón o meteorito más cercano al toque (con margen) y lo asigna al piloto. */
     private boolean pickTarget(Vector2 p) {
-        if (!upgrades.hasShipModule(ShipModuleDef.AUTOPILOT)) {
+        boolean hasPilot = upgrades.hasShipModule(ShipModuleDef.AUTOPILOT);
+        boolean hasDock = upgrades.hasShipModule(ShipModuleDef.DOCKING_AUTOPILOT);
+        if (!hasPilot && !hasDock) {
             return false;
         }
         final float slop = 30f
                 + (upgrades.hasShipModule(ShipModuleDef.RADAR) ? 70f : 0f);
-        if (world.station.distanceTo(p) - world.station.def.radius < slop) {
+        if (hasDock && world.station.distanceTo(p) - world.station.def.radius < slop) {
             world.pilot.station(world.station);
             if (sliderPointer < 0) {
                 thrustLevel = 0f;
                 throttle = 0f;
             }
             return true;
+        }
+        if (!hasPilot) {
+            return false;
         }
         Asteroid rock = null;
         float rockD = slop;
@@ -1847,6 +2202,7 @@ public class MyGame implements ApplicationListener {
         return pointerInCircle(joyCx, joyCy, joyR * 1.45f, pointer)
                 || pointerIn(sliderZone, pointer)
                 || hit(btnPause, pointer)
+                || (upgrades.loadout().hasRadar() && hit(btnRadar, pointer))
                 || (canRecoverLegacy() && hit(btnRecover, pointer))
                 || (canDock() && hit(btnDock, pointer))
                 || (canRescue() && hit(btnRescue, pointer));
@@ -1854,10 +2210,16 @@ public class MyGame implements ApplicationListener {
 
     /** Viaja al sector indicado con warp; actualiza el runtime y la UI. */
     boolean travelTo(String sectorId) {
+        return travelTo(sectorId, TravelPlan.Mode.WARP);
+    }
+
+    /** Viaja al sector indicado en el modo elegido (UPD-006-T42). */
+    boolean travelTo(String sectorId, TravelPlan.Mode mode) {
         if (sectorId == null) {
             return false;
         }
-        TravelService.Result result = TravelService.travel(session, sectorId);
+        TravelService.Result result = TravelService.travel(session, sectorId,
+                mode == null ? TravelPlan.Mode.WARP : mode);
         if (!result.ok) {
             logEvent("{\"event\":\"warp_fail\",\"error\":\""
                     + result.error + "\"}");
@@ -1907,6 +2269,10 @@ public class MyGame implements ApplicationListener {
 
     /** Vuelve a la partida o a la pantalla de estación si la nave está acoplada. */
     private void resumeGame() {
+        if (!session.hasShip) {
+            enterMothershipInterior();
+            return;
+        }
         if (world.ship.docked) {
             state = DOCKED;
             if (world.dockedAtPlayer) {
@@ -1955,9 +2321,28 @@ public class MyGame implements ApplicationListener {
             case MAP:
                 closeMap();
                 break;
+            case RADAR:
+                closeRadar();
+                break;
+            case LOCAL_MAP:
+                closeLocalMap();
+                break;
+            case EQUIPMENT:
+                closeEquipment();
+                break;
+            case DEALER:
+                closeShipDealer();
+                break;
+            case INTRO:
+                intro.markSeen(upgrades);
+                enterMothershipInterior();
+                break;
             case INTERIOR:
                 if (interiorManagement) {
                     managementBack();
+                } else if (interiorScene != null
+                        && interiorScene.kind == InteriorScene.Kind.MOTHERSHIP) {
+                    leaveMothershipToShip();
                 } else {
                     exitInterior();
                 }
@@ -2012,6 +2397,21 @@ public class MyGame implements ApplicationListener {
         interiorAvatar = new Avatar(scene);
         session.restoreAvatar(interiorAvatar);
         interiorInput.reset();
+    }
+
+    /** Entrar al interior de la nave nodriza (UPD-006-T22). */
+    void enterMothershipInterior() {
+        bindInterior(InteriorScene.mothership());
+        // El avatar de la nodriza empieza en el hangar, no en la última sala
+        // guardada de la estación personal.
+        interiorAvatar.roomId = starterTest && !session.hasShip ? "dealer" : "hangar";
+        interiorAvatar.x = starterTest && !session.hasShip ? 480f : 0f;
+        interiorAvatar.y = starterTest && !session.hasShip ? 190f : 380f;
+        resetControls();
+        interiorManagement = false;
+        state = INTERIOR;
+        layoutUi();
+        logEvent("{\"event\":\"interior_enter\",\"kind\":\"MOTHERSHIP\"}");
     }
 
     /** Entrar al interior de la estación personal desde la gestión. */
@@ -2098,6 +2498,62 @@ public class MyGame implements ApplicationListener {
     /** Volver del mapa a la partida. */
     void closeMap() {
         state = PLAYING;
+        layoutUi();
+    }
+
+    /** Abrir el radar circular si el módulo está instalado. */
+    void openRadar() {
+        if (!upgrades.loadout().hasRadar()) {
+            return;
+        }
+        radarScreen.enter();
+        state = RADAR;
+        layoutUi();
+        logEvent("{\"event\":\"radar_open\"}");
+    }
+
+    /** Volver del radar a la partida. */
+    void closeRadar() {
+        state = PLAYING;
+        layoutUi();
+    }
+
+    /** Abrir el mapa local del sector. */
+    void openLocalMap() {
+        localMapScreen.enter();
+        state = LOCAL_MAP;
+        layoutUi();
+        logEvent("{\"event\":\"local_map_open\"}");
+    }
+
+    /** Volver del mapa local a la partida. */
+    void closeLocalMap() {
+        state = PLAYING;
+        layoutUi();
+    }
+
+    /** Abrir la pantalla visual de equipamiento (UPD-006-T24). */
+    void openEquipment() {
+        equipmentScreen.enter();
+        state = EQUIPMENT;
+        layoutUi();
+        logEvent("{\"event\":\"equipment_open\"}");
+    }
+
+    /** Volver del equipamiento al contexto de origen. */
+    void closeEquipment() {
+        if (world.ship.docked) {
+            state = DOCKED;
+            if (world.dockedAtPlayer) {
+                managementScreen.enter();
+            } else {
+                stationScreen.enter();
+            }
+        } else if (interiorScene != null) {
+            state = INTERIOR;
+        } else {
+            state = PLAYING;
+        }
         layoutUi();
     }
 
@@ -2205,6 +2661,12 @@ public class MyGame implements ApplicationListener {
 
     /** DESPEGAR desde la pantalla de estación. */
     void undockFromStation() {
+        if (interiorService) {
+            interiorService = false;
+            state = INTERIOR;
+            layoutUi();
+            return;
+        }
         playSfx(AudioService.Sfx.DOCK);
         DockingSystem.undock(world);
         resetControls();
@@ -2218,6 +2680,8 @@ public class MyGame implements ApplicationListener {
     private void bankCoins() {
         upgrades.addCoins(world.coinsEarned);
         world.coinsEarned = 0;
+        // La deuda de la nave de servicio se paga con los beneficios.
+        upgrades.payDebt(upgrades.coins());
     }
 
     @Override
@@ -2249,6 +2713,9 @@ public class MyGame implements ApplicationListener {
         }
         interiorInput.set(mx, my);
         interiorAvatar.update(dt, interiorInput, interiorScene);
+        if (interiorScene != null) {
+            interiorScene.updateNpcs(dt);
+        }
         interiorInput.reset();
         Interactable near = interiorAvatar.nearest(interiorScene);
         btnInteriorAction.label = near == null ? ""
@@ -2281,8 +2748,35 @@ public class MyGame implements ApplicationListener {
     }
 
     private void interactInterior(Interactable near) {
+        logEvent("{\"event\":\"interact\",\"id\":\"" + near.id
+                + "\",\"action\":\"" + near.action.name() + "\"}");
         if (near.action == Interactable.Action.EXIT) {
-            exitInterior();
+            if (interiorScene != null
+                    && interiorScene.kind == InteriorScene.Kind.MOTHERSHIP
+                    && !world.ship.docked) {
+                leaveMothershipToShip();
+            } else {
+                exitInterior();
+            }
+            return;
+        }
+        if (near.action == Interactable.Action.EQUIP) {
+            openEquipment();
+            return;
+        }
+        if (near.action == Interactable.Action.BUY_SHIP) {
+            openShipDealer();
+            return;
+        }
+        if (near.action == Interactable.Action.BOARD_SHIP) {
+            boardShip();
+            return;
+        }
+        if (near.action == Interactable.Action.FUEL
+                || near.action == Interactable.Action.MARKET
+                || near.action == Interactable.Action.REPAIR
+                || near.action == Interactable.Action.CONTRACTS) {
+            openMothershipService(near.action);
             return;
         }
         interiorManagement = true;
@@ -2290,6 +2784,129 @@ public class MyGame implements ApplicationListener {
         layoutUi();
         logEvent("{\"event\":\"interior_module\",\"room\":\""
                 + near.roomId + "\"}");
+    }
+
+    /** Abre el concesionario de naves (UPD-006-T28). */
+    void openShipDealer() {
+        if (session.shipMarket == null) {
+            session.shipMarket = new ShipMarket(session.marketSeed());
+        }
+        dealerScreen.enter();
+        state = DEALER;
+        layoutUi();
+        logEvent("{\"event\":\"ship_dealer_open\",\"state\":"
+                + state + "}");
+    }
+
+    /** Volver del concesionario al interior o a la estación. */
+    void closeShipDealer() {
+        logEvent("{\"event\":\"ship_dealer_close\"}");
+        if (interiorScene != null) {
+            interiorManagement = false;
+            state = INTERIOR;
+        } else if (world.ship.docked) {
+            state = DOCKED;
+            stationScreen.enter();
+        } else {
+            state = PLAYING;
+        }
+        layoutUi();
+    }
+
+    /** Compra confirmada por el concesionario, con modulos iniciales opcionales. */
+    boolean purchaseShip(ShipOffer offer, int fuelUnits) {
+        return purchaseShip(offer, fuelUnits, null);
+    }
+
+    boolean purchaseShip(ShipOffer offer, int fuelUnits,
+                         com.badlogic.gdx.utils.Array<ShipModuleDef> extras) {
+        int extraCost = 0;
+        if (extras != null) {
+            for (int i = 0; i < extras.size; i++) {
+                extraCost += extras.get(i).creditCost;
+            }
+        }
+        if (upgrades.coins() < session.purchaseCost(offer, fuelUnits) + extraCost) {
+            return false;
+        }
+        if (!session.purchaseShip(offer, fuelUnits)) {
+            return false;
+        }
+        if (extras != null) {
+            for (int i = 0; i < extras.size; i++) {
+                ShipModuleDef def = extras.get(i);
+                int slot = upgrades.loadout().freeCompatibleSlot(def,
+                        upgrades.shipClass());
+                if (slot >= 0) {
+                    upgrades.installShipModule(slot, def);
+                }
+            }
+        }
+        if (starterTest && interiorAvatar != null) {
+            interiorAvatar.roomId = "hangar";
+            interiorAvatar.x = 150f;
+            interiorAvatar.y = 470f;
+        }
+        syncShipModules();
+        playSfx(AudioService.Sfx.TRADE);
+        saveRun();
+        logEvent(String.format(Locale.US,
+                "{\"event\":\"ship_buy\",\"id\":\"%s\",\"price\":%d,"
+                        + "\"fuel\":%d,\"coins\":%d}",
+                offer.spec.id, offer.spec.price + fuelUnits, fuelUnits,
+                upgrades.coins()));
+        return true;
+    }
+
+    /** Nave de servicio para evitar partidas bloqueadas (UPD-006-T31). */
+    boolean grantServiceShip() {
+        if (!session.grantServiceShip()) {
+            return false;
+        }
+        saveRun();
+        logEvent("{\"event\":\"service_ship\",\"debt\":"
+                + upgrades.debt() + "}");
+        return true;
+    }
+
+    /** Aborda la nave comprada desde el hangar (UPD-006-T30). */
+    void boardShip() {
+        if (!session.hasShip) {
+            return;
+        }
+        if (interiorScene != null) {
+            interiorScene = null;
+            interiorAvatar = null;
+        }
+        interiorManagement = false;
+        world.ship.docked = false;
+        world.dockedAtPlayer = false;
+        resetControls();
+        state = PLAYING;
+        layoutUi();
+        saveRun();
+        logEvent("{\"event\":\"board_ship\"}");
+    }
+
+    /** Salir de la nodriza a pie y volver a la nave (flujo clásico). */
+    private void leaveMothershipToShip() {
+        if (session.hasShip) {
+            boardShip();
+        } else {
+            logEvent("{\"event\":\"need_ship\"}");
+        }
+    }
+
+    /** Servicios de la nodriza desde el interior; se completan en UPD-006-T28/T30. */
+    private void openMothershipService(Interactable.Action action) {
+        if (!session.hasShip || !world.ship.docked) {
+            logEvent("{\"event\":\"service_hint\",\"action\":\"" + action.name() + "\"}");
+            return;
+        }
+        interiorService = true;
+        stationScreen.enter();
+        state = DOCKED;
+        layoutUi();
     }
 
     private void closeInterior() {
@@ -2436,6 +3053,16 @@ public class MyGame implements ApplicationListener {
             marketScreen.draw(w, h);
         } else if (state == MAP) {
             mapScreen.draw(w, h);
+        } else if (state == RADAR) {
+            radarScreen.draw(w, h);
+        } else if (state == LOCAL_MAP) {
+            localMapScreen.draw(w, h);
+        } else if (state == EQUIPMENT) {
+            equipmentScreen.draw(w, h);
+        } else if (state == DEALER) {
+            dealerScreen.draw(w, h);
+        } else if (state == INTRO) {
+            intro.draw(w, h, ui, batch, shapes, art, time);
         } else if (state == INTERIOR) {
             if (interiorManagement) {
                 managementScreen.draw(w, h);
@@ -2503,11 +3130,30 @@ public class MyGame implements ApplicationListener {
             hud.rescue = btnRescue;
             hud.canRescue = canRescue();
             hud.map = btnMap;
+            hud.radar = btnRadar;
             hud.canOpenMap = state == PLAYING && runActive && !rescue.active();
+            hud.canOpenRadar = state == PLAYING && runActive && !rescue.active()
+                    && upgrades.loadout().hasRadar();
             hud.buildBase = btnBuildBase;
             hud.canBuildBase = canBuildBase();
             hud.rescueActive = rescue.active();
             hud.rescueSeconds = rescue.remaining();
+            hud.hasNavigation = upgrades.loadout().hasNavigation();
+            if (navTarget != null && !navTarget.alive(world)) {
+                navTarget = null;
+            }
+            hud.navTarget = navTarget;
+            hud.dockGuide = state == PLAYING && !world.ship.docked
+                    && world.station != null
+                    && world.station.distanceToDock(world.ship.pos) < 620f;
+            if (hud.dockGuide) {
+                hud.dockDistance = world.station.distanceToDock(world.ship.pos);
+                hud.dockLateral = world.station.lateralDeviation(
+                        world.ship.pos.x, world.ship.pos.y);
+                hud.dockAngle = world.station.headingError(world.ship.heading);
+                hud.dockSpeed = world.ship.vel.len();
+                hud.inDockCorridor = world.station.inDockCorridor(world.ship.pos);
+            }
             playHud.draw(w, h);
             if (state == PAUSED) {
                 overlay.drawPause(w, h);

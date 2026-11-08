@@ -17,6 +17,9 @@ final class SystemDef {
     final String galaxyId;
     final long seed;
     final List<SectorDef> sectors = new ArrayList<>();
+    /** Centroide de los sectores, recalculado al añadirlos (UPD-006-T15). */
+    float mapX;
+    float mapY;
 
     SystemDef(String id, String name, String galaxyId, long seed) {
         if (id == null || id.isEmpty()) {
@@ -32,8 +35,26 @@ final class SystemDef {
         if (sector != null && sectors.size() < MAX_SECTORS
                 && sector(sector.id) == null) {
             sectors.add(sector);
+            updatePosition();
         }
         return sector;
+    }
+
+    /** Centroide determinista de las posiciones de sus sectores. */
+    void updatePosition() {
+        if (sectors.isEmpty()) {
+            mapX = 0f;
+            mapY = 0f;
+            return;
+        }
+        float sx = 0f;
+        float sy = 0f;
+        for (int i = 0; i < sectors.size(); i++) {
+            sx += sectors.get(i).mapX;
+            sy += sectors.get(i).mapY;
+        }
+        mapX = sx / sectors.size();
+        mapY = sy / sectors.size();
     }
 
     SectorDef sector(String sectorId) {

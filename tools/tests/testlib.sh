@@ -135,6 +135,13 @@ device_geometry() {
     local st_row_h8=$(( (st_avail - 7 * st_gap) / 8 ))
     [ "$st_row_h8" -gt $((200 * U)) ] && st_row_h8=$((200 * U))
     ST_UPG1_Y=$((H - (st_list_top - st_row_h8 / 2)))
+    # UPD-006: el catalogo de modulos tiene 7 filas.
+    local st_row_h7=$(( (st_avail - 6 * st_gap) / 7 ))
+    [ "$st_row_h7" -gt $((200 * U)) ] && st_row_h7=$((200 * U))
+    ST_MOD1_Y=$((H - (st_list_top - st_row_h7 / 2)))
+    ST_MOD2_Y=$((H - (st_list_top - (st_row_h7 + st_gap) - st_row_h7 / 2)))
+    ST_MOD3_Y=$((H - (st_list_top - 2 * (st_row_h7 + st_gap) - st_row_h7 / 2)))
+    ST_MOD5_Y=$((H - (st_list_top - 4 * (st_row_h7 + st_gap) - st_row_h7 / 2)))
     ST_UNDOCK_Y=$((H - (8 * U + 60 * U)))
     RESCUE_X=$((W / 2))
     RESCUE_Y=$((H - (H * 46 / 100 + 23 * U)))

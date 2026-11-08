@@ -143,6 +143,30 @@ class Upgrades {
         putInt("refills", Math.max(0, value));
     }
 
+    /** Deuda de la nave de servicio (UPD-006-T31). */
+    int debt() {
+        return Math.max(0, getInt("debt"));
+    }
+
+    void addDebt(int amount) {
+        putInt("debt", Math.max(0, debt() + amount));
+    }
+
+    void setDebt(int value) {
+        putInt("debt", Math.max(0, value));
+    }
+
+    /** Paga deuda con el saldo disponible; devuelve lo pagado. */
+    int payDebt(int amount) {
+        int pay = Math.min(debt(), Math.min(coins(), Math.max(0, amount)));
+        if (pay <= 0) {
+            return 0;
+        }
+        putInt("coins", coins() - pay);
+        putInt("debt", debt() - pay);
+        return pay;
+    }
+
     int level(int index) {
         return loadout.level(index);
     }

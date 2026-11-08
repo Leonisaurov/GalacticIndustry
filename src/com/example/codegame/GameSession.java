@@ -38,6 +38,16 @@ class GameSession {
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
     GameWorld sector;
 
+    /** Propiedad de nave (UPD-006-T27). Los guardados antiguos migran a true. */
+    boolean hasShip = true;
+    /** Fondo de arranque concedido una sola vez por cuenta. */
+    boolean starterBudgetGranted;
+    int starterBudget;
+    /** Nave comprada en el mercado; null si es la nave clásica de pruebas. */
+    ShipSpec ownedShip;
+    /** Mercado determinista de naves de la nodriza. */
+    ShipMarket shipMarket;
+
     private boolean runActive;
 
     GameSession() {
@@ -150,6 +160,116 @@ class GameSession {
         lifeSupport.reset();
         sector.start();
         runActive = true;
+    }
+
+    /**
+     * Arranca el flujo de comienzo aprobado (UPD-006-T27): personaje a pie en
+     * la nodriza, sin nave y con 1.200 CR la primera vez por cuenta.
+     */
+    void beginStarterFlow() {
+        beginStarterFlow(true);
+    }
+
+    /** Variante que conserva el mundo tras la muerte del personaje anterior. */
+    void beginStarterFlow(boolean resetWorld) {
+        if (!starterBudgetGranted) {
+            profile.upgrades.setCoins(1200);
+            starterBudget = 1200;
+            starterBudgetGranted = true;
+        }
+        hasShip = false;
+        ownedShip = null;
+        if (shipMarket == null) {
+            shipMarket = new ShipMarket(marketSeed());
+        }
+        pilot.reset();
+        lifeSupport.reset();
+        if (resetWorld) {
+            sector.start();
+        } else {
+            sector.ship.reset(profile.upgrades, 0f, 0f);
+        }
+        sector.ship.wrecked = true;
+        sector.ship.docked = false;
+        runActive = true;
+    }
+
+    long marketSeed() {
+        String id = profile == null ? null : profile.id;
+        long hash = 0x5A17C0DEL;
+        if (id != null) {
+            for (int i = 0; i < id.length(); i++) {
+                hash = hash * 31L + id.charAt(i);
+            }
+        }
+        return hash;
+    }
+
+    /** Coste total de una oferta con el combustible inicial solicitado. */
+    int purchaseCost(ShipOffer offer, int fuelUnits) {
+        if (offer == null || offer.spec == null) {
+            return 0;
+        }
+        int units = Math.max(0, Math.min(fuelUnits, (int) offer.spec.fuelCapacity));
+        return offer.spec.price + units;
+    }
+
+    /**
+     * Compra la nave y la deja en la boca de atraque. Exige que el
+     * combustible inicial llegue al mínimo operativo (60 UM) y que quede saldo
+     * suficiente para al menos una reparación básica.
+     */
+    boolean purchaseShip(ShipOffer offer, int fuelUnits) {
+        if (offer == null || offer.spec == null || hasShip) {
+            return false;
+        }
+        if (fuelUnits < 60 || fuelUnits > (int) offer.spec.fuelCapacity) {
+            return false;
+        }
+        int cost = purchaseCost(offer, fuelUnits);
+        if (profile.upgrades.coins() < cost) {
+            return false;
+        }
+        if (!profile.upgrades.spendCoins(cost)) {
+            return false;
+        }
+        hasShip = true;
+        ownedShip = offer.spec;
+        Ship ship = sector.ship;
+        offer.spec.applyTo(ship, profile.upgrades);
+        ship.fuel = Math.min(fuelUnits, ship.maxFuel);
+        if (sector.station != null) {
+            sector.station.snapToDock(ship.pos);
+            ship.heading = sector.station.dockHeading();
+            ship.dir.set(com.badlogic.gdx.math.MathUtils.cosDeg(ship.heading),
+                    com.badlogic.gdx.math.MathUtils.sinDeg(ship.heading));
+        }
+        ship.docked = false;
+        ship.wrecked = false;
+        return true;
+    }
+
+    /** Nave de servicio de emergencia (UPD-006-T31), sin coste inmediato. */
+    boolean grantServiceShip() {
+        if (hasShip) {
+            return false;
+        }
+        ShipSpec spec = new ShipSpec("service-1", "NAVE DE SERVICIO",
+                ShipSpec.Category.SCRAP, ShipClassDef.MINER, 70f, 0.45f,
+                110f, 1.15f, 1.10f, 85f, new String[0], 0,
+                "Cesion de la nodriza; se descuenta de los proximos beneficios.");
+        hasShip = true;
+        ownedShip = spec;
+        spec.applyTo(sector.ship, profile.upgrades);
+        sector.ship.fuel = Math.min(60f, sector.ship.maxFuel);
+        if (sector.station != null) {
+            sector.station.snapToDock(sector.ship.pos);
+            sector.ship.heading = sector.station.dockHeading();
+        }
+        sector.ship.docked = false;
+        sector.ship.wrecked = false;
+        profile.upgrades.addDebt(300);
+        return true;
     }
 
     /** Carga la partida guardada. Devuelve true si habia una partida valida. */
