@@ -40,6 +40,7 @@ defecto: el runner, sin argumentos, solo lista.
 - `08_visual_death` — capturas de la explosión y el diálogo.
 - `09_wing_damage` — ala perdida, humo y pestaña de reparaciones.
 - `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
+- `11_cargo` — bodega, masa, HUD de carga y persistencia al pausar.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
 
 ```sh
@@ -116,6 +117,8 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `recovery_test`: modo de desarrollo. Guarda un punto seguro al empezar y
   cada 10 s; tras la muerte, el botón `RECUPERAR (DEBUG)` restaura ese punto.
   Sin el flag no existe y el juego normal sigue con muerte permanente.
+- `cargo_test`: arranca con la bodega llena de Silicato (100/100 UM) para
+  revisar masa y HUD. Lo usa `11_cargo`.
 - La nave legado se recupera con el botón `RECUPERAR NAVE` cuando el personaje
   nuevo está a ≤100 u. El desguace da 10–90 créditos según las partes. Lo cubre
   `16_universe`.

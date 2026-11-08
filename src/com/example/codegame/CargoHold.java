@@ -60,6 +60,15 @@ class CargoHold {
         return total;
     }
 
+    /** Total de unidades, sumando todos los minerales. */
+    int totalUnits() {
+        int total = 0;
+        for (Map.Entry<Commodity, Integer> entry : items.entrySet()) {
+            total += entry.getValue();
+        }
+        return total;
+    }
+
     /** Masa libre, nunca negativa. */
     float freeMass() {
         return Math.max(0f, capacity - usedMass());

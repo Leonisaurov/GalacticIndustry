@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:52:00-06:00  
+**Última actualización:** 2026-11-08T00:56:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,58 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-028 — Verificación y cierre de carga
+
+- **Fecha:** 2026-11-08T00:56:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-306
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Verificados capacidad, masa, viaje de 800 u, persistencia y control.
+- Añadida telemetría `cargoMass`, `cargoCapacity` y `cargoUnits`.
+- Nuevo `cargo_test` y prueba `11_cargo`.
+- La simulación de SelfTest pasa a inmortal para no cortarse por un choque
+  aleatorio; la verificación de generación/monedas es determinista.
+- Etapa **S3 (Carga y masa) cerrada**.
+
+### Archivos modificados
+
+- `src/com/example/codegame/CargoHold.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/11_cargo.sh` (nuevo)
+- `docs/pruebas.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK** (dos ejecuciones seguidas).
+- `tools/run-tests.sh --no-build 11_cargo`: **OK**.
+
+### Evidencias
+
+- `11_cargo`: bodega `100/100 UM`, HUD y persistencia al pausar.
+- `BENCH viaje ida/vuelta 800u combustible=111.8 restante=48.2`.
+- Mejora Bodega y guardado de carga verificados.
+- `S3` marcada `COMPLETADO`; `S4` queda `LISTO`.
+
+### Decisiones tomadas
+
+- La simulación de SelfTest es inmortal porque mide generación y monedas, no
+  supervivencia.
+- `cargo_test` solo inyecta carga; no altera el juego normal.
+
+### Pendiente / siguiente paso
+
+- Empezar la Etapa 4 con **T-401 — Definir AsteroidType, composición y RNG determinista**.
 
 ---
 

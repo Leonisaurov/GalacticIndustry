@@ -1109,6 +1109,9 @@ public class SelfTest {
 
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
+        // La simulación mide generación y monedas, no supervivencia: evita que
+        // un choque aleatorio la corte y la haga no determinista.
+        w.immortal = true;
         int maxAsteroids = 0;
         int steps = 0;
         int totalEarned = 0;

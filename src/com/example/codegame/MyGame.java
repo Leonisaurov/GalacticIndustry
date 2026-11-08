@@ -87,6 +87,8 @@ public class MyGame implements ApplicationListener {
     private final boolean pilotDeathTest;
     /** Modo de desarrollo: recupera el último punto seguro tras la muerte. */
     private final boolean recoveryTest;
+    /** Arranca con la bodega llena para revisar masa/HUD. */
+    private final boolean cargoTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -196,6 +198,16 @@ public class MyGame implements ApplicationListener {
     public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest, boolean recoveryTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, false);
+    }
+
+    /**
+     * @param cargoTest arranca con la bodega llena para revisar masa y HUD.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -204,8 +216,10 @@ public class MyGame implements ApplicationListener {
         this.survivalTest = survivalTest;
         this.pilotDeathTest = pilotDeathTest;
         this.recoveryTest = recoveryTest;
+        this.cargoTest = cargoTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
-                || wingTest || survivalTest || pilotDeathTest || recoveryTest;
+                || wingTest || survivalTest || pilotDeathTest || recoveryTest
+                || cargoTest;
     }
 
     @Override
@@ -302,6 +316,13 @@ public class MyGame implements ApplicationListener {
             session.pilot.health = 0f;
             session.pilot.oxygenGrace = 0f;
             session.pilot.status = Pilot.Status.INCAPACITATED;
+        } else if (cargoTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.cargo().addExact(Commodity.SILICATO, 100);
         }
     }
 
@@ -733,7 +754,8 @@ public class MyGame implements ApplicationListener {
                         + "\"pilotGrace\":%.1f,\"pilotLeak\":%.1f,\"pilotBreach\":%s,"
                         + "\"o2Alert\":%d,\"pilotO2Seconds\":%.0f,"
                         + "\"legacyWreck\":%s,\"legacyX\":%.1f,\"legacyY\":%.1f,"
-                        + "\"legacyNear\":%s,\"legacyDistance\":%.1f}",
+                        + "\"legacyNear\":%s,\"legacyDistance\":%.1f,"
+                        + "\"cargoMass\":%.1f,\"cargoCapacity\":%.1f,\"cargoUnits\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -752,7 +774,10 @@ public class MyGame implements ApplicationListener {
                 world.legacyWreck, world.legacyWreckPos.x, world.legacyWreckPos.y,
                 world.legacyWreck && world.legacyDistance(world.ship.pos)
                         <= GameWorld.LEGACY_RECOVERY_RADIUS,
-                world.legacyDistance(world.ship.pos)));
+                world.legacyDistance(world.ship.pos),
+                world.ship.cargo().usedMass(),
+                world.ship.cargo().capacity(),
+                world.ship.cargo().totalUnits()));
     }
 
     private void logEvent(String json) {
