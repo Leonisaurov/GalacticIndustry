@@ -96,6 +96,8 @@ public class MyGame implements ApplicationListener {
     private final boolean miningTest;
     /** Arranca con fragmentos cercanos para probar el rayo tractor. */
     private final boolean tractorTest;
+    /** Arranca junto a la nave nodriza para revisar su escala y zona segura. */
+    private final boolean stationTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -223,6 +225,17 @@ public class MyGame implements ApplicationListener {
                   boolean autopilotTest, boolean wingTest, boolean survivalTest,
                   boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
                   boolean miningTest, boolean tractorTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest, false);
+    }
+
+    /**
+     * @param stationTest arranca junto a la nave nodriza para revisar su escala.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -234,9 +247,10 @@ public class MyGame implements ApplicationListener {
         this.cargoTest = cargoTest;
         this.miningTest = miningTest;
         this.tractorTest = tractorTest;
+        this.stationTest = stationTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
-                || cargoTest || miningTest || tractorTest;
+                || cargoTest || miningTest || tractorTest || stationTest;
     }
 
     @Override
@@ -366,6 +380,15 @@ public class MyGame implements ApplicationListener {
             world.fragments.add(new OreFragment(95f, 0f, Commodity.HIELO, 4, 0f, 0f));
             world.fragments.add(new OreFragment(-85f, 40f, Commodity.SILICATO, 4, 0f, 0f));
             world.fragments.add(new OreFragment(40f, -95f, Commodity.HIERRO, 4, 0f, 0f));
+        } else if (stationTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(world.station.pos.x, world.station.pos.y - 330f);
+            world.ship.heading = 90f;
+            world.ship.dir.set(0f, 1f);
         }
     }
 
@@ -615,6 +638,17 @@ public class MyGame implements ApplicationListener {
         return total;
     }
 
+    /** Asteroides dentro de la zona segura de la estación (debe ser 0). */
+    private int stationAsteroids() {
+        int count = 0;
+        for (int i = 0; i < world.asteroids.size; i++) {
+            if (world.station.inSafeZone(world.asteroids.get(i).pos)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     String fuelRefillLabel() {
         int cost = fuelRefillCost();
         return cost <= 0 ? "DEPOSITO OK" : "RELLENAR " + cost;
@@ -847,7 +881,9 @@ public class MyGame implements ApplicationListener {
                         + "\"fragments\":%d,\"fragmentUnits\":%d,"
                         + "\"energy\":%.1f,\"energyMax\":%.1f,\"mining\":%s,"
                         + "\"laserLevel\":%d,\"tractorActive\":%s,\"tractorTargets\":%d,"
-                        + "\"tractorLevel\":%d}",
+                        + "\"tractorLevel\":%d,"
+                        + "\"stationX\":%.1f,\"stationY\":%.1f,\"stationRadius\":%.1f,"
+                        + "\"stationDistance\":%.1f,\"stationAsteroids\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -878,7 +914,12 @@ public class MyGame implements ApplicationListener {
                 upgrades.laserLevel(),
                 world.ship.tractor.active(),
                 world.ship.tractor.targets.size,
-                upgrades.tractorLevel()));
+                upgrades.tractorLevel(),
+                world.station.pos.x,
+                world.station.pos.y,
+                world.station.def.radius,
+                world.station.distanceTo(world.ship.pos),
+                stationAsteroids()));
     }
 
     private void logEvent(String json) {

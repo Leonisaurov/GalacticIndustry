@@ -1,11 +1,23 @@
 package com.example.codegame;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 
 /** Prueba de lógica sin ventana: ejecutar con run_program. No forma parte del juego. */
 public class SelfTest {
 
     private static int failures = 0;
+
+    /** Cuenta asteroides dentro de la zona segura de la estación. */
+    private static int stationAsteroidsInSafeZone(GameWorld world) {
+        int count = 0;
+        for (int i = 0; i < world.asteroids.size; i++) {
+            if (world.station.inSafeZone(world.asteroids.get(i).pos)) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     /** Recorta el array levels de un guardado para probar la migración. */
     private static String trimLevels(String save, int keep) {
@@ -1845,6 +1857,41 @@ public class SelfTest {
         pc.update(dt, new Controls());
         pc.pilot.cancel();
         check("cancelar piloto", !pc.pilot.active());
+
+        // T-501: estación nodriza, servicios y zona segura.
+        GameWorld stationWorld = new GameWorld(new Upgrades(true));
+        stationWorld.start();
+        check("la nodriza existe en el sector inicial",
+                stationWorld.station != null
+                        && Math.abs(stationWorld.station.pos.x - GameData.MOTHERSHIP_X) < 0.01f
+                        && Math.abs(stationWorld.station.pos.y - GameData.MOTHERSHIP_Y) < 0.01f);
+        check("la nodriza tiene radio, acople y zona segura",
+                stationWorld.station.def.radius == 200f
+                        && stationWorld.station.def.dockRadius == 260f
+                        && stationWorld.station.def.safeRadius == 480f);
+        check("la nodriza ofrece todos los servicios",
+                stationWorld.station.def.serviceCount() == 6
+                        && stationWorld.station.def.repair
+                        && stationWorld.station.def.refuel
+                        && stationWorld.station.def.oxygen
+                        && stationWorld.station.def.upgrades
+                        && stationWorld.station.def.market
+                        && stationWorld.station.def.storage);
+        check("la nodriza tiene almacen",
+                Math.abs(stationWorld.station.storage.capacity() - Station.STORAGE_CAPACITY) < 0.01f);
+        check("la zona segura no tiene asteroides",
+                stationAsteroidsInSafeZone(stationWorld) == 0);
+        check("no se puede acoplar lejos o rapido",
+                !stationWorld.station.canDock(new Vector2(0f, 0f), 5f)
+                        && !stationWorld.station.canDock(
+                        new Vector2(0f, GameData.MOTHERSHIP_Y - 100f), 50f)
+                        && stationWorld.station.canDock(
+                        new Vector2(0f, GameData.MOTHERSHIP_Y - 100f), 10f));
+        check("la zona segura detecta el centro y el exterior",
+                stationWorld.station.inSafeZone(GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y)
+                        && !stationWorld.station.inSafeZone(
+                        GameData.MOTHERSHIP_X + GameData.MOTHERSHIP.safeRadius + 1f,
+                        GameData.MOTHERSHIP_Y));
 
         // T-408: verificación integrada de la etapa 4.
         Ship gateShip = new Ship();

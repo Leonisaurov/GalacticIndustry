@@ -39,6 +39,9 @@ class GameWorld {
 
     final Upgrades up;
     final Ship ship = new Ship();
+    /** Nave nodriza del sector inicial; su posición es fija. */
+    final Station station = new Station(GameData.MOTHERSHIP,
+            GameData.MOTHERSHIP_X, GameData.MOTHERSHIP_Y);
     /** Referencia al soporte vital de la sesión; opcional en pruebas aisladas. */
     LifeSupport lifeSupport;
     /** Restos de la nave del personaje anterior, en el punto de muerte. */
@@ -411,6 +414,7 @@ class GameWorld {
     void update(float dt, Controls c) {
         elapsed += dt;
         wave = 1 + (int) (elapsed / 45f);
+        station.update(dt);
 
         if (pilot.active()) {
             pilot.steer(c, this, dt);
@@ -798,6 +802,9 @@ class GameWorld {
             if (x * x + y * y < SAFE_RADIUS * SAFE_RADIUS) {
                 continue;
             }
+            if (station.inSafeZone(x, y)) {
+                continue;
+            }
             int roll = rnd.nextInt(100);
             int size = roll < 50 ? Asteroid.SMALL : roll < 85 ? Asteroid.MEDIUM : Asteroid.LARGE;
             AsteroidType type = GameData.rollAsteroidType(rnd);
@@ -821,6 +828,7 @@ class GameWorld {
 
     /** Dibuja el mundo visible con la cámara ya posicionada. */
     void draw(ShapeRenderer shapes) {
+        station.draw(shapes, elapsed);
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).draw(shapes);
         }
@@ -900,6 +908,7 @@ class GameWorld {
 
     /** Brillos aditivos del mundo: motores, impactos, objetivos y partículas. */
     void drawGlow(SpriteBatch batch, Visuals art) {
+        station.drawGlow(batch, art, elapsed);
         for (int i = 0; i < fuel.size; i++) {
             fuel.get(i).drawGlow(batch, art);
         }

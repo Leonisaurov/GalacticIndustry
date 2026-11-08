@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:20:00-06:00  
+**Última actualización:** 2026-11-08T02:24:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,68 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-041 — Nave nodriza del sector inicial
+
+- **Fecha:** 2026-11-08T02:24:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-501
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `StationDef` define nombre, radio visual 200, radio de acople 260, zona
+  segura 480 y seis servicios.
+- `Station` instancia la nodriza en `(0, 480)` con almacén de 2000 UM, giro
+  lento y dibujo a gran escala (anillo, brazos, núcleo y bahía).
+- `GameWorld.generateChunk()` descarta asteroides dentro de la zona segura.
+- Telemetría: `stationX`, `stationY`, `stationRadius`, `stationDistance` y
+  `stationAsteroids`.
+- Nuevo `station_test` y prueba `13_station` con captura `25_station`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/StationDef.java` (nuevo)
+- `src/com/example/codegame/Station.java` (nuevo)
+- `src/com/example/codegame/GameData.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/13_station.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 13_station`: **OK**.
+- `12_mining 04_autopilot 03_controls 07_visual_play 13_tractor 16_universe`: **6/6 OK**.
+
+### Evidencias
+
+- `PASS la nodriza existe en el sector inicial`
+- `PASS la nodriza tiene radio, acople y zona segura`
+- `PASS la nodriza ofrece todos los servicios`
+- `PASS la nodriza tiene almacen`
+- `PASS la zona segura no tiene asteroides`
+- `13_station`: distancia 330, radio 200 y 0 asteroides en la zona segura.
+- Captura `25_station`: anillo, núcleo y bahía visibles a escala.
+
+### Decisiones tomadas
+
+- La nodriza es fija en `(0, 480)` para quedar cerca del origen sin tapar el
+  arranque.
+- La zona segura se aplica al generar chunks, no eliminando asteroides después.
+- El acople y los servicios quedan fuera de T-501 (T-502..T-505).
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-502 — Implementar acoplamiento y Autopilot.STATION**.
 
 ---
 

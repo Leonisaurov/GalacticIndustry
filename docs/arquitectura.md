@@ -97,6 +97,20 @@ telemetría) y el dibujo se reparte en módulos:
 No se crean objetos en `render()`: `HudView`, `GlyphLayout` y los colores
 estáticos se reutilizan.
 
+## Estación nodriza
+
+- `StationDef` define nombre, radio visual (200), radio de acople (260), zona
+  segura (480) y servicios (reparación, combustible, O2, mejoras, mercado y
+  almacén).
+- `Station` instancia la nodriza en `(0, 480)` con un `CargoHold` de 2000 UM
+  como almacén. Gira lentamente y se dibuja a gran escala con anillo, brazos,
+  núcleo y bahía de acople.
+- `GameWorld.generateChunk()` descarta cualquier asteroide dentro de la zona
+  segura: `GameData.MOTHERSHIP.safeRadius`.
+- El acople, los servicios y el almacén persistente llegan en T-502..T-505.
+- Telemetría: `stationX`, `stationY`, `stationRadius`, `stationDistance` y
+  `stationAsteroids`.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de
