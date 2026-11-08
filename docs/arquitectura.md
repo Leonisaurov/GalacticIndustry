@@ -215,8 +215,10 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   ×1.35.
 - `Ship.update()` aplica los cuatro factores; la masa del combustible no se
   incluye todavía.
-- La nave llena sigue siendo controlable y cubre 800 u con combustible
-  restante.
+- Depósito base 160, consumo base 10/s. Ida y vuelta de 800 u con carga completa
+  usa ~112 y deja ~48 de margen.
+- La recarga de combustible cuesta 1 crédito/unidad con mínimo 5; un bidón de
+  40 sigue siendo útil (25 % del depósito base).
 - `SaveCodec` v2 incluye la posición, rumbo, casco y partes de la nave legado,
   así que el resto persiste tras reiniciar.
 - `GameWorld.beginDeath()` oculta la nave, limpia efectos y crea varias ondas y

@@ -11,7 +11,7 @@ class Ship {
 
     static final float RADIUS = 16f;
     static final float TURN_SPEED = 220f;
-    static final float FUEL_PER_SEC_THRUST = 12f;
+    static final float FUEL_PER_SEC_THRUST = 10f;
     static final float FUEL_PER_SHOT = 2f;
 
     /** Partes de la nave que se pueden danar y reparar en la tienda. */

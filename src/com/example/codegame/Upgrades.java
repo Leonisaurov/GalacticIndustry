@@ -16,7 +16,11 @@ class Upgrades {
     static final int GASOLINA = ShipLoadout.GASOLINA;
     static final int COUNT = ShipLoadout.COUNT;
     static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
-    /** Precio base de la recarga de emergencia; se duplica con cada compra. */
+    /** Precio del combustible en la tienda temporal: 1 crédito por unidad. */
+    static final float FUEL_PRICE_PER_UNIT = 1f;
+    /** Coste mínimo de una recarga de combustible. */
+    static final int FUEL_REFILL_MIN = 5;
+    /** Precio base de la recarga de emergencia (compatibilidad histórica). */
     static final int REFILL_BASE = 10;
     /** Precio del O2 en la tienda temporal: 0,5 créditos por unidad. */
     static final float O2_PRICE_PER_UNIT = 0.5f;
@@ -146,9 +150,18 @@ class Upgrades {
         return getInt("refills");
     }
 
-    /** Precio actual de la recarga: 10, 20, 40... Tras 24 compras deja de duplicarse para no desbordar. */
+    /** Precio actual de la recarga: 1 crédito/unidad, mínimo 5. */
+    int refillCost(float missingFuel) {
+        if (missingFuel < 0.5f) {
+            return 0;
+        }
+        return Math.max(FUEL_REFILL_MIN,
+                (int) Math.ceil(missingFuel * FUEL_PRICE_PER_UNIT));
+    }
+
+    /** Compatibilidad: coste de rellenar el depósito desde vacío. */
     int refillCost() {
-        return REFILL_BASE << Math.min(refillCount(), 24);
+        return refillCost(maxFuel());
     }
 
     void recordRefill() {
@@ -216,7 +229,7 @@ class Upgrades {
     }
 
     float maxFuel() {
-        return 100f + 30f * level(DEPOSITO);
+        return 160f + 30f * level(DEPOSITO);
     }
 
     int damage() {

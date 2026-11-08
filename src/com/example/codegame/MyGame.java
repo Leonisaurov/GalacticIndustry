@@ -481,7 +481,7 @@ public class MyGame implements ApplicationListener {
             for (int i = 0; i < Ship.PART_COUNT; i++) {
                 repairButtons.add(shopButton(repairLabel(i), i, cardX, cardW, bbw, bbh));
             }
-            btnRefill = shopButton("RELLENAR " + upgrades.refillCost(),
+            btnRefill = shopButton(fuelRefillLabel(),
                     Ship.PART_COUNT, cardX, cardW, bbw, bbh);
             btnO2 = shopButton(o2RefillLabel(),
                     Ship.PART_COUNT + 1, cardX, cardW, bbw, bbh);
@@ -506,7 +506,18 @@ public class MyGame implements ApplicationListener {
     /** La recarga solo se ofrece con una partida activa, deposito no lleno y saldo suficiente. */
     private boolean canRefill() {
         return runActive && world.ship.fuel < world.ship.maxFuel
-                && upgrades.coins() + world.coinsEarned >= upgrades.refillCost();
+                && upgrades.coins() + world.coinsEarned >= fuelRefillCost();
+    }
+
+    /** Coste de repostar: 1 crédito por unidad que falte, mínimo 5. */
+    private int fuelRefillCost() {
+        float missing = Math.max(0f, world.ship.maxFuel - world.ship.fuel);
+        return upgrades.refillCost(missing);
+    }
+
+    private String fuelRefillLabel() {
+        int cost = fuelRefillCost();
+        return cost <= 0 ? "DEPOSITO OK" : "RELLENAR " + cost;
     }
 
     /** Coste de rellenar O2 según lo que falte. */
@@ -1109,11 +1120,13 @@ public class MyGame implements ApplicationListener {
         }
         if (shopTab == 1) {
             if (btnRefill != null && tapped(btnRefill) && canRefill()) {
-                if (upgrades.spendCoins(upgrades.refillCost())) {
+                int cost = fuelRefillCost();
+                if (upgrades.spendCoins(cost)) {
                     world.ship.refuel(world.ship.maxFuel);
-                    upgrades.recordRefill();
                     saveRun();
-                    logEvent("{\"event\":\"refill\",\"coins\":" + upgrades.coins() + "}");
+                    logEvent(String.format(Locale.US,
+                            "{\"event\":\"refill\",\"cost\":%d,\"coins\":%d}",
+                            cost, upgrades.coins()));
                 }
                 layoutUi();
                 return;

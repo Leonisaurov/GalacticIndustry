@@ -1024,6 +1024,51 @@ public class SelfTest {
         check("viaje de 800 u con carga completa",
                 travelled > 800f && trip.ship.fuel > 0f);
 
+        // T-304: rebalanceo de depósito, consumo y recarga.
+        Upgrades balanceUp = new Upgrades(true);
+        check("deposito base 160", balanceUp.maxFuel() == 160f);
+        check("consumo base 10", Ship.FUEL_PER_SEC_THRUST == 10f);
+        check("el bidon sigue siendo util",
+                FuelPickup.AMOUNT >= balanceUp.maxFuel() * 0.20f);
+        check("repostar 160 cuesta 160", balanceUp.refillCost(160f) == 160);
+        check("repostar 40 cuesta 40", balanceUp.refillCost(40f) == 40);
+        check("repostar tiene coste minimo",
+                balanceUp.refillCost(1f) == Upgrades.FUEL_REFILL_MIN);
+        GameWorld roundTrip = new GameWorld(new Upgrades(true));
+        roundTrip.start();
+        roundTrip.immortal = true;
+        roundTrip.ship.cargo().addExact(Commodity.SILICATO, 100);
+        roundTrip.ship.heading = 0f;
+        roundTrip.ship.dir.set(1f, 0f);
+        // Bench de crucero: la aceleración desde parado se prueba en T-303.
+        roundTrip.ship.vel.set(300f, 0f);
+        float roundTripFuel = roundTrip.ship.fuel;
+        boolean outbound = false;
+        boolean returned = false;
+        int roundSteps = 0;
+        while (roundSteps < 60 * 30 && roundTrip.ship.fuel > 0f) {
+            roundTrip.asteroids.clear();
+            roundTrip.fuel.clear();
+            roundTrip.update(dt, false, false, true, false);
+            if (!outbound && roundTrip.ship.pos.x >= 800f) {
+                outbound = true;
+                roundTrip.ship.heading = 180f;
+                roundTrip.ship.dir.set(-1f, 0f);
+                roundTrip.ship.vel.set(-roundTrip.ship.vel.len(), 0f);
+            } else if (outbound && roundTrip.ship.pos.x <= 0f) {
+                returned = true;
+                break;
+            }
+            roundSteps++;
+        }
+        float roundTripUsed = roundTripFuel - roundTrip.ship.fuel;
+        check("ida y vuelta de 800 u con carga completa",
+                outbound && returned && roundTrip.ship.fuel > 0f);
+        check("la ida y vuelta deja margen", roundTrip.ship.fuel > 20f);
+        System.out.println(String.format(
+                "BENCH viaje ida/vuelta 800u combustible=%.1f restante=%.1f",
+                roundTripUsed, roundTrip.ship.fuel));
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

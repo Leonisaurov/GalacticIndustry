@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:42:00-06:00  
+**Última actualización:** 2026-11-08T00:49:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,65 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-026 — Rebalanceo de depósito y consumo
+
+- **Fecha:** 2026-11-08T00:49:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-304
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- Depósito base: **160** (antes 100).
+- Consumo base: **10/s** (antes 12/s).
+- Recarga de combustible: **1 crédito/unidad**, mínimo 5; ya no se duplica
+  con cada compra.
+- La etiqueta de la tienda muestra `DEPOSITO OK` si está lleno.
+- Bench de ida y vuelta de 800 u con carga completa:
+  **111.8 de combustible usado y 48.2 restante**.
+- Un bidón de 40 sigue siendo útil (25 % del depósito base).
+- Se actualizaron `MASTER_PLAN.md` y `docs/arquitectura.md`.
+
+### Archivos modificados
+
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/MASTER_PLAN.md`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 03_controls 09_wing_damage`: **2/2 OK**.
+
+### Evidencias
+
+- `PASS deposito base 160`
+- `PASS consumo base 10`
+- `PASS el bidon sigue siendo util`
+- `PASS repostar 160 cuesta 160`
+- `PASS repostar 40 cuesta 40`
+- `PASS repostar tiene coste minimo`
+- `PASS ida y vuelta de 800 u con carga completa`
+- `PASS la ida y vuelta deja margen`
+- `BENCH viaje ida/vuelta 800u combustible=111.8 restante=48.2`
+
+### Decisiones tomadas
+
+- El coste de repostar pasa de exponencial a lineal por unidad.
+- El depósito base sube a 160 para que la carga completa no sea un softlock.
+- La masa del combustible no se incluye todavía.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-305 — Añadir la mejora Bodega y el HUD de masa**.
 
 ---
 

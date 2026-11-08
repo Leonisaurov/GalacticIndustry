@@ -111,7 +111,7 @@ Un juego de exploración, minería, supervivencia, comercio y gestión de recurs
 | Monedas por asteroide | Existente | `destroyAsteroid` |
 | Tienda | Existente | `MyGame.handleShop` |
 | Mejoras | Parcial | 5 globales; faltan bodega, láser, soporte vital |
-| Combustible | Existente sin masa | `Ship.fuel`, bidones, recarga exponencial |
+| Combustible | Existente sin masa | `Ship.fuel`, bidones, recarga por unidad (T-304) |
 | Daño por partes | Existente | 7 partes con penalizaciones |
 | Reparaciones | Existente | coste proporcional |
 | Guardado | Parcial | texto plano, sin versión, solo `run2` |
@@ -147,7 +147,7 @@ Un juego de exploración, minería, supervivencia, comercio y gestión de recurs
 5. `MyGame` es un monolito de ~1.900 líneas.
 6. El dibujo no hace culling.
 7. `Effects` asigna objetos por partícula.
-8. La recarga de combustible se duplica globalmente y no encaja con una economía de mercado.
+8. La recarga de combustible se duplicaba globalmente; corregido en T-304 con 1 crédito/unidad y mínimo 5.
 9. Los tests dependen de monedas y de la tienda en pausa.
 10. La UI actual no cabe con todos los indicadores nuevos.
 11. No hay red ni servicios, lo cual es correcto para la visión local.

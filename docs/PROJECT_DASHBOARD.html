@@ -611,23 +611,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:42:00-06:00",
-    "lastSessionId": "S-025",
+    "lastUpdated": "2026-11-08T00:49:00-06:00",
+    "lastSessionId": "S-026",
     "lastVerification": {
-      "date": "2026-11-08T00:42:00-06:00",
+      "date": "2026-11-08T00:49:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Carga completa: aceleración -25 %, velocidad -12 %, giro -10 %, consumo +35 %",
-        "La nave cargada sigue controlable",
-        "Viaje de 800 u con carga completa y combustible restante",
-        "tools/run-tests.sh --no-build 03_controls: OK",
+        "Depósito base 160 y consumo base 10",
+        "Ida y vuelta de 800 u con carga completa: ~111.8 usado, 48.2 restante",
+        "Bidón de 40 sigue siendo útil (25 % del depósito)",
+        "Recarga a 1 crédito/unidad con mínimo 5",
+        "03_controls y 09_wing_damage: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-304",
+    "nextTaskId": "T-305",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2308,7 +2309,7 @@
       "description": "Ajustar la capacidad base y el consumo para que una expedición con carga completa sea viable.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-303"
@@ -2332,10 +2333,40 @@
         "SelfTest completo"
       ],
       "technicalNotes": "No convertir la carga completa en un softlock.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-026",
+          "date": "2026-11-08T00:49:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Depósito base 160, consumo base 10 y recarga a 1 crédito/unidad con mínimo 5. Bench de ida y vuelta de 800 u con carga completa: ~111.8 de combustible y 48.2 de margen. Bidones y coste verificados.",
+          "files": [
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SelfTest.java",
+            "docs/MASTER_PLAN.md"
+          ],
+          "tests": [
+            "01_logic",
+            "Bench de viaje",
+            "SelfTest completo",
+            "03_controls",
+            "09_wing_damage"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS deposito base 160; PASS consumo base 10",
+        "PASS el bidon sigue siendo util",
+        "PASS repostar 160 cuesta 160; PASS repostar 40 cuesta 40; PASS coste minimo",
+        "PASS ida y vuelta de 800 u con carga completa; PASS deja margen",
+        "BENCH viaje ida/vuelta 800u combustible=111.8 restante=48.2",
+        "03_controls y 09_wing_damage OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:49:00-06:00"
     },
     {
       "id": "T-305",
@@ -5248,6 +5279,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-026",
+      "date": "2026-11-08T00:49:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Rebalanceo de depósito y consumo",
+      "summary": "Depósito base 160, consumo base 10 y recarga a 1 crédito/unidad con mínimo 5. Bench de ida y vuelta de 800 u con carga completa: ~111.8 usado y 48.2 de margen. Bidones y tienda verificados.",
+      "tasks": [
+        "T-304"
+      ],
+      "files": [
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SelfTest.java",
+        "docs/MASTER_PLAN.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "Bench de viaje",
+        "tools/run-tests.sh 03_controls 09_wing_damage"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-305 (mejora Bodega y HUD de masa)."
+    },
     {
       "id": "S-025",
       "date": "2026-11-08T00:42:00-06:00",
