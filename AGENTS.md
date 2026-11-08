@@ -152,12 +152,12 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S5` — Nave nodriza y acoplamiento.
 - No hay tarea en progreso.
-- Última tarea completada: `T-503` — Crear StationScreen y servicios básicos.
-- Primera tarea disponible: `T-504` — Retirar la tienda económica de la pausa.
+- Última tarea completada: `T-504` — Retirar la tienda económica de la pausa.
+- Primera tarea disponible: `T-505` — Persistir estación, almacén y estado acoplado.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **42 %** (34 de 81 tareas de progreso).
+- La implementación del juego está al **43 %** (35 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
-  `ShopRenderer`, `OverlayRenderer` y `SpaceBackground` (T-007).
+  `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

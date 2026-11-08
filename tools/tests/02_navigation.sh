@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test: menú y tienda (sin partida)
+# Test: menú, partida, pausa y vuelta al menú
 set -euo pipefail
 source "$(dirname "$0")/testlib.sh"
 
@@ -11,14 +11,14 @@ status=$(latest_status)
 assert_eq "estado inicial" MENU "$(printf '%s' "$status" | json_get state)"
 assert_eq "modo inmortal" true "$(printf '%s' "$status" | json_get immortal)"
 
-tap "$((W / 2))" "$MENU_SHOP_Y" 0.2
-wait_current_state SHOP 5 || fail "no se abrió la tienda"
-sleep 0.5
-status=$(latest_status)
-assert_eq "origen de la tienda" MENU "$(printf '%s' "$status" | json_get shopReturn)"
-
-tap "$BACK_X" "$BACK_Y" 0.2
+tap "$((W / 2))" "$MENU_PLAY_Y" 0.2
+wait_current_state PLAYING 5 || fail "no empezó la partida"
+tap "$PAUSE_X" "$PAUSE_Y" 0.2
+wait_current_state PAUSED 5 || fail "no se pausó"
+tap "$((W / 2))" "$PAUSE_MENU_Y" 0.2
 wait_current_state MENU 5 || fail "no se volvió al menú"
+tap "$((W / 2))" "$MENU_PLAY_Y" 0.2
+wait_current_state PLAYING 5 || fail "no se reanudó la partida"
 
 check_no_crash
-echo "OK 02_navigation: MENU -> SHOP -> MENU"
+echo "OK 02_navigation: MENU -> PLAYING -> PAUSED -> MENU -> PLAYING"

@@ -1422,13 +1422,6 @@ public class SelfTest {
                         && fullAutoRock.reserve == 15);
 
         // T-405: fundición temporal a precio base y sin monedas directas.
-        Cargo meltHielo = new Cargo(Commodity.HIELO, 10);
-        Cargo meltOro = new Cargo(Commodity.ORO, 5);
-        check("fundir hielo a precio base",
-                Upgrades.meltValue(meltHielo) == 15);
-        check("fundir oro a precio base",
-                Upgrades.meltValue(meltOro) == 150);
-
         // T-406: fragmentación por misiles, dispersión y recuperación.
         GameWorld fragWorld = new GameWorld(new Upgrades(true));
         fragWorld.start();
@@ -2017,7 +2010,8 @@ public class SelfTest {
         check("S4: minar no da monedas", gate.coinsEarned == 0);
         int gateCredits = 0;
         for (int i = 0; i < gate.ship.cargo().entries().size(); i++) {
-            gateCredits += Upgrades.meltValue(gate.ship.cargo().entries().get(i));
+            Cargo gateEntry = gate.ship.cargo().entries().get(i);
+            gateCredits += Math.round(gateEntry.amount * gateEntry.commodity.basePrice);
         }
         check("S4: la fundicion temporal valora el mineral", gateCredits > 0);
         check("S4: el mineral extraido respeta la capacidad",

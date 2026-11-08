@@ -290,13 +290,6 @@ class Upgrades {
         return TractorBeam.BASE_TARGETS + level(TRACTOR);
     }
 
-    /** Conversión temporal de una entrada de carga a créditos a precio base. */
-    static int meltValue(Cargo cargo) {
-        if (cargo == null) {
-            return 0;
-        }
-        return Math.round(cargo.amount * cargo.commodity.basePrice);
-    }
 
     /** Loadout activo de la nave; lo usara tambien ShipState en tareas posteriores. */
     ShipLoadout loadout() {

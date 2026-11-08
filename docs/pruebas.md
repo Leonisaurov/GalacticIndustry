@@ -32,11 +32,11 @@ defecto: el runner, sin argumentos, solo lista.
 
 - `01_logic` — SelfTest de lógica, sin dispositivo.
 - `02_navigation` — menú y tienda, sin partida.
-- `03_controls` — partida, acelerador, pausa y tienda de pausa.
+- `03_controls` — partida, acelerador y pausa (sin tienda).
 - `04_autopilot` — frenada `STOP`, velocidad final y acelerador a 0.
 - `05_death` — explosión, diálogo `OVER` y reintento.
 - `06_visual_menu` — capturas de menú y tienda.
-- `07_visual_play` — capturas de partida, pausa y tienda de pausa.
+- `07_visual_play` — capturas de partida y pausa.
 - `08_visual_death` — capturas de la explosión y el diálogo.
 - `09_wing_damage` — ala perdida, humo y pestaña de reparaciones.
 - `10_survival` — HUD de O2/salud, aviso de O2 bajo y fuga/brecha.
@@ -45,7 +45,6 @@ defecto: el runner, sin argumentos, solo lista.
 - `13_tractor` — rayo tractor: atracción, energía, captura de fragmentos y HUD.
 - `13_station` — nave nodriza: escala, zona segura, Autopilot.STATION, acople, servicios (descarga/venta/combustible/O2/reparación/mejoras) y despegue.
 - `16_universe` — nuevo personaje, mundo persistente y recuperación de la nave legado.
-- `19_melt` — fundición temporal: 100 Silicato → 200 créditos y bodega vacía.
 
 ```sh
 tools/run-tests.sh --list
@@ -135,6 +134,9 @@ adb shell am start -n com.example.codegame/.MainActivity --ez wing_test true
 - `station_test`: arranca junto a la nave nodriza. Lo usa `13_station` para
   revisar escala, zona segura y telemetría (`stationX/Y`, `stationRadius`,
   `stationDistance`, `stationAsteroids`).
+- `station_service_test`: arranca acoplado con 100 UM de Silicato, casco y ala
+  dañados, combustible y O2 bajos y 200 créditos. Lo usan `13_station` y
+  `09_wing_damage`; sustituye a la antigua tienda de pausa.
 - `docking_test`: arranca a 900 u con `Autopilot.STATION`; el piloto frena en
   la zona de acople y `13_station` pulsa `ACOPLAR`, comprueba `DOCKED` y
   después `DESPEGAR`.
@@ -184,7 +186,7 @@ Verificación de T-408; se ejecuta con `01_logic` y las pruebas de dispositivo:
 | El tractor recupera fragmentos | `13_tractor`: 3 fragmentos y 12 UM en bodega |
 | Sin monedas directas | `PASS destruir/minar no da monedas`, `S4: minar no da monedas` |
 | Roca y fragmentos persisten | `PASS la roca agotada no reaparece`, `los fragmentos se restauran` |
-| Fundición temporal | `19_melt`: 100 Silicato → 200 créditos |
+| Venta en estación | `13_station`: 100 Silicato → 200 créditos |
 
 ## Añadir pruebas
 

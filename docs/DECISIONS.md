@@ -106,6 +106,16 @@ Dejar servicios de emergencia limitados durante la transición y retirar la econ
 
 Afecta a la Etapa 5 y a los tests 02/03.
 
+### Implementación actual (T-504)
+
+- La pausa solo ofrece `CONTINUAR` y `MENU`; no hay tienda.
+- El menú principal solo ofrece jugar/continuar.
+- Compras, ventas, combustible, O2, reparaciones y mejoras se hacen en
+  `StationScreen`, tras acoplar en la nodriza.
+- La antigua fundición `FUNDIR` también se retiró; vender en la estación paga
+  precio base.
+- Los tests usan `station_service_test` para las acciones económicas.
+
 ---
 
 ## D-003 — Láser, misiles y rayo tractor

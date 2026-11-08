@@ -25,7 +25,6 @@ public class MyGame implements ApplicationListener {
     static final int MENU = 0;
     static final int PLAYING = 1;
     static final int PAUSED = 2;
-    static final int SHOP = 3;
     static final int OVER = 4;
     static final int DYING = 5;
     static final int DOCKED = 6;
@@ -49,7 +48,6 @@ public class MyGame implements ApplicationListener {
     /** Estado reutilizable que alimenta el HUD de partida. */
     private final HudView hud = new HudView();
     private PlayHud playHud;
-    private ShopRenderer shopRenderer;
     private StationScreen stationScreen;
     private OverlayRenderer overlay;
     /** Composicion de perfil, sector y guardado. */
@@ -69,7 +67,6 @@ public class MyGame implements ApplicationListener {
     private final Vector2 touch = new Vector2();
 
     private int state = MENU;
-    private int shopReturn = MENU;
     float time;
     float u = 1f;
     /** Tiempo de la secuencia de explosión antes del diálogo de fin de partida. */
@@ -111,32 +108,13 @@ public class MyGame implements ApplicationListener {
     private static final String TAG = "AsteroidsTelemetry";
 
 
-    Button btnPlay, btnShop, btnResume, btnPauseShop, btnMenu, btnRetry, btnOverMenu, btnBack;
+    Button btnPlay, btnResume, btnMenu, btnRetry, btnOverMenu;
     /** Barra de aceleración: su rectángulo es btnThrust.bounds. */
     private Button btnThrust, btnPause;
     /** Recuperar la nave del personaje anterior cuando se está cerca. */
     private Button btnRecover;
     /** Acoplar a la nodriza y despegar de ella. */
     Button btnDock, btnUndock;
-    final Array<Button> buyButtons = new Array<>();
-    /** Botones de reparacion de cada parte (solo con una partida activa). */
-    final Array<Button> repairButtons = new Array<>();
-    /** Entradas y botones de fundición temporal. */
-    final Array<Button> meltButtons = new Array<>();
-    final Array<Cargo> meltEntries = new Array<>();
-    /** Recarga de gasolina en la tienda (solo durante la partida). */
-    Button btnRefill;
-    /** Recarga de O2 en la tienda temporal (solo durante la partida). */
-    Button btnO2;
-    /** Pestañas de la tienda: 0 mejoras, 1 reparaciones, 2 fundir. */
-    Button btnTabUpgrades, btnTabRepairs, btnTabMelt;
-    int shopTab = 0;
-
-    // Geometría de la tienda (se recalcula en layoutUi).
-    float shopListTop;
-    float shopRowH;
-    float shopRowGap;
-    int shopRows;
 
     // Joystick (izquierda) y barra de aceleración (derecha), en coordenadas de pantalla.
     private float joyCx, joyCy, joyR;
@@ -314,7 +292,6 @@ public class MyGame implements ApplicationListener {
         upgrades = session.upgrades();
         world = session.sector;
         playHud = new PlayHud(ui, world, session, upgrades, batch, shapes, art, hud);
-        shopRenderer = new ShopRenderer(this, ui, batch, shapes);
         stationScreen = new StationScreen(this, ui, batch, shapes, space);
         overlay = new OverlayRenderer(this, ui, batch, shapes, art);
         world.immortal = testMode;
@@ -446,6 +423,7 @@ public class MyGame implements ApplicationListener {
             world.ship.vel.set(0f, 0f);
             world.ship.docked = true;
             world.ship.part[Ship.HULL] = 50f;
+            world.ship.part[Ship.WING_RIGHT] = 0f;
             world.ship.fuel = 40f;
             world.ship.cargo().addExact(Commodity.SILICATO, 100);
             session.pilot.oxygen = 40f;
@@ -564,19 +542,16 @@ public class MyGame implements ApplicationListener {
         float cx = (w - bw) * 0.5f;
 
         float menuCy = h * 0.33f;
-        btnPlay = stacked(runActive ? "CONTINUAR" : "JUGAR", cx, menuCy, bw, bh, gap, 0, 2);
-        btnShop = stacked("TIENDA", cx, menuCy, bw, bh, gap, 1, 2);
+        btnPlay = stacked(runActive ? "CONTINUAR" : "JUGAR", cx, menuCy, bw, bh, gap, 0, 1);
 
         float pauseCy = h * 0.44f;
-        btnResume = stacked("CONTINUAR", cx, pauseCy, bw, bh, gap, 0, 3);
-        btnPauseShop = stacked("TIENDA", cx, pauseCy, bw, bh, gap, 1, 3);
-        btnMenu = stacked("MENU", cx, pauseCy, bw, bh, gap, 2, 3);
+        btnResume = stacked("CONTINUAR", cx, pauseCy, bw, bh, gap, 0, 2);
+        btnMenu = stacked("MENU", cx, pauseCy, bw, bh, gap, 1, 2);
 
         float overCy = h * 0.41f;
         btnRetry = stacked(recoveryTest ? "RECUPERAR (DEBUG)" : "NUEVO PERSONAJE",
                 cx, overCy, bw, bh, gap, 0, 2);
         btnOverMenu = stacked("MENU", cx, overCy, bw, bh, gap, 1, 2);
-        btnBack = new Button("VOLVER", cx, pad, bw, bh);
 
         joyR = 70f * u;
         joyCx = pad + joyR * 1.06f;
@@ -599,105 +574,20 @@ public class MyGame implements ApplicationListener {
         btnUndock = new Button("DESPEGAR", cx + bw * 0.05f, h * 0.30f,
                 bw * 0.9f, 46f * u);
 
-        // Pestañas de la tienda: solo hay reparaciones si existe una partida.
-        if (!runActive) {
-            shopTab = 0;
-        }
-        float tabH = 38f * u;
-        float tabY = h - 96f * u;
-        float tabX = pad * 1.5f;
-        float tabGap = 8f * u;
-        float tabW = runActive
-                ? (w - 3f * pad - 2f * tabGap) / 3f
-                : Math.max(80f * u, w - 2f * tabX);
-        btnTabUpgrades = new Button("MEJORAS", tabX, tabY, tabW, tabH);
-        if (runActive) {
-            btnTabRepairs = new Button("REPARAR", tabX + tabW + tabGap, tabY, tabW, tabH);
-            btnTabMelt = new Button("FUNDIR", tabX + 2f * (tabW + tabGap), tabY, tabW, tabH);
-        } else {
-            btnTabRepairs = null;
-            btnTabMelt = null;
-        }
-
-        // Filas de la tienda: mejoras o reparaciones + recarga.
-        shopRows = shopRowCount();
-        shopListTop = h - (runActive ? 112f : 74f) * u;
-        float bottomLimit = pad + bh + 26f * u;
-        float avail = shopListTop - bottomLimit;
-        shopRowGap = 10f * u;
-        shopRowH = Math.min(112f * u, (avail - (shopRows - 1) * shopRowGap) / shopRows);
-        if (shopRowH < 56f * u) {
-            shopRowH = Math.max(40f * u, (avail - (shopRows - 1) * shopRowGap) / shopRows);
-        }
-        float cardX = pad + 6f * u;
-        float cardW = w - 2f * pad - 12f * u;
-        float bbw = Math.min(158f * u, cardW * 0.40f);
-        float bbh = Math.min(52f * u, Math.max(26f * u, shopRowH - 18f * u));
-
-        buyButtons.clear();
-        repairButtons.clear();
-        meltButtons.clear();
-        meltEntries.clear();
-        btnRefill = null;
-        btnO2 = null;
-        if (shopTab == 0) {
-            for (int i = 0; i < Upgrades.COUNT; i++) {
-                buyButtons.add(shopButton(buyLabel(i), i, cardX, cardW, bbw, bbh));
-            }
-        } else if (shopTab == 1) {
-            for (int i = 0; i < Ship.PART_COUNT; i++) {
-                repairButtons.add(shopButton(repairLabel(i), i, cardX, cardW, bbw, bbh));
-            }
-            btnRefill = shopButton(fuelRefillLabel(),
-                    Ship.PART_COUNT, cardX, cardW, bbw, bbh);
-            btnO2 = shopButton(o2RefillLabel(),
-                    Ship.PART_COUNT + 1, cardX, cardW, bbw, bbh);
-        } else {
-            for (Cargo entry : world.ship.cargo().entries()) {
-                meltEntries.add(entry);
-            }
-            for (int i = 0; i < meltEntries.size; i++) {
-                meltButtons.add(shopButton("FUNDIR " + Upgrades.meltValue(meltEntries.get(i)),
-                        i, cardX, cardW, bbw, bbh));
-            }
-        }
         if (stationScreen != null) {
             stationScreen.layout(w, h);
         }
     }
 
-    private Button shopButton(String label, int row, float cardX, float cardW, float bbw, float bbh) {
-        float top = shopRowTop(row);
-        return new Button(label,
-                cardX + cardW - 10f * u - bbw,
-                top - shopRowH + (shopRowH - bbh) * 0.5f, bbw, bbh);
-    }
 
-    private int shopRowCount() {
-        if (runActive && shopTab == 1) {
-            return Ship.PART_COUNT + 2;
-        }
-        if (runActive && shopTab == 2) {
-            return Math.max(1, world.ship.cargo().entries().size());
-        }
-        return Upgrades.COUNT;
-    }
 
     private float topPanelH() {
         return 112f * u;
     }
 
     /** La recarga solo se ofrece con una partida activa, deposito no lleno y saldo suficiente. */
-    boolean canRefill() {
-        return runActive && world.ship.fuel < world.ship.maxFuel
-                && upgrades.coins() + world.coinsEarned >= fuelRefillCost();
-    }
 
     /** Coste de repostar: 1 crédito por unidad que falte, mínimo 5. */
-    private int fuelRefillCost() {
-        float missing = Math.max(0f, world.ship.maxFuel - world.ship.fuel);
-        return upgrades.refillCost(missing);
-    }
 
     /** UM totales de mineral dispersas como fragmentos. */
     private int fragmentUnits() {
@@ -719,26 +609,10 @@ public class MyGame implements ApplicationListener {
         return count;
     }
 
-    String fuelRefillLabel() {
-        int cost = fuelRefillCost();
-        return cost <= 0 ? "DEPOSITO OK" : "RELLENAR " + cost;
-    }
 
     /** Coste de rellenar O2 según lo que falte. */
-    private int o2RefillCost() {
-        float missing = Math.max(0f, session.pilot.o2Max - session.pilot.oxygen);
-        return upgrades.o2RefillCost(missing);
-    }
 
-    String o2RefillLabel() {
-        int cost = o2RefillCost();
-        return cost <= 0 ? "O2 OK" : "O2 " + cost;
-    }
 
-    boolean canRefillO2() {
-        return runActive && session.pilot.oxygen < session.pilot.o2Max - 0.01f
-                && upgrades.coins() + world.coinsEarned >= o2RefillCost();
-    }
 
     /** Hay una nave legado y el jugador está dentro de su radio de recuperación. */
     private boolean canRecoverLegacy() {
@@ -763,15 +637,7 @@ public class MyGame implements ApplicationListener {
         return Math.max(5, Math.round(missing * 0.70f));
     }
 
-    String repairLabel(int index) {
-        int cost = repairCost(index);
-        return cost == 0 ? "OK" : "REPARAR " + cost;
-    }
 
-    boolean canRepair(int index) {
-        return runActive && repairCost(index) > 0
-                && upgrades.coins() + world.coinsEarned >= repairCost(index);
-    }
 
     /** Repara por completo una parte y conserva el combustible que gana el deposito al ampliarse. */
     void repairPart(int index) {
@@ -816,9 +682,6 @@ public class MyGame implements ApplicationListener {
         saveRun();
     }
 
-    String buyLabel(int i) {
-        return upgrades.level(i) >= Upgrades.MAX_LEVEL ? "MAX" : "COMPRAR " + upgrades.cost(i);
-    }
 
     private Button stacked(String label, float cx, float cy, float bw, float bh, float gap, int index, int count) {
         float total = count * bh + (count - 1) * gap;
@@ -827,9 +690,6 @@ public class MyGame implements ApplicationListener {
         return new Button(label, cx, y, bw, bh);
     }
 
-    float shopRowTop(int index) {
-        return shopListTop - index * (shopRowH + shopRowGap);
-    }
 
     /** Pulsación nueva sobre el botón (en cualquier dedo). */
     boolean tapped(Button b) {
@@ -879,7 +739,6 @@ public class MyGame implements ApplicationListener {
         switch (state) {
             case PLAYING: updatePlaying(dt); break;
             case PAUSED: handlePause(); break;
-            case SHOP: handleShop(); break;
             case DOCKED: stationScreen.handle(); break;
             case OVER: handleOver(); break;
             case DYING: updateDying(dt); break;
@@ -899,7 +758,6 @@ public class MyGame implements ApplicationListener {
         switch (s) {
             case PLAYING: return "PLAYING";
             case PAUSED: return "PAUSED";
-            case SHOP: return "SHOP";
             case DOCKED: return "DOCKED";
             case OVER: return "OVER";
             case DYING: return "DYING";
@@ -948,7 +806,7 @@ public class MyGame implements ApplicationListener {
                         + "\"fuel\":%.1f,\"maxFuel\":%.1f,\"throttle\":%.2f,\"speed\":%.1f,"
                         + "\"asteroids\":%d,\"pickups\":%d,\"missiles\":%d,"
                         + "\"ignoredHits\":%d,\"x\":%.1f,\"y\":%.1f,\"w\":%d,\"h\":%d,"
-                        + "\"pilot\":\"%s\",\"immortal\":%s,\"shopReturn\":\"%s\",\"overCoins\":%d,"
+                        + "\"pilot\":\"%s\",\"immortal\":%s,\"overCoins\":%d,"
                         + "\"pilotHealth\":%.1f,\"pilotMaxHealth\":%.1f,"
                         + "\"pilotOxygen\":%.1f,\"pilotO2Max\":%.1f,\"pilotStatus\":\"%s\","
                         + "\"pilotGrace\":%.1f,\"pilotLeak\":%.1f,\"pilotBreach\":%s,"
@@ -973,7 +831,7 @@ public class MyGame implements ApplicationListener {
                 world.asteroids.size, world.fuel.size, world.missiles.size,
                 world.ignoredHits, world.ship.pos.x, world.ship.pos.y,
                 Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                pilotName(world.pilot.mode()), world.immortal, stateName(shopReturn), overCoins,
+                pilotName(world.pilot.mode()), world.immortal, overCoins,
                 session.pilot.health, session.pilot.maxHealth,
                 session.pilot.oxygen, session.pilot.o2Max, session.pilot.status.name(),
                 session.pilot.oxygenGrace, session.lifeSupport.leak,
@@ -1024,8 +882,6 @@ public class MyGame implements ApplicationListener {
     private void handleMenu() {
         if (tapped(btnPlay)) {
             startRun();
-        } else if (tapped(btnShop)) {
-            openShop(MENU);
         }
     }
 
@@ -1370,117 +1226,12 @@ public class MyGame implements ApplicationListener {
     private void handlePause() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnResume)) {
             state = PLAYING;
-        } else if (tapped(btnPauseShop)) {
-            openShop(PAUSED);
         } else if (tapped(btnMenu)) {
             state = MENU;
             saveRun();
         }
     }
 
-    private void handleShop() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnBack)) {
-            state = shopReturn;
-            return;
-        }
-        if (runActive && tapped(btnTabUpgrades)) {
-            if (shopTab != 0) {
-                shopTab = 0;
-                layoutUi();
-            }
-            return;
-        }
-        if (runActive && tapped(btnTabRepairs)) {
-            if (shopTab != 1) {
-                shopTab = 1;
-                layoutUi();
-            }
-            return;
-        }
-        if (runActive && tapped(btnTabMelt)) {
-            if (shopTab != 2) {
-                shopTab = 2;
-                layoutUi();
-            }
-            return;
-        }
-        if (shopTab == 1) {
-            if (btnRefill != null && tapped(btnRefill) && canRefill()) {
-                int cost = fuelRefillCost();
-                if (upgrades.spendCoins(cost)) {
-                    world.ship.refuel(world.ship.maxFuel);
-                    saveRun();
-                    logEvent(String.format(Locale.US,
-                            "{\"event\":\"refill\",\"cost\":%d,\"coins\":%d}",
-                            cost, upgrades.coins()));
-                }
-                layoutUi();
-                return;
-            }
-            if (btnO2 != null && tapped(btnO2) && canRefillO2()) {
-                int cost = o2RefillCost();
-                if (upgrades.spendCoins(cost)) {
-                    session.pilot.refillOxygen();
-                    saveRun();
-                    logEvent(String.format(Locale.US,
-                            "{\"event\":\"o2_refill\",\"cost\":%d,\"coins\":%d}",
-                            cost, upgrades.coins()));
-                }
-                layoutUi();
-                return;
-            }
-            for (int i = 0; i < repairButtons.size; i++) {
-                if (!tapped(repairButtons.get(i))) {
-                    continue;
-                }
-                int cost = repairCost(i);
-                if (cost > 0) {
-                    if (upgrades.spendCoins(cost)) {
-                        repairPart(i);
-                        saveRun();
-                        logEvent(String.format(Locale.US,
-                                "{\"event\":\"repair\",\"part\":%d,\"cost\":%d,\"coins\":%d}",
-                                i, cost, upgrades.coins()));
-                    }
-                }
-                layoutUi();
-                return;
-            }
-            return;
-        }
-        if (shopTab == 2) {
-            for (int i = 0; i < meltButtons.size; i++) {
-                if (!tapped(meltButtons.get(i))) {
-                    continue;
-                }
-                Cargo entry = meltEntries.get(i);
-                int value = Upgrades.meltValue(entry);
-                if (world.ship.cargo().removeExact(entry.commodity, entry.amount)) {
-                    upgrades.addCoins(value);
-                    saveRun();
-                    logEvent(String.format(Locale.US,
-                            "{\"event\":\"melt\",\"commodity\":\"%s\",\"amount\":%d,"
-                                    + "\"credits\":%d,\"coins\":%d}",
-                            entry.commodity.name(), entry.amount, value, upgrades.coins()));
-                }
-                layoutUi();
-                return;
-            }
-            return;
-        }
-        for (int i = 0; i < buyButtons.size; i++) {
-            if (tapped(buyButtons.get(i))) {
-                if (upgrades.buy(i)) {
-                    applyUpgradeToRun(i);
-                    logEvent(String.format(Locale.US,
-                            "{\"event\":\"buy\",\"index\":%d,\"level\":%d,\"coins\":%d}",
-                            i, upgrades.level(i), upgrades.coins()));
-                }
-                layoutUi();
-                break;
-            }
-        }
-    }
 
     private void handleOver() {
         if (tapped(btnRetry)) {
@@ -1503,17 +1254,6 @@ public class MyGame implements ApplicationListener {
         logEvent("{\"event\":\"undock\"}");
     }
 
-    private void openShop(int from) {
-        shopReturn = from;
-        state = SHOP;
-        shopTab = 0;
-        // Las monedas de la partida se ingresan al entrar para poder gastarlas
-        // en mejoras, recargas y reparaciones sin dejar dos saldos distintos.
-        bankCoins();
-        saveRun();
-        layoutUi();
-        logEvent("{\"event\":\"shop\",\"from\":\"" + stateName(from) + "\"}");
-    }
 
     /** Suma al saldo guardado las monedas de la partida y las pone a cero. */
     private void bankCoins() {
@@ -1597,8 +1337,6 @@ public class MyGame implements ApplicationListener {
 
         if (state == MENU) {
             overlay.drawMenu(w, h);
-        } else if (state == SHOP) {
-            shopRenderer.draw(w, h);
         } else if (state == DYING) {
             overlay.drawDeathFlourish(w, h);
         } else if (state == DOCKED) {

@@ -88,7 +88,7 @@ telemetría) y el dibujo se reparte en módulos:
 |---|---|
 | `UiKit` | Paneles, botones, iconos, pips de nivel, barras y texto (con `GlyphLayout`). |
 | `PlayHud` | Panel superior, combustible, energía, casco, supervivencia, avisos, joystick y acelerador. |
-| `ShopRenderer` | Pestañas y tarjetas de mejoras, reparaciones y fundición. |
+| `StationScreen` | Servicios de estación: descarga, venta, combustible, O2, reparaciones y mejoras. |
 | `OverlayRenderer` | Menú principal, pausa, fin de partida y fundido de muerte. |
 | `SpaceBackground` | Degradado, estrellas con parallax, nebulosas y planeta. |
 | `HudView` | Estado efímero reutilizable que `MyGame` pasa al HUD sin asignar objetos por frame. |
@@ -132,7 +132,7 @@ estáticos se reutilizan.
 - `StationStorage` mide la capacidad en UM. `depositAll()` mueve lo que cabe y
   deja el resto en la nave; `sellAll()` paga el precio base y vacía el almacén.
 - Los créditos de la partida se ingresan al acoplar (`bankCoins`).
-- Los precios usan las mismas fórmulas que la tienda temporal: combustible
+- Los precios usan las mismas fórmulas que la antigua tienda: combustible
   1 cr/UM (mín. 5), O2 0,5 cr/UM (mín. 5) y reparación 0,7 cr por punto.
 - `DESPEGAR` cierra la pantalla y devuelve la nave al exterior. La tienda de
   pausa se retira en T-504.
@@ -340,13 +340,13 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   verde-cian distintos del láser.
 - Telemetría: `tractorActive`, `tractorTargets` y `tractorLevel`.
 
-## Economía temporal: fundición
+## Venta en estación
 
 - Destruir o minar no concede monedas; el valor está en el mineral de la bodega.
-- La pestaña `FUNDIR` de la tienda convierte cada entrada completa a precio base
-  (`Upgrades.meltValue()`), vacía la bodega y suma créditos.
-- Es un puente para mantener el juego jugable hasta la estación de S5, donde el
-  mercado sustituirá a esta fundición.
+- La estación descarga el mineral al almacén y lo vende a precio base desde
+  `StationScreen` (`StationStorage.sellAll()`).
+- La antigua fundición de la tienda de pausa se retiró en T-504; la economía
+  principal vive en la estación. El mercado con precios variables llega en S6.
 
 ## Masa y movimiento
 

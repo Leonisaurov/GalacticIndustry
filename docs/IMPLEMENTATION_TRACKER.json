@@ -4,23 +4,24 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T02:40:00-06:00",
-    "lastSessionId": "S-043",
+    "lastUpdated": "2026-11-08T02:46:00-06:00",
+    "lastSessionId": "S-044",
     "lastVerification": {
-      "date": "2026-11-08T02:40:00-06:00",
+      "date": "2026-11-08T02:46:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "StationScreen con descarga, venta, combustible, O2, reparación y mejoras",
-        "StationStorage: descarga total/parcial y venta a precio base",
-        "13_station: flujo completo de servicios y despegue",
-        "02_navigation y 03_controls: OK",
+        "La pausa solo ofrece CONTINUAR/MENU; sin tienda",
+        "El menú principal ya no tiene TIENDA",
+        "Economía solo en StationScreen (descarga, venta, combustible, O2, reparación y mejoras)",
+        "09_wing_damage repara en estación; 19_melt retirado",
+        "02_navigation, 03_controls, 07_visual_play, 09_wing_damage y 13_station: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S5",
     "currentTaskId": null,
-    "nextTaskId": "T-504",
+    "nextTaskId": "T-505",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -2766,7 +2767,7 @@
       "description": "Eliminar la tienda económica del menú de pausa. Compras, ventas, mejoras, reparaciones y servicios económicos solo en estaciones espaciales físicas.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-503"
@@ -2793,10 +2794,47 @@
         "13_station"
       ],
       "technicalNotes": "D-002 aprobada: eliminar la tienda de pausa; no dejar una vía de economía infinita desde la pausa.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-044",
+          "date": "2026-11-08T02:46:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "Retirada total de la tienda económica de pausa y del menú. Se eliminan ShopRenderer, FUNDIR y la fundición temporal; compras, ventas, combustible, O2, reparaciones y mejoras pasan a StationScreen. Tests 02/03/07/09 actualizados y station_service_test como transición.",
+          "files": [
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/02_navigation.sh",
+            "tools/tests/03_controls.sh",
+            "tools/tests/07_visual_play.sh",
+            "tools/tests/09_wing_damage.sh",
+            "tools/tests/testlib.sh",
+            "docs/DECISIONS.md",
+            "docs/arquitectura.md"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "07_visual_play",
+            "09_wing_damage",
+            "13_station"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "La pausa solo tiene CONTINUAR y MENU",
+        "02_navigation: MENU -> PLAYING -> PAUSED -> MENU -> PLAYING",
+        "03_controls: PLAYING -> PAUSED -> PLAYING sin tienda",
+        "09_wing_damage repara el ala en la estación",
+        "19_melt eliminado; la venta se cubre en 13_station",
+        "docs/DECISIONS.md D-002 actualizada"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T02:46:00-06:00"
     },
     {
       "id": "T-505",
@@ -2805,7 +2843,7 @@
       "description": "Guardar y restaurar estaciones, almacén, posición y estado de acoplamiento.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-501",
@@ -5240,6 +5278,35 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-044",
+      "date": "2026-11-08T02:46:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Retirada de la tienda de pausa",
+      "summary": "La economía sale de la pausa y del menú. ShopRenderer/FUNDIR se eliminan; toda compra, venta, repostaje y reparación ocurre en StationScreen. Tests de navegación y capturas actualizados.",
+      "tasks": [
+        "T-504"
+      ],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/02_navigation.sh",
+        "tools/tests/03_controls.sh",
+        "tools/tests/07_visual_play.sh",
+        "tools/tests/09_wing_damage.sh",
+        "tools/tests/testlib.sh",
+        "docs/DECISIONS.md",
+        "docs/arquitectura.md"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 02_navigation 03_controls 07_visual_play 09_wing_damage 13_station"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-505 (persistir estación y acople)."
+    },
     {
       "id": "S-043",
       "date": "2026-11-08T02:40:00-06:00",

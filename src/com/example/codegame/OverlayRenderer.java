@@ -133,7 +133,6 @@ final class OverlayRenderer {
         Ship.drawBody(shapes, shipX, shipY, shipHeading, shipSize, true, 1f, game.time);
 
         ui.drawButton(game.btnPlay, Visuals.BTN_PRIMARY, true);
-        ui.drawButton(game.btnShop, Visuals.BTN_SECONDARY, true);
         ui.coinChipShape(w * 0.5f, h * 0.725f);
         shapes.end();
 
@@ -142,7 +141,6 @@ final class OverlayRenderer {
         ui.textCentered("PILOTA. MINA. SOBREVIVE.", w * 0.5f, h * 0.795f, 0.95f * game.u, Visuals.ACCENT);
         ui.coinChipText(w * 0.5f, h * 0.725f, game.upgrades.coins());
         ui.drawButtonText(game.btnPlay, true);
-        ui.drawButtonText(game.btnShop, true);
         if (game.runActive) {
             ui.textCentered("PARTIDA GUARDADA", w * 0.5f, h * 0.56f, 0.78f * game.u, Visuals.GOLD);
         }
@@ -190,7 +188,6 @@ final class OverlayRenderer {
         shapes.setColor(0.30f, 0.65f, 1f, 0.55f);
         shapes.rect(px + pw * 0.25f, py + ph - 4f * game.u, pw * 0.5f, 3f * game.u);
         ui.drawButton(game.btnResume, Visuals.BTN_PRIMARY, true);
-        ui.drawButton(game.btnPauseShop, Visuals.BTN_SECONDARY, true);
         ui.drawButton(game.btnMenu, Visuals.BTN_SECONDARY, true);
         shapes.end();
 
@@ -199,7 +196,6 @@ final class OverlayRenderer {
         ui.textCenteredMiddle("OLEADA " + game.world.wave + "   -   PUNTOS " + game.world.score,
                 w * 0.5f, h * 0.5f + 105f * game.u, 0.92f * game.u, Visuals.ACCENT);
         ui.drawButtonText(game.btnResume, true);
-        ui.drawButtonText(game.btnPauseShop, true);
         ui.drawButtonText(game.btnMenu, true);
         batch.end();
     }

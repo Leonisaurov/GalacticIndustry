@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test: controles de partida, acelerador y pausa
+# Test: controles de partida, acelerador y pausa (sin tienda)
 set -euo pipefail
 source "$(dirname "$0")/testlib.sh"
 
@@ -27,15 +27,10 @@ assert_eq "sigue con el casco intacto" "$hull_before" "$(printf '%s' "$status" |
 
 tap "$PAUSE_X" "$PAUSE_Y" 0.2
 wait_current_state PAUSED 5 || fail "no se pausó"
-tap "$((W / 2))" "$PAUSE_SHOP_Y" 0.2
-wait_current_state SHOP 5 || fail "no se abrió la tienda de pausa"
-sleep 0.5
 status=$(latest_status)
-assert_eq "origen de la tienda de pausa" PAUSED "$(printf '%s' "$status" | json_get shopReturn)"
-tap "$BACK_X" "$BACK_Y" 0.2
-wait_current_state PAUSED 5 || fail "no se volvió a pausa"
+assert_eq "pausa sin tienda" PAUSED "$(printf '%s' "$status" | json_get state)"
 tap "$((W / 2))" "$PAUSE_CONTINUE_Y" 0.2
 wait_current_state PLAYING 5 || fail "no se reanudó la partida"
 
 check_no_crash
-echo "OK 03_controls: PLAYING (inmortal, consume combustible) -> PAUSED -> SHOP -> PLAYING"
+echo "OK 03_controls: PLAYING (inmortal, consume combustible) -> PAUSED -> PLAYING"

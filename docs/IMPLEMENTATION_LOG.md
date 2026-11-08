@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T02:40:00-06:00  
+**Última actualización:** 2026-11-08T02:46:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,67 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-044 — Retirada de la tienda de pausa
+
+- **Fecha:** 2026-11-08T02:46:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-504
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- La pausa solo muestra `CONTINUAR` y `MENU`; no hay tienda.
+- El menú principal solo ofrece jugar/continuar (sin `TIENDA`).
+- Se elimina `ShopRenderer`, el estado `SHOP`, la pestaña `FUNDIR` y
+  `Upgrades.meltValue()`.
+- Compras, ventas, combustible, O2, reparaciones y mejoras pasan a
+  `StationScreen`, tras acoplar.
+- `station_service_test` es la vía de pruebas para la economía.
+- `09_wing_damage` repara el ala en la estación; `19_melt` se retira.
+- D-002 queda implementada y documentada.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/OverlayRenderer.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/02_navigation.sh`
+- `tools/tests/03_controls.sh`
+- `tools/tests/07_visual_play.sh`
+- `tools/tests/09_wing_damage.sh`
+- `tools/tests/testlib.sh`
+- `docs/DECISIONS.md`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `02_navigation 03_controls 07_visual_play 09_wing_damage 13_station`: **5/5 OK**.
+
+### Evidencias
+
+- `02_navigation`: `MENU -> PLAYING -> PAUSED -> MENU -> PLAYING`.
+- `03_controls`: `PLAYING -> PAUSED -> PLAYING` sin tienda.
+- `09_wing_damage`: ala perdida y reparada en la estación.
+- `13_station`: la venta cubre la antigua fundición.
+- Captura `05_pause`: solo `CONTINUAR` y `MENU`.
+
+### Decisiones tomadas
+
+- No quedan servicios económicos en pausa ni en el menú.
+- La economía principal es física (estación); el mercado de S6 añadirá precios.
+- La fundición temporal desaparece al existir venta en estación.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-505 — Persistir estación, almacén y estado acoplado**.
 
 ---
 
