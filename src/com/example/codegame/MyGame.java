@@ -597,6 +597,8 @@ public class MyGame implements ApplicationListener {
             if (gained > 0f) {
                 world.ship.refuel(gained);
             }
+        } else if (index == Upgrades.BODEGA) {
+            world.ship.syncCargo(upgrades);
         }
         saveRun();
     }
@@ -1739,6 +1741,9 @@ public class MyGame implements ApplicationListener {
                 0.78f * u, partColor(hullFrac));
         textLeftMiddle("PUNTOS " + world.score, pad + 44f * u + fuelBarW(w) + 14f * u,
                 h - 86f * u, 0.78f * u, Visuals.TEXT_DIM);
+        textLeft("CARGA " + Math.round(world.ship.cargo().usedMass()) + "/"
+                        + Math.round(world.ship.cargo().capacity()) + " UM",
+                pad + 8f * u, h - 100f * u, 0.60f * u, Visuals.TEXT_DIM);
         float frac = world.ship.maxFuel > 0f ? world.ship.fuel / world.ship.maxFuel : 0f;
         textCenteredMiddle(Math.round(frac * 100f) + "%",
                 pad + 44f * u + fuelBarW(w) * 0.5f, h - 86f * u, 0.78f * u, Color.WHITE);

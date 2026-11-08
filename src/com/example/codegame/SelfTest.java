@@ -1069,6 +1069,44 @@ public class SelfTest {
                 "BENCH viaje ida/vuelta 800u combustible=%.1f restante=%.1f",
                 roundTripUsed, roundTrip.ship.fuel));
 
+        // T-305: mejora Bodega, capacidad y persistencia.
+        Upgrades cargoUp = new Upgrades(true);
+        check("bodega base 100", cargoUp.cargoCapacity() == 100f);
+        cargoUp.addCoins(1000);
+        check("la mejora Bodega se compra", cargoUp.buy(Upgrades.BODEGA));
+        check("bodega sube 25 por nivel", cargoUp.cargoCapacity() == 125f);
+        Ship upgradedShip = new Ship();
+        upgradedShip.reset(cargoUp, 0f, 0f);
+        check("la nave aplica la capacidad de bodega",
+                upgradedShip.cargo().capacity() == 125f);
+        GameSession cargoUpSession = new GameSession(new PlayerProfile(cargoUp));
+        cargoUpSession.startRun();
+        check("la sesion usa la bodega mejorada",
+                cargoUpSession.cargo().capacity() == 125f);
+        check("la bodega mejorada acepta carga",
+                cargoUpSession.cargo().addExact(Commodity.HIELO, 100));
+        SaveService.MemoryStorage cargoUpStorage = new SaveService.MemoryStorage();
+        SaveService cargoUpService = new SaveService(cargoUpStorage);
+        check("la mejora de bodega se guarda", cargoUpService.save(cargoUpSession));
+        GameSession cargoUpLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("la mejora de bodega se restaura",
+                cargoUpService.load(cargoUpLoaded) == SaveService.LoadStatus.V2
+                        && cargoUpLoaded.cargo().capacity() == 125f
+                        && cargoUpLoaded.cargo().amount(Commodity.HIELO) == 100);
+        GameSession oldLevelsSession = new GameSession(new PlayerProfile(new Upgrades(true)));
+        oldLevelsSession.startRun();
+        SaveService.MemoryStorage oldLevelStorage = new SaveService.MemoryStorage();
+        SaveService oldLevelService = new SaveService(oldLevelStorage);
+        oldLevelService.save(oldLevelsSession);
+        String sixLevels = oldLevelStorage.read(SaveService.SAVE_NAME);
+        String fiveLevels = sixLevels.replace(
+                "\"levels\":[0,0,0,0,0,0]", "\"levels\":[0,0,0,0,0]");
+        GameSession oldLevelsLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("un v2 con 5 niveles carga con Bodega 0",
+                !sixLevels.equals(fiveLevels)
+                        && SaveCodec.decode(fiveLevels, oldLevelsLoaded)
+                        && oldLevelsLoaded.cargo().capacity() == 100f);
+
         // Partida simulada de 2 minutos: la nave apunta al meteorito más cercano y dispara.
         w.start();
         int maxAsteroids = 0;

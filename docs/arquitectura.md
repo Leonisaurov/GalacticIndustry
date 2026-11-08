@@ -207,6 +207,9 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
   `GameSession.cargo()` delega en la nave. El guardado v2 conserva las entradas
   con masa y las partidas antiguas sin campo `cargo` cargan vacías.
   La minería llega en S4; la masa en movimiento, en T-303.
+- `BODEGA` es la sexta mejora del loadout: +25 UM por nivel desde 100 base.
+  `Ship.reset()`/`syncCargo()` aplican la capacidad y el HUD muestra
+  `CARGA usado/capacidad UM` bajo el combustible.
 
 ## Masa y movimiento
 

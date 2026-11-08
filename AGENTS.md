@@ -149,10 +149,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S3` — Inventario, almacenamiento y peso.
 - No hay tarea en progreso.
-- Última tarea completada: `T-304` — Rebalancear depósito y consumo.
-- Primera tarea disponible: `T-305` — Añadir la mejora Bodega y el HUD de masa.
+- Última tarea completada: `T-305` — Añadir la mejora Bodega y el HUD de masa.
+- Primera tarea disponible: `T-306` — Verificación de carga, masa y combustible.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **23 %** (19 de 81 tareas de progreso).
+- La implementación del juego está al **25 %** (20 de 81 tareas de progreso).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

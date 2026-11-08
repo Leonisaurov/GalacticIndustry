@@ -14,6 +14,7 @@ class Upgrades {
     static final int CANON = ShipLoadout.CANON;
     static final int BLINDAJE = ShipLoadout.BLINDAJE;
     static final int GASOLINA = ShipLoadout.GASOLINA;
+    static final int BODEGA = ShipLoadout.BODEGA;
     static final int COUNT = ShipLoadout.COUNT;
     static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
     /** Precio del combustible en la tienda temporal: 1 crédito por unidad. */
@@ -27,13 +28,16 @@ class Upgrades {
     /** Coste mínimo de una recarga de O2. */
     static final int O2_REFILL_MIN = 5;
 
-    static final String[] NAMES = {"Motor", "Deposito", "Canon", "Blindaje", "Gasolina"};
+    static final String[] NAMES = {
+            "Motor", "Deposito", "Canon", "Blindaje", "Gasolina", "Bodega"
+    };
     static final String[] DESCS = {
             "Mas aceleracion y velocidad",
             "Mas combustible maximo",
             "Mas dano y cadencia de disparo",
             "Refuerza la integridad del casco",
-            "Menos consumo de combustible"
+            "Menos consumo de combustible",
+            "Mas capacidad de carga"
     };
 
     /** Preferencias de Android; null cuando se usa el almacén en memoria (tests). */
@@ -248,6 +252,11 @@ class Upgrades {
     /** Multiplicador del consumo de combustible: 1 sin mejora, 0.6 con nivel máximo. */
     float fuelUse() {
         return 1f - 0.08f * level(GASOLINA);
+    }
+
+    /** Capacidad de bodega: 100 UM base y +25 UM por nivel de Bodega. */
+    float cargoCapacity() {
+        return GameData.BASE_CARGO_CAPACITY + 25f * level(BODEGA);
     }
 
     /** Loadout activo de la nave; lo usara tambien ShipState en tareas posteriores. */

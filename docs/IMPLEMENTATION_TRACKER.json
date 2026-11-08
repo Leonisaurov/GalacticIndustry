@@ -4,24 +4,23 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T00:49:00-06:00",
-    "lastSessionId": "S-026",
+    "lastUpdated": "2026-11-08T00:52:00-06:00",
+    "lastSessionId": "S-027",
     "lastVerification": {
-      "date": "2026-11-08T00:49:00-06:00",
+      "date": "2026-11-08T00:52:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Depósito base 160 y consumo base 10",
-        "Ida y vuelta de 800 u con carga completa: ~111.8 usado, 48.2 restante",
-        "Bidón de 40 sigue siendo útil (25 % del depósito)",
-        "Recarga a 1 crédito/unidad con mínimo 5",
-        "03_controls y 09_wing_damage: OK",
+        "Mejora Bodega: +25 UM por nivel y compra con créditos",
+        "HUD muestra CARGA usado/capacidad UM",
+        "La mejora se guarda/restaura; v2 con 5 niveles migra con Bodega 0",
+        "02_navigation, 03_controls y 10_survival: OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S3",
     "currentTaskId": null,
-    "nextTaskId": "T-305",
+    "nextTaskId": "T-306",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -1768,7 +1767,7 @@
       "description": "Introducir la mejora de capacidad y mostrar masa/capacidad en la interfaz.",
       "category": "implementation",
       "priority": "P1",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-302"
@@ -1792,10 +1791,40 @@
         "03_controls"
       ],
       "technicalNotes": "La mejora puede añadir masa base para que no sea gratis.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-027",
+          "date": "2026-11-08T00:52:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "BODEGA como sexta mejora: +25 UM de capacidad por nivel, aplicada a Ship y persistida en el loadout. HUD muestra CARGA usado/capacidad UM. Los guardados v2 de 5 niveles migran con Bodega 0.",
+          "files": [
+            "src/com/example/codegame/ShipLoadout.java",
+            "src/com/example/codegame/Upgrades.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java"
+          ],
+          "tests": [
+            "01_logic",
+            "02_navigation",
+            "03_controls",
+            "10_survival (visual)"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS bodega base 100; PASS la mejora Bodega se compra; PASS bodega sube 25 por nivel",
+        "PASS la nave aplica la capacidad de bodega; PASS la sesion usa la bodega mejorada",
+        "PASS la mejora de bodega se guarda/restaura",
+        "PASS un v2 con 5 niveles carga con Bodega 0",
+        "Captura 20_survival_hud: CARGA 0/100 UM",
+        "02_navigation, 03_controls y 10_survival OK"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07"
+      "updatedAt": "2026-11-08T00:52:00-06:00"
     },
     {
       "id": "T-306",
@@ -1804,7 +1833,7 @@
       "description": "Cerrar la etapa con pruebas de capacidad, masa, consumo, guardado y viabilidad.",
       "category": "implementation",
       "priority": "P0",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-303",
@@ -4672,6 +4701,30 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-027",
+      "date": "2026-11-08T00:52:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Mejora Bodega y HUD de masa",
+      "summary": "BODEGA se añade como sexta mejora (+25 UM/nivel), se aplica a Ship y persiste en el loadout. El HUD muestra CARGA usado/capacidad. Los guardados v2 de 5 niveles migran con Bodega 0.",
+      "tasks": [
+        "T-305"
+      ],
+      "files": [
+        "src/com/example/codegame/ShipLoadout.java",
+        "src/com/example/codegame/Upgrades.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 02_navigation 03_controls 10_survival"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-306 (verificación y cierre de S3)."
+    },
     {
       "id": "S-026",
       "date": "2026-11-08T00:49:00-06:00",

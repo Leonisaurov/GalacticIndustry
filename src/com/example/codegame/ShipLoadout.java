@@ -25,7 +25,8 @@ class ShipLoadout {
     static final int CANON = 2;
     static final int BLINDAJE = 3;
     static final int GASOLINA = 4;
-    static final int COUNT = 5;
+    static final int BODEGA = 5;
+    static final int COUNT = 6;
     static final int MAX_LEVEL = 5;
 
     static final int MODULE_SLOTS = 4;

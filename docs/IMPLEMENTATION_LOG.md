@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T00:49:00-06:00  
+**Última actualización:** 2026-11-08T00:52:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,64 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-027 — Mejora Bodega y HUD de masa
+
+- **Fecha:** 2026-11-08T00:52:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-305
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `BODEGA` es la sexta mejora: +25 UM de capacidad por nivel.
+- `Ship.reset()` y `syncCargo()` aplican la capacidad del loadout.
+- `Upgrades.cargoCapacity()` parte de 100 UM.
+- El HUD muestra `CARGA usado/capacidad UM` bajo la barra de combustible;
+  no se añadió otra barra sin jerarquía.
+- La mejora se guarda/restaura en el loadout y los guardados v2 de 5 niveles
+  migran con Bodega 0.
+
+### Archivos modificados
+
+- `src/com/example/codegame/ShipLoadout.java`
+- `src/com/example/codegame/Upgrades.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `docs/arquitectura.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 02_navigation 03_controls 10_survival`: **3/3 OK**.
+
+### Evidencias
+
+- `PASS bodega base 100`
+- `PASS la mejora Bodega se compra`
+- `PASS bodega sube 25 por nivel`
+- `PASS la nave aplica la capacidad de bodega`
+- `PASS la sesion usa la bodega mejorada`
+- `PASS la bodega mejorada acepta carga`
+- `PASS la mejora de bodega se guarda/restaura`
+- `PASS un v2 con 5 niveles carga con Bodega 0`
+- Captura `20_survival_hud`: `CARGA 0/100 UM`.
+
+### Decisiones tomadas
+
+- La capacidad se deriva del nivel de Bodega; no se guarda como campo aparte.
+- Los niveles antiguos se completan con 0.
+- El HUD usa texto compacto para no añadir otra barra.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-306 — Verificación de carga, masa y combustible**.
 
 ---
 

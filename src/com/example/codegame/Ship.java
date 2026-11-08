@@ -65,7 +65,7 @@ class Ship {
         }
         maxFuel = up.maxFuel();
         fuel = maxFuel;
-        cargo.setCapacity(GameData.BASE_CARGO_CAPACITY);
+        cargo.setCapacity(up.cargoCapacity());
         cargo.clear();
         cooldown = 0f;
         invulnerable = 0f;
@@ -183,6 +183,11 @@ class Ship {
         if (fuel > maxFuel) {
             fuel = maxFuel;
         }
+    }
+
+    /** Recalcula la capacidad de bodega tras comprar la mejora. */
+    void syncCargo(Upgrades up) {
+        cargo.setCapacity(up.cargoCapacity());
     }
 
     /** Ángulo normalizado al intervalo [-180, 180). */

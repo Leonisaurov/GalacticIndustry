@@ -190,12 +190,15 @@ final class SaveCodec {
             d.coins = profile.getInt("coins", 0);
             d.refills = profile.getInt("refills", 0);
             JsonValue levels = profile.get("levels");
-            if (levels == null || !levels.isArray() || levels.size != ShipLoadout.COUNT) {
+            // Los guardados anteriores a T-305 tienen 5 niveles; BODEGA se
+            // rellena a 0.
+            if (levels == null || !levels.isArray()
+                    || levels.size < 5 || levels.size > ShipLoadout.COUNT) {
                 return null;
             }
             d.levels = new int[ShipLoadout.COUNT];
             for (int i = 0; i < ShipLoadout.COUNT; i++) {
-                d.levels[i] = levels.get(i).asInt();
+                d.levels[i] = i < levels.size ? levels.get(i).asInt() : 0;
             }
             d.modules = new String[ShipLoadout.MODULE_SLOTS];
             JsonValue modules = profile.get("modules");
