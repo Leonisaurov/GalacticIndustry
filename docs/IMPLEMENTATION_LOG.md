@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T01:47:00-06:00  
+**Última actualización:** 2026-11-08T02:00:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,71 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-037 — Refactor de MyGame en módulos de UI
+
+- **Fecha:** 2026-11-08T02:00:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-007
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+`MyGame` deja de ser un monolito: pasa de **2.623 a ~1.460 líneas** y delega
+el dibujo en módulos con estado explícito:
+
+| Clase | Responsabilidad |
+|---|---|
+| `UiKit` | Paneles, botones, iconos, pips, barras y texto. |
+| `SpaceBackground` | Degradado, estrellas con parallax, nebulosas y planeta. |
+| `PlayHud` | Panel superior, combustible, energía, casco, supervivencia, avisos y controles. |
+| `ShopRenderer` | Pestañas y tarjetas de mejoras, reparaciones y fundición. |
+| `OverlayRenderer` | Menú, pausa, fin de partida y fundido de muerte. |
+| `HudView` | Estado efímero reutilizable para el HUD. |
+
+`MyGame` conserva el flujo de estados, la entrada, el guardado, la telemetría y
+la coordinación. No cambia ningún comportamiento visible.
+
+### Archivos modificados
+
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/UiKit.java` (nuevo)
+- `src/com/example/codegame/SpaceBackground.java` (nuevo)
+- `src/com/example/codegame/PlayHud.java` (nuevo)
+- `src/com/example/codegame/ShopRenderer.java` (nuevo)
+- `src/com/example/codegame/OverlayRenderer.java` (nuevo)
+- `src/com/example/codegame/HudView.java` (nuevo)
+- `docs/arquitectura.md`
+- `docs/MASTER_PLAN.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `06_visual_menu 07_visual_play 08_visual_death 09_wing_damage 10_survival 11_cargo 12_mining 19_melt`: **8/8 OK**.
+- `03_controls 04_autopilot 05_death 16_universe`: **4/4 OK**.
+
+### Evidencias
+
+- `wc -l MyGame.java`: 2.623 → ~1.460.
+- Capturas de menú, partida, tienda, muerte, HUD, carga y minería correctas.
+- Sin cambios en la lógica de juego ni en el guardado.
+
+### Decisiones tomadas
+
+- Los renderizadores reciben referencias estables y un `HudView` reutilizable;
+  no se asignan objetos por frame.
+- `MyGame` sigue siendo el dueño del estado y del flujo; los módulos solo leen
+  o pintan.
+- El refactor es estructural: no adelanta funcionalidad de T-410.
+
+### Pendiente / siguiente paso
+
+- Retomar **T-410 — Implementar rayo tractor y captura de fragmentos**
+  (`TractorBeam` y `EnergyCapacitor.drain` están en el commit WIP).
 
 ---
 

@@ -144,7 +144,7 @@ Un juego de exploración, minería, supervivencia, comercio y gestión de recurs
 2. `Upgrades` es global, no por nave.
 3. La generación de asteroides no es completamente determinista: parte usa `MathUtils.random` fuera de la semilla del chunk.
 4. El guardado no tiene versión ni composición de asteroides.
-5. `MyGame` es un monolito de ~1.900 líneas.
+5. `MyGame` era un monolito de ~2.600 líneas; T-007 lo dividió en `MyGame` (flujo), `UiKit`, `PlayHud`, `ShopRenderer`, `OverlayRenderer` y `SpaceBackground`.
 6. El dibujo no hace culling.
 7. `Effects` asigna objetos por partícula.
 8. La recarga de combustible se duplicaba globalmente; corregido en T-304 con 1 crédito/unidad y mínimo 5.

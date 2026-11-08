@@ -611,18 +611,16 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T01:47:00-06:00",
-    "lastSessionId": "S-036",
+    "lastUpdated": "2026-11-08T02:00:00-06:00",
+    "lastSessionId": "S-037",
     "lastVerification": {
-      "date": "2026-11-08T01:47:00-06:00",
+      "date": "2026-11-08T02:00:00-06:00",
       "result": "OK",
       "checks": [
-        "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "Fragmentos persistidos en v2 y en el formato legacy",
-        "Guardados sin fragmentos cargan vacíos",
-        "fragmentShare/fragmentLoss ajustables por instancia",
-        "El mundo legado conserva los fragmentos",
-        "12_mining, 04_autopilot y 16_universe: OK",
+        "MyGame reducido de 2.623 a ~1.460 líneas",
+        "UiKit, PlayHud, ShopRenderer, OverlayRenderer y SpaceBackground extraídos",
+        "01_logic y 8 pruebas de captura en verde",
+        "03_controls, 04_autopilot, 05_death y 16_universe OK",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
@@ -683,7 +681,7 @@
       "type": "preparation",
       "objective": "Conocer el proyecto real, fijar la visión, registrar decisiones y dejar el sistema de continuidad operativo.",
       "gate": "Auditoría, plan maestro, tracker, panel, decisiones y protocolo de agentes listos.",
-      "taskCount": 6,
+      "taskCount": 7,
       "implementationTaskCount": 0
     },
     {
@@ -1134,6 +1132,94 @@
       ],
       "createdAt": "2026-11-07",
       "updatedAt": "2026-11-07T22:15:00-06:00"
+    },
+    {
+      "id": "T-007",
+      "stageId": "S0",
+      "title": "Refactorizar MyGame en módulos de UI",
+      "description": "Sacar de MyGame el dibujo de HUD, tienda, menús, fondo espacial y primitivas de interfaz para dejar un orquestador manejable.",
+      "category": "preparation",
+      "priority": "P1",
+      "status": "COMPLETADO",
+      "countsForProgress": false,
+      "dependencies": [
+        "T-006",
+        "T-407"
+      ],
+      "decisionIds": [],
+      "files": [
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/UiKit.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/ShopRenderer.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/SpaceBackground.java",
+        "src/com/example/codegame/HudView.java"
+      ],
+      "acceptanceCriteria": [
+        "MyGame conserva el flujo de estados, entrada, guardado y telemetría.",
+        "HUD, tienda, menús, fondo y primitivas viven en clases propias.",
+        "El comportamiento visible no cambia.",
+        "Las pruebas de lógica y las capturas siguen en verde."
+      ],
+      "tests": [
+        "01_logic",
+        "06_visual_menu",
+        "07_visual_play",
+        "08_visual_death",
+        "09_wing_damage",
+        "10_survival",
+        "11_cargo",
+        "12_mining",
+        "19_melt",
+        "03_controls",
+        "04_autopilot",
+        "05_death",
+        "16_universe"
+      ],
+      "technicalNotes": "Refactor estructural sin cambios de diseño: MyGame pasa de ~2.600 a ~1.460 líneas y delega el dibujo en módulos con estado explícito.",
+      "executionLog": [
+        {
+          "sessionId": "S-037",
+          "date": "2026-11-08T02:00:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "MyGame se reduce de 2.623 a ~1.460 líneas. Se extraen UiKit (paneles/botones/texto), SpaceBackground (degradado/estrellas/nebulosa/planeta), PlayHud (HUD de partida), ShopRenderer (tienda) y OverlayRenderer (menú/pausa/fin/muerte), con HudView como estado efímero reutilizable.",
+          "files": [
+            "src/com/example/codegame/UiKit.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/ShopRenderer.java",
+            "src/com/example/codegame/OverlayRenderer.java",
+            "src/com/example/codegame/SpaceBackground.java",
+            "src/com/example/codegame/HudView.java",
+            "src/com/example/codegame/MyGame.java"
+          ],
+          "tests": [
+            "01_logic",
+            "06_visual_menu",
+            "07_visual_play",
+            "08_visual_death",
+            "09_wing_damage",
+            "10_survival",
+            "11_cargo",
+            "12_mining",
+            "19_melt",
+            "03_controls",
+            "04_autopilot",
+            "05_death",
+            "16_universe"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "wc -l MyGame.java: 2.623 -> ~1.460",
+        "08 capturas de dispositivo + 01_logic en verde",
+        "03_controls, 04_autopilot, 05_death y 16_universe OK",
+        "python3 tools/sync-dashboard.py --check"
+      ],
+      "createdAt": "2026-11-08",
+      "updatedAt": "2026-11-08T02:00:00-06:00"
     },
     {
       "id": "T-101",
@@ -5586,6 +5672,32 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-037",
+      "date": "2026-11-08T02:00:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Refactor de MyGame en módulos de UI",
+      "summary": "MyGame deja de ser un monolito: se extraen UiKit, SpaceBackground, PlayHud, ShopRenderer y OverlayRenderer, con HudView reutilizable. Solo cambia la estructura; el comportamiento y las capturas se mantienen.",
+      "tasks": [
+        "T-007"
+      ],
+      "files": [
+        "src/com/example/codegame/UiKit.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/ShopRenderer.java",
+        "src/com/example/codegame/OverlayRenderer.java",
+        "src/com/example/codegame/SpaceBackground.java",
+        "src/com/example/codegame/HudView.java",
+        "src/com/example/codegame/MyGame.java"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh --no-build 06_visual_menu 07_visual_play 08_visual_death 09_wing_damage 10_survival 11_cargo 12_mining 19_melt",
+        "tools/run-tests.sh --no-build 03_controls 04_autopilot 05_death 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "T-410 queda pendiente: TractorBeam y EnergyCapacitor.drain están en un commit WIP."
+    },
     {
       "id": "S-036",
       "date": "2026-11-08T01:47:00-06:00",

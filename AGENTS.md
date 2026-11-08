@@ -153,6 +153,8 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 - Primera tarea disponible: `T-410` — Implementar rayo tractor y captura de fragmentos.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
 - La implementación del juego está al **36 %** (29 de 81 tareas de progreso).
+- `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
+  `ShopRenderer`, `OverlayRenderer` y `SpaceBackground` (T-007).
 
 No confundas “plan escrito” con “funcionalidad implementada”.
 

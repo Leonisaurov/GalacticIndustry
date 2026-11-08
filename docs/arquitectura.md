@@ -79,6 +79,24 @@
 - La app está bloqueada en vertical, en pantalla completa y con
   `windowLayoutInDisplayCutoutMode=shortEdges`.
 
+## Estructura de la interfaz
+
+Tras T-007, `MyGame` es un orquestador de flujo (estados, entrada, guardado y
+telemetría) y el dibujo se reparte en módulos:
+
+| Clase | Responsabilidad |
+|---|---|
+| `UiKit` | Paneles, botones, iconos, pips de nivel, barras y texto (con `GlyphLayout`). |
+| `PlayHud` | Panel superior, combustible, energía, casco, supervivencia, avisos, joystick y acelerador. |
+| `ShopRenderer` | Pestañas y tarjetas de mejoras, reparaciones y fundición. |
+| `OverlayRenderer` | Menú principal, pausa, fin de partida y fundido de muerte. |
+| `SpaceBackground` | Degradado, estrellas con parallax, nebulosas y planeta. |
+| `HudView` | Estado efímero reutilizable que `MyGame` pasa al HUD sin asignar objetos por frame. |
+| `MyGame` | Estados, entrada, sesión, guardado, telemetría y coordinación de los módulos. |
+
+No se crean objetos en `render()`: `HudView`, `GlyphLayout` y los colores
+estáticos se reutilizan.
+
 ## Render y aspecto visual
 
 - `Visuals` genera en runtime las texturas suaves (brillo, estrella, nube de
