@@ -413,6 +413,11 @@ La nave no tiene vidas: se dañan sus ocho partes y cada una afecta al juego.
 
 ## Simulación económica
 
+- `SimClock` define tres niveles: **cerca 2 s**, **lejos 5 s** y **offline
+  60 s**. Acumula tiempo y solo dispara ticks completos.
+- `EconomySim` usa cerca para **agentes** (cada 2 s) y 10 s para **mercados**;
+  nunca se ejecuta trabajo por frame. `updateOffline()` limita a 12 h.
+- Con 24 agentes el tick sigue siendo ligero (bench en `SelfTest`).
 - `EconomySim` tickea cada **10 s** de simulación, nunca por frame.
 - Cada tick: `stock += producción − consumo + round((objetivo − stock) · 0,02)`,
   acotado a `[0, objetivo · 3]`.

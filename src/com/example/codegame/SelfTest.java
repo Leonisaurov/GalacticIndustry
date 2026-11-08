@@ -2263,7 +2263,7 @@ public class SelfTest {
             sim.update(0.5f, simWorld);
         }
         check("el tick usa intervalos, no cada frame",
-                EconomySim.TICK_SECONDS >= 5f
+                EconomySim.MARKET_TICK_SECONDS >= 5f
                         && simWorld.station.market.stock(Commodity.HIELO) != simBefore);
 
         // T-606: gate de mercado y anti-exploit.
@@ -2422,6 +2422,71 @@ public class SelfTest {
         check("créditos y mineral del agente persisten",
                 brainLoaded.sector.agents.get(0).credits == 321
                         && brainLoaded.sector.agents.get(0).commodity == Commodity.ORO);
+
+        // T-703: EconomySim con tick y LOD.
+        SimClock clock = new SimClock();
+        check("el reloj define cerca/lejos/offline",
+                SimClock.NEAR_SECONDS == 2f
+                        && SimClock.FAR_SECONDS == 5f
+                        && SimClock.OFFLINE_SECONDS == 60f);
+        check("el reloj solo dispara ticks completos",
+                clock.advanceNear(1.9f) == 0
+                        && clock.advanceNear(0.2f) == 1
+                        && clock.advanceFar(4.9f) == 0
+                        && clock.advanceFar(0.2f) == 1
+                        && clock.advanceOffline(59f) == 0
+                        && clock.advanceOffline(2f) == 1);
+        GameWorld lodWorld = new GameWorld(new Upgrades(true));
+        lodWorld.start();
+        lodWorld.immortal = true;
+        lodWorld.asteroids.clear();
+        lodWorld.fuel.clear();
+        EconomySim lodSim = new EconomySim();
+        PilotAgent lodAgent = lodWorld.agents.get(0);
+        int lodHielo = lodWorld.station.market.stock(Commodity.HIELO);
+        lodSim.update(1f, lodWorld);
+        check("la economía no se ejecuta por frame",
+                lodAgent.state == PilotAgent.State.DOCKED
+                        && lodWorld.station.market.stock(Commodity.HIELO) == lodHielo);
+        lodSim.update(1.1f, lodWorld);
+        check("cerca, los agentes despiertan a los 2 s",
+                lodAgent.state != PilotAgent.State.DOCKED);
+        lodSim.update(8f, lodWorld);
+        check("los mercados tickean cada 10 s",
+                lodWorld.station.market.stock(Commodity.HIELO) < lodHielo);
+        GameWorld benchWorld = new GameWorld(new Upgrades(true));
+        benchWorld.start();
+        benchWorld.immortal = true;
+        benchWorld.asteroids.clear();
+        benchWorld.fuel.clear();
+        benchWorld.agents.createInitial(GameData.MAX_AGENTS);
+        EconomySim bench = new EconomySim();
+        long benchStart = System.nanoTime();
+        for (int i = 0; i < 300; i++) {
+            bench.update(2f, benchWorld);
+        }
+        long benchMs = (System.nanoTime() - benchStart) / 1_000_000L;
+        int progressed = 0;
+        for (int i = 0; i < benchWorld.agents.size(); i++) {
+            if (benchWorld.agents.get(i).credits > 200) {
+                progressed++;
+            }
+        }
+        check("24 agentes se simulan sin bloquear",
+                benchMs < 2000 && progressed > 0);
+        GameWorld offlineWorld = new GameWorld(new Upgrades(true));
+        offlineWorld.start();
+        offlineWorld.immortal = true;
+        offlineWorld.asteroids.clear();
+        offlineWorld.fuel.clear();
+        EconomySim offline = new EconomySim();
+        int offlineHielo = offlineWorld.station.market.stock(Commodity.HIELO);
+        int offlineState = offlineWorld.agents.get(0).state.ordinal();
+        offline.updateOffline(180f, offlineWorld);
+        check("offline usa ticks de 60 s",
+                offlineWorld.station.market.stock(Commodity.HIELO) != offlineHielo
+                        || offlineWorld.agents.get(0).state.ordinal() != offlineState
+                        || offlineWorld.agents.get(0).timer > 0f);
 
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));

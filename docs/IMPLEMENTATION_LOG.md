@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T03:58:00-06:00  
+**Última actualización:** 2026-11-08T04:06:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,66 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-056 — Tick y LOD de la economía
+
+- **Fecha:** 2026-11-08T04:06:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-703
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `SimClock` define **cerca 2 s**, **lejos 5 s** y **offline 60 s**, con
+  acumuladores y ticks completos.
+- `EconomySim`:
+  - agentes cada **2 s**;
+  - mercados cada **10 s**;
+  - `updateOffline()` limitado a **12 h**;
+  - ningún trabajo por frame.
+- Bench de **24 agentes** sin bloquear el bucle.
+- En dispositivo, `15_agents` ve los estados `TRAVEL` y `MINE` tras los ticks.
+
+### Archivos modificados
+
+- `src/com/example/codegame/SimClock.java` (nuevo)
+- `src/com/example/codegame/EconomySim.java`
+- `src/com/example/codegame/GameWorld.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/15_agents.sh`
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 15_agents`: **OK**.
+
+### Evidencias
+
+- `PASS el reloj define cerca/lejos/offline`
+- `PASS el reloj solo dispara ticks completos`
+- `PASS la economía no se ejecuta por frame`
+- `PASS cerca, los agentes despiertan a los 2 s`
+- `PASS los mercados tickean cada 10 s`
+- `PASS 24 agentes se simulan sin bloquear`
+- `PASS offline usa ticks de 60 s`
+- `15_agents`: `DOCKED → TRAVEL → MINE` observable.
+
+### Decisiones tomadas
+
+- Los agentes cercanos tickean a 2 s; los mercados a 10 s.
+- El tick offline es de 60 s y se limita a 12 h.
+- No se crean hilos; todo va en el bucle de simulación.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-704 — Conectar transacciones de agentes con el mercado**.
 
 ---
 
