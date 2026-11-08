@@ -27,7 +27,8 @@
   progreso persistente (`Upgrades`).
 - `ShipLoadout`: fuente única de niveles de mejora y ranuras genéricas de
   módulos. `Upgrades` es su fachada de tienda; el módulo de piloto automático
-  está previsto pero no se exige todavía para volar.
+  se exige para seleccionar blancos (`MyGame.pickTarget`), pero no para volar
+  manualmente.
 - `SaveCodec`: serializa/deserializa el guardado v2 con `version`, `profile`,
   `pilot`, `ship` y `sector`. Valida todo el texto antes de aplicarlo.
 - `SaveService`: guardado JSON local con `FileStorage` (temporal + rename

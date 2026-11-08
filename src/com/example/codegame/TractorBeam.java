@@ -26,10 +26,16 @@ final class TractorBeam {
     final Array<OreFragment> targets = new Array<>();
 
     private int level;
+    private float rangeBonus;
     private boolean active;
 
     void setLevel(int level) {
         this.level = Math.max(0, level);
+    }
+
+    /** Bonus de alcance por módulos (HERRAMIENTAS). */
+    void setRangeBonus(float bonus) {
+        this.rangeBonus = Math.max(0f, bonus);
     }
 
     int level() {
@@ -37,7 +43,7 @@ final class TractorBeam {
     }
 
     float range() {
-        return BASE_RANGE + RANGE_PER_LEVEL * level;
+        return BASE_RANGE + RANGE_PER_LEVEL * level + rangeBonus;
     }
 
     float speed() {

@@ -1037,6 +1037,57 @@ public class MyGame implements ApplicationListener {
         saveRun();
     }
 
+    /** Ranura ocupada por un módulo, o -1 si no está instalado. */
+    int shipModuleSlot(ShipModuleDef module) {
+        return upgrades.loadout().slotOf(module == null ? null : module.id);
+    }
+
+    /** Primera ranura libre del loadout, o -1 si las cuatro están ocupadas. */
+    int freeShipModuleSlot() {
+        ShipLoadout loadout = upgrades.loadout();
+        for (int i = 0; i < loadout.moduleSlots(); i++) {
+            if (loadout.module(i) == null) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Compra e instala un módulo en una ranura libre y guarda la partida. */
+    boolean installShipModule(int slot, ShipModuleDef module) {
+        if (!upgrades.installShipModule(slot, module)) {
+            return false;
+        }
+        syncShipModules();
+        saveRun();
+        logEvent("{\"event\":\"ship_module\",\"action\":\"install\",\"module\":\""
+                + module.id + "\",\"slot\":" + slot + ",\"coins\":" + upgrades.coins() + "}");
+        return true;
+    }
+
+    /** Retira un módulo instalado; no reembolsa créditos. */
+    boolean removeShipModule(int slot) {
+        String module = upgrades.loadout().module(slot);
+        if (!upgrades.removeShipModule(slot)) {
+            return false;
+        }
+        syncShipModules();
+        saveRun();
+        logEvent("{\"event\":\"ship_module\",\"action\":\"remove\",\"module\":\""
+                + (module == null ? "" : module) + "\",\"slot\":" + slot
+                + ",\"coins\":" + upgrades.coins() + "}");
+        return true;
+    }
+
+    /** Resincroniza los sistemas de la nave que dependen del loadout. */
+    private void syncShipModules() {
+        if (world == null || world.ship == null) {
+            return;
+        }
+        world.ship.syncLaser(upgrades);
+        world.ship.syncTractor(upgrades);
+    }
+
 
     private Button stacked(String label, float cx, float cy, float bw, float bh, float gap, int index, int count) {
         float total = count * bh + (count - 1) * gap;
@@ -2399,16 +2450,21 @@ public class MyGame implements ApplicationListener {
                 Interactable near = interiorAvatar == null ? null
                         : interiorAvatar.nearest(interiorScene);
                 beginShapes();
-                shapes.setColor(0f, 0f, 0f, 0.86f);
+                shapes.setColor(0.030f, 0.042f, 0.058f, 0.94f);
                 shapes.rect(0f, h - 84f * u, w, 84f * u);
-                shapes.setColor(0.30f, 0.65f, 1f, 0.55f);
+                shapes.setColor(Visuals.ACCENT.r, Visuals.ACCENT.g, Visuals.ACCENT.b, 0.70f);
+                shapes.rect(0f, h - 86f * u, w, 2f * u);
+                shapes.setColor(0f, 0f, 0f, 0.35f);
                 shapes.rect(0f, h - 84f * u, w, 2f * u);
+                ui.led(24f * u, h - 42f * u, 3f * u, Visuals.GOOD);
                 shapes.end();
                 batch.begin();
-                ui.textCentered("INTERIOR - " + roomName(),
-                        w * 0.5f, h - 38f * u, 0.92f * u, Visuals.ACCENT);
-                ui.textCentered("JOYSTICK MUEVE - FLECHAS TAMBIEN",
-                        w * 0.5f, h - 64f * u, 0.66f * u, Visuals.TEXT_DIM);
+                ui.textLeft("INTERIOR / " + roomName().toUpperCase(java.util.Locale.US),
+                        42f * u, h - 34f * u, 0.86f * u, Visuals.TEXT);
+                ui.textLeft("MOVIMIENTO CON JOYSTICK O FLECHAS",
+                        42f * u, h - 60f * u, 0.60f * u, Visuals.TEXT_DIM);
+                ui.textRight("SISTEMA DE A BORDO", w - 24f * u, h - 34f * u,
+                        0.60f * u, Visuals.TEXT_OFF);
                 batch.end();
                 playHud.drawJoystickOnly(w, h);
                 if (near != null) {

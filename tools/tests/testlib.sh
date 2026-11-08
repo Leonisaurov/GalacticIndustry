@@ -31,6 +31,7 @@ UNDOCK_X=0
 UNDOCK_Y=0
 ST_TAB_SERV_X=0
 ST_TAB_UPG_X=0
+ST_TAB_MOD_X=0
 ST_TAB_MKT_X=0
 ST_TAB_Y=0
 ST_ROW1_Y=0
@@ -114,10 +115,11 @@ device_geometry() {
     # Pantalla de estación: pestañas y filas (5 servicios / 8 mejoras).
     local st_px=$((8 * U))
     local st_pw=$((W - 16 * U))
-    local st_tab_w=$(( (st_pw - 60 * U) / 3 ))
+    local st_tab_w=$(( (st_pw - 70 * U) / 4 ))
     ST_TAB_SERV_X=$(( st_px + 20 * U + st_tab_w / 2 ))
     ST_TAB_UPG_X=$(( st_px + 30 * U + st_tab_w + st_tab_w / 2 ))
-    ST_TAB_MKT_X=$(( st_px + 40 * U + 2 * st_tab_w + st_tab_w / 2 ))
+    ST_TAB_MOD_X=$(( st_px + 40 * U + 2 * st_tab_w + st_tab_w / 2 ))
+    ST_TAB_MKT_X=$(( st_px + 50 * U + 3 * st_tab_w + st_tab_w / 2 ))
     ST_TAB_Y=$((76 * U))
     local st_list_top=$((H - 160 * U))
     local st_bottom=$((8 * U + 100 * U))

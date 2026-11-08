@@ -19,6 +19,8 @@ class Upgrades {
     static final int TRACTOR = ShipLoadout.TRACTOR;
     static final int COUNT = ShipLoadout.COUNT;
     static final int MAX_LEVEL = ShipLoadout.MAX_LEVEL;
+    /** Bonus de alcance del módulo HERRAMIENTAS, coherente con TractorBeam. */
+    static final float TOOLS_TRACTOR_BONUS = 30f;
     /** Precio del combustible en la tienda temporal: 1 crédito por unidad. */
     static final float FUEL_PRICE_PER_UNIT = 1f;
     /** Coste mínimo de una recarga de combustible. */
@@ -283,7 +285,7 @@ class Upgrades {
 
     float tractorRange() {
         return TractorBeam.BASE_RANGE + TractorBeam.RANGE_PER_LEVEL * level(TRACTOR)
-                + (hasShipModule(ShipModuleDef.TOOLS) ? 30f : 0f);
+                + (hasShipModule(ShipModuleDef.TOOLS) ? TOOLS_TRACTOR_BONUS : 0f);
     }
 
     float tractorSpeed() {

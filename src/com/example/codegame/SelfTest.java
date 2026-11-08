@@ -4050,6 +4050,10 @@ public class SelfTest {
                         && modUp.installShipModule(3, ShipModuleDef.TOOLS)
                         && modUp.tractorRange() > baseTractor
                         && modUp.shipModuleCount() == 4);
+        Ship toolsShip = new Ship();
+        toolsShip.reset(modUp, 0f, 0f);
+        check("HERRAMIENTAS amplia el alcance efectivo del tractor",
+                Math.abs(toolsShip.tractor.range() - modUp.tractorRange()) < 0.001f);
         check("se puede quitar un modulo",
                 modUp.removeShipModule(3)
                         && !modUp.hasShipModule(ShipModuleDef.TOOLS)

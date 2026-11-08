@@ -83,6 +83,8 @@ class Ship {
         capacitor.reset();
         laser.stop();
         tractor.setLevel(up.tractorLevel());
+        tractor.setRangeBonus(up.hasShipModule(ShipModuleDef.TOOLS)
+                ? Upgrades.TOOLS_TRACTOR_BONUS : 0f);
         tractor.stop();
         cooldown = 0f;
         invulnerable = 0f;
@@ -259,6 +261,8 @@ class Ship {
     /** Aplica la mejora del rayo tractor. */
     void syncTractor(Upgrades up) {
         tractor.setLevel(up.tractorLevel());
+        tractor.setRangeBonus(up.hasShipModule(ShipModuleDef.TOOLS)
+                ? Upgrades.TOOLS_TRACTOR_BONUS : 0f);
     }
 
     /** Ángulo normalizado al intervalo [-180, 180). */

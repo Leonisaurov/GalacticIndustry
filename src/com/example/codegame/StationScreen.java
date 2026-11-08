@@ -14,9 +14,9 @@ import com.badlogic.gdx.utils.Array;
  */
 final class StationScreen {
 
-    private static final Color PANEL_C = new Color(0.020f, 0.035f, 0.080f, 0.90f);
-    private static final Color CARD_C = new Color(0.07f, 0.11f, 0.21f, 0.92f);
-    private static final Color CARD_EDGE_C = new Color(0.26f, 0.48f, 0.75f, 0.40f);
+    private static final Color PANEL_C = new Color(0.030f, 0.042f, 0.058f, 0.95f);
+    private static final Color CARD_C = new Color(0.060f, 0.080f, 0.100f, 0.94f);
+    private static final Color CARD_EDGE_C = new Color(0.24f, 0.33f, 0.40f, 0.50f);
 
     private final MyGame game;
     private final UiKit ui;
@@ -68,12 +68,13 @@ final class StationScreen {
         tabButtons.clear();
         float tabH = 40f * u;
         float tabY = h - 96f * u;
-        float tabW = (pw - 60f * u) / 3f;
+        float tabW = (pw - 70f * u) / 4f;
         tabButtons.add(new Button("SERVICIOS", px + 20f * u, tabY, tabW, tabH));
         tabButtons.add(new Button("MEJORAS", px + 30f * u + tabW, tabY, tabW, tabH));
-        tabButtons.add(new Button("MERCADO", px + 40f * u + 2f * tabW, tabY, tabW, tabH));
+        tabButtons.add(new Button("MODULOS", px + 40f * u + 2f * tabW, tabY, tabW, tabH));
+        tabButtons.add(new Button("MERCADO", px + 50f * u + 3f * tabW, tabY, tabW, tabH));
 
-        rows = tab == 0 ? 5 : Upgrades.COUNT;
+        rows = tab == 0 ? 5 : tab == 1 ? Upgrades.COUNT : ShipModuleDef.values().length;
         listTop = h - 160f * u;
         float bottom = py + 100f * u;
         rowGap = 8f * u;
@@ -99,23 +100,18 @@ final class StationScreen {
         if (btnUndock == null) {
             layout();
         }
-        if (game.tapped(tabButtons.get(0))) {
-            if (tab != 0) {
-                tab = 0;
+        for (int i = 0; i < 3; i++) {
+            if (!game.tapped(tabButtons.get(i))) {
+                continue;
+            }
+            if (tab != i) {
+                tab = i;
                 message = "";
                 layout();
             }
             return true;
         }
-        if (game.tapped(tabButtons.get(1))) {
-            if (tab != 1) {
-                tab = 1;
-                message = "";
-                layout();
-            }
-            return true;
-        }
-        if (game.tapped(tabButtons.get(2))) {
+        if (game.tapped(tabButtons.get(3))) {
             message = "";
             game.openMarket();
             return true;
@@ -134,8 +130,10 @@ final class StationScreen {
             }
             if (tab == 0) {
                 service(i);
-            } else {
+            } else if (tab == 1) {
                 upgrade(i);
+            } else {
+                toggleModule(i);
             }
             return true;
         }
@@ -198,10 +196,48 @@ final class StationScreen {
         }
     }
 
+    /** Instala el módulo en la primera ranura libre o retira el que ya está. */
+    private void toggleModule(int index) {
+        ShipModuleDef def = ShipModuleDef.values()[index];
+        int installed = game.shipModuleSlot(def);
+        if (installed >= 0) {
+            if (game.removeShipModule(installed)) {
+                message = "RETIRADO (SIN REEMBOLSO)";
+            } else {
+                message = "NO SE PUDO RETIRAR";
+            }
+            return;
+        }
+        int free = game.freeShipModuleSlot();
+        if (free < 0) {
+            message = "SIN RANURA LIBRE";
+            return;
+        }
+        if (game.upgrades.coins() < def.creditCost) {
+            message = "SIN CREDITOS";
+            return;
+        }
+        if (game.installShipModule(free, def)) {
+            message = "INSTALADO EN RANURA " + (free + 1);
+        } else {
+            message = "NO SE PUDO INSTALAR";
+        }
+    }
+
     private String rowLockReason(int index) {
         if (tab == 1) {
             if (game.upgrades.level(index) >= Upgrades.MAX_LEVEL) {
                 return "NIVEL MAXIMO";
+            }
+            return "SIN CREDITOS";
+        }
+        if (tab == 2) {
+            ShipModuleDef def = ShipModuleDef.values()[index];
+            if (game.shipModuleSlot(def) >= 0) {
+                return "INSTALADO";
+            }
+            if (game.freeShipModuleSlot() < 0) {
+                return "SIN RANURA LIBRE";
             }
             return "SIN CREDITOS";
         }
@@ -258,57 +294,104 @@ final class StationScreen {
         Visuals.normal(batch);
 
         beginShapes();
-        ui.panel(px, py, pw, ph, 20f * u, PANEL_C, Visuals.PANEL_EDGE);
-        shapes.setColor(0.28f, 0.58f, 0.90f, 0.35f);
-        shapes.rect(px + 20f * u, h - 64f * u, pw - 40f * u, 2f * u);
-        ui.drawButton(tabButtons.get(0),
-                tab == 0 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
-        ui.drawButton(tabButtons.get(1),
-                tab == 1 ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
-        ui.drawButton(tabButtons.get(2), Visuals.BTN_SECONDARY, true);
+        ui.grid(w, h, 80f * u, 0.018f);
+        ui.frame(px, py, pw, ph, 14f * u, PANEL_C, Visuals.PANEL_EDGE, Visuals.ACCENT);
+        ui.divider(px + 24f * u, h - 64f * u, pw - 48f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
+        for (int i = 0; i < tabButtons.size; i++) {
+            ui.drawButton(tabButtons.get(i),
+                    tab == i ? Visuals.BTN_PRIMARY : Visuals.BTN_SECONDARY, true);
+        }
         for (int i = 0; i < rowButtons.size; i++) {
             boolean enabled = rowEnabled(i);
-            ui.panel(rowButtons.get(i).bounds.x - 6f * u,
-                    rowButtons.get(i).bounds.y - 6f * u,
-                    rowButtons.get(i).bounds.width + 12f * u,
-                    rowButtons.get(i).bounds.height + 12f * u, 14f * u,
+            Button b = rowButtons.get(i);
+            ui.panel(b.bounds.x - 6f * u, b.bounds.y - 6f * u,
+                    b.bounds.width + 12f * u, b.bounds.height + 12f * u, 7f * u,
                     CARD_C, enabled ? CARD_EDGE_C : Visuals.PANEL_EDGE);
-            if (enabled) {
-                shapes.setColor(0.36f, 0.86f, 1f, 0.55f);
-            } else {
-                shapes.setColor(0.52f, 0.56f, 0.66f, 0.22f);
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            ui.led(b.bounds.x + 14f * u, mid, 3.2f * u,
+                    enabled ? Visuals.ACCENT : Visuals.LED_OFF);
+            drawRowIcon(i, b.bounds.x + 40f * u, mid, 11f * u,
+                    enabled ? Visuals.ACCENT : Visuals.TEXT_OFF);
+            if (tab == 1) {
+                ui.drawLevelPips(b.bounds.x + 76f * u, b.bounds.y + 16f * u,
+                        game.upgrades.level(i));
             }
-            Visuals.roundRect(shapes, rowButtons.get(i).bounds.x + 8f * u,
-                    rowButtons.get(i).bounds.y + 10f * u, 4f * u,
-                    rowButtons.get(i).bounds.height - 20f * u, 2f * u);
+            shapes.setColor(0f, 0f, 0f, 0.30f);
+            shapes.rect(b.bounds.x + 62f * u, b.bounds.y + 12f * u, 1.2f * u,
+                    b.bounds.height - 24f * u);
+            // Chip de coste alineado a la derecha.
+            shapes.setColor(0.030f, 0.042f, 0.055f, 0.85f);
+            Visuals.roundRect(shapes, b.bounds.x + b.bounds.width - 156f * u,
+                    mid - 16f * u, 140f * u, 32f * u, 4f * u);
         }
+        ui.divider(px + 24f * u, py + 96f * u, pw - 48f * u,
+                Visuals.PANEL_EDGE, Visuals.ACCENT);
         ui.drawButton(btnUndock, Visuals.BTN_PRIMARY, true);
         shapes.end();
 
         batch.begin();
+        float titleY = h - 34f * u;
         ui.textLeft("ESTACION " + game.world.station.def.name,
-                px + 28f * u, h - 34f * u, 0.88f * u, Visuals.ACCENT);
+                px + 28f * u, titleY, 0.88f * u, Visuals.TEXT);
         drawCoins(w, h);
         drawTabs();
         if (!message.isEmpty()) {
             ui.textCenteredFit(message, w * 0.5f, h - 112f * u,
                     0.70f * u, pw - 40f * u, Visuals.ACCENT);
+        } else if (tab == 2) {
+            ui.textCenteredFit("MODULOS " + game.upgrades.shipModuleCount() + "/"
+                            + game.upgrades.loadout().moduleSlots()
+                            + "   -   RETIRAR NO REEMBOLSA",
+                    w * 0.5f, h - 112f * u, 0.66f * u, pw - 40f * u,
+                    Visuals.TEXT_DIM);
         }
         drawRows();
         ui.drawButtonText(btnUndock, true);
         batch.end();
     }
 
+    private void drawRowIcon(int index, float cx, float cy, float r, Color c) {
+        if (tab == 1) {
+            ui.drawGearIcon(cx, cy, r, c);
+            return;
+        }
+        if (tab == 2) {
+            drawModuleRowIcon(ShipModuleDef.values()[index], cx, cy, r, c);
+            return;
+        }
+        switch (index) {
+            case 0:
+                ui.drawCargoIcon(cx, cy, r, c);
+                break;
+            case 1:
+                ui.drawOreIcon(cx, cy, r, c);
+                break;
+            case 2:
+                ui.drawFuelIcon(cx, cy, r);
+                break;
+            case 3:
+                shapes.setColor(c);
+                shapes.circle(cx, cy, r * 0.72f, 12);
+                shapes.setColor(0.03f, 0.04f, 0.05f, 1f);
+                shapes.circle(cx, cy, r * 0.34f, 8);
+                break;
+            default:
+                ui.drawGearIcon(cx, cy, r, c);
+                break;
+        }
+    }
+
     private void drawCoins(float w, float h) {
         int coins = game.upgrades.coins();
-        ui.textLeft("CREDITOS " + coins, px + pw - 150f * game.u,
-                h - 34f * game.u, 0.76f * game.u, Visuals.GOLD);
+        ui.textRight("CREDITOS " + coins, px + pw - 28f * game.u,
+                h - 34f * game.u, 0.78f * game.u, Visuals.GOLD);
     }
 
     private void drawTabs() {
-        ui.drawButtonText(tabButtons.get(0), true);
-        ui.drawButtonText(tabButtons.get(1), true);
-        ui.drawButtonText(tabButtons.get(2), true);
+        for (int i = 0; i < tabButtons.size; i++) {
+            ui.drawButtonText(tabButtons.get(i), true);
+        }
     }
 
     private void drawRows() {
@@ -320,41 +403,109 @@ final class StationScreen {
             drawServiceRow(2, "REPOSTAR COMBUSTIBLE", "Deposito al maximo", fuelCost() + " CR");
             drawServiceRow(3, "RELLENAR OXIGENO", "Soporte vital", o2Cost() + " CR");
             drawServiceRow(4, "REPARAR TODO", "Casco y sistemas", repairAllCost() + " CR");
-        } else {
+        } else if (tab == 1) {
             for (int i = 0; i < Upgrades.COUNT; i++) {
                 Button b = rowButtons.get(i);
-                float x = b.bounds.x + 18f * u;
+                float x = b.bounds.x + 76f * u;
                 float mid = b.bounds.y + b.bounds.height * 0.5f;
-                ui.textLeftFit(Upgrades.NAMES[i], x, mid + 12f * u,
-                        0.95f * u, b.bounds.width - 30f * u, Visuals.TEXT);
-                ui.textLeftFit(Upgrades.DESCS[i], x, mid - 12f * u,
-                        0.68f * u, b.bounds.width - 180f * u, Visuals.TEXT_DIM);
+                ui.textLeftFit(Upgrades.NAMES[i], x, mid + 18f * u,
+                        0.95f * u, b.bounds.width - 250f * u,
+                        rowEnabled(i) ? Visuals.TEXT : Visuals.TEXT_OFF);
+                ui.textLeftFit(Upgrades.DESCS[i], x, mid - 8f * u,
+                        0.68f * u, b.bounds.width - 250f * u, Visuals.TEXT_DIM);
                 String label = game.upgrades.level(i) >= Upgrades.MAX_LEVEL
                         ? "MAX" : "COMPRAR " + game.upgrades.cost(i);
-                ui.textLeft(label, b.bounds.x + b.bounds.width - 150f * u,
-                        mid + 6f * u,
-                        0.82f * u, rowEnabled(i) ? Visuals.GOLD : Visuals.TEXT_OFF);
+                ui.textRight(label, b.bounds.x + b.bounds.width - 26f * u,
+                        mid + 8f * u, 0.82f * u,
+                        rowEnabled(i) ? Visuals.GOLD : Visuals.TEXT_OFF);
             }
+        } else {
+            drawModuleRows();
+        }
+    }
+
+    private void drawModuleRows() {
+        float u = game.u;
+        for (int i = 0; i < ShipModuleDef.values().length; i++) {
+            ShipModuleDef def = ShipModuleDef.values()[i];
+            Button b = rowButtons.get(i);
+            int slot = game.shipModuleSlot(def);
+            boolean can = rowEnabled(i);
+            float x = b.bounds.x + 76f * u;
+            float mid = b.bounds.y + b.bounds.height * 0.5f;
+            ui.textLeftFit(def.displayName, x, mid + 18f * u, 0.95f * u,
+                    b.bounds.width - 300f * u, can ? Visuals.TEXT : Visuals.TEXT_OFF);
+            ui.textLeftFit(def.description, x, mid - 8f * u, 0.68f * u,
+                    b.bounds.width - 300f * u, Visuals.TEXT_DIM);
+            String status;
+            Color color;
+            if (slot >= 0) {
+                status = "INSTALADO R" + (slot + 1);
+                color = Visuals.GOOD;
+                ui.textRight(status, b.bounds.x + b.bounds.width - 26f * u,
+                        mid + 10f * u, 0.74f * u, color);
+                ui.textRight("RETIRAR", b.bounds.x + b.bounds.width - 26f * u,
+                        mid - 14f * u, 0.66f * u, Visuals.TEXT_DIM);
+                continue;
+            } else if (game.freeShipModuleSlot() < 0) {
+                status = "SIN RANURA LIBRE";
+                color = Visuals.TEXT_OFF;
+            } else {
+                status = "INSTALAR " + def.creditCost + " CR";
+                color = can ? Visuals.GOLD : Visuals.TEXT_OFF;
+            }
+            ui.textRight(status, b.bounds.x + b.bounds.width - 26f * u,
+                    mid + 8f * u, 0.80f * u, color);
+        }
+    }
+
+    private void drawModuleRowIcon(ShipModuleDef def, float cx, float cy,
+                                   float r, Color c) {
+        switch (def) {
+            case AUTOPILOT:
+                ui.drawWarpIcon(cx, cy, r, c);
+                break;
+            case RADAR:
+                ui.drawStationIcon(cx, cy, r * 0.82f, c);
+                break;
+            case MINING:
+                ui.drawEnergyIcon(cx, cy, r, c);
+                break;
+            case PROPULSION:
+                ui.drawFuelIcon(cx, cy, r);
+                break;
+            case TOOLS:
+            default:
+                ui.drawGearIcon(cx, cy, r, c);
+                break;
         }
     }
 
     private void drawServiceRow(int index, String title, String desc, String status) {
         Button b = rowButtons.get(index);
         float u = game.u;
-        float x = b.bounds.x + 18f * u;
+        float x = b.bounds.x + 76f * u;
         float mid = b.bounds.y + b.bounds.height * 0.5f;
-        ui.textLeftFit(title, x, mid + 12f * u, 0.95f * u,
+        ui.textLeftFit(title, x, mid + 18f * u, 0.95f * u,
                 b.bounds.width * 0.56f, rowEnabled(index) ? Visuals.TEXT : Visuals.TEXT_OFF);
-        ui.textLeftFit(desc, x, mid - 12f * u, 0.70f * u,
+        ui.textLeftFit(desc, x, mid - 8f * u, 0.70f * u,
                 b.bounds.width * 0.56f, Visuals.TEXT_DIM);
-        ui.textLeft(status, b.bounds.x + b.bounds.width - 150f * u,
-                mid + 6f * u, 0.82f * u,
+        ui.textRight(status, b.bounds.x + b.bounds.width - 26f * u,
+                mid + 8f * u, 0.86f * u,
                 rowEnabled(index) ? Visuals.GOLD : Visuals.TEXT_OFF);
     }
 
     private boolean rowEnabled(int index) {
         if (tab == 1) {
             return game.upgrades.canBuy(index);
+        }
+        if (tab == 2) {
+            ShipModuleDef def = ShipModuleDef.values()[index];
+            if (game.shipModuleSlot(def) >= 0) {
+                return true;
+            }
+            return game.freeShipModuleSlot() >= 0
+                    && game.upgrades.coins() >= def.creditCost;
         }
         if (index == 0) {
             return cargoUnits() > 0;
