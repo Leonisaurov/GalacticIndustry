@@ -109,6 +109,8 @@ public class MyGame implements ApplicationListener {
     private final boolean marketTest;
     /** Arranca junto al borde del sector para revisar límites y borde. */
     private final boolean boundsTest;
+    /** Arranca con motor warp para probar viaje y regreso. */
+    private final boolean warpTest;
     /** Cualquier modo de prueba activa la telemetría estructurada. */
     private final boolean debugMode;
     private float telemetryTimer;
@@ -125,6 +127,8 @@ public class MyGame implements ApplicationListener {
     Button btnDock, btnUndock;
     /** Rescate por falta de combustible. */
     Button btnRescue;
+    /** Zonas invisibles solo para pruebas de warp. */
+    private Button btnWarpDebug, btnWarpBackDebug;
     private final RescueService rescue = new RescueService();
 
     // Joystick (izquierda) y barra de aceleración (derecha), en coordenadas de pantalla.
@@ -301,6 +305,21 @@ public class MyGame implements ApplicationListener {
                   boolean miningTest, boolean tractorTest, boolean stationTest,
                   boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
                   boolean marketTest, boolean boundsTest) {
+        this(testMode, debugDeath, slowDeath, autopilotTest, wingTest, survivalTest,
+                pilotDeathTest, recoveryTest, cargoTest, miningTest, tractorTest,
+                stationTest, dockingTest, stationServiceTest, rescueTest,
+                marketTest, boundsTest, false);
+    }
+
+    /**
+     * @param warpTest arranca con motor warp para probar viaje y regreso.
+     */
+    public MyGame(boolean testMode, boolean debugDeath, boolean slowDeath,
+                  boolean autopilotTest, boolean wingTest, boolean survivalTest,
+                  boolean pilotDeathTest, boolean recoveryTest, boolean cargoTest,
+                  boolean miningTest, boolean tractorTest, boolean stationTest,
+                  boolean dockingTest, boolean stationServiceTest, boolean rescueTest,
+                  boolean marketTest, boolean boundsTest, boolean warpTest) {
         this.testMode = testMode;
         this.debugDeath = debugDeath;
         this.slowDeath = slowDeath;
@@ -318,11 +337,12 @@ public class MyGame implements ApplicationListener {
         this.rescueTest = rescueTest;
         this.marketTest = marketTest;
         this.boundsTest = boundsTest;
+        this.warpTest = warpTest;
         this.debugMode = testMode || debugDeath || slowDeath || autopilotTest
                 || wingTest || survivalTest || pilotDeathTest || recoveryTest
                 || cargoTest || miningTest || tractorTest || stationTest
                 || dockingTest || stationServiceTest || rescueTest || marketTest
-                || boundsTest;
+                || boundsTest || warpTest;
     }
 
     @Override
@@ -521,6 +541,18 @@ public class MyGame implements ApplicationListener {
             world.ship.vel.set(0f, 0f);
             world.ship.heading = 90f;
             world.ship.dir.set(0f, 1f);
+        } else if (warpTest) {
+            session.startRun();
+            runActive = true;
+            state = PLAYING;
+            world.asteroids.clear();
+            world.fuel.clear();
+            world.ship.pos.set(0f, -220f);
+            world.ship.vel.set(0f, 0f);
+            upgrades.addCoins(1000);
+            upgrades.buy(Upgrades.MOTOR);
+            world.ship.fuel = world.ship.maxFuel;
+            world.ship.capacitor.reset();
         }
     }
 
@@ -666,6 +698,10 @@ public class MyGame implements ApplicationListener {
                 bw * 0.9f, 46f * u);
         btnRescue = new Button("PEDIR RESCATE", cx + bw * 0.05f, h * 0.46f,
                 bw * 0.9f, 46f * u);
+        if (warpTest) {
+            btnWarpDebug = new Button("", w * 0.30f, h * 0.05f, w * 0.18f, h * 0.08f);
+            btnWarpBackDebug = new Button("", w * 0.52f, h * 0.05f, w * 0.18f, h * 0.08f);
+        }
 
         if (stationScreen != null) {
             stationScreen.layout(w, h);
@@ -942,7 +978,8 @@ public class MyGame implements ApplicationListener {
                         + "\"sectorHalfWidth\":%.0f,\"sectorHalfHeight\":%.0f,"
                         + "\"sectorProfile\":\"%s\","
                         + "\"sectorMapX\":%.1f,\"sectorMapY\":%.1f,"
-                        + "\"loadedSectors\":%d,\"unloadedSectors\":%d}",
+                        + "\"loadedSectors\":%d,\"unloadedSectors\":%d,"
+                        + "\"warpLevel\":%d,\"snapshotSectors\":%d}",
                 stateName(state), Gdx.graphics.getFramesPerSecond(),
                 upgrades.coins() + world.coinsEarned, upgrades.coins(),
                 world.score, world.wave, world.ship.part[Ship.HULL], world.ship.maxHull,
@@ -1016,7 +1053,9 @@ public class MyGame implements ApplicationListener {
                 session.currentSector == null ? 0f : session.currentSector.mapX,
                 session.currentSector == null ? 0f : session.currentSector.mapY,
                 session.streamer.loadedCount(),
-                session.streamer.unloadedCount()));
+                session.streamer.unloadedCount(),
+                upgrades.level(Upgrades.MOTOR),
+                session.universe.snapshots().size()));
     }
 
     void logEvent(String json) {
@@ -1155,6 +1194,22 @@ public class MyGame implements ApplicationListener {
     }
 
     private void updatePlaying(float dt) {
+        if (warpTest && tapped(btnWarpDebug)) {
+            travelTo(TravelService.nextSectorId(session));
+            return;
+        }
+        if (warpTest && tapped(btnWarpBackDebug)) {
+            travelTo(TravelService.previousSectorId(session));
+            return;
+        }
+        if (debugMode && Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+            travelTo(TravelService.nextSectorId(session));
+            return;
+        }
+        if (debugMode && Gdx.input.isKeyJustPressed(Input.Keys.Y)) {
+            travelTo(TravelService.previousSectorId(session));
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || tapped(btnPause)) {
             resetControls();
             state = PAUSED;
@@ -1409,6 +1464,31 @@ public class MyGame implements ApplicationListener {
                 || (canRecoverLegacy() && hit(btnRecover, pointer))
                 || (canDock() && hit(btnDock, pointer))
                 || (canRescue() && hit(btnRescue, pointer));
+    }
+
+    /** Viaja al sector indicado con warp; actualiza el runtime y la UI. */
+    boolean travelTo(String sectorId) {
+        if (sectorId == null) {
+            return false;
+        }
+        TravelService.Result result = TravelService.travel(session, sectorId);
+        if (!result.ok) {
+            logEvent("{\"event\":\"warp_fail\",\"error\":\""
+                    + result.error + "\"}");
+            return false;
+        }
+        world = session.sector;
+        playHud.setWorld(world);
+        resetControls();
+        saveRun();
+        logEvent(String.format(Locale.US,
+                "{\"event\":\"warp\",\"to\":\"%s\",\"distance\":%.1f,"
+                        + "\"fuelCost\":%d,\"energyCost\":%d,\"gate\":%s,"
+                        + "\"fuel\":%.1f}",
+                result.quote.toSectorId, result.quote.distance,
+                result.quote.fuelCost, result.quote.energyCost,
+                result.quote.gateUsed, world.ship.fuel));
+        return true;
     }
 
     private void handlePause() {

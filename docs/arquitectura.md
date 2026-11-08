@@ -221,6 +221,26 @@ estáticos se reutilizan.
 - La simulación lejana sigue siendo agregada (mercados/agentes cada 2–10 s);
   no se mantiene detalle de asteroides fuera de carga.
 
+## Viaje warp y TravelService
+
+- **Sin puertas obligatorias**: `TravelService` permite viajar a cualquier
+  sector del universo con motor warp.
+- Coste:
+  - `combustible = ceil(distancia · 2 / (1 + 0,15 · nivelMotor))`;
+  - `energía = ceil(distancia · 4 / (1 + 0,15 · nivelMotor))`;
+  - mínimo 2 de combustible y 4 de energía.
+- Requiere **nivel de motor ≥ 1**; sin él, el viaje se rechaza.
+- `JumpGate` es un atajo **opcional**: si conecta origen y destino reduce el
+  coste a la mitad; sin puerta el viaje sigue funcionando.
+- Al viajar:
+  - se captura el sector de origen como snapshot;
+  - se descarga/carga el destino con `SectorStreamer`;
+  - la nave conserva carga, combustible restante, daños y energía;
+  - se guarda la partida.
+- El sector actual se persiste; al cargar se restaura con `switchSector`.
+- `T`/`Y` y dos zonas invisibles de prueba permiten viajar y volver en
+  `warp_test`; la UI de mapa llega en T-805.
+
 ## Pilotos autónomos (datos)
 
 - `PilotAgent` resume la nave de un agente: id, nombre, rol (`MINER`/`HAULER`),

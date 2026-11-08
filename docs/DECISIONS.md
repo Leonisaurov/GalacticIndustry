@@ -191,6 +191,15 @@ Puertas de salto para sistemas y una puerta mayor para galaxias; sin vuelo real 
 
 Afecta a la Etapa 8 y al mapa.
 
+### Implementación actual (T-804)
+
+- `TravelService` viaja sin puertas; el coste depende de distancia, motor y una
+  puerta opcional (`JumpGate`, factor 0,5).
+- Requiere motor warp de nivel ≥1, combustible y energía.
+- El destino se carga desde el streaming y la nave conserva carga, daños,
+  combustible restante y energía.
+- El sector de origen queda como snapshot y se puede volver a él.
+
 ---
 
 ## D-005 — Estación personal vacía y modular

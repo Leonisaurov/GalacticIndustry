@@ -25,11 +25,11 @@ class GameSession {
     /** Jerarquía de universo; el runtime finito llega en T-802. */
     final UniverseState universe;
     /** Sector activo según la definición del universo. */
-    final SectorDef currentSector;
+    SectorDef currentSector;
     /** Streaming de sectores: carga cercanos y descarga lejanos. */
     final SectorStreamer streamer;
     /** Runtime del sector actual; contiene la nave, asteroides y efectos. */
-    final GameWorld sector;
+    GameWorld sector;
 
     private boolean runActive;
 
@@ -78,6 +78,29 @@ class GameSession {
                 currentSector == null ? "sol-prime" : currentSector.id);
         universe.putSnapshot(snapshot);
         return snapshot;
+    }
+
+    /**
+     * Cambia el sector activo conservando la nave (combustible, carga, daños y
+     * energía). El sector anterior queda como snapshot y el destino se carga
+     * desde el streaming. Devuelve el nuevo runtime o null si el ID no existe.
+     */
+    GameWorld switchSector(String sectorId) {
+        SectorDef target = universe.sector(sectorId);
+        if (target == null || sector == null) {
+            return null;
+        }
+        GameWorld old = sector;
+        streamer.switchTo(sectorId, old);
+        GameWorld next = streamer.load(sectorId, profile.upgrades);
+        if (next == null) {
+            return null;
+        }
+        next.ship.copyTravelStateFrom(old.ship);
+        next.attachLifeSupport(lifeSupport);
+        currentSector = target;
+        sector = next;
+        return next;
     }
 
     boolean runActive() {

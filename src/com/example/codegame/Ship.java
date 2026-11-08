@@ -93,6 +93,40 @@ class Ship {
         return cargo;
     }
 
+    /**
+     * Copia el estado de la nave del jugador al llegar a otro sector: carga,
+     * combustible restante, daños y energía. La posición se coloca cerca de la
+     * estación de destino y se cancela el acople.
+     */
+    void copyTravelStateFrom(Ship other) {
+        if (other == null) {
+            return;
+        }
+        fuel = Math.max(0f, Math.min(other.fuel, maxFuel));
+        System.arraycopy(other.part, 0, part, 0, PART_COUNT);
+        maxHull = other.maxHull;
+        cargo.clear();
+        for (int i = 0; i < other.cargo.entries().size(); i++) {
+            Cargo entry = other.cargo.entries().get(i);
+            cargo.restore(entry.commodity, entry.amount);
+        }
+        capacitor.energy = Math.max(0f,
+                Math.min(other.capacitor.energy, capacitor.maxEnergy));
+        laser.setLevel(other.laser.level());
+        tractor.setLevel(other.tractor.level());
+        cooldown = 0f;
+        invulnerable = 0f;
+        lastDamaged = -1;
+        damageFlash = 0f;
+        thrusting = false;
+        wrecked = false;
+        docked = false;
+        pos.set(0f, -220f);
+        vel.set(0f, 0f);
+        heading = 90f;
+        dir.set(0f, 1f);
+    }
+
     /** Gira, acelera según el nivel del acelerador y mueve la nave. */
     void update(float dt, Upgrades up, Controls c) {
         float wing = wingFactor();

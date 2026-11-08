@@ -1,6 +1,6 @@
 # REGISTRO DE IMPLEMENTACIÓN — GalacticIndustry
 
-**Última actualización:** 2026-11-08T05:16:00-06:00  
+**Última actualización:** 2026-11-08T05:30:00-06:00  
 **Fuente canónica de estado:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Plan maestro:** `docs/MASTER_PLAN.md`  
 **Preguntas para conversar:** `docs/PENDING_DECISIONS.md`
@@ -30,6 +30,76 @@ Reglas:
 - Si la sesión se interrumpe, dejar la tarea `EN_PROGRESO` y anotar exactamente qué falta.
 - No borrar entradas antiguas.
 - No reescribir la historia para que parezca más limpia.
+
+---
+
+## S-065 — Propulsión warp y TravelService
+
+- **Fecha:** 2026-11-08T05:30:00-06:00
+- **Agente:** OpenCode / DeepSeek V4.1 Flash
+- **Tarea(s):** T-804
+- **Resultado:** COMPLETADO
+
+### Resumen
+
+- `TravelService` implementa viaje warp **sin puertas obligatorias**.
+- Coste por distancia y motor:
+  - combustible `ceil(distancia · 2 / (1 + 0,15 · nivel))`;
+  - energía `ceil(distancia · 4 / (1 + 0,15 · nivel))`;
+  - mínimo 2 de combustible y 4 de energía.
+- Requiere **motor warp ≥ 1**; sin equipamiento no se viaja.
+- `JumpGate` opcional reduce el coste a la mitad; sin puerta se puede viajar.
+- Al viajar se captura el origen, se carga el destino por streaming y la nave
+  conserva carga, combustible restante, daños y energía.
+- El sector actual se persiste y se restaura al cargar.
+- `17_warp` verifica viaje, coste y regreso en dispositivo.
+
+### Archivos modificados
+
+- `src/com/example/codegame/TravelService.java` (nuevo)
+- `src/com/example/codegame/JumpGate.java` (nuevo)
+- `src/com/example/codegame/GameSession.java`
+- `src/com/example/codegame/Ship.java`
+- `src/com/example/codegame/PlayHud.java`
+- `src/com/example/codegame/MyGame.java`
+- `src/com/example/codegame/MainActivity.java`
+- `src/com/example/codegame/SaveCodec.java`
+- `src/com/example/codegame/SelfTest.java`
+- `tools/tests/17_warp.sh` (nuevo)
+- `docs/arquitectura.md`
+- `docs/pruebas.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_TRACKER.json`
+- `docs/IMPLEMENTATION_LOG.md`
+
+### Pruebas ejecutadas
+
+- `tools/run-tests.sh 01_logic`: **TODO OK**.
+- `tools/run-tests.sh 17_warp`: **OK**.
+- `tools/run-tests.sh 16_universe`: **OK**.
+
+### Evidencias
+
+- `PASS el warp calcula coste sin puerta`
+- `PASS el viaje warp carga el destino y conserva la nave`
+- `PASS el sector de origen queda como snapshot`
+- `PASS el jugador puede regresar al sector anterior`
+- `PASS sin equipamiento warp no se viaja`
+- `PASS las puertas son atajos opcionales`
+- `PASS el viaje puede cruzar de sistema/galaxia`
+- `PASS al cargar se restaura el sector actual`
+- `17_warp`: viaje, coste de combustible y regreso.
+
+### Decisiones tomadas
+
+- El warp exige motor de nivel 1; no hay puerta obligatoria.
+- El coste escala con la distancia y baja con mejor motor.
+- La nave viaja con su estado; el sector de origen queda como snapshot.
+- Los botones/teclas de warp son solo de prueba hasta T-805.
+
+### Pendiente / siguiente paso
+
+- Continuar con **T-805 — Crear MapScreen y navegación warp**.
 
 ---
 

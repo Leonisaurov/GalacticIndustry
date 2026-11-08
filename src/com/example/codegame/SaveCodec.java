@@ -104,6 +104,8 @@ final class SaveCodec {
             w.pop();
 
             w.name("sector").object();
+            w.set("sectorId", session.currentSector == null
+                    ? GameData.START_SECTOR_ID : session.currentSector.id);
             w.set("coinsEarned", world.coinsEarned);
             w.set("score", world.score);
             w.set("elapsed", world.elapsed);
@@ -344,6 +346,7 @@ final class SaveCodec {
                 }
             }
 
+            d.sectorId = sector.getString("sectorId", GameData.START_SECTOR_ID);
             d.coinsEarned = sector.getInt("coinsEarned", 0);
             d.score = sector.getInt("score", 0);
             d.elapsed = sector.getFloat("elapsed", 0f);
@@ -645,6 +648,11 @@ final class SaveCodec {
         }
         session.profile.restoreIdentity(d.playerId, d.profileId, d.profileName);
 
+        if (d.sectorId != null && !d.sectorId.isEmpty()
+                && (session.currentSector == null
+                || !d.sectorId.equals(session.currentSector.id))) {
+            session.switchSector(d.sectorId);
+        }
         GameWorld world = session.sector;
         world.start();
         Ship ship = world.ship;
@@ -806,6 +814,7 @@ final class SaveCodec {
         float hull;
         float invulnerable;
         float[] parts;
+        String sectorId = GameData.START_SECTOR_ID;
         int coinsEarned;
         int score;
         float elapsed;

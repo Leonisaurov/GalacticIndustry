@@ -4,24 +4,26 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T05:16:00-06:00",
-    "lastSessionId": "S-064",
+    "lastUpdated": "2026-11-08T05:30:00-06:00",
+    "lastSessionId": "S-065",
     "lastVerification": {
-      "date": "2026-11-08T05:16:00-06:00",
+      "date": "2026-11-08T05:30:00-06:00",
       "result": "OK",
       "checks": [
         "tools/run-tests.sh 01_logic: SelfTest TODO OK",
-        "SectorStreamer carga el sector activo y vecinos dentro de 2.5 unidades",
-        "Los sectores lejanos se descargan dejando solo su snapshot",
-        "Volver a un sector descargado restaura recursos sin regenerarlos",
-        "Universo de 200 sectores: solo 1 cargado y streaming < 100 ms",
-        "16_universe: loadedSectors=2, unloadedSectors=4",
+        "TravelService calcula coste por distancia/motor y exige motor nivel >=1",
+        "El viaje descuenta combustible y energia y carga el destino por streaming",
+        "La nave conserva carga, combustible, danos y energia",
+        "El origen queda como snapshot y se puede regresar",
+        "Las puertas son atajos opcionales (factor 0.5)",
+        "El sector actual persiste al guardar y cargar",
+        "17_warp: viaje y regreso en dispositivo",
         "python3 tools/sync-dashboard.py --check"
       ]
     },
     "currentStageId": "S8",
     "currentTaskId": null,
-    "nextTaskId": "T-804",
+    "nextTaskId": "T-805",
     "preparationComplete": true,
     "implementationStarted": true,
     "progressDefinition": "Se calcula solo con tareas category=implementation y countsForProgress=true en estado COMPLETADO. Las tareas de preparación no cuentan como implementación del juego.",
@@ -4122,7 +4124,7 @@
       "description": "Añadir viaje libre mediante propulsión warp, sin puertas obligatorias. El coste se integra con combustible, energía y equipamiento; el mapa puede ser muy grande y cargarse dinámicamente.",
       "category": "implementation",
       "priority": "P0",
-      "status": "LISTO",
+      "status": "COMPLETADO",
       "countsForProgress": true,
       "dependencies": [
         "T-801",
@@ -4152,10 +4154,47 @@
         "Bench de carga"
       ],
       "technicalNotes": "D-004 aprobada. No implementar vuelo real continuo a escala astronómica; usar viaje abstracto/local con carga dinámica.",
-      "executionLog": [],
-      "evidence": [],
+      "executionLog": [
+        {
+          "sessionId": "S-065",
+          "date": "2026-11-08T05:30:00-06:00",
+          "agent": "OpenCode / DeepSeek V4.1 Flash",
+          "status": "COMPLETADO",
+          "summary": "TravelService con warp libre sin puertas obligatorias: coste por distancia y motor, requisito de motor nivel 1, consumo de combustible/energia, JumpGate opcional y cambio de sector por streaming conservando la nave. Origen en snapshot, regreso y persistencia del sector actual. 17_warp en dispositivo.",
+          "files": [
+            "src/com/example/codegame/TravelService.java",
+            "src/com/example/codegame/JumpGate.java",
+            "src/com/example/codegame/GameSession.java",
+            "src/com/example/codegame/Ship.java",
+            "src/com/example/codegame/PlayHud.java",
+            "src/com/example/codegame/MyGame.java",
+            "src/com/example/codegame/MainActivity.java",
+            "src/com/example/codegame/SaveCodec.java",
+            "src/com/example/codegame/SelfTest.java",
+            "tools/tests/17_warp.sh"
+          ],
+          "tests": [
+            "01_logic",
+            "16_universe",
+            "Prueba de viaje warp"
+          ],
+          "outcome": "Completado"
+        }
+      ],
+      "evidence": [
+        "PASS el warp calcula coste sin puerta",
+        "PASS el viaje warp carga el destino y conserva la nave",
+        "PASS el sector de origen queda como snapshot",
+        "PASS el jugador puede regresar al sector anterior",
+        "PASS sin equipamiento warp no se viaja",
+        "PASS las puertas son atajos opcionales",
+        "PASS el viaje puede cruzar de sistema/galaxia",
+        "PASS el viaje warp se puede guardar",
+        "PASS al cargar se restaura el sector actual",
+        "17_warp: viaje, coste de combustible y regreso"
+      ],
       "createdAt": "2026-11-07",
-      "updatedAt": "2026-11-07T22:30:00-06:00"
+      "updatedAt": "2026-11-08T05:30:00-06:00"
     },
     {
       "id": "T-805",
@@ -4164,7 +4203,7 @@
       "description": "Añadir el mapa de sectores/sistemas/galaxias con posición actual, destinos, coste estimado y descubrimiento, orientado a viaje libre warp.",
       "category": "implementation",
       "priority": "P1",
-      "status": "PENDIENTE",
+      "status": "LISTO",
       "countsForProgress": true,
       "dependencies": [
         "T-804"
@@ -5887,6 +5926,35 @@
     }
   ],
   "sessions": [
+    {
+      "id": "S-065",
+      "date": "2026-11-08T05:30:00-06:00",
+      "agent": "OpenCode / DeepSeek V4.1 Flash",
+      "title": "Propulsión warp y TravelService",
+      "summary": "Viaje warp libre sin puertas: coste por distancia/motor, consumo de combustible y energía, destino cargado por streaming, nave conservada, origen en snapshot, regreso y persistencia del sector actual.",
+      "tasks": [
+        "T-804"
+      ],
+      "files": [
+        "src/com/example/codegame/TravelService.java",
+        "src/com/example/codegame/JumpGate.java",
+        "src/com/example/codegame/GameSession.java",
+        "src/com/example/codegame/Ship.java",
+        "src/com/example/codegame/PlayHud.java",
+        "src/com/example/codegame/MyGame.java",
+        "src/com/example/codegame/MainActivity.java",
+        "src/com/example/codegame/SaveCodec.java",
+        "src/com/example/codegame/SelfTest.java",
+        "tools/tests/17_warp.sh"
+      ],
+      "tests": [
+        "tools/run-tests.sh 01_logic",
+        "tools/run-tests.sh 17_warp",
+        "tools/run-tests.sh 16_universe"
+      ],
+      "outcome": "Completado",
+      "notes": "Siguiente tarea: T-805 (MapScreen y navegación warp)."
+    },
     {
       "id": "S-064",
       "date": "2026-11-08T05:16:00-06:00",

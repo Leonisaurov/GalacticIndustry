@@ -25,7 +25,7 @@ final class PlayHud {
     private static final Color tint2 = new Color();
 
     private final UiKit ui;
-    private final GameWorld world;
+    private GameWorld world;
     private final GameSession session;
     private final Upgrades upgrades;
     private final SpriteBatch batch;
@@ -33,6 +33,12 @@ final class PlayHud {
     private final Visuals art;
     private final HudView hud;
     private float u = 1f;
+
+    void setWorld(GameWorld world) {
+        if (world != null) {
+            this.world = world;
+        }
+    }
 
     PlayHud(UiKit ui, GameWorld world, GameSession session, Upgrades upgrades,
             SpriteBatch batch, ShapeRenderer shapes, Visuals art, HudView hud) {

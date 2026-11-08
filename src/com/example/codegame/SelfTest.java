@@ -3033,6 +3033,97 @@ public class SelfTest {
                         && bigStreamer.unloadedCount() == 199
                         && streamMs < 100);
 
+        // T-804: warp libre y TravelService.
+        Upgrades warpUp = new Upgrades(true);
+        warpUp.addCoins(10000);
+        warpUp.buy(Upgrades.MOTOR);
+        GameSession warpSession = new GameSession(new PlayerProfile(warpUp));
+        warpSession.startRun();
+        warpSession.ship().cargo().addExact(Commodity.HIERRO, 7);
+        TravelService.Quote warpQuote = TravelService.quote(warpSession, "sol-belt");
+        check("el warp calcula coste sin puerta",
+                warpQuote.ok
+                        && warpQuote.distance > 1.9f
+                        && warpQuote.fuelCost > 0
+                        && warpQuote.energyCost > 0
+                        && !warpQuote.gateUsed);
+        float warpFuelBefore = warpSession.ship().fuel;
+        float warpEnergyBefore = warpSession.ship().capacitor.energy;
+        GameWorld warpOld = warpSession.sector;
+        TravelService.Result warpResult = TravelService.travel(warpSession, "sol-belt");
+        check("el viaje warp carga el destino y conserva la nave",
+                warpResult.ok
+                        && "sol-belt".equals(warpSession.currentSector.id)
+                        && warpSession.sector != warpOld
+                        && warpSession.sector.sector.id.equals("sol-belt")
+                        && warpSession.ship().cargo().amount(Commodity.HIERRO) == 7
+                        && Math.abs(warpSession.ship().fuel
+                        - (warpFuelBefore - warpQuote.fuelCost)) < 0.01f
+                        && Math.abs(warpSession.ship().capacitor.energy
+                        - (warpEnergyBefore - warpQuote.energyCost)) < 0.01f);
+        check("el sector de origen queda como snapshot",
+                warpSession.universe.hasSnapshot(GameData.START_SECTOR_ID)
+                        && warpSession.streamer.isLoaded("sol-belt"));
+        warpSession.ship().fuel = warpSession.ship().maxFuel;
+        warpSession.ship().capacitor.reset();
+        TravelService.Result warpBack = TravelService.travel(warpSession,
+                GameData.START_SECTOR_ID);
+        check("el jugador puede regresar al sector anterior",
+                warpBack.ok
+                        && GameData.START_SECTOR_ID.equals(warpSession.currentSector.id)
+                        && warpSession.universe.hasSnapshot("sol-belt")
+                        && warpSession.streamer.isLoaded(GameData.START_SECTOR_ID));
+        Upgrades noWarpUp = new Upgrades(true);
+        GameSession noWarp = new GameSession(new PlayerProfile(noWarpUp));
+        noWarp.startRun();
+        check("sin equipamiento warp no se viaja",
+                !TravelService.quote(noWarp, "sol-belt").ok
+                        && "Necesitas motor warp".equals(
+                        TravelService.quote(noWarp, "sol-belt").error));
+        {
+            warpSession.ship().fuel = warpSession.ship().maxFuel;
+            warpSession.ship().capacitor.reset();
+            TravelService.Quote noGate = TravelService.quote(warpSession, "sol-ice");
+            JumpGate gate = new JumpGate("ATAJO", GameData.START_SECTOR_ID,
+                    "sol-ice", 0.5f);
+            TravelService.Quote withGate = TravelService.quote(warpSession, "sol-ice", gate);
+            check("las puertas son atajos opcionales",
+                    noGate.ok
+                            && withGate.ok
+                            && withGate.gateUsed
+                            && withGate.fuelCost < noGate.fuelCost
+                            && withGate.energyCost < noGate.energyCost);
+        }
+        check("el viaje puede cruzar de sistema/galaxia",
+                TravelService.quote(warpSession, "andromeda-forge").distance > 30f
+                        && TravelService.nextSectorId(warpSession) != null
+                        && TravelService.previousSectorId(warpSession) != null);
+
+        // T-804: el sector actual también persiste tras viajar.
+        Upgrades warpSaveUp = new Upgrades(true);
+        warpSaveUp.addCoins(1000);
+        warpSaveUp.buy(Upgrades.MOTOR);
+        GameSession warpSave = new GameSession(new PlayerProfile(warpSaveUp));
+        warpSave.startRun();
+        warpSave.ship().cargo().addExact(Commodity.COBRE, 9);
+        TravelService.Result warpSaveTravel = TravelService.travel(warpSave, "sol-belt");
+        SaveService.MemoryStorage warpStore = new SaveService.MemoryStorage();
+        SaveService warpSaves = new SaveService(warpStore);
+        check("el viaje warp se puede guardar", warpSaveTravel.ok && warpSaves.save(warpSave));
+        GameSession warpLoaded = new GameSession(new PlayerProfile(new Upgrades(true)));
+        check("al cargar se restaura el sector actual",
+                warpSaves.load(warpLoaded) == SaveService.LoadStatus.V2
+                        && "sol-belt".equals(warpLoaded.currentSector.id)
+                        && "sol-belt".equals(warpLoaded.sector.sector.id)
+                        && warpLoaded.ship().cargo().amount(Commodity.COBRE) == 9
+                        && warpLoaded.universe.hasSnapshot(GameData.START_SECTOR_ID));
+        warpLoaded.ship().fuel = warpLoaded.ship().maxFuel;
+        warpLoaded.ship().capacitor.reset();
+        check("tras cargar se puede volver al sector anterior",
+                TravelService.travel(warpLoaded, GameData.START_SECTOR_ID).ok
+                        && GameData.START_SECTOR_ID.equals(
+                        warpLoaded.currentSector.id));
+
         // T-602: TradeService, validación y reacción de precios.
         GameWorld tradeWorld = new GameWorld(new Upgrades(true));
         tradeWorld.start();

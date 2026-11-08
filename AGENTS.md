@@ -152,10 +152,10 @@ El estado real está siempre en el tracker. Al cierre de la sesión de preparaci
 
 - Etapa actual: `S8` — Expansión del universo y galaxias.
 - No hay tarea en progreso.
-- Última tarea completada: `T-808` — Implementar streaming dinámico de sectores y regiones.
-- Primera tarea disponible: `T-804` — Implementar propulsión warp y TravelService.
+- Última tarea completada: `T-804` — Implementar propulsión warp y TravelService.
+- Primera tarea disponible: `T-805` — Crear MapScreen y navegación warp.
 - Decisiones: **todas cerradas**; D-012 (facciones/combate/online) queda aplazada.
-- La implementación del juego está al **68 %** (55 de 81 tareas de progreso).
+- La implementación del juego está al **69 %** (56 de 81 tareas de progreso).
 - `MyGame` ya no es un monolito: el dibujo vive en `UiKit`, `PlayHud`,
   `StationScreen`, `OverlayRenderer` y `SpaceBackground` (T-007/T-504).
 
