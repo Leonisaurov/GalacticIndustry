@@ -27,6 +27,11 @@ La implementación inicial es la versión visual **0.1**. Cada actualización
 | 0.4 | `UPD-003` | Identidad visual industrial |
 | 0.5 | `UPD-004` | Compra e instalación de módulos de nave |
 | 0.6 | `UPD-005` | Dashboard por versiones, selector y línea de tiempo |
+| 0.7 | `UPD-006` | Exploración, navegación, personaje y comienzo de partida |
+| 0.8 | `UPD-007` | Renovación gráfica del mundo (propuesta pendiente de aprobación) |
+| 0.9 | `UPD-008` | Rediseño y organización del dashboard (carta estelar) |
+| 0.10 | `UPD-009` | Scroll interno en listas largas y pulido del panel |
+| 0.11 | `UPD-010` | Reconstrucción visual del panel: carta náutica técnica |
 
 La numeración es solo de presentación. Los identificadores internos (`BASE`,
 `UPD-XXX`, `T-XXX`, `S-XXX`) no cambian. `displayVersion` se guarda en el
@@ -35,13 +40,20 @@ tracker para que las etiquetas históricas no cambien al añadir actualizaciones
 ## Selector y línea de tiempo
 
 - **Selector**: lista horizontal de la versión más reciente a la más antigua.
-  El elemento seleccionado se destaca. Comparte estado con la línea de tiempo.
-- **Modo compacto** (predeterminado): número de versión, identificador y estado.
-- **Modo descriptivo**: además muestra nombre, descripción, objetivo y progreso.
-  La preferencia se guarda en `localStorage` (`gi-version-mode`); no es fuente
-  de verdad.
+  El elemento seleccionado se destaca con un marcador dorado. Comparte estado
+  con la línea de tiempo. Cada tarjeta compacta muestra estado y una barra mini
+  de progreso; el modo descriptivo añade nombre, descripción, objetivo y cifras.
+  Se puede recorrer con las flechas, `Inicio` y `Fin` cuando el foco está en el
+  selector.
+- **Modo compacto** (predeterminado): número de versión, identificador, estado y
+  barra de progreso.
+- **Modo descriptivo**: además muestra nombre, descripción, objetivo y progreso
+  con cifras. La preferencia se guarda en `localStorage` (`gi-version-mode`); no
+  es fuente de verdad.
 - **Línea de tiempo**: de `0.1` a la versión más reciente, con puntos
-  seleccionables y desplazamiento horizontal. No representa versiones futuras.
+  seleccionables, anillo de progreso por versión, cifras tabulares y
+  desplazamiento horizontal con fundido en los bordes. Se auto-centra en la
+  versión seleccionada. No representa versiones futuras.
 
 Al abrir el panel se selecciona `meta.currentUpdateId`. Si no existe, se elige la
 actualización activa más reciente; si no hay activas, la versión más reciente
@@ -72,6 +84,32 @@ La información global (resumen, estado actual, propuestas pendientes de
 aprobación, decisiones, problemas, tareas bloqueadas de otras versiones,
 actividad reciente y reglas) vive después del contenido de la versión y no
 cambia al seleccionar otra.
+
+### Listas largas con scroll interno
+
+Las listas que crecen con los datos no alargan la página: cada una tiene una
+altura máxima proporcional al viewport y desplazamiento interno. Se aplica a
+decisiones, problemas técnicos, tareas bloqueadas, aprobaciones pendientes,
+tareas de la versión, historial de la versión y actividad reciente. Un fundido
+en el borde superior o inferior (según la posición) y la barra de desplazamiento
+indican que hay más contenido; ambos desaparecen cuando la lista cabe entera o
+se llega a ese extremo. Cada contenedor es enfocable por teclado
+(`tabindex="0"`, `role="region"`, `aria-label`) y las teclas de dirección lo
+desplazan. El scroll se conserva al refrescar datos y se reinicia al cambiar de
+versión o de filtros.
+
+### Accesibilidad y estados
+
+- Todos los controles (botones, chips, selectores de versión, puntos de la línea
+  de tiempo, cierre de modales y volver arriba) definen hover, foco visible,
+  activo y deshabilitado. El foco visible usa el anillo dorado del tema.
+- Los modales abren con el foco en su primer campo, atrapan `Tab` y `Shift+Tab`,
+  cierran con `Escape`, marcan el resto de la página como `inert` +
+  `aria-hidden` y devuelven el foco al control que los abrió.
+- La posición, el resumen de versión y la distribución usan `aria-live` para
+  anunciar cambios; la navegación marca la sección activa con `aria-current`.
+- Con `prefers-reduced-motion: reduce` se desactivan transiciones y
+  transformaciones.
 
 ### Regla de progreso
 

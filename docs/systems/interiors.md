@@ -74,3 +74,19 @@ ajenas, pospuesta).
 ## 9. Dependencias
 
 Estación personal, estaciones, HUD/entrada, persistencia y render.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Interior dedicado y amplio de la nave nodriza: hangar, concesionario, talleres,
+  comercios, instalaciones técnicas, pasillos, tránsito y zonas habitables.
+- Arquitectura reutilizable o documentada para homogeneizar con estaciones
+  personales.
+- Personaje con sprite cenital, orientación, caminata, reposo, colisión e
+  interacción.
+- Población NPC reducida (6–12) con movimiento y objetivos básicos.
+- Los menús se abren desde elementos representados en el mundo.
+
+Decisiones: `D-023`. No se ha modificado el código de interiores.

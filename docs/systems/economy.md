@@ -90,3 +90,17 @@ T-601 (mercado), T-602 (precios), T-603 (comercio), T-604 (interfaz), T-605
 ## 10. Dependencias
 
 Nave y carga, estaciones, estación personal, contratos, persistencia y HUD.
+
+
+## 11. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Mercado de naves de chatarra, usadas y nuevas, con ofertas e inspecciones.
+- Paquetes de naves nuevas y compra personalizada.
+- Presupuesto inicial de 1.200 CR y regla anti-bloqueo.
+- Combustible por capacidad, eficiencia, masa y repostaje por unidad; el código
+  actual ya calcula `refillCost(missingFuel)` por unidad.
+- Energía de estación para el campo de contención como recurso futuro.
+
+Decisiones: `D-018`, `D-020`. No se ha modificado el código de economía.

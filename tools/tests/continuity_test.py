@@ -534,7 +534,7 @@ class ContinuityTest(unittest.TestCase):
         }
         value = {
             "id": "UPD-900",
-            "displayVersion": "0.7",
+            "displayVersion": "0.99",
             "objective": "Probar la plantilla dinámica.",
             "name": "Actualización de prueba",
             "status": "PROPUESTA",
@@ -589,7 +589,7 @@ class ContinuityTest(unittest.TestCase):
         labels = {u["id"]: u.get("displayVersion") for u in tracker["updates"]}
         self.assertEqual(labels["UPD-001"], "0.2")
         self.assertEqual(labels["UPD-005"], "0.6")
-        self.assertEqual(labels["UPD-900"], "0.7")
+        self.assertEqual(labels["UPD-900"], "0.99")
         self.assertEqual(self.run_tool("sync-dashboard.py", "--quiet").returncode, 0)
 
         # Un grupo no puede referenciar una tarea inexistente.

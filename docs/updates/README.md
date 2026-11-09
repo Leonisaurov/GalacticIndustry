@@ -21,6 +21,30 @@ El plan base **no se reabre**. Si una actualización corrige o mejora algo ya
 implementado, se crea una tarea nueva (`UPD-XXX-TNN`) y se referencia la tarea
 histórica en `relatedTaskIds`; la tarea histórica conserva su estado.
 
+## Contraste obligatorio antes de planificar
+
+Toda propuesta debe contrastarse con el código real antes de convertirse en
+tareas. No se acepta una descripción como prueba de que algo no existe: puede
+estar implementado, parcialmente implementado o funcionar de forma distinta.
+
+El agente que prepara una `UPD-XXX` debe:
+
+1. Localizar archivos, clases y métodos relacionados.
+2. Investigar el comportamiento real.
+3. Consultar fichas de sistema y decisiones.
+4. Describir el estado actual con referencias reales.
+5. Compararlo con el objetivo y localizar la brecha.
+6. Clasificar cada característica como `IMPLEMENTADA`, `PARCIAL`, `AUSENTE`,
+   `INCOMPLETA VISUALMENTE`, `INCONSISTENTE`, `PLANIFICADA`, `POSPUESTO` o
+   `POR VERIFICAR`.
+7. Diseñar solo las modificaciones necesarias y registrar las dudas como
+   decisiones pendientes.
+
+La propuesta debe incluir una sección de auditoría y otra de comparación. Si un
+dato no se puede verificar, se marca `POR VERIFICAR`; no se inventa. Esta regla
+está desarrollada en `AGENTS.md` y se aplica también a las revisiones solicitadas
+desde el panel.
+
 ## Identificadores
 
 - Actualización: `UPD-001`, `UPD-002`, …

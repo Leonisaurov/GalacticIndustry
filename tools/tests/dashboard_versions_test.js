@@ -204,32 +204,57 @@ function makeEnv(tracker, options) {
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 
-// 1. Estado real: UPD-005 es la versión actual y se selecciona por defecto.
+// 1. Estado real: la versión actual del tracker se selecciona por defecto.
 const env = makeEnv(BASE_DATA);
 const selector = text(env, "version-selector");
 const timeline = text(env, "version-timeline");
-check(selector.indexOf("v0.1") !== -1 && selector.indexOf("v0.6") !== -1, "el selector muestra de v0.1 a v0.6");
-check(selector.indexOf("UPD-005") !== -1 && selector.indexOf("BASE") !== -1, "el selector muestra los identificadores internos");
-check(selector.indexOf('data-select-version="UPD-005"') !== -1, "el selector incluye UPD-005");
+const currentId = BASE_DATA.meta.currentUpdateId;
+const currentVersion = BASE_DATA.updates.find(function (u) { return u.id === currentId; })
+  || BASE_DATA.updates[BASE_DATA.updates.length - 1];
+const currentLabel = "v" + currentVersion.displayVersion;
+check(selector.indexOf("v0.1") !== -1 && selector.indexOf(currentLabel) !== -1, "el selector muestra de v0.1 a la versión actual");
+check(selector.indexOf(currentVersion.id) !== -1 && selector.indexOf("BASE") !== -1, "el selector muestra los identificadores internos");
+check(selector.indexOf('data-select-version="' + currentVersion.id + '"') !== -1, "el selector incluye la versión actual");
 check(selector.indexOf("version-chip selected") !== -1, "el modo compacto está activo por defecto");
 check(selector.indexOf("version-card") === -1, "el modo compacto no renderiza tarjetas descriptivas");
-check(timeline.indexOf("v0.1") < timeline.indexOf("v0.6"), "la línea de tiempo va de la versión inicial a la más reciente");
-check(text(env, "version-hero").indexOf("Versión 0.6") !== -1, "la cabecera muestra la versión 0.6");
-check(text(env, "version-hero").indexOf("UPD-005") !== -1, "la cabecera muestra UPD-005");
-check(text(env, "version-hero").indexOf("Dashboard por versiones") !== -1, "la cabecera muestra el nombre de la versión");
-const upd005 = BASE_DATA.updates.find(function (u) { return u.id === "UPD-005"; });
-const impl005 = upd005.tasks.filter(function (t) { return t.category === "implementation" && t.countsForProgress === true; });
-const done005 = impl005.filter(function (t) { return t.status === "COMPLETADO"; }).length;
+check(timeline.indexOf("v0.1") < timeline.indexOf(currentLabel), "la línea de tiempo va de la versión inicial a la más reciente");
+check(text(env, "version-hero").indexOf("Versión " + currentVersion.displayVersion) !== -1, "la cabecera muestra la versión actual");
+check(text(env, "version-hero").indexOf(currentVersion.id) !== -1, "la cabecera muestra el identificador actual");
+check(text(env, "version-hero").indexOf(currentVersion.name) !== -1, "la cabecera muestra el nombre de la versión");
+const implCurrent = currentVersion.tasks.filter(function (t) { return t.category === "implementation" && t.countsForProgress === true; });
+const doneCurrent = implCurrent.filter(function (t) { return t.status === "COMPLETADO"; }).length;
 check(
-  text(env, "version-progress").indexOf(done005 + " de " + impl005.length) !== -1,
-  "el progreso de UPD-005 cuenta " + done005 + " de " + impl005.length + " tareas"
+  text(env, "version-progress").indexOf(doneCurrent + " de " + implCurrent.length) !== -1,
+  "el progreso de " + currentVersion.id + " cuenta " + doneCurrent + " de " + implCurrent.length + " tareas"
 );
-check(text(env, "version-groups").indexOf("no declara etapas ni grupos propios") !== -1, "UPD-005 no inventa etapas");
-check(text(env, "task-list").indexOf("UPD-005-T01") !== -1, "la lista muestra la tarea de UPD-005");
-check(text(env, "task-list").indexOf("UPD-004-T01") === -1, "la lista no mezcla tareas de UPD-004");
+if ((currentVersion.groups || []).length) {
+  check(text(env, "version-groups").indexOf(currentVersion.groups[0].id) !== -1, currentVersion.id + " muestra sus grupos propios");
+} else {
+  check(text(env, "version-groups").indexOf("Sin etapas ni grupos propios") !== -1, currentVersion.id + " no inventa grupos");
+}
+check(text(env, "task-list").indexOf(currentVersion.tasks[0].id) !== -1, "la lista muestra la tarea de " + currentVersion.id);
+const otherUpdate = BASE_DATA.updates.find(function (u) { return u.id !== currentVersion.id && u.tasks.length; });
+if (otherUpdate) {
+  check(text(env, "task-list").indexOf(otherUpdate.tasks[0].id) === -1, "la lista no mezcla tareas de " + otherUpdate.id);
+}
 check(text(env, "task-list").indexOf("T-001") === -1, "la lista no mezcla tareas del plan inicial");
-check(text(env, "version-history").indexOf("S-096") !== -1, "el historial de UPD-005 incluye S-096");
-check(text(env, "pending-approvals").indexOf("No hay actualizaciones pendientes") !== -1, "no hay propuestas pendientes en el estado real");
+const referencedSessions = {};
+currentVersion.tasks.forEach(function (t) {
+  (t.executionLog || []).forEach(function (l) { if (l.sessionId) referencedSessions[l.sessionId] = true; });
+});
+(currentVersion.implementationLog || []).forEach(function (l) { if (l.sessionId) referencedSessions[l.sessionId] = true; });
+const referencedIds = Object.keys(referencedSessions);
+if (referencedIds.length) {
+  check(text(env, "version-history").indexOf(referencedIds[0]) !== -1, "el historial de " + currentVersion.id + " incluye su sesión");
+}
+const pendingStatuses = ["PROPUESTA", "EN_REVISION", "PENDIENTE_APROBACION"];
+const isPending = pendingStatuses.indexOf(currentVersion.status) !== -1;
+check(
+  isPending
+    ? text(env, "pending-approvals").indexOf(currentVersion.id) !== -1
+    : text(env, "pending-approvals").indexOf(currentVersion.id) === -1,
+  isPending ? currentVersion.id + " aparece como propuesta pendiente" : currentVersion.id + " no aparece como propuesta pendiente"
+);
 check(fs.readdirSync(path.join(ROOT, "docs/dashboard")).every(function (f) { return !/^UPD-.*\.html$/.test(f); }), "no hay páginas HTML por actualización");
 
 // 2. Cambio de selección: UPD-001 (sin grupos propios) y BASE (con etapas).
@@ -238,8 +263,8 @@ clickDocument(env, "[data-select-version]", "data-select-version", "UPD-001");
 check(text(env, "version-hero").indexOf("UPD-001") !== -1, "seleccionar UPD-001 cambia la cabecera");
 check(text(env, "version-progress").indexOf("6 de 6") !== -1, "el progreso de UPD-001 cuenta 6 de 6");
 check(text(env, "task-list").indexOf("UPD-001-T01") !== -1, "la lista muestra las tareas de UPD-001");
-check(text(env, "task-list").indexOf("UPD-005-T01") === -1, "la lista ya no muestra UPD-005");
-check(text(env, "version-groups").indexOf("no declara etapas ni grupos propios") !== -1, "UPD-001 no muestra etapas del plan inicial");
+check(text(env, "task-list").indexOf("UPD-006-T01") === -1, "la lista ya no muestra UPD-006");
+check(text(env, "version-groups").indexOf("Sin etapas ni grupos propios") !== -1, "UPD-001 no muestra etapas del plan inicial");
 check(text(env, "version-groups").indexOf("S0") === -1, "UPD-001 no reutiliza S0");
 check(text(env, "summary-cards") === globalBefore, "el resumen global no cambia al seleccionar una versión");
 
@@ -343,10 +368,14 @@ check(text(blockedEnv, "version-hero").indexOf("Bloqueada") !== -1, "una versió
 const noCurrentData = clone(BASE_DATA);
 noCurrentData.meta.currentUpdateId = null;
 const noCurrentEnv = makeEnv(noCurrentData);
-check(text(noCurrentEnv, "version-hero").indexOf("UPD-005") !== -1, "sin actualización actual se selecciona la versión más reciente");
+const latestVersionId = BASE_DATA.updates[BASE_DATA.updates.length - 1].id;
+check(text(noCurrentEnv, "version-hero").indexOf(latestVersionId) !== -1, "sin actualización actual se selecciona la versión más reciente");
 
 const multiActiveData = clone(BASE_DATA);
 multiActiveData.meta.currentUpdateId = null;
+multiActiveData.updates.forEach(function (u) {
+  if (u.id !== "UPD-001" && u.id !== "UPD-002") u.status = "COMPLETADA";
+});
 multiActiveData.updates.find(function (u) { return u.id === "UPD-001"; }).status = "EN_PROGRESO";
 multiActiveData.updates.find(function (u) { return u.id === "UPD-002"; }).status = "EN_PROGRESO";
 const multiActiveEnv = makeEnv(multiActiveData);
@@ -355,8 +384,8 @@ check(text(multiActiveEnv, "version-hero").indexOf("UPD-002") !== -1, "con varia
 // 9. Añadir una actualización nueva no requiere otra plantilla ni otra página.
 const newData = clone(BASE_DATA);
 newData.updates.push({
-  id: "UPD-006",
-  displayVersion: "0.7",
+  id: "UPD-900",
+  displayVersion: "0.99",
   objective: "Demostrar que una versión nueva usa la misma plantilla.",
   name: "Versión nueva de prueba",
   status: "PROPUESTA",
@@ -372,7 +401,7 @@ newData.updates.push({
   relatedTasks: [],
   relatedUpdates: [],
   dependencies: [],
-  document: "docs/updates/UPD-006.md",
+  document: "docs/updates/UPD-900.md",
   approval: {
     required: true,
     status: "PENDIENTE",
@@ -383,8 +412,8 @@ newData.updates.push({
   acceptanceCriteria: [],
   tasks: [
     {
-      id: "UPD-006-T01",
-      updateId: "UPD-006",
+      id: "UPD-900-T01",
+      updateId: "UPD-900",
       title: "Tarea de la versión nueva",
       description: "Tarea de prueba.",
       category: "implementation",
@@ -411,7 +440,7 @@ newData.updates.push({
       objective: "Agrupar la tarea nueva.",
       description: "Grupo de prueba.",
       status: "PENDIENTE",
-      taskIds: ["UPD-006-T01"],
+      taskIds: ["UPD-900-T01"],
       dependencies: [],
       tests: ["Prueba de grupo"]
     }
@@ -421,11 +450,11 @@ newData.updates.push({
   reviewExports: []
 });
 const newEnv = makeEnv(newData);
-check(text(newEnv, "version-selector").indexOf("v0.7") !== -1 && text(newEnv, "version-selector").indexOf("UPD-006") !== -1, "una actualización nueva aparece en el selector");
-check(text(newEnv, "version-timeline").indexOf("v0.7") !== -1, "una actualización nueva aparece en la línea de tiempo");
-clickDocument(newEnv, "[data-select-version]", "data-select-version", "UPD-006");
-check(text(newEnv, "version-hero").indexOf("UPD-006") !== -1, "la actualización nueva usa la misma cabecera");
-check(text(newEnv, "task-list").indexOf("UPD-006-T01") !== -1, "la actualización nueva usa la misma lista de tareas");
+check(text(newEnv, "version-selector").indexOf("v0.99") !== -1 && text(newEnv, "version-selector").indexOf("UPD-900") !== -1, "una actualización nueva aparece en el selector");
+check(text(newEnv, "version-timeline").indexOf("v0.99") !== -1, "una actualización nueva aparece en la línea de tiempo");
+clickDocument(newEnv, "[data-select-version]", "data-select-version", "UPD-900");
+check(text(newEnv, "version-hero").indexOf("UPD-900") !== -1, "la actualización nueva usa la misma cabecera");
+check(text(newEnv, "task-list").indexOf("UPD-900-T01") !== -1, "la actualización nueva usa la misma lista de tareas");
 check(text(newEnv, "version-groups").indexOf("G1") !== -1, "la actualización nueva muestra sus grupos explícitos");
 
 if (failures) {

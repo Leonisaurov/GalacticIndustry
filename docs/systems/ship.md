@@ -79,3 +79,19 @@ T-103 (loadout), T-301…T-306 (carga y masa), T-1101 (clases), T-1109 (módulos
 
 Movimiento y combustible, daños y reparaciones, minería, comercio, estaciones,
 persistencia e interfaz.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Mercado de naves de chatarra, usadas y nuevas, con condición, desgaste,
+  componentes, depósito, eficiencia, masa, carga, módulos y precio reales.
+- Inspección de naves usadas y paquetes de naves nuevas.
+- Compra personalizada: nave vieja reparada, combustible y módulos.
+- Separación de capacidad de depósito, eficiencia de propulsión, masa base y masa
+  de carga; repostaje por unidad suministrada.
+- Ranuras visuales con tipo, posición y compatibilidad.
+- Separación de `AUTOPILOT` (minería) y `DOCKING_AUTOPILOT` (estacionamiento).
+
+Decisiones: `D-019`, `D-020`, `D-022`. No se ha modificado el código de nave.

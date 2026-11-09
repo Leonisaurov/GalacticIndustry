@@ -85,3 +85,17 @@ T-404 (piloto automático), T-502 (aproximación a estación), T-1109 (módulos)
 ## 10. Dependencias
 
 Movimiento y combustible, nave y módulos, minería, estaciones, HUD.
+
+
+## 11. Propuesta UPD-006 (no implementada)
+
+`UPD-006` separa dos especialidades, pendiente de aprobación global:
+
+- `AUTOPILOT` existente: minería, asteroides, bidones y selección de blancos.
+- `DOCKING_AUTOPILOT` nuevo: aproximación, alineación y acoplamiento en
+  estaciones.
+- El estacionamiento manual no requiere módulo y debe seguir siendo funcional.
+- La migración de guardados y la semántica de `MyGame.pickTarget()` se definen en
+  `UPD-006-T35`.
+
+Decisión: `D-019`. No se ha modificado el código del piloto automático.

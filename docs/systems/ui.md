@@ -101,3 +101,18 @@ interacción, pausa y HUD adaptable) y UPD-003-T01 (identidad visual).
 ## 9. Dependencias
 
 Todos los sistemas visibles, entrada, audio, accesibilidad y render.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Brújula básica horizontal hacia la nodriza más cercana.
+- Brújula avanzada y radar circular como módulos e instrumentos separados.
+- Mapa local 2D y mapa de navegación con zoom, pan, iconos y objetivos.
+- Pantalla visual de equipamiento centrada en la nave.
+- Pantalla de mercado/concesionario de naves con inspección y paquetes.
+- HUD de estacionamiento manual (velocidad, desviación, ángulo y distancia).
+- Interfaz de energía del campo de contención.
+
+Decisiones: `D-018`…`D-023`. No se ha modificado la interfaz.

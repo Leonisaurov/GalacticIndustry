@@ -1,43 +1,71 @@
-# DECISIONES CERRADAS — GalacticIndustry
+# DECISIONES — GalacticIndustry
 
-**Última actualización:** 2026-11-08T15:00:00-06:00  
-**Estado:** no hay decisiones pendientes.  
+**Última actualización:** 2026-11-08T18:30:00-06:00  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
 
-Este archivo se usó para conversar las decisiones con otro agente. Las respuestas ya fueron aplicadas al tracker y al plan maestro. Se conserva como resumen histórico.
+## Estado
 
-## Resumen de respuestas
+**No hay decisiones pendientes.** `D-026` a `D-030` de `UPD-007`
+(renovación gráfica del mundo, sesión S-101) fueron respondidas por el usuario
+el 2026-11-08: mundo más realista manteniendo el estilo, solo glows (sin
+bloom), sin naves nuevas pero con personalización visible, e interiores
+incluidos; `D-029` quedó resuelta técnicamente al cerrarse UPD-006.
+**La aprobación global de `UPD-007` sigue `PENDIENTE`.**
+`UPD-008` (rediseño del dashboard, sesión S-102) ya se perfeccionó
+con el usuario y está en `PENDIENTE_APROBACION`; sus decisiones `D-031`
+(propiedad) y `D-032` (tipografía: stack del sistema) están **APROBADAS**.
+Ver [`updates/UPD-007.md`](updates/UPD-007.md) §11 y
+[`updates/UPD-008.md`](updates/UPD-008.md) §10.
+
+Las decisiones de diseño `D-018` a `D-023` de
+`UPD-006` fueron respondidas y aprobadas por el usuario el 2026-11-08. `D-024`
+(tutorial y campaña) sigue aplazada.
+
+La actualización global `UPD-006` fue aprobada por el usuario el 2026-11-08.
+La implementación se inició en la sesión S-100; el estado operativo de cada
+tarea vive en el tracker y en `docs/STATUS.md`.
+
+## Decisiones cerradas de UPD-006
 
 | ID | Decisión | Estado | Respuesta aplicada |
 |---|---|---|---|
-| D-001 | Muerte y persistencia | Aprobada | Muerte permanente del personaje en el juego normal. Un personaje nuevo entra en el **mismo mundo persistente**. La nave anterior queda en las coordenadas de la muerte, con los restos/recursos que sigan existiendo. La nave nodriza no es punto de reaparición. Debe existir un modo de desarrollo para recuperarse en pruebas. |
+| `D-017` | Contraste obligatorio | Aprobada | Toda propuesta se contrasta con el código real y se clasifica antes de convertirse en tareas. |
+| `D-018` | Campo de contención | Aprobada | Exclusión de generación más campo de impactos contundentes, efectos visuales y físicos, naves autorizadas y consumo energético continuo y por impacto. |
+| `D-019` | Entrada y acoplamiento | Aprobada | Punto de entrada, corredor y acoplamiento; estacionamiento manual sin módulo y piloto automático de estacionamiento independiente del de minería. |
+| `D-020` | Presupuesto y mercado de naves | Aprobada | 1.200 CR; mercado de chatarra, usadas y nuevas; paquetes, inspecciones, compra personalizada, combustible por capacidad/eficiencia/masa y repostaje por unidad; motores modulares futuros. |
+| `D-021` | Mapa, escala y viaje | Aprobada | Coordenadas derivadas de datos reales, universo ampliado con streaming, viaje convencional sin warp y warp opcional como ventaja. |
+| `D-022` | Brújula y radar | Aprobada | Brújula básica hacia la nodriza más cercana; brújula avanzada y radar circular como módulos independientes, con alcance y conocimiento reales. |
+| `D-023` | Interior de la nodriza | Aprobada | Escena dedicada amplia y reutilizable, personaje con sprite/animación y población NPC reducida con movimiento y objetivos básicos. |
+| `D-024` | Tutorial y campaña | Aplazada | Se documentan dependencias; no se implementa tutorial ni campaña en `UPD-006`. |
+| `D-025` | Motores modulares | Aprobada (documentación) | Se documentan potencia, consumo, eficiencia, masa y compatibilidad como puntos de extensión; no se implementan catálogos. |
+
+## Decisiones históricas cerradas
+
+| ID | Decisión | Estado | Respuesta aplicada |
+|---|---|---|---|
+| D-001 | Muerte y persistencia | Aprobada | Muerte permanente del personaje. Un personaje nuevo entra en el **mismo mundo persistente**. La nave anterior queda en el lugar de la muerte. La nodriza no es punto de reaparición automático. |
 | D-002 | Tienda de pausa | Aprobada | Se elimina la tienda económica de la pausa. Compras, ventas, mejoras, reparaciones y servicios solo en estaciones físicas. |
-| D-003 | Minería, misiles y tractor | Aprobada | Tres sistemas: láser minero principal; misiles que fragmentan y dispersan mineral; rayo tractor que recupera fragmentos, con mejoras de alcance, velocidad y capacidad. Sin porcentajes definitivos hasta balance. |
-| D-004 | Viaje interestelar | Aprobada | Viaje libre con propulsión warp, sin puertas obligatorias. Universo grande con carga/descarga dinámica de sectores y regiones. El warp consume combustible/energía y depende de equipamiento. |
-| D-005 | Estación personal | Aprobada | La estación inicial es una plataforma vacía donde se acopla la nave. No trae almacén, reparación, refinería ni mercado. El jugador construye módulos progresivamente. |
-| D-006 | Interiores | Aprobada a largo plazo | Se podrá caminar dentro de estaciones, estación propia y naves. No se implementa en las primeras etapas. La Etapa 10 empieza por la estación propia; naves y estaciones no propias quedan como extensión posterior. |
+| D-003 | Minería, misiles y tractor | Aprobada | Láser minero principal; misiles que fragmentan y dispersan mineral; rayo tractor que recupera fragmentos. |
+| D-004 | Viaje interestelar | Aprobada | Viaje libre con propulsión warp, sin puertas obligatorias. Universo grande con carga/descarga dinámica. El warp consume combustible y energía y depende de equipamiento. |
+| D-005 | Estación personal | Aprobada | La estación inicial es una plataforma vacía y acoplable. El jugador construye módulos progresivamente. |
+| D-006 | Interiores | Aprobada a largo plazo | Se podrá caminar dentro de estaciones, estación propia y naves. La Etapa 10 empieza por la estación propia; naves y estaciones ajenas quedan para después. |
 | D-007 | Agentes/offline | Técnica resuelta | 8 agentes iniciales, 24 máximo, tick 2/5/60 s, catch-up máximo de 12 h. |
 | D-008 | Guardado | Técnica resuelta | JSON local, escritura atómica, backup y migración desde `run2`. Sin red. |
-| D-009 | Audio | Aprobada | Experiencia audiovisual completa: música ambiental, ambientes de exploración, música para distintas situaciones y efectos para motores, warp, láseres, misiles, explosiones, impactos, recuperación, alarmas, acople, maquinaria, comercio y módulos. |
-| D-010 | Naves y personalización | Aprobada | Varios modelos de nave con formas, características y capacidades distintas. Personalización por piezas, componentes, herramientas, propulsión, radares, navegación, minería y módulos. El piloto automático puede ser un módulo instalable. |
-| D-011 | Galaxias | Aprobada | Galaxias reales empezando por la Vía Láctea, más otras galaxias reales y ficticias cuando convenga. Sin exactitud astronómica; prioridad a un universo jugable. |
-| D-012 | Facciones, combate y online | Aplazada | No se implementa ahora IA hostil, combate avanzado, facciones completas, multijugador ni servidores. La arquitectura no debe cerrar la posibilidad futura de facciones, PvP, saqueo, cooperación y online. La economía actual se centra en minería, transporte y comercio. |
-| D-013 | Actualizaciones y revisiones | Aprobada | El plan maestro queda como histórico. Los cambios posteriores se registran como actualizaciones `UPD-XXX` en `docs/updates/` y en la clave `updates` del tracker. Cada actualización requiere aprobación explícita antes de implementarse. Las tareas `UPD-XXX-TNN` no alteran el progreso base. |
-| D-014 | Coordinación concurrente | Aprobada | Varias sesiones pueden trabajar a la vez sin coordinador permanente. Cada tarea se reserva con `assignedSessionId`, el tracker se actualiza con `expectUpdatedAt` y un bloqueo `flock` breve, y las sesiones nuevas viven en `docs/sessions/S-XXX.md`. Los commits no son automáticos. |
-| D-015 | Identidad visual | Aprobada | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. Sin cambios de mecánicas ni recursos nuevos. |
-| D-016 | Versiones y dashboard | Aprobada | La implementación inicial es la versión visual `0.1`; cada actualización tiene `displayVersion` estable. Una única plantilla dinámica con selector y línea de tiempo comparte selección y muestra solo la versión elegida. La numeración no cambia IDs internos. |
-| D-015 | Identidad visual | Aprobada | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. Sin cambios de mecánicas ni recursos nuevos. |
+| D-009 | Audio | Aprobada | Música ambiental y efectos para motores, warp, láser, misiles, explosiones, impactos, recogida, alarmas, acople, comercio y módulos. |
+| D-010 | Naves y personalización | Aprobada | Varios modelos con formas, características y capacidades distintas. Personalización por piezas, componentes, herramientas, propulsión, radares, navegación, minería y módulos. |
+| D-011 | Galaxias | Aprobada | Galaxias reales empezando por la Vía Láctea, más otras reales y ficticias. Sin exactitud astronómica; prioridad a un universo jugable. |
+| D-012 | Facciones, combate y online | Aplazada | No se implementa ahora IA hostil, combate avanzado, facciones completas, multijugador ni servidores. |
+| D-013 | Actualizaciones y revisiones | Aprobada | El plan maestro queda como histórico. Los cambios posteriores se registran como `UPD-XXX`; cada actualización requiere aprobación explícita. |
+| D-014 | Coordinación concurrente | Aprobada | Varias sesiones pueden trabajar a la vez con reserva de tarea, `expectUpdatedAt`, bloqueo `flock` breve y sesiones por archivo. |
+| D-015 | Identidad visual | Aprobada | Interfaz de simulador espacial industrial: grafito y acero, ámbar de seguridad, cian de instrumentación, marcos de consola, botones con bisel e iconos geométricos. |
+| D-016 | Versiones y dashboard | Aprobada | La implementación inicial es la versión visual `0.1`; cada actualización tiene `displayVersion` estable. Una única plantilla dinámica con selector y línea de tiempo comparte la selección. |
 
-## Tareas de decisión
+## Tareas que requieren decisión
 
-Ya no hay tareas en estado `REQUIERE_DECISION`.
-
-Las tareas que dependían de estas decisiones fueron reactivadas o pospuestas:
-
-- `T-208`, `T-504`, `T-406`, `T-804`, `T-903`, `T-1001`…`T-1006`, `T-1104`: reactivadas como `PENDIENTE` cuando correspondía.
-- `T-1103` (facciones/combate/online): `POSPUESTO`.
-- `T-1007` (interiores de naves y estaciones no propias): `POSPUESTO`.
-- `T-107` (revisión de extensibilidad online): `PENDIENTE`, no cuenta para el progreso de implementación.
-
-Las Etapas 1, 2, 3, 4, 5, 6, 7, 8, 9 y 10 están completadas. La siguiente tarea de implementación es **T-1105 — Balance, telemetría y rendimiento** (Etapa 11).
+Las tareas de `UPD-006` no dependen de decisiones `PENDIENTE` y la
+actualización está completada. Las 11 tareas de `UPD-007`
+(`UPD-007-T01`…`T11`) están `PENDIENTE`: sus decisiones ya están respondidas,
+pero no pueden iniciarse hasta la aprobación global de la actualización. Las 6 tareas de `UPD-008`
+(`UPD-008-T01`…`T06`) están `PENDIENTE` y no pueden iniciarse hasta aprobar la
+actualización; `D-032` ya está resuelta (stack del sistema).

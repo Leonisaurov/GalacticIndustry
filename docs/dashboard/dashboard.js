@@ -122,6 +122,9 @@
 
   var VERSION_MODE_KEY = "gi-version-mode";
 
+  var scrollAreas = [];
+  var lastTaskSignature = null;
+
   function parseEmbedded() {
     return JSON.parse(document.getElementById("tracker-data").textContent);
   }
@@ -529,11 +532,23 @@
     return STATUS[status] || { label: status || "—", cls: "" };
   }
 
+  function badgeGlyph(cls) {
+    var c = String(cls || "");
+    var path;
+    if (c.indexOf("COMPLET") !== -1) path = '<path d="m2.4 5.1 1.8 1.8 3.4-3.8"/>';
+    else if (c.indexOf("BLOQUE") !== -1) path = '<path d="m3 3 4 4M7 3 3 7"/>';
+    else if (c.indexOf("PROGRES") !== -1) path = '<circle cx="5" cy="5" r="3.4"/><path d="M5 3v2.3l1.5 1"/>';
+    else if (c.indexOf("POSPUESTO") !== -1) path = '<path d="M3.4 2.6v4.8M6.6 2.6v4.8"/>';
+    else if (c.indexOf("DECISION") !== -1) path = '<path d="M5 1.6 8.4 5 5 8.4 1.6 5z"/>';
+    else path = '<circle cx="5" cy="5" r="2.6"/>';
+    return '<svg class="badge-glyph" viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + "</svg>";
+  }
+
   function statusBadge(status) {
     var s = statusInfo(status);
     var def = statusDefs[status];
     var title = def && def.description ? ' title="' + esc(def.description) + '"' : "";
-    return '<span class="badge ' + s.cls + '"' + title + ">" + esc(s.label) + "</span>";
+    return '<span class="badge ' + s.cls + '"' + title + ">" + badgeGlyph(s.cls) + esc(s.label) + "</span>";
   }
 
   function priorityChip(priority) {
@@ -549,7 +564,7 @@
     var s = updateStatusInfo(status);
     var def = updateStatusDefs[status];
     var title = def && def.description ? ' title="' + esc(def.description) + '"' : "";
-    return '<span class="badge ' + s.cls + '"' + title + ">" + esc(s.label) + "</span>";
+    return '<span class="badge ' + s.cls + '"' + title + ">" + badgeGlyph(s.cls) + esc(s.label) + "</span>";
   }
 
   function updateTypeLabel(type) {
@@ -623,7 +638,7 @@
   function decisionBadge(status) {
     var label = DECISION_LABEL[status] || status || "—";
     var cls = DECISION_CLASS[status] || "s-LISTO";
-    return '<span class="badge ' + cls + '">' + esc(label) + "</span>";
+    return '<span class="badge ' + cls + '">' + badgeGlyph(cls) + esc(label) + "</span>";
   }
 
   function outcomeBadge(value) {
@@ -632,13 +647,13 @@
       : s.indexOf("BLOQUE") === 0 ? "s-BLOQUEADO"
       : s.indexOf("PROGRES") === 0 ? "s-EN_PROGRESO"
       : "s-LISTO";
-    return '<span class="badge ' + cls + '">' + esc(value || "—") + "</span>";
+    return '<span class="badge ' + cls + '">' + badgeGlyph(cls) + esc(value || "—") + "</span>";
   }
 
   function issueStatusBadge(status) {
     var s = String(status || "").toUpperCase();
     var cls = s === "ABIERTO" ? "s-BLOQUEADO" : s === "CONOCIDO" ? "s-LISTO" : "s-COMPLETADO";
-    return '<span class="badge ' + cls + '">' + esc(status || "—") + "</span>";
+    return '<span class="badge ' + cls + '">' + badgeGlyph(cls) + esc(status || "—") + "</span>";
   }
 
   function issueSeverityChip(severity) {
@@ -773,12 +788,12 @@
         : ' class="dist-seg" aria-hidden="true"';
       return "<" + tag + attrs +
         ' title="' + esc(STATUS[k].label + ": " + n + " tareas") + '"' +
-        ' style="width:' + pct + "%;background:var(--st-" + slug + "-line);color:var(--st-" + slug + '-ink)">' +
-        (pct >= 7 ? esc(n) : "") + "</" + tag + ">";
+        ' style="width:' + pct + "%;background:var(--st-" + slug + '-line)">' + "</" + tag + ">";
     }).join("");
 
     var legend = STATUS_ORDER.map(function (k) {
       var n = c[k] || 0;
+      var pct = Math.round(n * 100 / total);
       var slug = STATUS_SLUG[k] || "pendiente";
       var tag = interactive ? "button" : "span";
       var attrs = interactive
@@ -786,12 +801,16 @@
         : ' class="legend-btn"';
       return "<" + tag + attrs + ">" +
         '<span class="legend-dot" style="background:var(--st-' + slug + '-line)"></span>' +
-        esc(STATUS[k].label) + " <strong>" + n + "</strong></" + tag + ">";
+        esc(STATUS[k].label) + ' <span class="legend-pct">' + pct + "%</span><strong>" + n + "</strong></" + tag + ">";
     }).join("");
+
+    var aria = STATUS_ORDER.filter(function (k) { return (c[k] || 0) > 0; }).map(function (k) {
+      return STATUS[k].label + ": " + c[k];
+    }).join(", ");
 
     return '<div class="dist-head"><h3>' + esc(title) + "</h3>" +
       '<span class="hint">' + esc(hint || (total + " tareas")) + "</span></div>" +
-      '<div class="dist-bar" role="img" aria-label="Distribución de tareas por estado">' + segments + "</div>" +
+      '<div class="dist-bar" role="img" aria-label="' + esc("Distribución de tareas por estado. " + aria) + '">' + segments + "</div>" +
       '<div class="dist-legend">' + legend + "</div>";
   }
 
@@ -975,7 +994,7 @@
         : (groups.length ? "Grupos declarados en el tracker para esta actualización." : "Esta versión no declara etapas ni grupos propios.");
     }
     if (!groups.length) {
-      el.innerHTML = '<div class="empty">Esta versión no declara etapas ni grupos propios. Sus tareas se muestran en la sección Tareas, sin jerarquía inventada.</div>';
+      el.innerHTML = '<div class="empty compact">Sin etapas ni grupos propios: las tareas se listan en Tareas.</div>';
       return;
     }
     el.innerHTML = groups.map(function (group) { return versionGroupHtml(v, group); }).join("");
@@ -991,11 +1010,14 @@
   function compactVersionHtml(v, selected) {
     var sel = selected && selected.id === v.id;
     var label = versionStatusInfo(v).label;
+    var p = versionProgress(v);
+    var pct = p.pct === null ? 0 : Math.max(0, Math.min(100, p.pct));
     return '<button type="button" class="version-chip' + (sel ? " selected" : "") + '" data-select-version="' + esc(v.id) + '"' +
       ' aria-pressed="' + (sel ? "true" : "false") + '" title="' + esc("v" + v.displayVersion + " · " + v.internalId + " · " + v.name + " · " + label) + '">' +
       '<span class="version-number">v' + esc(v.displayVersion) + "</span>" +
       '<span class="version-id">' + esc(v.internalId) + "</span>" +
       '<span class="version-state"><span class="version-dot" style="background:var(--st-' + esc(versionStatusSlug(v)) + '-line)"></span>' + esc(label) + "</span>" +
+      '<span class="version-mini" aria-hidden="true"><span style="width:' + pct + '%"></span></span>' +
     "</button>";
   }
 
@@ -1051,15 +1073,24 @@
     var selected = selectedVersion();
     el.innerHTML = versionList().map(function (v) {
       var sel = selected.id === v.id;
+      var p = versionProgress(v);
+      var pct = p.pct === null ? 0 : Math.max(0, Math.min(100, p.pct));
       return '<button type="button" class="timeline-point' + (sel ? " selected" : "") + '" data-select-version="' + esc(v.id) + '"' +
         ' aria-pressed="' + (sel ? "true" : "false") + '" title="' + esc("v" + v.displayVersion + " · " + v.internalId + " · " + v.name) + '">' +
-        '<span class="timeline-dot" style="background:var(--st-' + esc(versionStatusSlug(v)) + '-line)"></span>' +
+        '<span class="timeline-dot" style="--dot:var(--st-' + esc(versionStatusSlug(v)) + '-line);--pct:' + pct + '"></span>' +
         '<span class="timeline-version">v' + esc(v.displayVersion) + "</span>" +
         '<span class="timeline-id">' + esc(v.internalId) + "</span>" +
         '<span class="timeline-name">' + esc(v.name) + "</span>" +
+        '<span class="timeline-pct">' + (p.pct === null ? "sin tareas" : p.pct + "% · " + p.done + "/" + p.total) + "</span>" +
         versionStatusBadge(v) +
       "</button>";
     }).join("");
+
+    var wrap = el.parentElement;
+    var selPoint = el.querySelector ? el.querySelector(".timeline-point.selected") : null;
+    if (wrap && selPoint && wrap.scrollWidth > wrap.clientWidth) {
+      wrap.scrollLeft = Math.max(0, selPoint.offsetLeft - (wrap.clientWidth - selPoint.offsetWidth) / 2);
+    }
   }
 
   function renderVersionHero(v) {
@@ -1132,10 +1163,7 @@
         (card.pct === null ? "" : '<div class="progress"><span style="width:' + Math.max(0, Math.min(100, card.pct)) + '%"></span></div>') +
         "</div>";
     }).join("") + "</div>" +
-    '<div class="chips version-secondary">' + secondary + "</div>" +
-    '<div class="card distribution" id="version-distribution">' +
-      distributionMarkup(p.list, "Distribución de la versión", "solo tareas de la versión seleccionada", true) +
-    "</div>";
+    '<div class="chips version-secondary">' + secondary + "</div>";
   }
 
   function renderVersionAlert(v) {
@@ -1205,6 +1233,7 @@
       : "";
     if (!list.length) {
       el.innerHTML = logHtml + '<div class="empty">No hay sesiones registradas directamente para esta versión.</div>';
+      refreshScrollAreas();
       return;
     }
     var limit = 8;
@@ -1216,6 +1245,7 @@
           (state.versionHistoryAll ? "Mostrar solo las últimas " + limit : "Mostrar todas (" + list.length + ")") +
           "</button></div>"
         : "");
+    refreshScrollAreas();
   }
 
   function renderVersionPending(v) {
@@ -1344,6 +1374,7 @@
     });
     if (!list.length) {
       el.innerHTML = '<div class="empty">No hay actualizaciones pendientes de aprobación.</div>';
+      refreshScrollAreas();
       return;
     }
     el.innerHTML = list.map(function (u) {
@@ -1355,6 +1386,7 @@
         '<button type="button" class="btn ghost small" data-select-version="' + esc(u.id) + '">Abrir versión</button></div>' +
         "</div>";
     }).join("");
+    refreshScrollAreas();
   }
 
   function renderGlobalHistory() {
@@ -1366,6 +1398,7 @@
     el.innerHTML = sorted.length
       ? sorted.map(function (s) { return sessionCardHtml(s, { showVersions: true }); }).join("")
       : '<div class="empty">No hay sesiones registradas.</div>';
+    refreshScrollAreas();
   }
 
   function renderGlobalSections() {
@@ -1616,11 +1649,19 @@
     var v = selectedVersion();
     var list = sortTasks(filterTasks());
     var el = document.getElementById("task-list");
+    var signature = [
+      state.versionId, state.search, state.status, state.stage,
+      state.priority, state.sort, state.groupByStage
+    ].join("|");
+    var resetScroll = signature !== lastTaskSignature;
+    lastTaskSignature = signature;
     var total = versionTaskList(v).length;
     document.getElementById("task-count").textContent = list.length + " de " + total + " tareas de v" + v.displayVersion;
     if (!list.length) {
       el.innerHTML = '<div class="empty">No hay tareas que coincidan con los filtros.<br>' +
         '<button type="button" class="btn ghost" data-clear-filters>Limpiar filtros</button></div>';
+      if (resetScroll) resetScrollArea("task-list");
+      refreshScrollAreas();
       return;
     }
 
@@ -1680,8 +1721,12 @@
         if (d.open) state.open[d.getAttribute("data-task")] = true;
         else delete state.open[d.getAttribute("data-task")];
         saveUiState();
+        window.requestAnimationFrame(refreshScrollAreas);
       });
     });
+
+    if (resetScroll) resetScrollArea("task-list");
+    refreshScrollAreas();
   }
 
   function renderDecisions() {
@@ -1782,6 +1827,7 @@
           "</div>";
       }).join("");
     }
+    refreshScrollAreas();
   }
 
   function renderRules() {
@@ -1810,6 +1856,46 @@
       (meta.oneTaskPerSession ? " · Una tarea por sesión." : "") + "</p>";
   }
 
+  function setText(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function renderKpis(v) {
+    var p = taskProgress();
+    setText("top-progress", p.pct + "%");
+    setText("top-progress-sub", p.done + " de " + p.total + " tareas del plan base");
+    var bar = document.getElementById("top-progress-bar");
+    if (bar) bar.style.width = Math.max(0, Math.min(100, p.pct)) + "%";
+
+    setText("top-version", "v" + v.displayVersion);
+    setText("top-version-sub", v.internalId + " · " + versionStatusInfo(v).label);
+
+    var cu = currentUpdate();
+    setText("top-update", cu ? cu.id : "—");
+    setText("top-update-sub", cu
+      ? "v" + (cu.displayVersion || fallbackDisplayVersion(cu)) + " · " + updateStatusInfo(cu.status).label
+      : (updates.length ? updates.length + " registradas" : "sin actualizaciones"));
+
+    setText("kpi-approvals", String(pendingApprovalCount()));
+    setText("kpi-approvals-sub", updates.length ? "de " + updates.length + " actualizaciones" : "sin propuestas");
+  }
+
+  function renderPosition(v) {
+    var el = document.getElementById("position-text");
+    var metaEl = document.getElementById("position-meta");
+    if (el) el.textContent = "v" + v.displayVersion + " · " + v.internalId + " · " + v.name;
+    if (!metaEl) return;
+    var bits = [versionStatusBadge(v)];
+    var p = versionProgress(v);
+    if (p.pct !== null) bits.push("<span>" + p.pct + "% · " + p.done + "/" + p.total + " tareas</span>");
+    var active = allProjectTasks().filter(function (t) { return t.status === "EN_PROGRESO"; });
+    bits.push(active.length
+      ? '<span><span class="mono">' + esc(active[0].id) + "</span> en progreso</span>"
+      : '<span class="hint">sin tarea activa</span>');
+    metaEl.innerHTML = bits.join('<span class="pos-sep" aria-hidden="true">·</span>');
+  }
+
   function renderAll() {
     ensureVersionSelection();
     var v = selectedVersion();
@@ -1819,13 +1905,8 @@
     document.getElementById("last-session").textContent = meta.lastSessionId || "—";
     var currentStage = stageById[meta.currentStageId];
     document.getElementById("top-stage").textContent = currentStage ? currentStage.id + " · " + currentStage.name : "—";
-    var cu = currentUpdate();
-    var cuEl = document.getElementById("top-update");
-    if (cuEl) cuEl.textContent = cu ? "v" + (cu.displayVersion || fallbackDisplayVersion(cu)) + " · " + cu.id + " · " + updateStatusInfo(cu.status).label : (updates.length ? updates.length + " registradas" : "—");
-    var topVersion = document.getElementById("top-version");
-    if (topVersion) topVersion.textContent = "v" + v.displayVersion + " · " + v.internalId;
-    var p = taskProgress();
-    document.getElementById("top-progress").textContent = p.pct + "% (" + p.done + "/" + p.total + ")";
+    renderKpis(v);
+    renderPosition(v);
     document.title = "Panel — " + (meta.displayName || "GalacticIndustry") + " · v" + v.displayVersion + " " + v.internalId;
 
     renderVersionSelector();
@@ -1860,8 +1941,8 @@
     renderTimeline();
     renderVersionContent();
     renderGlobalSections();
-    var topVersion = document.getElementById("top-version");
-    if (topVersion) topVersion.textContent = "v" + v.displayVersion + " · " + v.internalId;
+    renderKpis(v);
+    renderPosition(v);
     document.title = "Panel — " + (meta.displayName || "GalacticIndustry") + " · v" + v.displayVersion + " " + v.internalId;
     if (opts.updateHash !== false) pushHash("#version-" + v.id);
     if (opts.scroll !== false) {
@@ -1886,6 +1967,46 @@
     if (dot) {
       dot.className = "dot" + (kind === "warn" ? " warn" : kind === "err" ? " err" : "");
     }
+  }
+
+  function setupScrollAreas() {
+    var nodes = document.querySelectorAll("[data-scroll-area]");
+    Array.prototype.forEach.call(nodes, function (area) {
+      if (area.__scrollShell) return;
+      area.classList.add("scroll-area");
+      var shell = document.createElement("div");
+      shell.className = "scroll-shell";
+      area.parentNode.insertBefore(shell, area);
+      shell.appendChild(area);
+      ["top", "bottom"].forEach(function (edge) {
+        var fade = document.createElement("span");
+        fade.className = "scroll-fade " + edge;
+        fade.setAttribute("aria-hidden", "true");
+        shell.appendChild(fade);
+      });
+      area.__scrollShell = shell;
+      area.__scrollUpdate = function () {
+        var scrollable = area.scrollHeight - area.clientHeight > 2;
+        shell.classList.toggle("is-scrollable", scrollable);
+        shell.classList.toggle("at-top", area.scrollTop <= 1);
+        shell.classList.toggle("at-bottom", area.scrollTop + area.clientHeight >= area.scrollHeight - 1);
+      };
+      area.addEventListener("scroll", area.__scrollUpdate, { passive: true });
+      if (window.ResizeObserver) new ResizeObserver(area.__scrollUpdate).observe(area);
+      scrollAreas.push(area);
+      area.__scrollUpdate();
+    });
+  }
+
+  function refreshScrollAreas() {
+    for (var i = 0; i < scrollAreas.length; i += 1) {
+      if (scrollAreas[i].__scrollUpdate) scrollAreas[i].__scrollUpdate();
+    }
+  }
+
+  function resetScrollArea(id) {
+    var el = document.getElementById(id);
+    if (el) el.scrollTop = 0;
   }
 
   function motionMode() {
@@ -2087,27 +2208,70 @@
     }
   }
 
+  var lastFocused = null;
+  var PAGE_REGIONS = ["header.top", "nav.sticky", "main", "footer"];
+
+  function focusableIn(el) {
+    return Array.prototype.slice.call(el.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(function (n) { return n.offsetParent !== null || n === document.activeElement; });
+  }
+
+  function anyModalOpen() {
+    return document.querySelector(".modal:not([hidden])");
+  }
+
+  function setPageInert(on) {
+    PAGE_REGIONS.forEach(function (sel) {
+      var region = document.querySelector(sel);
+      if (!region) return;
+      if (on) {
+        region.setAttribute("inert", "");
+        region.setAttribute("aria-hidden", "true");
+      } else {
+        region.removeAttribute("inert");
+        region.removeAttribute("aria-hidden");
+      }
+    });
+  }
+
   function openModal(id) {
     var el = document.getElementById(id);
     if (!el) return;
+    if (!anyModalOpen() && document.activeElement) lastFocused = document.activeElement;
     el.hidden = false;
     document.body.style.overflow = "hidden";
-    var focus = el.querySelector("input, select, textarea, button");
-    if (focus) setTimeout(function () { focus.focus(); }, 30);
+    setPageInert(true);
+    var body = el.querySelector(".modal-body");
+    var focus = (body && (body.querySelector("input, select, textarea") || focusableIn(body)[0]))
+      || el.querySelector("[autofocus]")
+      || focusableIn(el)[0]
+      || el.querySelector(".modal-panel");
+    if (focus) focus.focus();
+  }
+
+  function restoreFocusAfterModal() {
+    if (anyModalOpen()) return;
+    document.body.style.overflow = "";
+    setPageInert(false);
+    if (lastFocused && lastFocused.focus) {
+      try { lastFocused.focus(); } catch (e) { /* ignorar */ }
+    }
+    lastFocused = null;
   }
 
   function closeModal(id) {
     var el = document.getElementById(id);
     if (!el) return;
     el.hidden = true;
-    if (!document.querySelector(".modal:not([hidden])")) document.body.style.overflow = "";
+    restoreFocusAfterModal();
   }
 
   function closeAllModals() {
     Array.prototype.forEach.call(document.querySelectorAll(".modal:not([hidden])"), function (el) {
       el.hidden = true;
     });
-    document.body.style.overflow = "";
+    restoreFocusAfterModal();
   }
 
   function selectedIds(type) {
@@ -2842,6 +3006,8 @@
   }
 
   var THEME_KEY = "gi-theme";
+  var SUN_ICON = '<circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M15.7 4.3l-1.4 1.4M5.7 14.3l-1.4 1.4"/>';
+  var MOON_ICON = '<path d="M16 12.2A6.8 6.8 0 0 1 7.8 4 7 7 0 1 0 16 12.2z"/>';
 
   function setTheme(theme) {
     var t = theme === "light" ? "light" : "dark";
@@ -2849,12 +3015,15 @@
     try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* ignorar */ }
     var btn = document.getElementById("theme-btn");
     if (btn) {
-      btn.textContent = t === "light" ? "☾ Oscuro" : "☀ Claro";
       btn.setAttribute("aria-pressed", t === "light" ? "true" : "false");
       btn.setAttribute("aria-label", t === "light" ? "Cambiar a tema oscuro" : "Cambiar a tema claro");
     }
+    var icon = document.getElementById("theme-icon");
+    if (icon) icon.innerHTML = t === "light" ? MOON_ICON : SUN_ICON;
+    var label = document.getElementById("theme-label");
+    if (label) label.textContent = t === "light" ? "Oscuro" : "Claro";
     var metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) metaTheme.setAttribute("content", t === "light" ? "#f4f7fb" : "#05070d");
+    if (metaTheme) metaTheme.setAttribute("content", t === "light" ? "#f5f8fd" : "#04070f");
   }
 
   function initTheme() {
@@ -2946,8 +3115,25 @@
       toast(next === "light" ? "Tema claro activado" : "Tema oscuro activado");
     });
 
+    var selectorEl = document.getElementById("version-selector");
+    if (selectorEl) selectorEl.addEventListener("keydown", function (ev) {
+      if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight" && ev.key !== "Home" && ev.key !== "End") return;
+      var items = Array.prototype.slice.call(selectorEl.querySelectorAll("button[data-select-version]"));
+      if (!items.length) return;
+      var idx = items.indexOf(document.activeElement);
+      if (idx === -1) idx = 0;
+      var next = idx;
+      if (ev.key === "ArrowLeft") next = Math.max(0, idx - 1);
+      else if (ev.key === "ArrowRight") next = Math.min(items.length - 1, idx + 1);
+      else if (ev.key === "Home") next = 0;
+      else if (ev.key === "End") next = items.length - 1;
+      ev.preventDefault();
+      items[next].focus();
+    });
+
     document.getElementById("decisions-toggle").addEventListener("click", function () {
       state.hideResolved = !state.hideResolved;
+      resetScrollArea("decision-list");
       renderDecisions();
       saveUiState();
     });
@@ -3102,10 +3288,35 @@
     });
 
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape" && document.querySelector(".modal:not([hidden])")) {
+      if (ev.key === "Escape" && anyModalOpen()) {
         ev.preventDefault();
         closeAllModals();
         return;
+      }
+      if (ev.key === "Tab") {
+        var openModalEl = anyModalOpen();
+        if (openModalEl) {
+          var f = focusableIn(openModalEl);
+          if (!f.length) {
+            ev.preventDefault();
+            return;
+          }
+          var active = document.activeElement;
+          var inside = openModalEl === active ||
+            (openModalEl.contains && openModalEl.contains(active));
+          if (!inside) {
+            ev.preventDefault();
+            f[0].focus();
+            return;
+          }
+          var first = f[0], last = f[f.length - 1];
+          if (ev.shiftKey && active === first) {
+            ev.preventDefault(); last.focus();
+          } else if (!ev.shiftKey && active === last) {
+            ev.preventDefault(); first.focus();
+          }
+          return;
+        }
       }
       if (ev.key === "Enter" || ev.key === " ") {
         var el = closest(ev.target, "[data-stage-jump]");
@@ -3155,6 +3366,7 @@
   initTheme();
   populateFilters();
   restoreFilters();
+  setupScrollAreas();
   renderAll();
   initEvents();
   setAuto(autoEnabled());

@@ -76,3 +76,18 @@ T-801…T-808: universo, sectores, streaming, warp, mapa y contenido.
 ## 9. Dependencias
 
 Nave y combustible, estaciones, persistencia, mapa/HUD y economía.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Mapa de navegación 2D con galaxias, sistemas, regiones, estaciones, nodriza y
+  puntos de interés.
+- Posiciones derivadas de `mapX`/`mapY` y centroides; escala de universo ampliada
+  manteniendo el streaming.
+- Viaje convencional sin warp entre sistemas y galaxias, con tiempos mayores.
+- Warp opcional como ventaja tecnológica, con energía/combustible.
+- El mapa muestra ambos modos y sus requisitos.
+
+Decisiones: `D-021`. No se ha modificado el código del universo ni el warp.

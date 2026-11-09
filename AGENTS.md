@@ -29,7 +29,8 @@ Al empezar cualquier sesión, en este orden:
    plan base y después en la actualización aprobada. Usa `contextFiles`,
    `contextDocs`, `artifacts` y `tests` si están registrados.
 7. Identifica solo los archivos y documentos pertinentes.
-8. Contrasta la documentación con el código real antes de modificarlo.
+8. Contrasta la documentación con el código real antes de modificarlo y aplica
+   la sección **Contraste obligatorio con el código real**.
 9. Consulta las decisiones aplicables en `docs/DECISIONS.md`.
 10. Comprueba que las dependencias están `COMPLETADO` y que no hay decisiones
     pendientes que bloqueen la tarea.
@@ -54,6 +55,32 @@ Detente. No empieces automáticamente la siguiente tarea.
   añade o corrige la ficha y la fila de `docs/INDEX.md`.
 - Si un documento y el código discrepan, prevalece el código real; corrige la
   documentación o el comentario obsoleto y deja constancia.
+
+### Contraste obligatorio con el código real
+
+**Ninguna propuesta se convierte en tarea o cambio de código sin contrastarla
+antes con la implementación real.** Una descripción del usuario no confirma que
+algo no exista: puede existir, estar parcialmente implementado o funcionar de
+otra forma. La auditoría prevalece sobre la interpretación literal.
+
+Para toda funcionalidad nueva o revisada:
+
+1. Localiza los archivos, clases y métodos relacionados.
+2. Investiga el comportamiento real en el código.
+3. Consulta la documentación, las fichas de sistema y las decisiones.
+4. Determina qué hace hoy exactamente.
+5. Identifica qué comportamiento se quiere conseguir.
+6. Compara ambos y localiza la brecha real.
+7. Diseña solo las modificaciones necesarias; no reconstruyas lo que ya sirve.
+8. Clasifica cada característica como `IMPLEMENTADA`, `PARCIAL`, `AUSENTE`,
+   `INCOMPLETA VISUALMENTE`, `INCONSISTENTE`, `PLANIFICADA`, `POSPUESTO` o
+   `POR VERIFICAR`.
+9. Cita archivos, clases y métodos reales; no inventes rutas ni comportamientos.
+
+Si no se puede verificar algo, se marca `POR VERIFICAR` y se explica qué falta.
+La clasificación y las referencias se registran en la propuesta o en la ficha
+del sistema, no solo en la conversación. Esta regla se aplica también a las
+actualizaciones `UPD-XXX` y a las revisiones solicitadas desde el panel.
 
 ## Coordinación entre sesiones
 

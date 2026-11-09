@@ -73,3 +73,17 @@ T-502 (acoplamiento y aproximación).
 ## 9. Dependencias
 
 Nave y carga, daños (motor/depósito), piloto automático, estaciones y rescate.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Separar capacidad del depósito, eficiencia de propulsión, masa base y masa de
+  carga en las fórmulas de consumo.
+- Mantener el repostaje por unidad suministrada y mostrarlo en la UI.
+- Preparar la evolución futura de motores modulares sin implementar catálogos.
+- Añadir viaje convencional sin warp, con tiempo mayor y coste de combustible,
+  frente al warp opcional.
+
+Decisiones: `D-020`, `D-021`. No se ha modificado el código de vuelo.

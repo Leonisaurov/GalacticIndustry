@@ -77,3 +77,20 @@ tienda de pausa), T-505 (almacén), T-506 (rescate), T-507 (tráfico).
 ## 9. Dependencias
 
 Nave, economía, contratos, supervivencia, persistencia, HUD y universo.
+
+
+## 10. Propuesta UPD-006 (no implementada)
+
+`UPD-006` propone, pendiente de aprobación global:
+
+- Entrada identificable, punto de atraque y corredor de aproximación.
+- Estacionamiento manual sin módulo, exigente pero aprendible.
+- Módulo independiente `DOCKING_AUTOPILOT` para aproximación, alineación y acople.
+- Colisión física con el casco y respuesta por impacto.
+- Campo de contención con impactos contundentes, efectos visuales, naves
+  autorizadas y consumo energético continuo y por impacto.
+- Interior dedicado de la nodriza con hangar, concesionario, talleres, comercios,
+  pasillos y NPC básicos.
+
+Decisiones: `D-018` (campo), `D-019` (acoplamiento), `D-023` (interior). No se ha
+modificado el código de estaciones.
