@@ -34,7 +34,7 @@ No leas todas las fichas ni todo `MASTER_PLAN.md` para una sola tarea.
 
 | Sistema | Estado | Ficha | Código principal | Documentación | Decisiones | Tareas | Pruebas |
 |---|---|---|---|---|---|---|---|
-| Continuidad y panel | Implementado | [continuity](systems/continuity.md) | `tools/sync-dashboard.py`, `tools/continuity.py`, `docs/dashboard/*` | `dashboard/README.md`, `CONCURRENCY.md` | D-013, D-014, D-016, D-017, D-031, D-032, D-036, D-037, D-038, D-039 | T-003, T-006, T-007, UPD-001, UPD-002, UPD-005, UPD-006, UPD-008, UPD-009, UPD-010 | `sync-dashboard.py --check`, `continuity_test.py` (17), `dashboard_versions_test.js/.py` |
+| Continuidad y panel | Implementado | [continuity](systems/continuity.md) | `tools/sync-dashboard.py`, `tools/continuity.py`, `docs/dashboard/*` | `dashboard/README.md`, `CONCURRENCY.md` | D-013, D-014, D-016, D-017, D-031, D-032, D-036, D-037, D-038, D-039 | T-003, T-006, T-007, UPD-001, UPD-002, UPD-005, UPD-006, UPD-008, UPD-009, UPD-010, UPD-011 | `sync-dashboard.py --check`, `continuity_test.py` (20), `dashboard_versions_test.js/.py`, `run-tests.sh --tools` |
 | Piloto y supervivencia | Implementado | [survival](systems/survival.md) | `Pilot.java`, `LifeSupport.java`, `GameSession.java`, `GameWorld.java` | `MASTER_PLAN.md` §4.1, §4.5, §7, §13.2 | D-001, D-002 | T-102, T-201…T-210 | `01_logic`, `10_survival`, `05_death` |
 | Nave, componentes y carga | Implementado | [ship](systems/ship.md) | `Ship.java`, `ShipLoadout.java`, `ShipModuleDef.java`, `ShipSlotDef.java`, `ShipSpec.java`, `Upgrades.java`, `CargoHold.java` | `MASTER_PLAN.md` §4.2–4.4, §6.4; UPD-006 §9 | D-010, D-025 | T-103, T-301…T-306, T-1101, T-1109, UPD-004, UPD-006 | `01_logic`, `11_cargo`, `23_ship_modules`, `33_equipment` |
 | Movimiento y combustible | Implementado | [flight](systems/flight.md) | `Ship.java`, `MassModel.java`, `FuelPickup.java`, `Controls.java` | `MASTER_PLAN.md` §4.2, §13.1 | — | T-303, T-304, T-404, T-502 | `01_logic`, `02_navigation`, `03_controls` |
@@ -105,6 +105,7 @@ por `D-024`) y su detalle vive en [`updates/UPD-006.md`](updates/UPD-006.md).
 | [`updates/UPD-008.md`](updates/UPD-008.md) | Rediseño y organización del dashboard (COMPLETADA, S-102 → S-103). |
 | [`updates/UPD-009.md`](updates/UPD-009.md) | Scroll interno en listas largas y pulido del panel (COMPLETADA, S-104). |
 | [`updates/UPD-010.md`](updates/UPD-010.md) | Reconstrucción visual del panel de continuidad (COMPLETADA, S-105). |
+| [`updates/UPD-011.md`](updates/UPD-011.md) | Indicadores derivados canónicos y verificación comprobable del panel (APROBADA, S-106). |
 | [`CONCURRENCY.md`](CONCURRENCY.md) | Bloqueos, escrituras atómicas y coordinación. |
 | [`pruebas.md`](pruebas.md) | Pruebas de dispositivo y telemetría. |
 

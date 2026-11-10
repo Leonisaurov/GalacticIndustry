@@ -25,6 +25,12 @@ if (!DATA_MATCH) {
   process.exit(1);
 }
 const BASE_DATA = JSON.parse(DATA_MATCH[1].replace(/<\\\//g, "</"));
+const DERIVED_MATCH = /<script id="derived-data" type="application\/json">([\s\S]*?)<\/script>/.exec(HTML);
+if (!DERIVED_MATCH) {
+  console.error("FAIL: no se encontró el bloque derived-data en index.html");
+  process.exit(1);
+}
+const BASE_DERIVED = JSON.parse(DERIVED_MATCH[1].replace(/<\\\//g, "</"));
 
 let failures = 0;
 function check(condition, message) {
@@ -38,6 +44,10 @@ function check(condition, message) {
 function text(env, id) {
   const el = env.document.getElementById(id);
   return el ? el.innerHTML : "";
+}
+function plain(env, id) {
+  const el = env.document.getElementById(id);
+  return el ? String(el.textContent || "") : "";
 }
 function attr(env, id, name) {
   const el = env.document.getElementById(id);
@@ -134,6 +144,11 @@ function makeEnv(tracker, options) {
   }
   if (!elements["tracker-data"]) throw new Error("Falta tracker-data");
   elements["tracker-data"].textContent = JSON.stringify(tracker);
+  // Sin options.derived el bloque queda vacío: el panel debe usar su respaldo
+  // local (HTML antiguo). Con options.derived se comprueba el consumo real.
+  if (elements["derived-data"]) {
+    elements["derived-data"].textContent = options.derived ? JSON.stringify(options.derived) : "";
+  }
 
   const document = {
     title: "",
@@ -153,7 +168,7 @@ function makeEnv(tracker, options) {
   const localStorage = makeStorage();
   const sessionStorage = makeStorage();
   if (options.mode) localStorage.setItem("gi-version-mode", options.mode);
-  const location = { protocol: "file:", hash: options.hash || "", href: "file:///docs/dashboard/index.html" };
+  const location = { protocol: options.protocol || "file:", hash: options.hash || "", href: "file:///docs/dashboard/index.html" };
   const history = {
     pushState: function (_state, _title, hash) { location.hash = hash || ""; }
   };
@@ -184,7 +199,7 @@ function makeEnv(tracker, options) {
     clearInterval: clearInterval,
     URL: { createObjectURL: function () { return "blob:test"; }, revokeObjectURL: function () {} },
     Blob: function Blob() {},
-    fetch: function () { throw new Error("fetch no debe usarse con file://"); },
+    fetch: options.fetch || function () { throw new Error("fetch no debe usarse con file://"); },
     JSON: JSON,
     Math: Math,
     Date: Date,
@@ -456,6 +471,86 @@ clickDocument(newEnv, "[data-select-version]", "data-select-version", "UPD-900")
 check(text(newEnv, "version-hero").indexOf("UPD-900") !== -1, "la actualización nueva usa la misma cabecera");
 check(text(newEnv, "task-list").indexOf("UPD-900-T01") !== -1, "la actualización nueva usa la misma lista de tareas");
 check(text(newEnv, "version-groups").indexOf("G1") !== -1, "la actualización nueva muestra sus grupos explícitos");
+
+// 10. Indicadores derivados canónicos (UPD-011).
+// Sin bloque derivado el panel conserva el cálculo local de respaldo.
+check(
+  text(env, "summary-cards").indexOf(BASE_DERIVED.progresoBase.porcentaje + "%") !== -1,
+  "sin derived-data el panel conserva el cálculo de respaldo"
+);
+const derivedRealEnv = makeEnv(BASE_DATA, { derived: BASE_DERIVED });
+check(
+  text(derivedRealEnv, "summary-cards").indexOf(BASE_DERIVED.progresoBase.porcentaje + "%") !== -1,
+  "los KPIs del panel coinciden con derived-data"
+);
+check(
+  plain(derivedRealEnv, "top-progress").indexOf(BASE_DERIVED.progresoBase.porcentaje + "%") !== -1,
+  "la franja superior usa el progreso derivado"
+);
+const estadoActual = BASE_DATA.updates.find(function (u) { return u.id === BASE_DERIVED.actualizacionActual; });
+check(
+  !estadoActual || ["PROPUESTA", "EN_REVISION", "PENDIENTE_APROBACION"].indexOf(estadoActual.status) === -1,
+  "ninguna propuesta sin aprobar figura como Actualización actual"
+);
+check(
+  plain(derivedRealEnv, "top-update").indexOf(BASE_DERIVED.actualizacionActual) !== -1,
+  "top-update muestra la actualización derivada"
+);
+
+// Si los derivados cambian y el tracker no, los KPIs deben cambiar: prueba de
+// que el JS consume DERIVED en vez de recalcular por su cuenta.
+const derivadosMutados = clone(BASE_DERIVED);
+derivadosMutados.progresoBase = { hechas: 7, total: 10, porcentaje: 70 };
+derivadosMutados.actualizacionActual = "UPD-001";
+derivadosMutados.verificacion = Object.assign({}, BASE_DERIVED.verificacion, { resultado: "REVISAR" });
+const derivedMutadoEnv = makeEnv(BASE_DATA, { derived: derivadosMutados });
+check(text(derivedMutadoEnv, "summary-cards").indexOf("70%") !== -1, "alterar derived-data altera los KPIs del panel");
+check(plain(derivedMutadoEnv, "top-update").indexOf("UPD-001") !== -1, "currentUpdate() lee la actualización derivada");
+check(text(derivedMutadoEnv, "verification").indexOf("REVISAR") !== -1, "el badge de verificación lee DERIVED");
+
+// 11. Refresco HTTP validado (UPD-011-T04). Thenable síncrono para resolver
+// la cadena de promesas de refreshData() sin depender del loop de eventos.
+function thenableSincrono(valor) {
+  return {
+    then: function (fn) {
+      try { return thenableSincrono(fn(valor)); }
+      catch (e) { return thenableRechazado(e); }
+    },
+    catch: function () { return this; }
+  };
+}
+function thenableRechazado(error) {
+  return {
+    then: function () { return this; },
+    catch: function (fn) { fn(error); return thenableSincrono(null); }
+  };
+}
+function envConFetch(trackerRemoto) {
+  return makeEnv(BASE_DATA, {
+    protocol: "https:",
+    derived: BASE_DERIVED,
+    fetch: function () {
+      return thenableSincrono({
+        ok: true,
+        text: function () { return JSON.stringify(trackerRemoto); }
+      });
+    }
+  });
+}
+
+const jsonInvalido = { meta: { lastUpdated: BASE_DERIVED.derivadoDe }, tasks: [], stages: [], updates: "no-es-un-array" };
+const envRechazo = envConFetch(jsonInvalido);
+check(plain(envRechazo, "data-source").indexOf("JSON rechazado") !== -1, "un JSON vivo con forma inválida se rechaza con warn");
+check(plain(envRechazo, "data-source").indexOf("JSON en vivo") === -1, "nunca se marca ok ante un JSON rechazado");
+check(text(envRechazo, "summary-cards").indexOf(BASE_DERIVED.progresoBase.porcentaje + "%") !== -1, "se conservan los KPIs de los embebidos");
+
+const desincronizado = clone(BASE_DATA);
+desincronizado.meta.lastUpdated = "2000-01-01T00:00:00Z";
+const envDesfase = envConFetch(desincronizado);
+check(plain(envDesfase, "data-source").indexOf("JSON rechazado") !== -1, "un tracker desincronizado con derived-data no se aplica");
+
+const envVivo = envConFetch(BASE_DATA);
+check(plain(envVivo, "data-source").indexOf("JSON en vivo") !== -1, "un JSON coherente se aplica y marca ok");
 
 if (failures) {
   console.error("\n" + failures + " comprobaciones fallaron.");

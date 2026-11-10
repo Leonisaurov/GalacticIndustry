@@ -41,8 +41,8 @@ tracker JSON es la fuente canónica; el panel y `STATUS.md` son derivados.
 |---|---|
 | `tools/continuity_io.py` | Bloqueo `flock`, escritura atómica, lectura JSON, raíz configurable. |
 | `tools/continuity.py` | `status`, `new-session`, `claim`, `apply`, `append`, `replace`, `lock-status`. |
-| `tools/sync-dashboard.py` | Valida el tracker, regenera `STATUS.md` y el bloque embebido del panel bajo bloqueo. |
-| `docs/dashboard/dashboard.js` | Modelo de versiones, selector compacto/descriptivo, línea de tiempo, plantilla dinámica, filtros, búsqueda, propuestas, expedientes y contenedores de scroll interno con fundidos. |
+| `tools/sync-dashboard.py` | Valida el tracker, calcula `vista_derivada()`, regenera `STATUS.md` y los bloques `tracker-data` / `derived-data` del panel bajo bloqueo. |
+| `docs/dashboard/dashboard.js` | Modelo de versiones, selector compacto/descriptivo, línea de tiempo, plantilla dinámica, filtros, búsqueda, propuestas, expedientes y contenedores de scroll interno con fundidos. Consume `derived-data` con respaldo local. |
 | `docs/IMPLEMENTATION_TRACKER.json` | Estado operativo canónico. |
 | `docs/STATUS.md` | Resumen derivado; nunca se edita a mano. |
 
@@ -86,15 +86,20 @@ versiones), UPD-008 (rediseño del panel), UPD-009 (scroll interno) y UPD-010
 
 ## 7. Pruebas existentes
 
-- `sync-dashboard.py --check`: tracker válido, HTML y `STATUS.md` coherentes;
-  valida `displayVersion`, `objective`, `meta.initialVersion` y `groups`.
+- `sync-dashboard.py --check`: tracker válido y los tres artefactos coherentes
+  (`tracker-data`, `derived-data` y `STATUS.md`); valida `displayVersion`,
+  `objective`, `meta.initialVersion` y `groups`. Falla con `exit 1` ante
+  cualquier divergencia.
 - `continuity_test.py`: modificaciones independientes, conflicto en la misma
   tarea, interrupción, bloqueos, sincronización concurrente, conservación de
   trabajo ajeno, dependencias entre tareas de actualización, sesiones activas,
-  cierre de sesión y versiones/grupos (17 pruebas).
+  cierre de sesión, versiones/grupos y mutaciones de derivados (20 pruebas).
 - `dashboard_versions_test.js` / `.py`: renderizado en DOM mínimo de Node;
   selector, línea de tiempo, modos, contenido por versión, progreso aislado,
-  ausencia de etapas inventadas, pendientes globales y propuesta pendiente.
+  ausencia de etapas inventadas, pendientes globales, propuesta pendiente y
+  consumo de `derived-data` con respaldo local.
+- `tools/run-tests.sh --tools`: ejecuta los cuatro comandos anteriores sin
+  dispositivo Android ni build. No forma parte de `--all`.
 - Apertura manual del panel con `file://`.
 
 ## 8. Problemas conocidos
@@ -105,8 +110,8 @@ versiones), UPD-008 (rediseño del panel), UPD-009 (scroll interno) y UPD-010
   cambios visuales se verifican con Firefox headless en 1440/1024/768/390 px y
   ambos temas, midiendo desbordamiento y altura de cabecera.
 - Los archivos derivados (`STATUS.md`, `index.html`) pueden quedar uno detrás de
-  otro si el proceso muere entre dos escrituras; la siguiente sincronización lo
-  corrige.
+  otro si el proceso muere entre dos escrituras; `--check` lo detecta con
+  `exit 1` y la siguiente sincronización lo corrige.
 - Una sesión interrumpida permanece `EN_PROGRESO` hasta que otra la inspecciona
   y la cierra; no se borra automáticamente.
 - `IMPLEMENTATION_LOG.md` conserva el historial anterior a S-093; las sesiones
@@ -116,3 +121,29 @@ versiones), UPD-008 (rediseño del panel), UPD-009 (scroll interno) y UPD-010
 
 Depende de Python 3 y `fcntl` (Linux/macOS). No usa red, servidores, bases de
 datos ni dependencias externas.
+
+## 10. Indicadores derivados (UPD-011)
+
+Antes de UPD-011 el panel recalculaba en JavaScript los KPIs que Python ya
+calculaba para `STATUS.md`, y existían tres reglas distintas para decidir qué
+era la «Actualización actual». `--check` solo comparaba dos artefactos y podía
+dar verde mientras el panel mostraba una propuesta sin aprobar como trabajo
+vigente.
+
+Ahora `vista_derivada(tracker)` es la única fuente de cálculo. Es determinista
+(no incluye relojes ni marcas de ejecución), se emite en el bloque
+`derived-data` con marcadores propios fuera de `tracker-data`, y el JS la lee
+con un respaldo local para HTML antiguo. `--check` compara ese bloque con un
+cálculo nuevo y falla si difiere. La regla de «Actual» se separa en dos:
+
+- `actualizacionActual`: solo trabajo autorizado; alimenta `top-update` y
+  `STATUS.md`. Nunca una propuesta sin aprobar.
+- `versionPorDefecto`: selección inicial del panel según `UPD-005` §6.3; puede
+  ser la versión más reciente registrada, mostrada con su estado y su aviso.
+
+El badge de verificación se deriva del mismo bloque (ya no de
+`meta.lastVerification`, que era autodeclarado) y el refresco por HTTP valida
+forma mínima y coherencia de `meta.lastUpdated` antes de aplicar el JSON; si
+falla, conserva los embebidos con indicador `warn`. Referencia completa:
+[`updates/UPD-011.md`](../updates/UPD-011.md) y
+[`dashboard/README.md`](../dashboard/README.md).

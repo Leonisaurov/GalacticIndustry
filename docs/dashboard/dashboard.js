@@ -86,6 +86,11 @@
     return;
   }
 
+  // Indicadores calculados por tools/sync-dashboard.py:vista_derivada().
+  // Si el HTML es antiguo o el bloque no es legible, DERIVED queda en null y
+  // el panel conserva el cálculo local de respaldo (compatibilidad file://).
+  var DERIVED = leerDerivados();
+
   var meta;
   var stages;
   var tasks;
@@ -127,6 +132,19 @@
 
   function parseEmbedded() {
     return JSON.parse(document.getElementById("tracker-data").textContent);
+  }
+
+  function leerDerivados() {
+    try {
+      var el = document.getElementById("derived-data");
+      if (!el || !el.textContent || !el.textContent.trim()) return null;
+      var datos = JSON.parse(el.textContent);
+      // Un bloque vacío {}, manipulado o de otra versión no es confiable.
+      if (!datos || datos.origen !== "tools/sync-dashboard.py:vista_derivada" || !datos.derivadoDe) return null;
+      return datos;
+    } catch (e) {
+      return null;
+    }
   }
 
   function applyTrackerData(next) {
@@ -224,6 +242,11 @@
   }
 
   function fallbackDisplayVersion(u) {
+    // El mapa lo calcula vista_derivada(); el cálculo local queda de respaldo
+    // para HTML antiguo y para actualizaciones añadidas en pruebas.
+    if (DERIVED && DERIVED.mapaVersiones && DERIVED.mapaVersiones[u.id]) {
+      return DERIVED.mapaVersiones[u.id];
+    }
     var sorted = updates.slice().sort(function (a, b) {
       return String(a.createdAt || "").localeCompare(String(b.createdAt || "")) || natCompare(a.id, b.id);
     });
@@ -235,11 +258,12 @@
   }
 
   function updateVersion(u) {
+    var versionDerivada = DERIVED && DERIVED.mapaVersiones ? DERIVED.mapaVersiones[u.id] : null;
     return {
       id: u.id,
       kind: "update",
       internalId: u.id,
-      displayVersion: u.displayVersion || fallbackDisplayVersion(u),
+      displayVersion: versionDerivada || u.displayVersion || fallbackDisplayVersion(u),
       name: u.name || u.id,
       description: u.description || MISSING,
       objective: u.objective || u.motivation || u.description || MISSING,
@@ -266,6 +290,9 @@
   }
 
   function defaultVersionId() {
+    if (DERIVED && DERIVED.versionPorDefecto && versionById(DERIVED.versionPorDefecto)) {
+      return DERIVED.versionPorDefecto;
+    }
     if (meta.currentUpdateId && updateById[meta.currentUpdateId]) {
       return meta.currentUpdateId;
     }
@@ -576,6 +603,9 @@
   }
 
   function updateProgress(u) {
+    var d = DERIVED && DERIVED.progresoPorActualizacion && u
+      ? DERIVED.progresoPorActualizacion[u.id] : null;
+    if (d) return { done: d.hechas, total: d.total, pct: d.porcentaje };
     var list = (u && u.tasks) || [];
     var impl = list.filter(function (t) {
       return t.category === "implementation" && t.countsForProgress === true;
@@ -602,12 +632,23 @@
   }
 
   function currentUpdate() {
+    // DERIVED.actualizacionActual solo contiene trabajo autorizado: corrige el
+    // defecto que incluía PROPUESTA / PENDIENTE_APROBACION como «Actual».
+    if (DERIVED && DERIVED.actualizacionActual && updateById[DERIVED.actualizacionActual]) {
+      return updateById[DERIVED.actualizacionActual];
+    }
     if (meta.currentUpdateId && updateById[meta.currentUpdateId]) return updateById[meta.currentUpdateId];
-    var active = updates.filter(function (u) {
-      return u.status === "EN_PROGRESO" || u.status === "PENDIENTE_APROBACION" || u.status === "PROPUESTA" || u.status === "APROBADA";
+    var propuesta = function (u) {
+      return u.status === "PROPUESTA" || u.status === "EN_REVISION" || u.status === "PENDIENTE_APROBACION";
+    };
+    var autorizadas = updates.filter(function (u) { return !propuesta(u); });
+    var activas = autorizadas.filter(function (u) {
+      return u.status === "EN_PROGRESO" || u.status === "APROBADA" || u.status === "BLOQUEADA";
     });
-    if (active.length) return active[active.length - 1];
-    return updates.length ? updates[updates.length - 1] : null;
+    var candidatas = activas.length ? activas : autorizadas;
+    if (!candidatas.length) return null;
+    candidatas.sort(function (a, b) { return versionCompare(updateVersion(a), updateVersion(b)); });
+    return candidatas[candidatas.length - 1];
   }
 
   function nextUpdateId() {
@@ -626,10 +667,16 @@
   }
 
   function approvedUpdateCount() {
+    if (DERIVED && typeof DERIVED.actualizacionesAprobadas === "number") {
+      return DERIVED.actualizacionesAprobadas;
+    }
     return updates.filter(isApprovedUpdate).length;
   }
 
   function pendingApprovalCount() {
+    if (DERIVED && typeof DERIVED.aprobacionesPendientes === "number") {
+      return DERIVED.aprobacionesPendientes;
+    }
     return updates.filter(function (u) {
       return u.status === "PROPUESTA" || u.status === "EN_REVISION" || u.status === "PENDIENTE_APROBACION";
     }).length;
@@ -684,6 +731,8 @@
   }
 
   function taskProgress() {
+    var d = DERIVED && DERIVED.progresoBase;
+    if (d) return { done: d.hechas, total: d.total, pct: d.porcentaje };
     var impl = tasks.filter(function (t) {
       return t.category === "implementation" && t.countsForProgress === true;
     });
@@ -696,6 +745,8 @@
   }
 
   function prepProgress() {
+    var d = DERIVED && DERIVED.preparacion;
+    if (d) return { done: d.hechas, total: d.total, pct: d.porcentaje };
     var prep = tasks.filter(function (t) { return t.category === "preparation"; });
     var done = prep.filter(function (t) { return t.status === "COMPLETADO"; });
     return {
@@ -734,6 +785,7 @@
   }
 
   function countsByStatus() {
+    if (DERIVED && DERIVED.conteosPorEstado) return DERIVED.conteosPorEstado;
     var c = {};
     tasks.forEach(function (t) { c[t.status] = (c[t.status] || 0) + 1; });
     return c;
@@ -926,20 +978,28 @@
   function renderVerification() {
     var el = document.getElementById("verification");
     if (!el) return;
-    var v = meta.lastVerification;
+    // El badge ya no lee meta.lastVerification (valor autodeclarado sin
+    // escritor). DERIVED lo emite solo tras validate() y bajo --check.
+    // El objeto antiguo se conserva como respaldo para HTML sin derivados.
+    var v = (DERIVED && DERIVED.verificacion) ? DERIVED.verificacion : meta.lastVerification;
     if (!v) {
       el.innerHTML = '<div class="verification-top"><h3>Última verificación</h3>' + statusBadge("PENDIENTE") + "</div>" +
         '<p class="hint" style="margin:8px 0 0">No hay verificación registrada en el tracker.</p>';
       return;
     }
-    var ok = String(v.result || "").toUpperCase() === "OK";
-    var checks = Array.isArray(v.checks) ? v.checks : [];
+    var resultado = v.resultado || v.result || "—";
+    var ok = String(resultado).toUpperCase() === "OK";
+    var fecha = v.fecha || v.date || meta.lastUpdated;
+    var checks = Array.isArray(v.comprobaciones) ? v.comprobaciones
+      : (Array.isArray(v.checks) ? v.checks : []);
     el.innerHTML =
-      '<div class="verification-top"><h3>Última verificación · ' + esc(fmtDate(v.date)) + "</h3>" +
-      '<span class="badge ' + (ok ? "s-COMPLETADO" : "s-BLOQUEADO") + '">' + esc(v.result || "—") + "</span></div>" +
+      '<div class="verification-top"><h3>Última verificación · ' + esc(fmtDate(fecha)) + "</h3>" +
+      '<span class="badge ' + (ok ? "s-COMPLETADO" : "s-BLOQUEADO") + '">' + esc(resultado) + "</span></div>" +
       (checks.length
         ? '<div class="check-list">' + checks.map(function (c) { return '<span class="chip ok">✓ ' + esc(c) + "</span>"; }).join("") + "</div>"
         : '<p class="hint" style="margin:8px 0 0">Sin comprobaciones detalladas.</p>') +
+      (v.fuente ? '<p class="hint" style="margin:8px 0 0">Fuente: <span class="mono">' + esc(v.fuente) + "</span></p>" : "") +
+      (v.nota ? '<p class="hint" style="margin:6px 0 0">' + esc(v.nota) + "</p>" : "") +
       '<p class="hint" style="margin:9px 0 0">Tracker actualizado: ' + esc(fmtDate(meta.lastUpdated)) +
       " · Última sesión: <strong style=\"color:var(--ink)\">" + esc(meta.lastSessionId || "—") + "</strong></p>";
   }
@@ -2944,6 +3004,22 @@
   var TRACKER_URL = "../IMPLEMENTATION_TRACKER.json";
   var refreshing = false;
 
+  // Validación de forma mínima y de coherencia con los derivados embebidos.
+  // No reimplementa validate() de Python: solo evita aplicar un JSON que el
+  // validador rechazaría o que dejaría al panel con KPIs de dos versiones
+  // distintas (AGENTS.md:369, «No inventar estados en el panel»).
+  function formaTrackerValida(next) {
+    if (!next || typeof next !== "object" || Array.isArray(next)) return false;
+    if (!next.meta || typeof next.meta !== "object") return false;
+    if (!Array.isArray(next.tasks) || !Array.isArray(next.updates) || !Array.isArray(next.stages)) return false;
+    return next.updates.every(function (u) { return !!u && typeof u.id === "string" && u.id.length > 0; });
+  }
+
+  function derivadosCoherentes(next) {
+    var esperado = DERIVED ? DERIVED.derivadoDe : (DATA && DATA.meta ? DATA.meta.lastUpdated : null);
+    return !!esperado && !!next.meta.lastUpdated && next.meta.lastUpdated === esperado;
+  }
+
   function refreshData(showToast) {
     if (refreshing) return;
     if (window.location.protocol === "file:") {
@@ -2964,6 +3040,8 @@
       })
       .then(function (text) {
         var next = JSON.parse(text);
+        if (!formaTrackerValida(next)) throw new Error("forma de tracker no válida");
+        if (!derivadosCoherentes(next)) throw new Error("tracker desincronizado con los derivados del panel");
         var scrollY = window.scrollY;
         var keepVersion = state.versionId;
         applyTrackerData(next);
@@ -2974,8 +3052,9 @@
         if (showToast) toast("Datos actualizados sin recargar");
       })
       .catch(function (error) {
-        setDataSource("embebidos (sin fetch)", "warn");
-        if (showToast) toast("No se pudo leer el JSON: " + error.message);
+        // Nunca se marca "ok": se conservan los embebidos y sus derivados.
+        setDataSource("embebidos (JSON rechazado)", "warn");
+        if (showToast) toast("No se aplicó el JSON: " + error.message);
       })
       .then(function () {
         refreshing = false;

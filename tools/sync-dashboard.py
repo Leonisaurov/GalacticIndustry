@@ -32,6 +32,13 @@ DASHBOARD_CSS = ROOT / "docs" / "dashboard" / "dashboard.css"
 DASHBOARD_JS = ROOT / "docs" / "dashboard" / "dashboard.js"
 START = "<!-- TRACKER_DATA_START -->"
 END = "<!-- TRACKER_DATA_END -->"
+DERIVED_START = "<!-- DERIVED_DATA_START -->"
+DERIVED_END = "<!-- DERIVED_DATA_END -->"
+
+# Estados que representan trabajo autorizado en curso. Una propuesta sin
+# aprobar nunca cuenta como «actualización actual» (UPD-005 §6.3-6.4).
+ESTADOS_ACTIVOS = {"EN_PROGRESO", "APROBADA", "BLOQUEADA"}
+ESTADOS_PROPUESTA = {"PROPUESTA", "EN_REVISION", "PENDIENTE_APROBACION"}
 
 VALID_STATUS = {
     "PENDIENTE",
@@ -807,6 +814,158 @@ def update_progress(tracker: dict) -> list[tuple[str, int, int, int]]:
     return rows
 
 
+def _clave_natural(texto: object) -> list[tuple[int, object]]:
+    """Equivalente determinista de natCompare() del panel para ordenar IDs."""
+    partes = re.split(r"(\d+)", str(texto or ""))
+    return [(1, int(p)) if p.isdigit() else (0, p.lower()) for p in partes]
+
+
+def _mapa_versiones(updates: list[dict]) -> dict[str, str]:
+    """Calcula el displayVersion efectivo de cada actualización.
+
+    Replica fallbackDisplayVersion() del panel: orden por createdAt e id y
+    versión 0.2 + 0.1 por posición cuando el tracker no declara una explícita.
+    """
+    ordenadas = sorted(
+        updates,
+        key=lambda u: (str(u.get("createdAt") or ""), _clave_natural(u.get("id"))),
+    )
+    mapa: dict[str, str] = {}
+    for indice, upd in enumerate(ordenadas):
+        uid = upd.get("id")
+        if not uid:
+            continue
+        explicita = upd.get("displayVersion")
+        mapa[uid] = str(explicita) if explicita else f"{(2 + indice) / 10:.1f}"
+    return mapa
+
+
+def _clave_version(upd: dict, mapa: dict[str, str]) -> tuple:
+    partes = str(mapa.get(upd.get("id"), "")).split(".")
+    major = int(partes[0]) if partes and partes[0].isdigit() else -1
+    minor = int(partes[1]) if len(partes) > 1 and partes[1].isdigit() else -1
+    return (major, minor, _clave_natural(upd.get("id")))
+
+
+def _actualizacion_actual(tracker: dict, mapa: dict[str, str]) -> str | None:
+    """Regla única de «Actualización actual» (UPD-005 §6.3-6.4).
+
+    Alimenta top-update y STATUS.md: siempre trabajo autorizado. Prioridad:
+    meta.currentUpdateId → activa autorizada más reciente → autorizada más
+    reciente. Una propuesta sin aprobar jamás se elige por su estado; solo
+    puede serlo si el tracker la fija explícitamente, y entonces el panel
+    muestra su estado real y su aviso.
+    """
+    updates = tracker.get("updates", [])
+    explicita = tracker.get("meta", {}).get("currentUpdateId")
+    if explicita and any(u.get("id") == explicita for u in updates):
+        return explicita
+    autorizadas = [u for u in updates if u.get("status") not in ESTADOS_PROPUESTA]
+    activas = [u for u in autorizadas if u.get("status") in ESTADOS_ACTIVOS]
+    candidatas = activas or autorizadas
+    if not candidatas:
+        return None
+    return max(candidatas, key=lambda u: _clave_version(u, mapa)).get("id")
+
+
+def _version_por_defecto(tracker: dict, mapa: dict[str, str]) -> str:
+    """Selección inicial del panel (UPD-005 §6.3): distinta de «Actual».
+
+    Aquí sí puede seleccionarse la versión más reciente registrada aunque sea
+    una propuesta, porque se muestra con su estado y su aviso; no se presenta
+    como trabajo en desarrollo (defaultVersionId() del panel).
+    """
+    updates = tracker.get("updates", [])
+    explicita = tracker.get("meta", {}).get("currentUpdateId")
+    if explicita and any(u.get("id") == explicita for u in updates):
+        return explicita
+    activas = [u for u in updates if u.get("status") in ESTADOS_ACTIVOS]
+    candidatas = activas or updates
+    if not candidatas:
+        return "BASE"
+    mejor = max(candidatas, key=lambda u: _clave_version(u, mapa))
+    return "BASE" if _clave_version(mejor, mapa)[:2] < (0, 1) else mejor.get("id")
+
+
+def vista_derivada(tracker: dict) -> dict:
+    """Única fuente de los indicadores que muestra el panel.
+
+    Es determinista: solo depende del tracker. Ningún valor de reloj ni de
+    ejecución entra aquí, para que --check pueda comparar el bloque embebido
+    con un cálculo nuevo y dos sincronizaciones concurrentes den el mismo
+    resultado.
+    """
+    meta = tracker.get("meta", {})
+    tasks = tracker.get("tasks", [])
+    updates = tracker.get("updates", [])
+    decisions = tracker.get("decisions", [])
+    stages = tracker.get("stages", [])
+
+    hechas, total, pct = progress(tracker)
+    conteos: dict[str, int] = {}
+    for task in tasks:
+        estado = task.get("status", "?")
+        conteos[estado] = conteos.get(estado, 0) + 1
+
+    prep = [t for t in tasks if t.get("category") == "preparation"]
+    prep_hechas = [t for t in prep if t.get("status") == "COMPLETADO"]
+
+    mapa = _mapa_versiones(updates)
+    por_actualizacion: dict[str, dict] = {}
+    for uid, d, t, p in update_progress(tracker):
+        upd = next((u for u in updates if u.get("id") == uid), {})
+        por_actualizacion[uid] = {
+            "hechas": d,
+            "total": t,
+            "porcentaje": p,
+            "estado": upd.get("status"),
+        }
+
+    actual = _actualizacion_actual(tracker, mapa)
+    return {
+        "version": 1,
+        "origen": "tools/sync-dashboard.py:vista_derivada",
+        "derivadoDe": meta.get("lastUpdated"),
+        "progresoBase": {"hechas": hechas, "total": total, "porcentaje": pct},
+        "preparacion": {
+            "hechas": len(prep_hechas),
+            "total": len(prep),
+            "porcentaje": round(100 * len(prep_hechas) / len(prep)) if prep else 0,
+        },
+        "conteosPorEstado": conteos,
+        "progresoPorActualizacion": por_actualizacion,
+        "actualizacionActual": actual,
+        "versionPorDefecto": _version_por_defecto(tracker, mapa),
+        "aprobacionesPendientes": sum(1 for u in updates if u.get("status") in ESTADOS_PROPUESTA),
+        "actualizacionesAprobadas": sum(
+            1 for u in updates if u.get("status") in {"APROBADA", "EN_PROGRESO", "COMPLETADA"}
+        ),
+        "mapaVersiones": mapa,
+        "decisionesPendientes": [
+            d.get("id") for d in decisions if d.get("status") == "PENDIENTE"
+        ],
+        "siguienteTarea": meta.get("nextTaskId"),
+        "numeroEtapas": len(stages),
+        "numeroActualizaciones": len(updates),
+        "numeroTareas": len(tasks),
+        "verificacion": {
+            "resultado": "OK",
+            "fecha": meta.get("lastUpdated"),
+            "fuente": "sync-dashboard.py --check",
+            "comprobaciones": [
+                "validate(tracker) sin errores",
+                "tracker-data idéntico al JSON canónico",
+                "STATUS.md generado desde el tracker",
+                "derived-data generado desde el tracker",
+            ],
+            "nota": (
+                "Se emite solo tras validate() sin errores. --check falla con "
+                "exit 1 si cualquiera de los bloques diverge del tracker."
+            ),
+        },
+    }
+
+
 def _md(value: object) -> str:
     """Escapa un valor para una celda Markdown de una sola línea."""
     return str(value if value is not None else "").replace("|", "\\|").replace("\n", " ").strip()
@@ -871,12 +1030,12 @@ def status_markdown(tracker: dict) -> str:
     pending_decisions = [d for d in decisions if d.get("status") == "PENDIENTE"]
     pending_ids = ", ".join(f"`{_md(d.get('id'))}`" for d in pending_decisions) or "ninguna"
 
+    # Una sola regla compartida con vista_derivada() y con el panel. Antes se
+    # tomaba updates[-1], que podía ser una propuesta sin aprobar.
     current_update = None
-    current_update_id = meta.get("currentUpdateId")
+    current_update_id = _actualizacion_actual(tracker, _mapa_versiones(updates))
     if current_update_id:
         current_update = next((u for u in updates if u.get("id") == current_update_id), None)
-    if not current_update and updates:
-        current_update = updates[-1]
     if current_update:
         upd_done = sum(
             1 for t in current_update.get("tasks", [])
@@ -1033,6 +1192,31 @@ def embedded_tracker(html: str) -> dict | None:
         return None
 
 
+def derived_block(tracker: dict) -> str:
+    """Bloque con marcadores propios, fuera de TRACKER_DATA_START/END."""
+    raw = json.dumps(vista_derivada(tracker), ensure_ascii=False, indent=2, sort_keys=True)
+    raw = raw.replace("</", "<\\/")
+    return (
+        f"{DERIVED_START}\n"
+        f'<script id="derived-data" type="application/json">\n{raw}\n</script>\n'
+        f"{DERIVED_END}"
+    )
+
+
+def embedded_derived(html: str) -> dict | None:
+    pattern = re.compile(
+        re.escape(DERIVED_START) + r"\s*<script id=\"derived-data\" type=\"application/json\">\s*(.*?)\s*</script>\s*" + re.escape(DERIVED_END),
+        re.S,
+    )
+    match = pattern.search(html)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1).replace("<\\/", "</"))
+    except json.JSONDecodeError:
+        return None
+
+
 def sync(tracker: dict, check_only: bool) -> bool:
     if not DASHBOARD.exists():
         err(f"No existe {DASHBOARD}")
@@ -1047,9 +1231,19 @@ def sync(tracker: dict, check_only: bool) -> bool:
     if START not in html or END not in html:
         err(f"El panel no contiene los marcadores {START} / {END}.")
         return False
+    if DERIVED_START not in html or DERIVED_END not in html:
+        # Los marcadores viven en la plantilla del panel. Si un HTML antiguo
+        # no los tiene, la sincronización los crea; --check exige que existan.
+        if check_only:
+            err(f"El panel no contiene los marcadores {DERIVED_START} / {DERIVED_END}.")
+            return False
+        html = html.replace(END, f"{END}\n{DERIVED_START}\n{DERIVED_END}", 1)
     block = dashboard_block(tracker)
+    derivado = derived_block(tracker)
     pattern = re.compile(re.escape(START) + r".*?" + re.escape(END), re.S)
+    pattern_derived = re.compile(re.escape(DERIVED_START) + r".*?" + re.escape(DERIVED_END), re.S)
     new_html = pattern.sub(lambda _: block, html, count=1)
+    new_html = pattern_derived.sub(lambda _: derivado, new_html, count=1)
     status_text = status_markdown(tracker)
     if check_only:
         embedded = embedded_tracker(html)
@@ -1058,6 +1252,14 @@ def sync(tracker: dict, check_only: bool) -> bool:
             return False
         if embedded != tracker:
             err("El bloque tracker-data del HTML no coincide con el JSON canónico.")
+            return False
+        esperado = vista_derivada(tracker)
+        actual = embedded_derived(html)
+        if actual is None:
+            err("No se pudo leer el bloque derived-data del HTML.")
+            return False
+        if actual != esperado:
+            err("El bloque derived-data del HTML no coincide con vista_derivada(tracker).")
             return False
         if not STATUS.exists():
             err(f"No existe {STATUS}; ejecuta el sincronizador sin --check para generarlo.")
@@ -1091,7 +1293,8 @@ def summary(tracker: dict) -> str:
         + (upd_lines if upd_lines else "")
         + f"Estados: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())) + "\n"
         f"Siguiente tarea: {tracker.get('meta', {}).get('nextTaskId')}\n"
-        f"Actualización actual: {tracker.get('meta', {}).get('currentUpdateId')}\n"
+        f"Actualización actual: {_actualizacion_actual(tracker, _mapa_versiones(updates))}\n"
+        f"Indicadores derivados: derived-data (vista_derivada)\n"
         f"Resumen: docs/STATUS.md | Índice: docs/INDEX.md"
     )
 
@@ -1137,7 +1340,7 @@ def main() -> int:
             for w in warnings:
                 print(f"  - {w}")
         print(summary(tracker))
-        print("OK: tracker válido y panel sincronizado." if not args.check else "OK: tracker válido, HTML y STATUS.md coinciden.")
+        print("OK: tracker válido; tracker-data, derived-data y STATUS.md sincronizados." if not args.check else "OK: tracker válido; tracker-data, derived-data y STATUS.md coinciden.")
     return 0
 
 

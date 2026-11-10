@@ -1,6 +1,6 @@
 # DECISIONES — GalacticIndustry
 
-**Última actualización:** 2026-11-08T18:30:00-06:00  
+**Última actualización:** 2026-11-09T23:25:21-06:00  
 **Fuente canónica:** `docs/IMPLEMENTATION_TRACKER.json`  
 **Detalle narrativo:** `docs/DECISIONS.md`
 
@@ -11,12 +11,20 @@
 el 2026-11-08: mundo más realista manteniendo el estilo, solo glows (sin
 bloom), sin naves nuevas pero con personalización visible, e interiores
 incluidos; `D-029` quedó resuelta técnicamente al cerrarse UPD-006.
-**La aprobación global de `UPD-007` sigue `PENDIENTE`.**
-`UPD-008` (rediseño del dashboard, sesión S-102) ya se perfeccionó
-con el usuario y está en `PENDIENTE_APROBACION`; sus decisiones `D-031`
-(propiedad) y `D-032` (tipografía: stack del sistema) están **APROBADAS**.
-Ver [`updates/UPD-007.md`](updates/UPD-007.md) §11 y
-[`updates/UPD-008.md`](updates/UPD-008.md) §10.
+**La aprobación global de `UPD-007` sigue `PENDIENTE_APROBACION`**, por lo que
+sus 11 tareas continúan `PENDIENTE` y no deben implementarse.
+
+`UPD-008` (rediseño del dashboard), `UPD-009` (scroll interno) y `UPD-010`
+(reconstrucción visual) están **COMPLETADAS** en el tracker. Las decisiones
+`D-031`…`D-039` están aprobadas o aplicadas; no queda ninguna propuesta de
+diseño pendiente de esas actualizaciones. `UPD-011` (indicadores derivados
+canónicos y verificación comprobable del panel) fue **APROBADA** por el usuario
+y no abre decisiones nuevas: las cinco dudas del planteamiento se cerraron con
+evidencia del repositorio (`UPD-005` §6.3-6.4, `dashboard/README.md`,
+`sync-dashboard.py` y `AGENTS.md`), no como preferencias de producto. Ver
+[`updates/UPD-007.md`](updates/UPD-007.md) §11,
+[`updates/UPD-010.md`](updates/UPD-010.md) y
+[`updates/UPD-011.md`](updates/UPD-011.md) §10.
 
 Las decisiones de diseño `D-018` a `D-023` de
 `UPD-006` fueron respondidas y aprobadas por el usuario el 2026-11-08. `D-024`
@@ -63,9 +71,12 @@ tarea vive en el tracker y en `docs/STATUS.md`.
 
 ## Tareas que requieren decisión
 
-Las tareas de `UPD-006` no dependen de decisiones `PENDIENTE` y la
-actualización está completada. Las 11 tareas de `UPD-007`
-(`UPD-007-T01`…`T11`) están `PENDIENTE`: sus decisiones ya están respondidas,
-pero no pueden iniciarse hasta la aprobación global de la actualización. Las 6 tareas de `UPD-008`
-(`UPD-008-T01`…`T06`) están `PENDIENTE` y no pueden iniciarse hasta aprobar la
-actualización; `D-032` ya está resuelta (stack del sistema).
+Las tareas de `UPD-006`, `UPD-008`, `UPD-009` y `UPD-010` están completadas y
+no dependen de decisiones `PENDIENTE`. Las 11 tareas de `UPD-007`
+(`UPD-007-T01`…`T11`) siguen `PENDIENTE`: sus decisiones ya están respondidas,
+pero no pueden iniciarse hasta la aprobación global de esa actualización.
+
+Las 6 tareas de `UPD-011` (`UPD-011-T01`…`T06`) están aprobadas y no requieren
+decisión del usuario; su avance operativo se registra en el tracker y en
+`docs/STATUS.md`. `D-024` (tutorial y campaña) sigue aplazada por decisión
+histórica, no bloquea ninguna tarea de estas actualizaciones.

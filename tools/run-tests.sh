@@ -7,6 +7,7 @@
 #   tools/run-tests.sh 01_logic 04_autopilot
 #   tools/run-tests.sh 06 07 08              # por prefijo
 #   tools/run-tests.sh --all                 # todo, solo si lo pides
+#   tools/run-tests.sh --tools               # pruebas de herramientas, sin dispositivo ni build
 #   tools/run-tests.sh --no-build 04_autopilot
 #
 # Sin argumentos solo muestra la ayuda y la lista; no ejecuta nada.
@@ -20,6 +21,7 @@ source "$ROOT/tools/tests/testlib.sh"
 TESTS_DIR="$ROOT/tools/tests"
 DO_BUILD=1
 RUN_ALL=0
+RUN_TOOLS=0
 SELECTED=()
 
 usage() {
@@ -28,11 +30,13 @@ Uso: tools/run-tests.sh [--list] [--all] [--no-build] [test ...]
 
   --list       muestra los tests disponibles
   --all        ejecuta todos los tests (solo si lo pides)
+  --tools      ejecuta las pruebas de continuidad y del panel, sin dispositivo ni build
   --no-build   no compila; usa build/app.apk y build/classes actuales
   test ...     nombre o prefijo de test: 01, 01_logic, 04_autopilot...
 
 Ejemplos:
   tools/run-tests.sh --list
+  tools/run-tests.sh --tools
   tools/run-tests.sh 03_controls
   tools/run-tests.sh 01_logic 04_autopilot
   tools/run-tests.sh --no-build 04_autopilot
@@ -54,11 +58,25 @@ for arg in "$@"; do
     case "$arg" in
         --list|-l) list_tests; exit 0 ;;
         --all|-a) RUN_ALL=1 ;;
+        --tools) RUN_TOOLS=1 ;;
         --no-build) DO_BUILD=0 ;;
         -h|--help) usage; exit 0 ;;
         *) SELECTED+=("$arg") ;;
     esac
 done
+
+# Grupo de herramientas: no toca build/, no pide dispositivo Android y no
+# forma parte de --all (all solo descubre [0-9][0-9]_*.sh).
+if [ "$RUN_TOOLS" = 1 ]; then
+    echo "===== herramientas (sin dispositivo ni build) ====="
+    python3 tools/sync-dashboard.py --check
+    python3 tools/tests/continuity_test.py
+    node tools/tests/dashboard_versions_test.js
+    python3 tools/tests/dashboard_versions_test.py
+    echo
+    echo "OK runner: grupo --tools superado"
+    exit 0
+fi
 
 if [ "$RUN_ALL" = 0 ] && [ ${#SELECTED[@]} -eq 0 ]; then
     usage

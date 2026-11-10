@@ -435,8 +435,8 @@
     "project": "GalacticIndustry",
     "displayName": "GalacticIndustry / Asteroides",
     "description": "Sistema persistente de continuidad para transformar el arcade 2D en un universo de minería, supervivencia, comercio y estaciones.",
-    "lastUpdated": "2026-11-08T22:38:00-06:00",
-    "lastSessionId": "S-105",
+    "lastUpdated": "2026-11-10T12:43:32+08:00",
+    "lastSessionId": "S-112",
     "lastVerification": {
       "date": "2026-11-08T22:30:00-06:00",
       "result": "OK",
@@ -10611,6 +10611,109 @@
       "outcome": "Completado",
       "notes": "Continuacion de S-105 por OpenCode/DeepSeek V4.1 Flash. UPD-010 cerrada 6/6. UPD-007 sigue en PENDIENTE_APROBACION; no se toco src/. Sin commits.",
       "document": "docs/sessions/S-105.md"
+    },
+    {
+      "id": "S-106",
+      "date": "2026-11-09T13:09:06+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "Propuesta UPD-011: indicadores derivados canonicos y verificacion comprobable",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [],
+      "files": [],
+      "tests": [],
+      "outcome": "EN_PROGRESO",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-106.md"
+    },
+    {
+      "id": "S-107",
+      "date": "2026-11-10T12:43:29+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T01 vista derivada y bloque derived-data",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T01"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-107.md"
+    },
+    {
+      "id": "S-108",
+      "date": "2026-11-10T12:43:30+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T02 check ampliado con fallo explicito",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T02"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-108.md"
+    },
+    {
+      "id": "S-109",
+      "date": "2026-11-10T12:43:31+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T03 dashboard.js consume DERIVED",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T03"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-109.md"
+    },
+    {
+      "id": "S-110",
+      "date": "2026-11-10T12:43:31+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T04 verificacion honesta y fetch validado",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T04"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-110.md"
+    },
+    {
+      "id": "S-111",
+      "date": "2026-11-10T12:43:32+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T05 pruebas de regresion y grupo tools",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T05"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-111.md"
+    },
+    {
+      "id": "S-112",
+      "date": "2026-11-10T12:43:32+08:00",
+      "agent": "CodeBuddy / Tencent Hunyuan Hy",
+      "title": "UPD-011-T06 documentacion y cierre del desfase",
+      "summary": "Sesión abierta; pendiente de cierre.",
+      "tasks": [
+        "UPD-011-T06"
+      ],
+      "files": [],
+      "tests": [],
+      "outcome": "Completado",
+      "notes": "Actualización prevista: UPD-011.",
+      "document": "docs/sessions/S-112.md"
     }
   ],
   "issues": [
@@ -17253,6 +17356,352 @@
       ],
       "implementationLog": [],
       "reviewExports": []
+    },
+    {
+      "id": "UPD-011",
+      "displayVersion": "0.12",
+      "name": "Indicadores derivados canonicos y verificacion comprobable del panel",
+      "objective": "Una sola fuente de cálculo para los indicadores del panel, con un --check que falle cuando los derivados se desincronizan y sin que una propuesta sin aprobar aparezca como trabajo vigente.",
+      "status": "COMPLETADA",
+      "changeType": "CORRECCION",
+      "priority": "P1",
+      "createdAt": "2026-11-08T23:09:06-06:00",
+      "updatedAt": "2026-11-10T12:43:32+08:00",
+      "description": "Corrige la regla de actualización actual (tres implementaciones divergentes), unifica los KPIs duplicados en Python y JS, convierte el badge de verificación en un resultado real y valida el refresco HTTP. Bloque derived-data con marcadores propios fuera de tracker-data.",
+      "motivation": "Con meta.currentUpdateId=null, dashboard.js:604-611 pinta UPD-007 (PENDIENTE_APROBACION) como Actual mientras sync-dashboard.py:874-879 y STATUS.md:24 dicen UPD-010, incumpliendo UPD-005 §6.3-6.4 y README.md:58-60. Además --check (1054-1068) solo compara el JSON embebido y STATUS.md, por lo que no detecta la divergencia, los KPIs recalculados en JS ni el badge lastVerification autodeclarado.",
+      "affectedSystems": [
+        "SYS-CONTINUIDAD"
+      ],
+      "affectedFeatures": [
+        "F-CONTINUIDAD"
+      ],
+      "relatedStages": [],
+      "relatedTasks": [],
+      "relatedUpdates": [
+        "UPD-005",
+        "UPD-008",
+        "UPD-009",
+        "UPD-010"
+      ],
+      "dependencies": [],
+      "document": "docs/updates/UPD-011.md",
+      "approval": {
+        "required": true,
+        "status": "APROBADA",
+        "approvedBy": "Usuario",
+        "approvedAt": "2026-11-08T23:25:21-06:00",
+        "basis": "Aprobacion explicita del plan UPD-011 en la conversacion del 2026-11-09: 'acepto el plan, implementalo'. Plan de 6 tareas de implementacion; la auditoria previa no figura como tarea (seccion 2 del documento)."
+      },
+      "acceptanceCriteria": [
+        "Una sola regla de actualización actual, compartida por Python y JS, conforme a UPD-005 §6.3-6.4.",
+        "Ninguna propuesta no aprobada aparece como trabajo en desarrollo ni en top-update.",
+        "Panel, STATUS.md y derived-data muestran las mismas cifras con el mismo tracker.",
+        "--check falla con exit 1 si derived-data, tracker-data o STATUS.md divergen.",
+        "meta.lastVerification deja de ser un valor escrito a mano.",
+        "Un JSON servido por HTTP inválido o desincronizado no se aplica ni se marca ok.",
+        "file:// funciona sin servidor, CDN, red ni dependencias nuevas.",
+        "continuity_test.py, dashboard_versions_test.js/.py y --check en verde; --tools los ejecuta sin dispositivo.",
+        "Sin cambios en src/, assets/, res/, en tasks del plan base ni en estados de S-101.",
+        "Sin commits automáticos."
+      ],
+      "groups": [],
+      "tasks": [
+        {
+          "id": "UPD-011-T01",
+          "updateId": "UPD-011",
+          "title": "vista_derivada() y bloque derived-data con marcadores propios",
+          "description": "Un único cálculo en Python de progreso base, conteos por estado, progreso por actualización, regla de actualización actual, pendingApprovalCount y mapa id→displayVersion. Emitirlo en un bloque con marcadores DERIVED_START/DERIVED_END fuera de TRACKER_DATA_START/END, con su propio embedded_derived().",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "sync-dashboard.py regenera sin tocar index.html fuera de los bloques"
+          ],
+          "tests": [
+            "sync-dashboard.py regenera sin tocar index.html fuera de los bloques",
+            "embedded_tracker() sigue devolviendo el tracker íntegro"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-107",
+              "date": "2026-11-10T12:43:29+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T01 reclamada por S-107 para UPD-011."
+            },
+            {
+              "sessionId": "S-107",
+              "date": "2026-11-10T12:43:30+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "Se implemento vista_derivada(tracker) como unica fuente de calculo, con _clave_natural, _mapa_versiones, _clave_version, _actualizacion_actual y _version_por_defecto. Se anadieron los marcadores DERIVED_DATA_START/END fuera de TRACKER_DATA_START/END, derived_block(), embedded_derived() y sustitucion en sync(). STATUS.md y summary() dejaron de usar updates[-1]."
+            }
+          ],
+          "evidence": [
+            "tools/sync-dashboard.py: vista_derivada(), derived_block(), embedded_derived(), _mapa_versiones(), _actualizacion_actual(), _version_por_defecto().",
+            "docs/dashboard/index.html: bloque <script id=\"derived-data\"> entre DERIVED_DATA_START y DERIVED_DATA_END, fuera del bloque tracker-data.",
+            "El bloque es determinista: sin relojes ni marcas de ejecucion; dos sincronizaciones concurrentes producen el mismo JSON.",
+            "python3 tools/sync-dashboard.py --check -> exit 0; derived-data coincide con vista_derivada(tracker)."
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:30+08:00",
+          "assignedSessionId": "S-107",
+          "assignedAt": "2026-11-10T12:43:29+08:00"
+        },
+        {
+          "id": "UPD-011-T02",
+          "updateId": "UPD-011",
+          "title": "Ampliar --check para que falle ante derivados desincronizados",
+          "description": "Comparar derived-data con vista_derivada(tracker), además de tracker-data y STATUS.md. Usar err() (fallo, exit 1), no warn(). No tocar la validación de stages[].taskCount, que sigue siendo aviso.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "Mutar un estado del tracker sin resincronizar produce exit 1"
+          ],
+          "tests": [
+            "Mutar un estado del tracker sin resincronizar produce exit 1",
+            "Borrar meta.currentUpdateId o un displayVersion produce exit 1"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-108",
+              "date": "2026-11-10T12:43:30+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T02 reclamada por S-108 para UPD-011."
+            },
+            {
+              "sessionId": "S-108",
+              "date": "2026-11-10T12:43:30+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "sync(check_only) compara ahora tres artefactos: tracker-data contra el JSON canonico, derived-data contra vista_derivada(tracker) y STATUS.md contra status_markdown(tracker). Todas las divergencias usan err(), por lo que main() devuelve exit 1. Si faltan los marcadores derivados, --check falla y la sincronizacion normal los crea."
+            }
+          ],
+          "evidence": [
+            "tools/sync-dashboard.py: sync() usa err() para derived-data ausente, ilegible o divergente.",
+            "tools/tests/continuity_test.py test_q: manipular derived-data a mano hace fallar --check con exit 1.",
+            "tools/tests/continuity_test.py test_r: mutar estado de tarea, currentUpdateId o displayVersion sin resincronizar hace fallar --check.",
+            "python3 tools/sync-dashboard.py --check -> 'OK: tracker valido; tracker-data, derived-data y STATUS.md coinciden.'"
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:30+08:00",
+          "assignedSessionId": "S-108",
+          "assignedAt": "2026-11-10T12:43:30+08:00"
+        },
+        {
+          "id": "UPD-011-T03",
+          "updateId": "UPD-011",
+          "title": "dashboard.js consume DERIVED y corrige currentUpdate()",
+          "description": "currentUpdate(), defaultVersionId(), taskProgress(), countsByStatus(), updateProgress() y fallbackDisplayVersion() leen los derivados. currentUpdate() se alinea con README.md:58-60 y deja de presentar una propuesta PENDIENTE_APROBACION como trabajo en desarrollo. Mantener el cálculo actual solo como fallback para HTML antiguo.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "KPIs del panel idénticos a STATUS.md con el mismo tracker"
+          ],
+          "tests": [
+            "KPIs del panel idénticos a STATUS.md con el mismo tracker",
+            "dashboard_versions_test.js pruebas 8 y 9 siguen en verde",
+            "UPD-007 no aparece en top-update ni en #current-main"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-109",
+              "date": "2026-11-10T12:43:31+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T03 reclamada por S-109 para UPD-011."
+            },
+            {
+              "sessionId": "S-109",
+              "date": "2026-11-10T12:43:31+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "Se anadio leerDerivados() con validacion de origen y respaldo local para HTML antiguo. fallbackDisplayVersion, updateVersion, defaultVersionId, currentUpdate, updateProgress, taskProgress, prepProgress, countsByStatus, approvedUpdateCount y pendingApprovalCount leen los derivados. currentUpdate() se corrigio: excluye PROPUESTA, EN_REVISION y PENDIENTE_APROBACION del trabajo vigente, conforme a UPD-005 6.3-6.4."
+            }
+          ],
+          "evidence": [
+            "docs/dashboard/dashboard.js: DERIVED, leerDerivados(), currentUpdate() y 10 funciones de KPI con respaldo local.",
+            "tools/tests/dashboard_versions_test.js prueba 10: los KPIs cambian al alterar derived-data con el tracker intacto.",
+            "tools/tests/dashboard_versions_test.js: sin derived-data se conserva el calculo de respaldo; pruebas 1-9 siguen en verde.",
+            "node --check docs/dashboard/dashboard.js -> OK."
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:31+08:00",
+          "assignedSessionId": "S-109",
+          "assignedAt": "2026-11-10T12:43:31+08:00"
+        },
+        {
+          "id": "UPD-011-T04",
+          "updateId": "UPD-011",
+          "title": "Verificación honesta y refresco HTTP validado",
+          "description": "El badge de verificación lee de DERIVED y deja de ser autodeclarado. El fetch por HTTP valida forma mínima (updates como lista, estados conocidos, meta.lastUpdated presente) y coherencia de lastUpdated con los embebidos; si no pasa, conserva los datos actuales e indica warn, nunca ok.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "JSON vivo inválido no se aplica y el panel conserva los embebidos"
+          ],
+          "tests": [
+            "JSON vivo inválido no se aplica y el panel conserva los embebidos",
+            "file:// sigue funcionando sin red"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-110",
+              "date": "2026-11-10T12:43:31+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T04 reclamada por S-110 para UPD-011."
+            },
+            {
+              "sessionId": "S-110",
+              "date": "2026-11-10T12:43:31+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "renderVerification() lee DERIVED.verificacion en lugar de meta.lastVerification, que era un valor autodeclarado sin escritor. El bloque solo se emite tras validate() sin errores y enumera las comprobaciones reales de --check. refreshData() valida forma minima y que meta.lastUpdated coincida con derivadoDe; si no pasa, conserva los embebidos con indicador warn y nunca marca ok."
+            }
+          ],
+          "evidence": [
+            "docs/dashboard/dashboard.js: renderVerification(), formaTrackerValida(), derivadosCoherentes(), refreshData().",
+            "vista_derivada().verificacion incluye resultado, fecha del tracker, fuente, comprobaciones y nota; esta bajo --check.",
+            "El fetch no reimplementa validate() de Python: solo forma y coherencia de lastUpdated.",
+            "tools/tests/dashboard_versions_test.js prueba 10: el badge muestra el resultado de DERIVED, no el de meta.lastVerification.",
+            "file:// sigue sin fetch, sin red y sin dependencias nuevas."
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:31+08:00",
+          "assignedSessionId": "S-110",
+          "assignedAt": "2026-11-10T12:43:31+08:00"
+        },
+        {
+          "id": "UPD-011-T05",
+          "updateId": "UPD-011",
+          "title": "Pruebas de regresión y grupo --tools en el runner",
+          "description": "Aserciones KPI↔DERIVED en dashboard_versions_test.js; casos de mutación en continuity_test.py que exijan fallo de --check; sustituir literales fijos por aserciones derivadas; añadir --tools a run-tests.sh para los cuatro comandos, sin build ni dispositivo Android.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "tools/run-tests.sh --tools en verde"
+          ],
+          "tests": [
+            "tools/run-tests.sh --tools en verde",
+            "--all sigue ejecutando solo las pruebas de dispositivo"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-111",
+              "date": "2026-11-10T12:43:32+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T05 reclamada por S-111 para UPD-011."
+            },
+            {
+              "sessionId": "S-111",
+              "date": "2026-11-10T12:43:32+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "Se anadieron tres pruebas Python (derivados contra tracker, bloque manipulado y tracker mutado sin resincronizar), ocho aserciones JS sobre KPI, top-update y badge, el helper plain() para textContent, y el grupo --tools en run-tests.sh. --tools ejecuta los cuatro comandos sin dispositivo Android ni build y no forma parte de --all."
+            }
+          ],
+          "evidence": [
+            "tools/tests/continuity_test.py: test_p_derived_matches_tracker, test_q_check_fails_on_manipulated_derived, test_r_check_fails_on_stale_derived (20 pruebas).",
+            "tools/tests/dashboard_versions_test.js: BASE_DERIVED, options.derived, plain(), prueba 10 con 8 comprobaciones.",
+            "tools/run-tests.sh: --tools, uso y ayuda actualizados; bash -n OK.",
+            "tools/run-tests.sh --tools -> exit 0; --list/--all siguen sin incluir las pruebas de herramientas."
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:32+08:00",
+          "assignedSessionId": "S-111",
+          "assignedAt": "2026-11-10T12:43:32+08:00"
+        },
+        {
+          "id": "UPD-011-T06",
+          "updateId": "UPD-011",
+          "title": "Documentación y corrección del desfase de PENDING_DECISIONS.md",
+          "description": "Actualizar docs/dashboard/README.md, docs/systems/continuity.md y la ficha continuity de docs/INDEX.md. Corregir docs/PENDING_DECISIONS.md para reflejar UPD-008/009/010 completadas y UPD-011 pendiente, dejando coherente el enlace de index.html:266.",
+          "category": "implementation",
+          "priority": "P1",
+          "status": "COMPLETADO",
+          "countsForProgress": true,
+          "dependencies": [],
+          "relatedTaskIds": [],
+          "decisionIds": [],
+          "files": [],
+          "acceptanceCriteria": [
+            "python3 tools/sync-dashboard.py --check"
+          ],
+          "tests": [
+            "python3 tools/sync-dashboard.py --check",
+            "El enlace del panel apunta a un resumen acorde con el tracker"
+          ],
+          "technicalNotes": "",
+          "executionLog": [
+            {
+              "sessionId": "S-112",
+              "date": "2026-11-10T12:43:32+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "EN_PROGRESO",
+              "summary": "UPD-011-T06 reclamada por S-112 para UPD-011."
+            },
+            {
+              "sessionId": "S-112",
+              "date": "2026-11-10T12:43:32+08:00",
+              "agent": "CodeBuddy / Tencent Hunyuan Hy",
+              "status": "COMPLETADO",
+              "summary": "Se actualizaron dashboard/README.md (dos bloques, regla unica, badge y fetch), systems/continuity.md seccion 10 y tablas, INDEX.md (ficha y documento UPD-011), PENDING_DECISIONS.md (UPD-008/009/010 completadas, UPD-011 aprobada, UPD-007 aun pendiente) y UPD-011.md. Se cierra la actualizacion como COMPLETADA y se limpia meta.currentUpdateId."
+            }
+          ],
+          "evidence": [
+            "docs/dashboard/README.md: tabla de archivos, version 0.12, seccion Datos y Pruebas.",
+            "docs/systems/continuity.md: componentes, pruebas, problema conocido y seccion 10.",
+            "docs/INDEX.md: fila de Continuidad y enlace a updates/UPD-011.md.",
+            "docs/PENDING_DECISIONS.md: estado real del tracker sin afirmaciones obsoletas.",
+            "docs/updates/UPD-011.md: cabecera APROBADA y seccion 11 con el registro de implementacion.",
+            "python3 tools/sync-dashboard.py --check -> exit 0; enlace de index.html:266 coherente."
+          ],
+          "createdAt": "2026-11-08T23:09:06-06:00",
+          "updatedAt": "2026-11-10T12:43:32+08:00",
+          "assignedSessionId": "S-112",
+          "assignedAt": "2026-11-10T12:43:32+08:00"
+        }
+      ],
+      "observations": [],
+      "implementationLog": [],
+      "reviewExports": []
     }
   ],
   "reviewCatalog": {
@@ -17848,6 +18297,132 @@
 }
 </script>
 <!-- TRACKER_DATA_END -->
+
+<!-- DERIVED_DATA_START -->
+<script id="derived-data" type="application/json">
+{
+  "actualizacionActual": "UPD-011",
+  "actualizacionesAprobadas": 10,
+  "aprobacionesPendientes": 1,
+  "conteosPorEstado": {
+    "COMPLETADO": 91,
+    "POSPUESTO": 2
+  },
+  "decisionesPendientes": [],
+  "derivadoDe": "2026-11-10T12:43:32+08:00",
+  "mapaVersiones": {
+    "UPD-001": "0.2",
+    "UPD-002": "0.3",
+    "UPD-003": "0.4",
+    "UPD-004": "0.5",
+    "UPD-005": "0.6",
+    "UPD-006": "0.7",
+    "UPD-007": "0.8",
+    "UPD-008": "0.9",
+    "UPD-009": "0.10",
+    "UPD-010": "0.11",
+    "UPD-011": "0.12"
+  },
+  "numeroActualizaciones": 11,
+  "numeroEtapas": 12,
+  "numeroTareas": 93,
+  "origen": "tools/sync-dashboard.py:vista_derivada",
+  "preparacion": {
+    "hechas": 7,
+    "porcentaje": 100,
+    "total": 7
+  },
+  "progresoBase": {
+    "hechas": 82,
+    "porcentaje": 100,
+    "total": 82
+  },
+  "progresoPorActualizacion": {
+    "UPD-001": {
+      "estado": "COMPLETADA",
+      "hechas": 6,
+      "porcentaje": 100,
+      "total": 6
+    },
+    "UPD-002": {
+      "estado": "COMPLETADA",
+      "hechas": 6,
+      "porcentaje": 100,
+      "total": 6
+    },
+    "UPD-003": {
+      "estado": "COMPLETADA",
+      "hechas": 1,
+      "porcentaje": 100,
+      "total": 1
+    },
+    "UPD-004": {
+      "estado": "COMPLETADA",
+      "hechas": 1,
+      "porcentaje": 100,
+      "total": 1
+    },
+    "UPD-005": {
+      "estado": "COMPLETADA",
+      "hechas": 1,
+      "porcentaje": 100,
+      "total": 1
+    },
+    "UPD-006": {
+      "estado": "COMPLETADA",
+      "hechas": 40,
+      "porcentaje": 100,
+      "total": 40
+    },
+    "UPD-007": {
+      "estado": "PENDIENTE_APROBACION",
+      "hechas": 0,
+      "porcentaje": 0,
+      "total": 11
+    },
+    "UPD-008": {
+      "estado": "COMPLETADA",
+      "hechas": 6,
+      "porcentaje": 100,
+      "total": 6
+    },
+    "UPD-009": {
+      "estado": "COMPLETADA",
+      "hechas": 1,
+      "porcentaje": 100,
+      "total": 1
+    },
+    "UPD-010": {
+      "estado": "COMPLETADA",
+      "hechas": 6,
+      "porcentaje": 100,
+      "total": 6
+    },
+    "UPD-011": {
+      "estado": "COMPLETADA",
+      "hechas": 6,
+      "porcentaje": 100,
+      "total": 6
+    }
+  },
+  "siguienteTarea": null,
+  "verificacion": {
+    "comprobaciones": [
+      "validate(tracker) sin errores",
+      "tracker-data idéntico al JSON canónico",
+      "STATUS.md generado desde el tracker",
+      "derived-data generado desde el tracker"
+    ],
+    "fecha": "2026-11-10T12:43:32+08:00",
+    "fuente": "sync-dashboard.py --check",
+    "nota": "Se emite solo tras validate() sin errores. --check falla con exit 1 si cualquiera de los bloques diverge del tracker.",
+    "resultado": "OK"
+  },
+  "version": 1,
+  "versionPorDefecto": "UPD-011"
+}
+</script>
+<!-- DERIVED_DATA_END -->
 
 <script src="dashboard.js"></script>
 </body>

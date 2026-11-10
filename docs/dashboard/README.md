@@ -7,9 +7,9 @@ Panel visual autocontenido de GalacticIndustry. Se abre con doble clic en
 
 | Archivo | Responsabilidad |
 |---|---|
-| `index.html` | Estructura del panel, plantilla única de versión y bloque `tracker-data` con los datos embebidos para `file://` |
+| `index.html` | Estructura del panel, plantilla única de versión, bloque `tracker-data` con los datos embebidos para `file://` y bloque `derived-data` con los indicadores derivados |
 | `dashboard.css` | Tema oscuro/claro, selector, línea de tiempo, tarjetas, tablas, badges y responsive |
-| `dashboard.js` | Modelo de versiones, selector compacto/descriptivo, línea de tiempo, contenido dinámico, filtros, propuestas, expedientes, temas y refresco por HTTP |
+| `dashboard.js` | Modelo de versiones, selector compacto/descriptivo, línea de tiempo, contenido dinámico, filtros, propuestas, expedientes, temas y refresco por HTTP. Lee los indicadores de `derived-data`; si el bloque falta, usa el cálculo local de respaldo |
 
 `docs/PROJECT_DASHBOARD.html` se conserva como redirección de compatibilidad
 para enlaces antiguos.
@@ -32,6 +32,7 @@ La implementación inicial es la versión visual **0.1**. Cada actualización
 | 0.9 | `UPD-008` | Rediseño y organización del dashboard (carta estelar) |
 | 0.10 | `UPD-009` | Scroll interno en listas largas y pulido del panel |
 | 0.11 | `UPD-010` | Reconstrucción visual del panel: carta náutica técnica |
+| 0.12 | `UPD-011` | Indicadores derivados canónicos y verificación comprobable |
 
 La numeración es solo de presentación. Los identificadores internos (`BASE`,
 `UPD-XXX`, `T-XXX`, `S-XXX`) no cambian. `displayVersion` se guarda en el
@@ -123,17 +124,53 @@ implementación, se muestra `—`, no un porcentaje ficticio. Las versiones
 ## Datos
 
 `index.html` es la única parte que contiene el tracker integrado, porque
-`file://` no permite leer `IMPLEMENTATION_TRACKER.json` con `fetch()`. El bloque
-entre `<!-- TRACKER_DATA_START -->` y `<!-- TRACKER_DATA_END -->` se regenera
-con:
+`file://` no permite leer `IMPLEMENTATION_TRACKER.json` con `fetch()`. Hay
+**dos bloques generados**, ambos con marcadores propios:
+
+| Bloque | Marcadores | Contenido |
+|---|---|---|
+| `tracker-data` | `TRACKER_DATA_START` / `TRACKER_DATA_END` | Copia exacta del JSON canónico |
+| `derived-data` | `DERIVED_DATA_START` / `DERIVED_DATA_END` | Indicadores calculados por `vista_derivada()` en Python |
+
+`derived-data` vive **fuera** del bloque `tracker-data`: añadirlo dentro
+rompería `embedded_tracker()` y la comparación con el JSON canónico. Lo emite
+`tools/sync-dashboard.py` de forma determinista (solo depende del tracker, sin
+fechas de ejecución) y contiene progreso base, preparación, conteos por estado,
+progreso por actualización, mapa `id → displayVersion`, la regla de
+«Actualización actual», la versión seleccionada por defecto, los conteos de
+aprobaciones y el resultado de la verificación. El JS **lee** esos valores en
+lugar de recalcularlos; si el bloque no existe o no es legible (HTML antiguo),
+usa el cálculo local de respaldo.
 
 ```sh
-python3 tools/sync-dashboard.py          # panel + docs/STATUS.md
-python3 tools/sync-dashboard.py --check  # valida HTML y STATUS.md
+python3 tools/sync-dashboard.py          # panel + docs/STATUS.md + ambos bloques
+python3 tools/sync-dashboard.py --check  # falla con exit 1 si algo diverge
 ```
 
-No edites ese bloque a mano. Si el panel se sirve por HTTP, el botón
-**Actualizar** relee `../IMPLEMENTATION_TRACKER.json` sin recargar la página.
+`--check` compara los tres artefactos: `tracker-data` contra el JSON canónico,
+`derived-data` contra `vista_derivada(tracker)` y `STATUS.md` contra
+`status_markdown(tracker)`. No edites ninguno a mano.
+
+**Una sola regla de «Actual».** `actualizacionActual` (para `top-update` y
+`STATUS.md`) siempre es trabajo autorizado: `meta.currentUpdateId` si el tracker
+lo fija, si no la activa autorizada más reciente y, si no hay activas, la
+autorizada más reciente. Una propuesta `PROPUESTA`, `EN_REVISION` o
+`PENDIENTE_APROBACION` **nunca** se presenta como trabajo en desarrollo.
+`versionPorDefecto` es distinta: reproduce `defaultVersionId()` de `UPD-005`
+§6.3 y sí puede seleccionar la versión más reciente registrada, porque se
+muestra con su estado real y su aviso.
+
+El badge **Última verificación** ya no lee `meta.lastVerification` (un valor
+autodeclarado sin escritor): muestra `DERIVED.verificacion`, emitido solo tras
+`validate()` sin errores y con la lista de comprobaciones que `--check`
+ejecuta de verdad.
+
+Si el panel se sirve por HTTP, el botón **Actualizar** relee
+`../IMPLEMENTATION_TRACKER.json` sin recargar la página. El `fetch` valida forma
+mínima y que `meta.lastUpdated` coincida con `derivadoDe`; si no pasa, conserva
+los embebidos y sus derivados con indicador `warn`, nunca `ok`. Así el panel no
+mezcla KPIs de dos versiones distintas del tracker. No se reimplementa
+`validate()` de Python en JS.
 
 La sincronización usa `tools/continuity_io.py`: toma un bloqueo `flock` breve,
 relee el tracker, valida y escribe `STATUS.md` y el HTML de forma atómica. Dos
@@ -164,14 +201,20 @@ Flujo completo: [`docs/updates/README.md`](../updates/README.md).
 ## Pruebas
 
 ```sh
+tools/run-tests.sh --tools              # los cuatro comandos, sin dispositivo ni build
 python3 tools/sync-dashboard.py --check
 python3 tools/tests/continuity_test.py
 node tools/tests/dashboard_versions_test.js
 python3 tools/tests/dashboard_versions_test.py
 ```
 
-La prueba de renderizado ejecuta `dashboard.js` en un DOM mínimo de Node y
-comprueba selector, línea de tiempo, modos, contenido por versión, progreso
-aislado, ausencia de etapas inventadas, pendientes globales y estados de
-propuesta. No sustituye una revisión visual en navegador, pero detecta
-regresiones de datos y de plantilla sin red.
+`--tools` no forma parte de `--all` (el runner solo descubre
+`[0-9][0-9]_*.sh`). `continuity_test.py` incluye mutaciones de estado,
+`currentUpdateId`, `displayVersion` y del propio bloque derivado que **deben**
+hacer fallar `--check`. La prueba de renderizado ejecuta `dashboard.js` en un
+DOM mínimo de Node y comprueba selector, línea de tiempo, modos, contenido por
+versión, progreso aislado, ausencia de etapas inventadas, pendientes globales,
+estados de propuesta, que los KPIs leen `derived-data` (con respaldo local si
+falta) y que un `fetch` con forma inválida o `lastUpdated` desincronizado se
+rechaza con `warn` conservando los embebidos. No sustituye una revisión visual
+en navegador, pero detecta regresiones de datos y de plantilla sin red.

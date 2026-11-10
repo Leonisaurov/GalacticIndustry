@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -601,6 +602,122 @@ class ContinuityTest(unittest.TestCase):
         bad = self.run_tool("sync-dashboard.py", "--quiet")
         self.assertNotEqual(bad.returncode, 0, bad.stdout)
         self.assertIn("referencia tarea inexistente", bad.stderr)
+
+
+    # P. Indicadores derivados y --check verificable (UPD-011) -------------
+    def _ruta_html(self) -> Path:
+        return self.root / "docs" / "dashboard" / "index.html"
+
+    def _derivados_html(self) -> dict:
+        html = self._ruta_html().read_text(encoding="utf-8")
+        match = re.search(
+            r'<!-- DERIVED_DATA_START -->\s*'
+            r'<script id="derived-data" type="application/json">\s*(.*?)\s*</script>\s*'
+            r'<!-- DERIVED_DATA_END -->',
+            html,
+            re.S,
+        )
+        self.assertIsNotNone(match, "Falta el bloque derived-data en index.html")
+        return json.loads(match.group(1).replace("<\\/", "</"))
+
+    def _reescribir_tracker_embebido(self, tracker: dict) -> None:
+        """Sincroniza solo tracker-data para aislar el fallo de derived-data."""
+        html = self._ruta_html().read_text(encoding="utf-8")
+        raw = json.dumps(tracker, ensure_ascii=False, indent=2).replace("</", "<\\/")
+        bloque = (
+            "<!-- TRACKER_DATA_START -->\n"
+            '<script id="tracker-data" type="application/json">\n'
+            + raw + "\n</script>\n<!-- TRACKER_DATA_END -->"
+        )
+        nuevo = re.sub(
+            r"<!-- TRACKER_DATA_START -->.*?<!-- TRACKER_DATA_END -->",
+            lambda _: bloque,
+            html,
+            count=1,
+            flags=re.S,
+        )
+        self._ruta_html().write_text(nuevo, encoding="utf-8")
+
+    def test_p_derived_matches_tracker(self) -> None:
+        """Los derivados son un cálculo determinista del tracker canónico."""
+        tracker = self.tracker()
+        derivados = self._derivados_html()
+        self.assertEqual(derivados["derivadoDe"], tracker["meta"]["lastUpdated"])
+        self.assertEqual(derivados["origen"], "tools/sync-dashboard.py:vista_derivada")
+
+        impl = [t for t in tracker["tasks"]
+                if t.get("category") == "implementation" and t.get("countsForProgress") is True]
+        hechas = [t for t in impl if t.get("status") == "COMPLETADO"]
+        self.assertEqual(derivados["progresoBase"]["hechas"], len(hechas))
+        self.assertEqual(derivados["progresoBase"]["total"], len(impl))
+
+        conteos: dict[str, int] = {}
+        for task in tracker["tasks"]:
+            estado = task.get("status", "?")
+            conteos[estado] = conteos.get(estado, 0) + 1
+        self.assertEqual(derivados["conteosPorEstado"], conteos)
+        self.assertEqual(set(derivados["mapaVersiones"]), {u["id"] for u in tracker["updates"]})
+
+        actual = derivados["actualizacionActual"]
+        estado_actual = next((u.get("status") for u in tracker["updates"] if u["id"] == actual), None)
+        self.assertNotIn(estado_actual, {"PROPUESTA", "EN_REVISION", "PENDIENTE_APROBACION"},
+                         "una propuesta sin aprobar no puede ser la Actualización actual")
+        self.assertEqual(self.run_tool("sync-dashboard.py", "--check", "--quiet").returncode, 0)
+
+    def test_q_check_fails_on_manipulated_derived(self) -> None:
+        """Manipular derived-data a mano hace fallar --check con exit 1."""
+        ruta = self._ruta_html()
+        html = ruta.read_text(encoding="utf-8")
+        derivados = self._derivados_html()
+        derivados["progresoBase"]["hechas"] = 999
+        raw = json.dumps(derivados, ensure_ascii=False, indent=2, sort_keys=True).replace("</", "<\\/")
+        bloque = (
+            "<!-- DERIVED_DATA_START -->\n"
+            '<script id="derived-data" type="application/json">\n'
+            + raw + "\n</script>\n<!-- DERIVED_DATA_END -->"
+        )
+        ruta.write_text(
+            re.sub(r"<!-- DERIVED_DATA_START -->.*?<!-- DERIVED_DATA_END -->",
+                   lambda _: bloque, html, count=1, flags=re.S),
+            encoding="utf-8",
+        )
+        resultado = self.run_tool("sync-dashboard.py", "--check")
+        self.assertNotEqual(resultado.returncode, 0)
+        self.assertIn("derived-data", resultado.stderr)
+
+    def test_r_check_fails_on_stale_derived(self) -> None:
+        """Mutar tracker sin resincronizar los derivados hace fallar --check."""
+        html_original = self._ruta_html().read_text(encoding="utf-8")
+        base = self.tracker()
+
+        def estado_actualizacion(t: dict) -> None:
+            # Reversible: funciona tanto con la UPD en curso como completada.
+            actual = t["updates"][-1]["status"]
+            t["updates"][-1]["status"] = "APROBADA" if actual == "COMPLETADA" else "COMPLETADA"
+
+        def actual_explicita(t: dict) -> None:
+            t["meta"]["currentUpdateId"] = "UPD-010"
+
+        def version_display(t: dict) -> None:
+            t["updates"][-1]["displayVersion"] = "0.13"
+
+        mutaciones = [
+            ("estado de actualización", estado_actualizacion),
+            ("currentUpdateId", actual_explicita),
+            ("displayVersion", version_display),
+        ]
+        for nombre, mutar in mutaciones:
+            with self.subTest(mutacion=nombre):
+                tracker = json.loads(json.dumps(base))
+                mutar(tracker)
+                (self.root / "docs" / "IMPLEMENTATION_TRACKER.json").write_text(
+                    json.dumps(tracker, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
+                self._ruta_html().write_text(html_original, encoding="utf-8")
+                self._reescribir_tracker_embebido(tracker)
+                resultado = self.run_tool("sync-dashboard.py", "--check")
+                self.assertNotEqual(resultado.returncode, 0, nombre)
+                self.assertIn("derived-data", resultado.stderr, nombre)
 
 
 if __name__ == "__main__":
